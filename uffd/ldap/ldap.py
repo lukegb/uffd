@@ -20,3 +20,31 @@ def service_conn():
 
 def user_conn():
 	pass
+
+def uid_to_dn(uid):
+	conn = service_conn()
+	conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format(escape_filter_chars(uid)))
+	if not len(conn.entries) == 1:
+		return None
+	else:
+		return conn.entries[0].entry_dn
+
+def loginname_to_dn(loginname):
+	return 'uid={},{}'.format(escape_filter_chars(loginname), current_app.config["LDAP_BASE_USER"])
+
+def get_next_uid():
+	conn = service_conn()
+	conn.search(current_app.config["LDAP_BASE_USER"], '(objectclass=person)')
+	max_uid = current_app.config["LDAP_USER_MIN_UID"]
+	for i in conn.entries:
+		# skip out of range entries
+		if i['uidNumber'].value > current_app.config["LDAP_USER_MAX_UID"]:
+			continue
+		if i['uidNumber'].value < current_app.config["LDAP_USER_MIN_UID"]:
+			continue
+		max_uid = max(i['uidNumber'].value, max_uid)
+	next_uid = max_uid + 1
+	if uid_to_dn(next_uid):
+		raise Exception('No free uid found')
+	else:
+		return next_uid

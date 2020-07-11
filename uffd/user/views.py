@@ -23,16 +23,18 @@ def user_list():
 def user_show(uid=None):
 	if not uid:
 		user = User()
+		ldif = '<none yet>'
 	else:
 		conn = service_conn()
 		conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
 		assert len(conn.entries) == 1
 		user = User.from_ldap(conn.entries[0])
-	return render_template('user.html', user=user, user_ldif=conn.entries[0].entry_to_ldif())
+		ldif = conn.entries[0].entry_to_ldif()
+	return render_template('user.html', user=user, user_ldif=ldif)
 
 @bp.route("/<int:uid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
-def user_update(uid=None):
+def user_update(uid=False):
 	conn = service_conn()
 	if uid:
 		conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
@@ -51,7 +53,7 @@ def user_update(uid=None):
 	new_password = request.form.get('password')
 	if new_password:
 		user.set_password(new_password)
-	if user.to_ldap(conn, new=bool(uid)):
+	if user.to_ldap(new=(not uid)):
 		flash('User updated')
 	else:
 		flash('Error updating user: {}'.format(conn.result['message']))
