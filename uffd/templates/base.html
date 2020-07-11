@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		{% block head %}
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<title>{% block title %}uffd{% endblock %}</title>
+
+		<link href="{{ url_for('static', filename="bootstrap/bootstrap.min.css") }}" rel="stylesheet">
+		<link href="{{ url_for('static', filename="fa/css/all.css") }}" rel="stylesheet">
+		<link href="{{ url_for('static', filename="style.css") }}" rel="stylesheet">
+		<script src="{{ url_for('static', filename="jquery/jquery-3.4.1.min.js") }}"></script>
+		<script src="{{ url_for('static', filename="popper/popper.min.js") }}"></script>
+		<script src="{{ url_for('static', filename="bootstrap/bootstrap.min.js") }}"></script>
+
+		<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/png">
+		{% endblock %}
+	</head>
+	<body>
+		{% block navbar %}
+		{% macro navbarlink(data, htmlclass="nav-link") -%}
+			<a class="{{ htmlclass }}" href="{{ url_for(data.endpoint) }}">
+				{% if data.gly != '' %}
+					{% if data.iconlib == 'fa' %}
+						<span aria-hidden="true" class="fa fa-{{ data.icon }}"></span>
+					{% endif %}
+					{{ data.name }}
+				{% endif %}
+			</a>
+		{%- endmacro %}
+		{% macro navbaricon(data) -%}
+		<li class="nav-item {% if data.endpoint == request.endpoint %} active{% endif %}">
+			{{ navbarlink(data) }}
+		</li>
+		{%- endmacro %}
+
+		<nav class="navbar navbar-expand-md navbar-dark bg-dark static-top" >
+			<a class="navbar-brand" href="{{ url_for('index') }}">uffd</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#baseNavbar" aria-controls="baseNavbar" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<div class="collapse navbar-collapse" id="baseNavbar">
+				<ul class="navbar-nav mr-auto">
+					{% for n in navbar if (not n.group) %}
+					{{ navbaricon(n) }}
+					{% endfor %}
+
+					{% for grouper, list in navbar|rejectattr("group", "none")|groupby("group")  %}
+					<li class="nav-item dropdown {% if request.endpoint in list|map(attribute='endpoint') %} active{% endif %}">
+						<a
+							class="nav-link dropdown-toggle dropdow-clickable"
+							href="google.com"
+							id="baseNavbardropdown-{{ grouper }}"
+							data-toggle="dropdown"
+							aria-haspopup="true"
+							aria-expanded="false">
+								{{ grouper }}
+								<span class="caret"></span>
+						</a>
+						<div class="dropdown-menu" aria-labelledby="baseNavbardropdown-{{ grouper }}">
+							{% for n in list %}
+							{{ navbarlink(n, htmlclass="dropdown-item") }}
+							{% endfor %}
+						</div>
+					</li>
+					{% endfor %}
+				</ul>
+
+
+			</div>
+		</nav>
+		{% endblock navbar %}
+
+		<div class="container mt-2">
+			<div class="row">
+				{% for message in get_flashed_messages() %}
+				<div class="alert alert-primary col" role="alert">{{ message }}</div>
+				{% endfor %}
+			</div>
+		</div>
+
+		<main role="main" class="container">
+			{% block body %}
+			{% endblock body %}
+		</main>
+
+	</body>
+</html>

@@ -1,0 +1,33 @@
+image: debian:latest
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  DEBIAN_FRONTEND: noninteractive 
+
+before_script:
+  - apt update
+  - apt -y -qq -o Dpkg::Use-Pty=0 install python3 sqlite3 locales-all git python3-flask python3-coverage python3-flask-sqlalchemy python3-pip python-ldap3
+  - python3 -V
+  - uname -a
+
+linter:
+  stage: test
+  script:
+  - pip3 install pylint
+  - python3 -m pylint --rcfile .pylintrc --output-format=text uffd | tee pylint.txt
+  artifacts:
+      paths:
+      - pylint.txt
+
+#unittest:
+#  stage: test
+#  script:
+#  - python3 -m coverage run runTests.py
+#  - python3 -m coverage report --include "./*"
+#  - python3 -m coverage report -m  --include "./*" > report.txt
+#  - python3 -m coverage html --include "./*"
+#  artifacts:
+#      paths:
+#      - htmlcov/*
+#      - .coverage
+#      - report.txt
