@@ -1,6 +1,7 @@
 import string
 
 from ldap3 import MODIFY_REPLACE, HASHED_SALTED_SHA512
+from ldap3.utils.hashed import hashed
 from flask import current_app
 
 from uffd import ldap
@@ -63,12 +64,10 @@ class User():
 				'cn': [(MODIFY_REPLACE, [self.displayname])],
 				'mail': [(MODIFY_REPLACE, [self.mail])],
 				}
+			if self.newpassword:
+				attributes['userPassword'] = [(MODIFY_REPLACE, [hashed(HASHED_SALTED_SHA512, self.newpassword)])]
 			dn = ldap.uid_to_dn(self.uid)
 			result = conn.modify(dn, attributes)
-		if result:
-			if self.newpassword:
-				print(self.newpassword)
-				conn.extend.standard.modify_password(user=dn, old_password=None, new_password=self.newpassword, hash_algorithm=HASHED_SALTED_SHA512)
 		return result
 
 	def get_groups(self):
