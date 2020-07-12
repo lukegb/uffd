@@ -2,11 +2,17 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
+from uffd.ldap import get_conn, escape_filter_chars
+from uffd.session import login_required
 
 from .models import User
-from uffd.ldap import get_conn, escape_filter_chars
 
 bp = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/')
+
+@bp.before_request
+@login_required
+def user_acl():
+	pass
 
 @bp.route("/")
 @register_navbar('Users', icon='users', blueprint=bp)
@@ -59,8 +65,8 @@ def user_update(uid=False):
 		flash('Error updating user: {}'.format(conn.result['message']))
 	return redirect(url_for('.user_list'))
 
-@csrf_protect
 @bp.route("/<int:uid>/del")
+@csrf_protect
 def user_delete(uid):
 	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))

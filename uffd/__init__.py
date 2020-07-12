@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, redirect, url_for
 from werkzeug.routing import IntegerConverter
 
 from uffd.database import db, SQLAlchemyJSON
@@ -40,12 +40,15 @@ def create_app(test_config=None):
 
 	db.init_app(app)
 	# pylint: disable=C0415
-	from uffd import user, group, csrf, ldap
+	from uffd import user, group, selfservice, session, csrf, ldap
 	# pylint: enable=C0415
 
-	for i in user.bp + group.bp + csrf.bp + ldap.bp:
+	for i in user.bp + group.bp + selfservice.bp + session.bp + csrf.bp + ldap.bp:
 		app.register_blueprint(i)
-	app.add_url_rule("/", endpoint="index")
+
+	@app.route("/")
+	def index():
+		return redirect(url_for('selfservice.self_index'))
 
 	return app
 

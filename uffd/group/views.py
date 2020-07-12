@@ -2,10 +2,16 @@ from flask import Blueprint, current_app, render_template
 
 from uffd.navbar import register_navbar
 from uffd.ldap import get_conn, escape_filter_chars
+from uffd.session import login_required
 
 from .models import Group
 
 bp = Blueprint("group", __name__, template_folder='templates', url_prefix='/group/')
+
+@bp.before_request
+@login_required
+def group_acl():
+	pass
 
 @bp.route("/")
 @register_navbar('Groups', icon='layer-group', blueprint=bp)

@@ -1,7 +1,9 @@
 from flask import Blueprint, request, session, current_app
+from ldap3.utils.conv import escape_filter_chars
+from ldap3.utils.dn import escape_rdn
+from ldap3.core.exceptions import LDAPBindError
 
 from ldap3 import Server, Connection, ALL, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES
-from ldap3.utils.conv import escape_filter_chars
 
 bp = Blueprint("ldap", __name__)
 
@@ -17,15 +19,19 @@ def service_conn():
 	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
 	return Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"], current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=True)
 
-def user_conn():
-	pass
+def user_conn(loginname, password):
+	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
+	try:
+		return fix_connection(Connection(server, loginname_to_dn(loginname), password, auto_bind=True))
+	except LDAPBindError:
+		return False
 
 def get_conn():
 	conn = service_conn()
 	return fix_connection(conn)
 
 def uid_to_dn(uid):
-	conn = service_conn()
+	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format(escape_filter_chars(uid)))
 	if not len(conn.entries) == 1:
 		return None
@@ -33,10 +39,10 @@ def uid_to_dn(uid):
 		return conn.entries[0].entry_dn
 
 def loginname_to_dn(loginname):
-	return 'uid={},{}'.format(escape_filter_chars(loginname), current_app.config["LDAP_BASE_USER"])
+	return 'uid={},{}'.format(escape_rdn(loginname), current_app.config["LDAP_BASE_USER"])
 
 def get_next_uid():
-	conn = service_conn()
+	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_USER"], '(objectclass=person)')
 	max_uid = current_app.config["LDAP_USER_MIN_UID"]
 	for i in conn.entries:

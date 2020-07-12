@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<form action="{{ url_for(".self_update") }}" method="POST" onInput="password2.setCustomValidity(password1.value != password2.value ? 'Passwords do not match.' : '')">
+<div class="align-self-center row">
+	<div class="form-group col-md-6">
+		<label for="user-uid">uid</label>
+		<input type="number" class="form-control" id="user-uid" name="uid" value="{{ user.uid }}" readonly>
+	</div>
+	<div class="form-group col-md-6">
+		<label for="user-loginname">login name</label>
+		<input type="text" class="form-control" id="user-loginname" name="loginname" value="{{ user.loginname }}" readonly>
+	</div>
+	<div class="form-group col-md-6">
+		<label for="user-displayname">display name</label>
+		<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ user.displayname }}">
+	</div>
+	<div class="form-group col-md-6">
+		<label for="user-mail">mail</label>
+		<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail }}">
+		<small class="form-text text-muted">
+		</small>
+	</div>
+	<div class="form-group col-md-6">
+		<label for="user-password1">password</label>
+		<input type="password" class="form-control" id="user-password1" name="password1" placeholder="do not change">
+		<small class="form-text text-muted">
+			No special requirements but please don't be stupid and use a password manager.
+		</small>
+	</div>
+	<div class="form-group col-md-6">
+		<label for="user-password2">password repeat</label>
+		<input type="password" class="form-control" id="user-password2" name="password2" placeholder="do not change">
+	</div>
+	<div class="form-group col-md-12">
+		<button type="submit" class="btn btn-primary float-right"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
+	</div>
+	<div class="form-group col-md-12" "id="accordion">
+		<div class="card">
+			<div class="card-header" id="user-group">
+				<h5 class="mb-0">
+					<a class="btn btn-link collapsed" data-toggle="collapse" data-target="#user-group-body" aria-expanded="false" aria-controls="user-group">
+						groups
+					</a>
+				</h5>
+			</div>
+			<div id="user-group-body" class="collapse" aria-labelledby="user-group" data-parent="#accordion">
+				<div class="card-body">
+					<ul class="list-group">
+					{% for group in user.get_groups() %}
+					<li class="list-group-item"><a href="{{ url_for("group.group_show", gid=group.gid) }}">{{ group.name }}</a></li>
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="card">
+			<div class="card-header" id="user-role">
+				<h5 class="mb-0">
+					<a class="btn btn-link" data-toggle="collapse" data-target="#user-role-body" aria-expanded="true" aria-controls="user-role">
+						roles
+					</a>
+				</h5>
+			</div>
+			<div id="user-role-body" class="collapse show" aria-labelledby="user-role" data-parent="#accordion">
+				<div class="card-body">
+					roles.
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</form>
+{% endblock %}
