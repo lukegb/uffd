@@ -15,7 +15,7 @@ def fix_connection(conn):
 
 def service_conn():
 	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
-	conn = Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"], current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=True)
+	return Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"], current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=True)
 
 def user_conn():
 	pass
