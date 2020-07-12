@@ -31,6 +31,9 @@ def login():
 		flash('Login name or password is wrong')
 		return redirect(url_for('.login'))
 	user = User.from_ldap(conn.entries[0])
+	if not user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
+		flash('You do not have access to this service')
+		return redirect(url_for('.login'))
 	session['user_uid'] = user.uid
 	session['logintime'] = datetime.datetime.now().timestamp()
 	return redirect(request.values.get('ref', url_for('index')))
