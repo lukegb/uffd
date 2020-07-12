@@ -3,19 +3,23 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.ldap import get_conn, escape_filter_chars
-from uffd.session import login_required, is_valid_session
+from uffd.session import login_required, is_valid_session, get_current_user
 
 from .models import User, Group
 
 bp_user = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/')
 @bp_user.before_request
-#@login_required(group=current_app.config('ACL_LDAP_GROUP_USEREDIT'))
 @login_required()
 def user_acl():
-	pass
+	if not user_acl_check():
+		flash('Access denied')
+		return redirect(url_for('index'))
+
+def user_acl_check():
+	return is_valid_session() and get_current_user().is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp_user.route("/")
-@register_navbar('Users', icon='users', blueprint=bp_user, visible=is_valid_session)
+@register_navbar('Users', icon='users', blueprint=bp_user, visible=user_acl_check)
 def user_list():
 	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_USER"], '(objectclass=person)')
@@ -81,10 +85,12 @@ bp_group = Blueprint("group", __name__, template_folder='templates', url_prefix=
 @bp_group.before_request
 @login_required()
 def group_acl():
-	pass
+	if not user_acl_check():
+		flash('Access denied')
+		return redirect(url_for('index'))
 
 @bp_group.route("/")
-@register_navbar('Groups', icon='layer-group', blueprint=bp_group, visible=is_valid_session)
+@register_navbar('Groups', icon='layer-group', blueprint=bp_group, visible=user_acl_check)
 def group_list():
 	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_GROUPS"], '(objectclass=groupOfUniqueNames)')

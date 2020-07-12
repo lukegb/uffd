@@ -13,6 +13,12 @@ bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix=
 @login_required()
 def self_acl():
 	pass
+	#if not self_acl_check():
+	#	flash('Access denied')
+	#	return redirect(url_for('index'))
+
+def self_acl_check():
+	return is_valid_session() and get_current_user().is_in_group(current_app.config['ACL_SELFSERVICE_GROUP'])
 
 @bp.route("/")
 @register_navbar('Selfservice', icon='portrait', blueprint=bp, visible=is_valid_session)
