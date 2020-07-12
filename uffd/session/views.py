@@ -38,7 +38,9 @@ def login():
 def get_current_user():
 	if not session.get('user_uid'):
 		return None
-	return User.from_ldap_dn(uid_to_dn(session['user_uid']))
+	if not hasattr(request, 'current_user'):
+		request.current_user = User.from_ldap_dn(uid_to_dn(session['user_uid']))
+	return request.current_user
 
 def is_valid_session():
 	user = get_current_user()
