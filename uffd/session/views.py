@@ -10,7 +10,6 @@ from uffd.ldap import get_conn, user_conn, uid_to_dn
 
 bp = Blueprint("session", __name__, template_folder='templates', url_prefix='/')
 
-@register_navbar('Logout', icon='sign-out-alt', blueprint=bp)
 @bp.route("/logout")
 def logout():
 	session.clear()
@@ -34,7 +33,7 @@ def login():
 	user = User.from_ldap(conn.entries[0])
 	session['user_uid'] = user.uid
 	session['logintime'] = datetime.datetime.now().timestamp()
-	return redirect(url_for('index'))
+	return redirect(request.values.get('ref', url_for('index')))
 
 def get_current_user():
 	if not session.get('user_uid'):
@@ -49,16 +48,18 @@ def is_valid_session():
 		flash('Session timed out')
 		return False
 	return True
+bp.add_app_template_global(is_valid_session)
 
 def is_user_in_group(user, group):
 	return True
+bp.add_app_template_global(is_user_in_group)
 
 def login_required(view, group=None):
 	@functools.wraps(view)
 	def wrapped_view(**kwargs):
 		if not is_valid_session():
 			flash('You need to login first')
-			return redirect(url_for('session.login'))
+			return redirect(url_for('session.login', ref=request.url))
 		if not is_user_in_group(get_current_user, group):
 			flash('Access denied')
 			return redirect(url_for('index'))

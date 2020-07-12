@@ -9,7 +9,7 @@ def setup_navbar(app):
 # ( see: http://getbootstrap.com/components/#glyphicons )
 # or 'fa'
 # ( see: http://fontawesome.io/icons/ )
-def register_navbar(name, iconlib='fa', icon=None, group=None, endpoint=None, blueprint=None):
+def register_navbar(name, iconlib='fa', icon=None, group=None, endpoint=None, blueprint=None, visible=None):
 	def wrapper(func):
 		urlendpoint = endpoint
 		if not endpoint:
@@ -26,6 +26,7 @@ def register_navbar(name, iconlib='fa', icon=None, group=None, endpoint=None, bl
 		item['endpoint'] = urlendpoint
 		item['name'] = name
 		item['blueprint'] = blueprint
+		item['visible'] = visible
 		navbarList.append(item)
 		return func
 	return wrapper

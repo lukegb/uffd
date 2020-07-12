@@ -2,7 +2,7 @@ from flask import Blueprint, current_app, render_template
 
 from uffd.navbar import register_navbar
 from uffd.ldap import get_conn, escape_filter_chars
-from uffd.session import login_required
+from uffd.session import login_required, is_valid_session
 
 from .models import Group
 
@@ -14,7 +14,7 @@ def group_acl():
 	pass
 
 @bp.route("/")
-@register_navbar('Groups', icon='layer-group', blueprint=bp)
+@register_navbar('Groups', icon='layer-group', blueprint=bp, visible=is_valid_session)
 def group_list():
 	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_GROUPS"], '(objectclass=groupOfUniqueNames)')

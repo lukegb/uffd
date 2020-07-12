@@ -5,7 +5,7 @@ from uffd.csrf import csrf_protect
 
 from uffd.user.models import User
 from uffd.group.models import Group
-from uffd.session import get_current_user, login_required
+from uffd.session import get_current_user, login_required, is_valid_session
 from uffd.ldap import get_conn, escape_filter_chars
 
 bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix='/self/')
@@ -16,7 +16,7 @@ def self_acl():
 	pass
 
 @bp.route("/")
-@register_navbar('Selfservice', icon='portrait', blueprint=bp)
+@register_navbar('Selfservice', icon='portrait', blueprint=bp, visible=is_valid_session)
 def self_index():
 	return render_template('self.html', user=get_current_user())
 

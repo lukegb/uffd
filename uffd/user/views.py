@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.ldap import get_conn, escape_filter_chars
-from uffd.session import login_required
+from uffd.session import login_required, is_valid_session
 
 from .models import User
 
@@ -15,7 +15,7 @@ def user_acl():
 	pass
 
 @bp.route("/")
-@register_navbar('Users', icon='users', blueprint=bp)
+@register_navbar('Users', icon='users', blueprint=bp, visible=is_valid_session)
 def user_list():
 	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_USER"], '(objectclass=person)')
