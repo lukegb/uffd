@@ -3,8 +3,7 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 
-from uffd.user.models import User
-from uffd.group.models import Group
+from uffd.user.models import User, Group
 from uffd.session import get_current_user, login_required, is_valid_session
 from uffd.ldap import get_conn, escape_filter_chars
 

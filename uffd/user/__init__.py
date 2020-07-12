@@ -1,3 +1,3 @@
-from .views import bp as ui_bp
+from .views import bp_user, bp_group
 
-bp = [ui_bp]
+bp = [bp_user, bp_group]
