@@ -1,7 +1,7 @@
 from flask import Blueprint, current_app, render_template
 
 from uffd.navbar import register_navbar
-from uffd.ldap import service_conn, escape_filter_chars
+from uffd.ldap import get_conn, escape_filter_chars
 
 from .models import Group
 
@@ -10,7 +10,7 @@ bp = Blueprint("group", __name__, template_folder='templates', url_prefix='/grou
 @bp.route("/")
 @register_navbar('Groups', icon='layer-group', blueprint=bp)
 def group_list():
-	conn = service_conn()
+	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_GROUPS"], '(objectclass=groupOfUniqueNames)')
 	groups = []
 	for i in conn.entries:
@@ -19,7 +19,7 @@ def group_list():
 
 @bp.route("/<int:gid>")
 def group_show(gid):
-	conn = service_conn()
+	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_GROUPS"], '(&(objectclass=groupOfUniqueNames)(gidNumber={}))'.format((escape_filter_chars(gid))))
 	assert len(conn.entries) == 1
 	group = Group.from_ldap(conn.entries[0])

@@ -35,14 +35,14 @@ class User():
 
 	@classmethod
 	def from_ldap_dn(cls, dn):
-		conn = ldap.service_conn()
+		conn = ldap.get_conn()
 		conn.search(dn, '(objectClass=person)')
 		if not len(conn.entries) == 1:
 			return None
 		return User.from_ldap(conn.entries[0])
 
 	def to_ldap(self, new):
-		conn = ldap.service_conn()
+		conn = ldap.get_conn()
 		if new:
 			attributes= {
 				'uidNumber': ldap.get_next_uid(),

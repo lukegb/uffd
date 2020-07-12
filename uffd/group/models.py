@@ -25,7 +25,7 @@ class Group():
 
 	@classmethod
 	def from_ldap_dn(cls, dn):
-		conn = ldap.service_conn()
+		conn = ldap.get_conn()
 		conn.search(dn, '(objectClass=groupOfUniqueNames)')
 		if not len(conn.entries) == 1:
 			return None

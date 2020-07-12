@@ -16,10 +16,13 @@ def fix_connection(conn):
 def service_conn():
 	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
 	conn = Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"], current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=True)
-	return fix_connection(conn)
 
 def user_conn():
 	pass
+
+def get_conn():
+	conn = service_conn()
+	return fix_connection(conn)
 
 def uid_to_dn(uid):
 	conn = service_conn()

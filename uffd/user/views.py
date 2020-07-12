@@ -4,14 +4,14 @@ from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 
 from .models import User
-from uffd.ldap import service_conn, escape_filter_chars
+from uffd.ldap import get_conn, escape_filter_chars
 
 bp = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/')
 
 @bp.route("/")
 @register_navbar('Users', icon='users', blueprint=bp)
 def user_list():
-	conn = service_conn()
+	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_USER"], '(objectclass=person)')
 	users = []
 	for i in conn.entries:
@@ -25,7 +25,7 @@ def user_show(uid=None):
 		user = User()
 		ldif = '<none yet>'
 	else:
-		conn = service_conn()
+		conn = get_conn()
 		conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
 		assert len(conn.entries) == 1
 		user = User.from_ldap(conn.entries[0])
@@ -35,7 +35,7 @@ def user_show(uid=None):
 @bp.route("/<int:uid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
 def user_update(uid=False):
-	conn = service_conn()
+	conn = get_conn()
 	if uid:
 		conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
 		assert len(conn.entries) == 1
@@ -62,7 +62,7 @@ def user_update(uid=False):
 @csrf_protect
 @bp.route("/<int:uid>/del")
 def user_delete(uid):
-	conn = service_conn()
+	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
 	assert len(conn.entries) == 1
 	if conn.delete(conn.entries[0].entry_dn):
