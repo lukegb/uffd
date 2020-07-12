@@ -9,7 +9,7 @@ from .models import Group
 bp = Blueprint("group", __name__, template_folder='templates', url_prefix='/group/')
 
 @bp.before_request
-@login_required
+@login_required()
 def group_acl():
 	pass
 

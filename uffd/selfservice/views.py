@@ -11,7 +11,7 @@ from uffd.ldap import get_conn, escape_filter_chars
 bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix='/self/')
 
 @bp.before_request
-@login_required
+@login_required()
 def self_acl():
 	pass
 

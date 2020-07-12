@@ -50,18 +50,16 @@ def is_valid_session():
 	return True
 bp.add_app_template_global(is_valid_session)
 
-def is_user_in_group(user, group):
-	return True
-bp.add_app_template_global(is_user_in_group)
-
-def login_required(view, group=None):
-	@functools.wraps(view)
-	def wrapped_view(**kwargs):
-		if not is_valid_session():
-			flash('You need to login first')
-			return redirect(url_for('session.login', ref=request.url))
-		if not is_user_in_group(get_current_user, group):
-			flash('Access denied')
-			return redirect(url_for('index'))
-		return view(**kwargs)
-	return wrapped_view
+def login_required(group=None):
+	def wrapper(func):
+		@functools.wraps(func)
+		def decorator(*args, **kwargs):
+			if not is_valid_session():
+				flash('You need to login first')
+				return redirect(url_for('session.login', ref=request.url))
+			if not get_current_user().is_in_group(group):
+				flash('Access denied')
+				return redirect(url_for('index'))
+			return func(*args, **kwargs)
+		return decorator
+	return wrapper

@@ -82,6 +82,15 @@ class User():
 		self._groups = groups
 		return groups
 
+	def is_in_group(self, name):
+		if not name:
+			return True
+		groups = self.get_groups()
+		for i in groups:
+			if i.name == name:
+				return True
+		return False
+
 	def set_loginname(self, value):
 		if len(value) > 32 or len(value) < 1:
 			return False

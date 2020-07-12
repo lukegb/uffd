@@ -10,7 +10,7 @@ from .models import User
 bp = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/')
 
 @bp.before_request
-@login_required
+@login_required(group='admins')
 def user_acl():
 	pass
 
