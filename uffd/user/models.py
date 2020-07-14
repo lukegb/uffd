@@ -41,7 +41,7 @@ class User():
 			return None
 		return User.from_ldap(conn.entries[0])
 
-	def to_ldap(self, new):
+	def to_ldap(self, new=False):
 		conn = ldap.get_conn()
 		if new:
 			attributes= {

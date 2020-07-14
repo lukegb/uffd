@@ -1,32 +1,70 @@
+import datetime
+
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
-
 from uffd.user.models import User, Group
 from uffd.session import get_current_user, login_required, is_valid_session
-from uffd.ldap import get_conn, escape_filter_chars
+from uffd.ldap import get_conn, escape_filter_chars, loginname_to_dn
+from uffd.selfservice.models import PasswordToken
+from uffd.database import db
 
 bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix='/self/')
 
-@bp.before_request
-@login_required()
-def self_acl():
-	pass
-	#if not self_acl_check():
-	#	flash('Access denied')
-	#	return redirect(url_for('index'))
-
-def self_acl_check():
-	return is_valid_session() and get_current_user().is_in_group(current_app.config['ACL_SELFSERVICE_GROUP'])
-
 @bp.route("/")
 @register_navbar('Selfservice', icon='portrait', blueprint=bp, visible=is_valid_session)
+@login_required()
 def self_index():
 	return render_template('self.html', user=get_current_user())
 
 @bp.route("/update", methods=(['POST']))
 @csrf_protect(blueprint=bp)
+@login_required()
 def self_update():
-	pass
+	# TODO: actualy update the user...
+	send_passwordreset('uffdtest')
+	return 'OK', 200
 
+@bp.route("/token/password/<token>", methods=(['POST', 'GET']))
+def self_token_password(token):
+	session = db.session
+	dbtoken = PasswordToken.query.get(token)
+	if not dbtoken or dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
+		flash('Token expired, please try again.')
+		if dbtoken:
+			session.delete(dbtoken)
+			session.commit()
+		return redirect(url_for('session.login'))
+	if not 'loginname' in request.values:
+		flash('Please set a new password.')
+		return render_template('reset_password.html', token=token)
+	else:
+		if not request.values['loginname'] == dbtoken.loginname:
+			flash('That is not the correct login name. Please start the password reset process again')
+			session.delete(dbtoken)
+			session.commit()
+			return redirect(url_for('session.login'))
+		if not request.values['password1']:
+			flash('Please specify a new password.')
+			return render_template('reset_password.html', token=token)
+		user = User.from_ldap_dn(loginname_to_dn(dbtoken.loginname))
+		user.set_password(request.values['password1'])
+		user.to_ldap()
+		flash('New password set')
+		session.delete(dbtoken)
+		session.commit()
+		return redirect(url_for('session.login'))
+
+
+
+def send_passwordreset(loginname):
+	session = db.session
+	expired_tokens = PasswordToken.query.filter(PasswordToken.created < (datetime.datetime.now() - datetime.timedelta(days=2))).all()
+	for i in expired_tokens:
+		session.delete(i)
+	token = PasswordToken()
+	token.loginname = loginname
+	session.add(token)
+	# TODO: send mail
+	session.commit()
