@@ -1,5 +1,5 @@
 import datetime
-import random
+import secrets
 import string
 import functools
 
@@ -38,7 +38,7 @@ def login():
 		return redirect(url_for('.login'))
 	session['user_uid'] = user.uid
 	session['logintime'] = datetime.datetime.now().timestamp()
-	session['_csrf_token'] = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64))
+	session['_csrf_token'] = secrets.token_hex(128)
 	return redirect(request.values.get('ref', url_for('index')))
 
 def get_current_user():

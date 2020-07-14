@@ -1,4 +1,5 @@
 import os
+import secrets
 
 from flask import Flask, redirect, url_for
 from werkzeug.routing import IntegerConverter
@@ -16,7 +17,7 @@ def create_app(test_config=None):
 	# set development default config values
 	app.config.from_mapping(
 		TEMPLATES_AUTO_RELOAD=True,
-		SECRET_KEY=os.urandom(128),
+		SECRET_KEY=secrets.token_hex(128),
 		SQLALCHEMY_DATABASE_URI="sqlite:///{}".format(os.path.join(app.instance_path, 'uffd.sqlit3')),
 		SQLALCHEMY_ECHO=True,
 	)
