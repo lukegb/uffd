@@ -32,7 +32,6 @@ def csrf_protect(blueprint=None, endpoint=None):
 
 @bp.app_url_defaults
 def csrf_inject(endpoint, values):
-	print(endpoint, csrfEndpoints, endpoint not in csrfEndpoints)
 	if endpoint not in csrfEndpoints or not session.get('_csrf_token'):
 		return
 	values['_csrf_token'] = session['_csrf_token']
