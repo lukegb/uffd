@@ -44,6 +44,7 @@ def user_show(uid=None):
 
 @bp_user.route("/<int:uid>/update", methods=['POST'])
 @bp_user.route("/new", methods=['POST'])
+@csrf_protect(blueprint=bp_user)
 def user_update(uid=False):
 	conn = get_conn()
 	if uid:
@@ -70,7 +71,7 @@ def user_update(uid=False):
 	return redirect(url_for('.user_list'))
 
 @bp_user.route("/<int:uid>/del")
-@csrf_protect
+@csrf_protect(blueprint=bp_user)
 def user_delete(uid):
 	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))

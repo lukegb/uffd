@@ -1,4 +1,6 @@
 import datetime
+import random
+import string
 import functools
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session
@@ -36,6 +38,7 @@ def login():
 		return redirect(url_for('.login'))
 	session['user_uid'] = user.uid
 	session['logintime'] = datetime.datetime.now().timestamp()
+	session['_csrf_token'] = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64))
 	return redirect(request.values.get('ref', url_for('index')))
 
 def get_current_user():

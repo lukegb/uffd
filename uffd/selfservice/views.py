@@ -26,7 +26,7 @@ def self_index():
 	return render_template('self.html', user=get_current_user())
 
 @bp.route("/update", methods=(['POST']))
-@csrf_protect
+@csrf_protect(blueprint=bp)
 def self_update():
 	pass
 
