@@ -1,5 +1,8 @@
 import datetime
 
+import smtplib
+from email.message import EmailMessage
+
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
 
 from uffd.navbar import register_navbar
@@ -23,8 +26,21 @@ def self_index():
 @login_required()
 def self_update():
 	# TODO: actualy update the user...
-	send_passwordreset('uffdtest')
 	return 'OK', 200
+
+@bp.route("/passwordreset", methods=(['GET', 'POST']))
+@csrf_protect(blueprint=bp)
+def self_forgot_password():
+	if request.method == 'GET':
+		return render_template('forgot_password.html')
+
+	loginname = request.values['loginname']
+	mail = request.values['mail']
+	flash("We sent a mail to this users mail address if you entered the correct mail and login name combination")
+	user = User.from_ldap_dn(loginname_to_dn(loginname))
+	if user.mail == mail:
+		send_passwordreset(loginname)
+	return redirect(url_for('session.login'))
 
 @bp.route("/token/password/<token>", methods=(['POST', 'GET']))
 def self_token_password(token):
@@ -38,16 +54,16 @@ def self_token_password(token):
 		return redirect(url_for('session.login'))
 	if not 'loginname' in request.values:
 		flash('Please set a new password.')
-		return render_template('reset_password.html', token=token)
+		return render_template('set_password.html', token=token)
 	else:
 		if not request.values['loginname'] == dbtoken.loginname:
-			flash('That is not the correct login name. Please start the password reset process again')
+			flash('That is not the correct login name for this token. Your token is now invalide. Please start the password reset process again')
 			session.delete(dbtoken)
 			session.commit()
 			return redirect(url_for('session.login'))
 		if not request.values['password1']:
 			flash('Please specify a new password.')
-			return render_template('reset_password.html', token=token)
+			return render_template('set_password.html', token=token)
 		user = User.from_ldap_dn(loginname_to_dn(dbtoken.loginname))
 		user.set_password(request.values['password1'])
 		user.to_ldap()
@@ -55,8 +71,6 @@ def self_token_password(token):
 		session.delete(dbtoken)
 		session.commit()
 		return redirect(url_for('session.login'))
-
-
 
 def send_passwordreset(loginname):
 	session = db.session
@@ -66,5 +80,21 @@ def send_passwordreset(loginname):
 	token = PasswordToken()
 	token.loginname = loginname
 	session.add(token)
-	# TODO: send mail
 	session.commit()
+
+	user = User.from_ldap_dn(loginname_to_dn(loginname))
+
+	msg = EmailMessage()
+	msg.set_content(render_template('passwordreset.mail.txt', user=user, token=token.token))
+	msg['Subject'] = 'Password reset'
+	send_mail(user.mail, msg)
+
+def send_mail(to, msg):
+	server = smtplib.SMTP(host=current_app.config['MAIL_SERVER'], port=current_app.config['MAIL_PORT'])
+	if current_app.config['MAIL_USE_STARTTLS']:
+		server.starttls()
+	server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
+	msg['From'] = current_app.config['MAIL_FROM_ADDRESS']
+	msg['To'] = to
+	server.send_message(msg)
+	server.quit()

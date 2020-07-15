@@ -53,7 +53,6 @@ def is_valid_session():
 	if not user:
 		return False
 	if datetime.datetime.now().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
-		flash('Session timed out')
 		return False
 	return True
 bp.add_app_template_global(is_valid_session)
