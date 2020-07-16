@@ -1,7 +1,7 @@
 Hi {{ user.displayname }},
 
 you have requested to change your mail address.
-To do so, visit this url: {{ url_for('.self_token_mail', token=token, _external=True) }} 
+To do so, visit this url: {{ url_for('selfservice.self_token_mail', token=token, _external=True) }} 
 **Please note this link is only valid for 48h**
 
 If you did not request a mail address change, you should change your password asap because somebody else logged in and requested this.

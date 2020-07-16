@@ -22,13 +22,14 @@
 		<label for="user-loginname">display name</label>
 		<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ user.displayname }}">
 		<small class="form-text text-muted">
-			At most 128, at least 2 characters. No character restrictions.
+			If you leave this empty it will be set to the login name. At most 128, at least 2 characters. No character restrictions.
 		</small>
 	</div>
 	<div class="form-group col">
 		<label for="user-mail">mail</label>
 		<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail }}">
 		<small class="form-text text-muted">
+			Do a sanity check here. A user can take over another account if both have the same mail address set.
 		</small>
 	</div>
 	<div class="form-group col">
@@ -42,6 +43,7 @@
 			At least 8 characters, no other special requirements. But please don't be stupid and use a password manager.
 		</small>
 	</div>
+	{% if user.uid %}
 	<div class="form-group col "id="accordion">
 		<div class="card">
 			<div class="card-header" id="user-ldif">
@@ -90,6 +92,7 @@
 			</div>
 		</div>
 	</div>
+	{% endif %}
 	<div class="form-group col">
 		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
 		<a href="{{ url_for(".user_list") }}" class="btn btn-secondary">Cancle</a>

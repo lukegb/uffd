@@ -46,7 +46,6 @@ def self_update():
 	return redirect(url_for('.self_index'))
 
 @bp.route("/passwordreset", methods=(['GET', 'POST']))
-@csrf_protect(blueprint=bp)
 def self_forgot_password():
 	if request.method == 'GET':
 		return render_template('forgot_password.html')
