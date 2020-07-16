@@ -106,7 +106,16 @@ class User():
 		return True
 
 	def set_password(self, value):
+		if len(value) < 8:
+			return False
 		self.newpassword = value
+		return True
+
+	def set_mail(self, value):
+		if len(value) < 3 or '@' not in value:
+			return False
+		self.mail = value
+		return True
 
 class Group():
 	gid = None
