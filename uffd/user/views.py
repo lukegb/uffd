@@ -10,7 +10,7 @@ from .models import User, Group
 bp_user = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/')
 @bp_user.before_request
 @login_required()
-def user_acl():
+def user_acl(): #pylint: disable=inconsistent-return-statements
 	if not user_acl_check():
 		flash('Access denied')
 		return redirect(url_for('index'))
@@ -56,11 +56,11 @@ def user_update(uid=False):
 		user = User()
 		if not user.set_loginname(request.form['loginname']):
 			flash('Login name does not meet requirements')
-			return(url_for('.user_show'))
+			return url_for('.user_show')
 	user.mail = request.form['mail']
 	if not user.set_displayname(request.form['displayname']):
 		flash('Display name does not meet requirements')
-		return(url_for('.user_show'))
+		return url_for('.user_show')
 	new_password = request.form.get('password')
 	if new_password:
 		user.set_password(new_password)
@@ -85,7 +85,7 @@ def user_delete(uid):
 bp_group = Blueprint("group", __name__, template_folder='templates', url_prefix='/group/')
 @bp_group.before_request
 @login_required()
-def group_acl():
+def group_acl(): #pylint: disable=inconsistent-return-statements
 	if not user_acl_check():
 		flash('Access denied')
 		return redirect(url_for('index'))

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, current_app
+from flask import Blueprint, current_app
 from ldap3.utils.conv import escape_filter_chars
 from ldap3.utils.dn import escape_rdn
 from ldap3.core.exceptions import LDAPBindError
@@ -35,8 +35,7 @@ def uid_to_dn(uid):
 	conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format(escape_filter_chars(uid)))
 	if not len(conn.entries) == 1:
 		return None
-	else:
-		return conn.entries[0].entry_dn
+	return conn.entries[0].entry_dn
 
 def loginname_to_dn(loginname):
 	return 'uid={},{}'.format(escape_rdn(loginname), current_app.config["LDAP_BASE_USER"])
@@ -55,5 +54,4 @@ def get_next_uid():
 	next_uid = max_uid + 1
 	if uid_to_dn(next_uid):
 		raise Exception('No free uid found')
-	else:
-		return next_uid
+	return next_uid

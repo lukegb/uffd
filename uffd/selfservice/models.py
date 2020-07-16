@@ -1,7 +1,7 @@
 import datetime
 import secrets
 
-from sqlalchemy import Column, Integer, String, Text, LargeBinary, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, String, DateTime
 
 from uffd.database import db
 

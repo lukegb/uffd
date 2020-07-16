@@ -7,9 +7,9 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
-from uffd.user.models import User, Group
+from uffd.user.models import User
 from uffd.session import get_current_user, login_required, is_valid_session
-from uffd.ldap import get_conn, escape_filter_chars, loginname_to_dn
+from uffd.ldap import loginname_to_dn
 from uffd.selfservice.models import PasswordToken, MailToken
 from uffd.database import db
 
@@ -72,22 +72,21 @@ def self_token_password(token):
 	if not 'loginname' in request.values:
 		flash('Please set a new password.')
 		return render_template('set_password.html', token=token)
-	else:
-		if not request.values['loginname'] == dbtoken.loginname:
-			flash('That is not the correct login name for this token. Your token is now invalide. Please start the password reset process again')
-			session.delete(dbtoken)
-			session.commit()
-			return redirect(url_for('session.login'))
-		if not request.values['password1']:
-			flash('Please specify a new password.')
-			return render_template('set_password.html', token=token)
-		user = User.from_ldap_dn(loginname_to_dn(dbtoken.loginname))
-		user.set_password(request.values['password1'])
-		user.to_ldap()
-		flash('New password set')
+	if not request.values['loginname'] == dbtoken.loginname:
+		flash('That is not the correct login name for this token. Your token is now invalide. Please start the password reset process again')
 		session.delete(dbtoken)
 		session.commit()
 		return redirect(url_for('session.login'))
+	if not request.values['password1']:
+		flash('Please specify a new password.')
+		return render_template('set_password.html', token=token)
+	user = User.from_ldap_dn(loginname_to_dn(dbtoken.loginname))
+	user.set_password(request.values['password1'])
+	user.to_ldap()
+	flash('New password set')
+	session.delete(dbtoken)
+	session.commit()
+	return redirect(url_for('session.login'))
 
 @bp.route("/token/mail_verification/<token>")
 @login_required()
@@ -144,12 +143,12 @@ def send_passwordreset(loginname):
 	msg['Subject'] = 'Password reset'
 	send_mail(user.mail, msg)
 
-def send_mail(to, msg):
+def send_mail(to_address, msg):
 	server = smtplib.SMTP(host=current_app.config['MAIL_SERVER'], port=current_app.config['MAIL_PORT'])
 	if current_app.config['MAIL_USE_STARTTLS']:
 		server.starttls()
 	server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
 	msg['From'] = current_app.config['MAIL_FROM_ADDRESS']
-	msg['To'] = to
+	msg['To'] = to_address
 	server.send_message(msg)
 	server.quit()

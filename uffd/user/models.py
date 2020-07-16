@@ -44,7 +44,7 @@ class User():
 	def to_ldap(self, new=False):
 		conn = ldap.get_conn()
 		if new:
-			attributes= {
+			attributes = {
 				'uidNumber': ldap.get_next_uid(),
 				'gidNumber': current_app.config['LDAP_USER_GID'],
 				'homeDirectory': '/home/'+self.loginname,
