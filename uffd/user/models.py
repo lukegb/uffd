@@ -1,5 +1,3 @@
-import string
-
 from ldap3 import MODIFY_REPLACE, HASHED_SALTED_SHA512
 from ldap3.utils.hashed import hashed
 from flask import current_app
@@ -90,11 +88,8 @@ class User():
 		return False
 
 	def set_loginname(self, value):
-		if len(value) > 32 or len(value) < 1:
+		if not ldap.loginname_is_safe(value):
 			return False
-		for char in value:
-			if not char in string.ascii_lowercase + string.digits + '_':
-				return False
 		self.loginname = value
 		return True
 

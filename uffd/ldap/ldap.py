@@ -1,6 +1,7 @@
+import string
+
 from flask import Blueprint, current_app
 from ldap3.utils.conv import escape_filter_chars
-from ldap3.utils.dn import escape_rdn
 from ldap3.core.exceptions import LDAPBindError
 
 from ldap3 import Server, Connection, ALL, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES
@@ -17,9 +18,11 @@ def fix_connection(conn):
 
 def service_conn():
 	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
-	return Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"], current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=True)
+	return fix_connection(Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"], current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=True))
 
 def user_conn(loginname, password):
+	if not loginname_is_safe(loginname):
+		return False
 	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
 	try:
 		return fix_connection(Connection(server, loginname_to_dn(loginname), password, auto_bind=True))
@@ -27,8 +30,7 @@ def user_conn(loginname, password):
 		return False
 
 def get_conn():
-	conn = service_conn()
-	return fix_connection(conn)
+	return service_conn()
 
 def uid_to_dn(uid):
 	conn = get_conn()
@@ -38,7 +40,18 @@ def uid_to_dn(uid):
 	return conn.entries[0].entry_dn
 
 def loginname_to_dn(loginname):
-	return 'uid={},{}'.format(escape_rdn(loginname), current_app.config["LDAP_BASE_USER"])
+	if loginname_is_safe(loginname):
+		return 'uid={},{}'.format(loginname, current_app.config["LDAP_BASE_USER"])
+	else:
+		raise Exception('unsafe login name')
+
+def loginname_is_safe(value):
+	if len(value) > 32 or len(value) < 1:
+		return False
+	for char in value:
+		if not char in string.ascii_lowercase + string.digits + '_':
+			return False
+	return True
 
 def get_next_uid():
 	conn = get_conn()
