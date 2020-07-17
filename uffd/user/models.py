@@ -115,19 +115,27 @@ class Group():
 	def __init__(self, gid=None, name='', members=None, description=''):
 		self.gid = gid
 		self.name = name
-		if isinstance(members, str):
-			members = [members]
 		self.members_ldap = members
 		self._members = None
 		self.description = description
 
 	@classmethod
 	def from_ldap(cls, ldapobject):
+		if 'description' in ldapobject:
+			description = ldapobject['description'].value
+		else:
+			description = ''
+		# if a group has no members, "uniqueMember" attribute does not exist
+		# if a group has exactly one member, ldap returns a string not an array with one element
+		# we sanitize this to always be an array
+		sanitized_members = ldapobject['uniqueMember']
+		if isinstance(sanitized_members, str):
+			sanitized_members = [sanitized_members]
 		return Group(
 				gid=ldapobject['gidNumber'].value,
 				name=ldapobject['cn'].value,
-				members=ldapobject['uniqueMember'],
-				description=ldapobject['description'].value if 'description' in ldapobject else '',
+				members=sanitized_members,
+				description=description,
 			)
 
 	@classmethod
