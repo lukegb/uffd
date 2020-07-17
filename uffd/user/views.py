@@ -53,16 +53,18 @@ def user_update(uid=False):
 		user = User()
 		if not user.set_loginname(request.form['loginname']):
 			flash('Login name does not meet requirements')
-			return url_for('.user_show')
+			return redirect(url_for('.user_show'))
 	else:
 		conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
 		assert len(conn.entries) == 1
 		user = User.from_ldap(conn.entries[0])
-	user.mail = request.form['mail']
+	if not user.set_mail(request.form['mail']):
+		flash('Mail is invalide.')
+		return redirect(url_for('.user_show'))
 	new_displayname = request.form['displayname'] if request.form['displayname'] else request.form['loginname']
 	if not user.set_displayname(new_displayname):
 		flash('Display name does not meet requirements')
-		return url_for('.user_show')
+		return redirect(url_for('.user_show'))
 	new_password = request.form.get('password')
 	if new_password and not is_newuser:
 		user.set_password(new_password)

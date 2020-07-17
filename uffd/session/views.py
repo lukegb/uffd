@@ -17,7 +17,7 @@ def logout():
 @bp.route("/login", methods=('GET', 'POST'))
 def login():
 	if request.method == 'GET':
-		return render_template('login.html')
+		return render_template('login.html', ref=request.values.get('ref'))
 
 	username = request.form['loginname']
 	password = request.form['password']
@@ -28,11 +28,11 @@ def login():
 	conn.search(conn.user, '(objectClass=person)')
 	if not len(conn.entries) == 1:
 		flash('Login name or password is wrong')
-		return redirect(url_for('.login'))
+		return render_template('login.html', ref=request.values.get('ref'))
 	user = User.from_ldap(conn.entries[0])
 	if not user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
 		flash('You do not have access to this service')
-		return redirect(url_for('.login'))
+		return render_template('login.html', ref=request.values.get('ref'))
 	session['user_uid'] = user.uid
 	session['logintime'] = datetime.datetime.now().timestamp()
 	session['_csrf_token'] = secrets.token_hex(128)

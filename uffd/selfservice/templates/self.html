@@ -1,37 +1,39 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<form action="{{ url_for(".self_update") }}" method="POST"
-	onInput="password2.setCustomValidity(password1.value != password2.value ? 'Passwords do not match.' : ''); password1.setCustomValidity(password1.value.length < 8 ? 'Password is too short' : '')">
+<form action="{{ url_for(".self_update") }}" method="POST" onInput="
+	password2.setCustomValidity(password1.value != password2.value ? 'Passwords do not match.' : '');
+	password1.setCustomValidity((password1.value.length < 8 || password1.value.length == 0) ? 'Password is too short' : '') ">
 <div class="align-self-center row">
 	<div class="form-group col-md-6">
-		<label for="user-uid">uid</label>
+		<label for="user-uid">Uid</label>
 		<input type="number" class="form-control" id="user-uid" name="uid" value="{{ user.uid }}" readonly>
 	</div>
 	<div class="form-group col-md-6">
-		<label for="user-loginname">login name</label>
+		<label for="user-loginname">Login Name</label>
 		<input type="text" class="form-control" id="user-loginname" name="loginname" value="{{ user.loginname }}" readonly>
 	</div>
 	<div class="form-group col-md-6">
-		<label for="user-displayname">display name</label>
+		<label for="user-displayname">Display Name</label>
 		<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ user.displayname }}">
 	</div>
 	<div class="form-group col-md-6">
-		<label for="user-mail">mail</label>
+		<label for="user-mail">Mail</label>
 		<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail }}">
 		<small class="form-text text-muted">
+			We will sent you a confirmation mail to set a new mail address.
 		</small>
 	</div>
 	<div class="form-group col-md-6">
-		<label for="user-password1">password</label>
-		<input type="password" class="form-control" id="user-password1" name="password1" placeholder="do not change">
+		<label for="user-password1">Password</label>
+		<input type="password" class="form-control" id="user-password1" name="password1" placeholder="●●●●●●●●">
 		<small class="form-text text-muted">
 			At least 8 characters, no other special requirements. But please don't be stupid and use a password manager.
 		</small>
 	</div>
 	<div class="form-group col-md-6">
-		<label for="user-password2">password repeat</label>
-		<input type="password" class="form-control" id="user-password2" name="password2" placeholder="do not change">
+		<label for="user-password2">Password Repeat</label>
+		<input type="password" class="form-control" id="user-password2" name="password2" placeholder="●●●●●●●●">
 	</div>
 	<div class="form-group col-md-12">
 		<button type="submit" class="btn btn-primary float-right"><i class="fa fa-save" aria-hidden="true"></i> Save</button>

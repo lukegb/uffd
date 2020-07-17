@@ -2,6 +2,7 @@ import datetime
 
 import smtplib
 from email.message import EmailMessage
+import email.utils
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
 
@@ -68,19 +69,18 @@ def self_token_password(token):
 			session.delete(dbtoken)
 			session.commit()
 		return redirect(url_for('session.login'))
-	if not 'loginname' in request.values:
-		flash('Please set a new password.')
+	if request.method == 'GET':
 		return render_template('set_password.html', token=token)
-	if not request.values['loginname'] == dbtoken.loginname:
-		flash('That is not the correct login name for this token. Your token is now invalide. Please start the password reset process again')
-		session.delete(dbtoken)
-		session.commit()
-		return redirect(url_for('session.login'))
 	if not request.values['password1']:
-		flash('Please specify a new password.')
+		flash('You need to set a password, please try again.')
+		return render_template('set_password.html', token=token)
+	if not request.values['password1'] == request.values['password2']:
+		flash('Passwords do not match, please try again.')
 		return render_template('set_password.html', token=token)
 	user = User.from_ldap_dn(loginname_to_dn(dbtoken.loginname))
-	user.set_password(request.values['password1'])
+	if not user.set_password(request.values['password1']):
+		flash('Password ist not valid, please try again.')
+		return render_template('set_password.html', token=token)
 	user.to_ldap()
 	flash('New password set')
 	session.delete(dbtoken)
@@ -149,5 +149,7 @@ def send_mail(to_address, msg):
 	server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
 	msg['From'] = current_app.config['MAIL_FROM_ADDRESS']
 	msg['To'] = to_address
+	msg['Date']     = email.utils.formatdate(localtime = 1)
+	msg['Message-ID'] = email.utils.make_msgid()
 	server.send_message(msg)
 	server.quit()

@@ -12,30 +12,30 @@
 		{% endif %}
 	</div>
 	<div class="form-group col">
-		<label for="user-loginname">login name</label>
+		<label for="user-loginname">Login Name</label>
 		<input type="text" class="form-control" id="user-loginname" name="loginname" value="{{ user.loginname }}" {% if user.uid %}readonly{% endif %}>
 		<small class="form-text text-muted">
 			Only letters, numbers and underscore ("_") are allowed. At most 32, at least 2 characters. There is a word blacklist. Musst be unique.
 		</small>
 	</div>
 	<div class="form-group col">
-		<label for="user-loginname">display name</label>
+		<label for="user-loginname">Display Name</label>
 		<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ user.displayname }}">
 		<small class="form-text text-muted">
 			If you leave this empty it will be set to the login name. At most 128, at least 2 characters. No character restrictions.
 		</small>
 	</div>
 	<div class="form-group col">
-		<label for="user-mail">mail</label>
+		<label for="user-mail">Mail</label>
 		<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail }}">
 		<small class="form-text text-muted">
 			Do a sanity check here. A user can take over another account if both have the same mail address set.
 		</small>
 	</div>
 	<div class="form-group col">
-		<label for="user-loginname">password</label>
+		<label for="user-loginname">Password</label>
 		{% if user.uid %}
-		<input type="password" class="form-control" id="user-password" name="password" placeholder="do not change">
+		<input type="password" class="form-control" id="user-password" name="password" placeholder="●●●●●●●●">
 		{% else %}
 		<input type="password" class="form-control" id="user-password" name="password" placeholder="mail to set it will be sent" readonly>
 		{% endif %}
@@ -95,7 +95,7 @@
 	{% endif %}
 	<div class="form-group col">
 		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
-		<a href="{{ url_for(".user_list") }}" class="btn btn-secondary">Cancle</a>
+		<a href="{{ url_for(".user_list") }}" class="btn btn-secondary">Cancel</a>
 		{% if user.uid %}
 			<a href="{{ url_for(".user_delete", uid=user.uid) }}" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
 		{% else %}

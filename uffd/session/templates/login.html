@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<form action="{{ url_for(".login") }}" method="POST">
+<form action="{{ url_for(".login", ref=ref) }}" method="POST">
 <div class="row mt-2 justify-content-center">
 	<div class="col-lg-6 col-md-10" style="background: #f7f7f7; box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3); padding: 30px;">
 		<div class="text-center">
@@ -11,11 +11,11 @@
 			<h2 class="text-center">Login</h2>
 		</div>
 		<div class="form-group col-12">
-			<label for="user-loginname">login name</label>
+			<label for="user-loginname">Login Name</label>
 			<input type="text" class="form-control" id="user-loginname" name="loginname" required="required" tabindex = "1">
 		</div>
 		<div class="form-group col-12">
-			<label for="user-password1">password</label>
+			<label for="user-password1">Password</label>
 			<input type="password" class="form-control" id="user-password1" name="password" required="required" tabindex = "2">
 		</div>
 		<div class="form-group col-12">
