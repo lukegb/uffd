@@ -19,7 +19,10 @@ class User():
 		# if you are in no groups, the "memberOf" attribute does not exist
 		# if you are only in one group, ldap returns a string not an array with one element
 		# we sanitize this to always be an array
-		sanitized_groups = ldapobject['memberOf'].value if hasattr(ldapobject, 'memberOf') else []
+		try:
+			sanitized_groups = ldapobject['memberOf'].value if hasattr(ldapobject, 'memberOf') else []
+		except:
+			sanitized_groups = []
 		if isinstance(sanitized_groups, str):
 			sanitized_groups = [sanitized_groups]
 		return User(
@@ -121,7 +124,10 @@ class Group():
 
 	@classmethod
 	def from_ldap(cls, ldapobject):
-		description = ldapobject['description'].value if hasattr(ldapobject, 'description') else ''
+		try:
+			description = ldapobject['description'].value if hasattr(ldapobject, 'description') else ''
+		except:
+			description = ''
 		# if a group has no members, "uniqueMember" attribute does not exist
 		# if a group has exactly one member, ldap returns a string not an array with one element
 		# we sanitize this to always be an array
