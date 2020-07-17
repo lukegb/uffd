@@ -7,30 +7,29 @@ from flask import current_app
 from uffd import ldap
 
 class User():
-	uid = None
-	loginname = None
-	displayname = None
-	mail = None
-	newpassword = None
-
 	def __init__(self, uid=None, loginname='', displayname='', mail='', groups=None):
 		self.uid = uid
 		self.loginname = loginname
 		self.displayname = displayname
 		self.mail = mail
-		if isinstance(groups, str):
-			groups = [groups]
 		self.groups_ldap = groups or []
 		self._groups = None
+		self.newpassword = None
 
 	@classmethod
 	def from_ldap(cls, ldapobject):
+		# if you are in no groups, the "memberOf" attribute does not exist
+		# if you are only in one group, ldap returns a string not an array with one element
+		# we sanitize this to always be an array
+		sanitized_groups = ldapobject['memberOf'].value if 'memberOf' in ldapobject else []
+		if isinstance(sanitized_groups, str):
+			sanitized_groups = [sanitized_groups]
 		return User(
 				uid=ldapobject['uidNumber'].value,
 				loginname=ldapobject['uid'].value,
 				displayname=ldapobject['cn'].value,
 				mail=ldapobject['mail'].value,
-				groups=ldapobject['memberOf'].value if 'memberOf' in ldapobject else [],
+				groups=sanitized_groups,
 			)
 
 	@classmethod
@@ -118,10 +117,6 @@ class User():
 		return True
 
 class Group():
-	gid = None
-	name = None
-	description = None
-
 	def __init__(self, gid=None, name='', members=None, description=''):
 		self.gid = gid
 		self.name = name
