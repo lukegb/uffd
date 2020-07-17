@@ -149,7 +149,7 @@ def send_mail(to_address, msg):
 	server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
 	msg['From'] = current_app.config['MAIL_FROM_ADDRESS']
 	msg['To'] = to_address
-	msg['Date']     = email.utils.formatdate(localtime = 1)
+	msg['Date'] = email.utils.formatdate(localtime=1)
 	msg['Message-ID'] = email.utils.make_msgid()
 	server.send_message(msg)
 	server.quit()
