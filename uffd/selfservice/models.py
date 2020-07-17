@@ -13,7 +13,7 @@ class Token():
 	created = Column(DateTime, default=datetime.datetime.now)
 
 class PasswordToken(Token, db.Model):
-	__tablename__ = 'passwortToken'
+	__tablename__ = 'passwordToken'
 	loginname = Column(String(32))
 
 class MailToken(Token, db.Model):
