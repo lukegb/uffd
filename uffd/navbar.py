@@ -9,6 +9,7 @@ def setup_navbar(app):
 # ( see: http://getbootstrap.com/components/#glyphicons )
 # or 'fa'
 # ( see: http://fontawesome.io/icons/ )
+# visible is a function that returns "True" if this icon should be visible in the calling context
 def register_navbar(name, iconlib='fa', icon=None, group=None, endpoint=None, blueprint=None, visible=None):
 	def wrapper(func):
 		urlendpoint = endpoint
