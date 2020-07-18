@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<form action="{{ url_for(".user_update", uid=user.uid) }}" method="POST">
+<form action="{{ url_for("user.update", uid=user.uid) }}" method="POST">
 <div class="align-self-center">
 	<div class="form-group col">
 		<label for="user-uid">uid</label>
@@ -71,7 +71,7 @@
 				<div class="card-body">
 					<ul class="list-group">
 					{% for group in user.get_groups() %}
-					<li class="list-group-item"><a href="{{ url_for("group.group_show", gid=group.gid) }}">{{ group.name }}</a></li>
+					<li class="list-group-item"><a href="{{ url_for("group.show", gid=group.gid) }}">{{ group.name }}</a></li>
 					{% endfor %}
 					</ul>
 				</div>
@@ -95,9 +95,9 @@
 	{% endif %}
 	<div class="form-group col">
 		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
-		<a href="{{ url_for(".user_list") }}" class="btn btn-secondary">Cancel</a>
+		<a href="{{ url_for("user.index") }}" class="btn btn-secondary">Cancel</a>
 		{% if user.uid %}
-			<a href="{{ url_for(".user_delete", uid=user.uid) }}" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
+			<a href="{{ url_for("user.delete", uid=user.uid) }}" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
 		{% else %}
 			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
 		{% endif %}

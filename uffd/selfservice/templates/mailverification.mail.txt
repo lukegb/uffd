@@ -1,7 +1,7 @@
 Hi {{ user.displayname }},
 
 you have requested to change your mail address.
-To confirm the change, please visit this URL: {{ url_for('selfservice.self_token_mail', token=token, _external=True) }} 
+To confirm the change, please visit this URL: {{ url_for('selfservice.token_mail', token=token, _external=True) }} 
 **Please note this link is only valid for 48h**
 
 Kind regards,

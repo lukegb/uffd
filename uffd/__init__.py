@@ -47,7 +47,7 @@ def create_app(test_config=None):
 
 	@app.route("/")
 	def index(): #pylint: disable=unused-variable
-		return redirect(url_for('selfservice.self_index'))
+		return redirect(url_for('selfservice.index'))
 
 	return app
 

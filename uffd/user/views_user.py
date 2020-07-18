@@ -6,10 +6,10 @@ from uffd.selfservice import send_passwordreset
 from uffd.ldap import get_conn, escape_filter_chars
 from uffd.session import login_required, is_valid_session, get_current_user
 
-from .models import User, Group
+from .models import User
 
-bp_user = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/')
-@bp_user.before_request
+bp = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/')
+@bp.before_request
 @login_required()
 def user_acl(): #pylint: disable=inconsistent-return-statements
 	if not user_acl_check():
@@ -19,9 +19,9 @@ def user_acl(): #pylint: disable=inconsistent-return-statements
 def user_acl_check():
 	return is_valid_session() and get_current_user().is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
-@bp_user.route("/")
-@register_navbar('Users', icon='users', blueprint=bp_user, visible=user_acl_check)
-def user_list():
+@bp.route("/")
+@register_navbar('Users', icon='users', blueprint=bp, visible=user_acl_check)
+def index():
 	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_USER"], '(objectclass=person)')
 	users = []
@@ -29,9 +29,9 @@ def user_list():
 		users.append(User.from_ldap(i))
 	return render_template('user_list.html', users=users)
 
-@bp_user.route("/<int:uid>")
-@bp_user.route("/new")
-def user_show(uid=None):
+@bp.route("/<int:uid>")
+@bp.route("/new")
+def show(uid=None):
 	if not uid:
 		user = User()
 		ldif = '<none yet>'
@@ -43,17 +43,17 @@ def user_show(uid=None):
 		ldif = conn.entries[0].entry_to_ldif()
 	return render_template('user.html', user=user, user_ldif=ldif)
 
-@bp_user.route("/<int:uid>/update", methods=['POST'])
-@bp_user.route("/new", methods=['POST'])
-@csrf_protect(blueprint=bp_user)
-def user_update(uid=False):
+@bp.route("/<int:uid>/update", methods=['POST'])
+@bp.route("/new", methods=['POST'])
+@csrf_protect(blueprint=bp)
+def update(uid=False):
 	conn = get_conn()
 	is_newuser = bool(not uid)
 	if is_newuser:
 		user = User()
 		if not user.set_loginname(request.form['loginname']):
 			flash('Login name does not meet requirements')
-			return redirect(url_for('.user_show'))
+			return redirect(url_for('user.show'))
 	else:
 		conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
 		assert len(conn.entries) == 1
@@ -64,7 +64,7 @@ def user_update(uid=False):
 	new_displayname = request.form['displayname'] if request.form['displayname'] else request.form['loginname']
 	if not user.set_displayname(new_displayname):
 		flash('Display name does not meet requirements')
-		return redirect(url_for('.user_show'))
+		return redirect(url_for('user.show'))
 	new_password = request.form.get('password')
 	if new_password and not is_newuser:
 		user.set_password(new_password)
@@ -76,11 +76,11 @@ def user_update(uid=False):
 			flash('User updated')
 	else:
 		flash('Error updating user: {}'.format(conn.result['message']))
-	return redirect(url_for('.user_list'))
+	return redirect(url_for('user.index'))
 
-@bp_user.route("/<int:uid>/del")
-@csrf_protect(blueprint=bp_user)
-def user_delete(uid):
+@bp.route("/<int:uid>/del")
+@csrf_protect(blueprint=bp)
+def delete(uid):
 	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
 	assert len(conn.entries) == 1
@@ -88,30 +88,4 @@ def user_delete(uid):
 		flash('Deleted user')
 	else:
 		flash('Could not delete user: {}'.format(conn.result['message']))
-	return redirect(url_for('.user_list'))
-
-bp_group = Blueprint("group", __name__, template_folder='templates', url_prefix='/group/')
-@bp_group.before_request
-@login_required()
-def group_acl(): #pylint: disable=inconsistent-return-statements
-	if not user_acl_check():
-		flash('Access denied')
-		return redirect(url_for('index'))
-
-@bp_group.route("/")
-@register_navbar('Groups', icon='layer-group', blueprint=bp_group, visible=user_acl_check)
-def group_list():
-	conn = get_conn()
-	conn.search(current_app.config["LDAP_BASE_GROUPS"], '(objectclass=groupOfUniqueNames)')
-	groups = []
-	for i in conn.entries:
-		groups.append(Group.from_ldap(i))
-	return render_template('group_list.html', groups=groups)
-
-@bp_group.route("/<int:gid>")
-def group_show(gid):
-	conn = get_conn()
-	conn.search(current_app.config["LDAP_BASE_GROUPS"], '(&(objectclass=groupOfUniqueNames)(gidNumber={}))'.format((escape_filter_chars(gid))))
-	assert len(conn.entries) == 1
-	group = Group.from_ldap(conn.entries[0])
-	return render_template('group.html', group=group)
+	return redirect(url_for('user.index'))

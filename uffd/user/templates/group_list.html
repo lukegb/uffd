@@ -18,7 +18,7 @@
 						{{ group.gid }}
 					</th>
 					<td>
-						<a href="{{ url_for(".group_show", gid=group.gid) }}">
+						<a href="{{ url_for("group.show", gid=group.gid) }}">
 							{{ group.name }}
 						</a>
 					</td>

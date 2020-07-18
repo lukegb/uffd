@@ -19,13 +19,13 @@ bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix=
 @bp.route("/")
 @register_navbar('Selfservice', icon='portrait', blueprint=bp, visible=is_valid_session)
 @login_required()
-def self_index():
+def index():
 	return render_template('self.html', user=get_current_user())
 
 @bp.route("/update", methods=(['POST']))
 @csrf_protect(blueprint=bp)
 @login_required()
-def self_update():
+def update():
 	user = get_current_user()
 	if request.values['displayname'] != user.displayname:
 		if user.set_displayname(request.values['displayname']):
@@ -44,10 +44,10 @@ def self_update():
 		send_mail_verification(user.loginname, request.values['mail'])
 		flash('We sent you an email, please verify your mail address.')
 	user.to_ldap()
-	return redirect(url_for('.self_index'))
+	return redirect(url_for('selfservice.index'))
 
 @bp.route("/passwordreset", methods=(['GET', 'POST']))
-def self_forgot_password():
+def forgot_password():
 	if request.method == 'GET':
 		return render_template('forgot_password.html')
 
@@ -60,7 +60,7 @@ def self_forgot_password():
 	return redirect(url_for('session.login'))
 
 @bp.route("/token/password/<token>", methods=(['POST', 'GET']))
-def self_token_password(token):
+def token_password(token):
 	session = db.session
 	dbtoken = PasswordToken.query.get(token)
 	if not dbtoken or dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
@@ -89,7 +89,7 @@ def self_token_password(token):
 
 @bp.route("/token/mail_verification/<token>")
 @login_required()
-def self_token_mail(token):
+def token_mail(token):
 	session = db.session
 	dbtoken = MailToken.query.get(token)
 	if not dbtoken or dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
@@ -97,7 +97,7 @@ def self_token_mail(token):
 		if dbtoken:
 			session.delete(dbtoken)
 			session.commit()
-		return redirect(url_for('.self_index'))
+		return redirect(url_for('selfservice.index'))
 
 	user = User.from_ldap_dn(loginname_to_dn(dbtoken.loginname))
 	user.set_mail(dbtoken.newmail)
@@ -105,7 +105,7 @@ def self_token_mail(token):
 	flash('New mail set')
 	session.delete(dbtoken)
 	session.commit()
-	return redirect(url_for('.self_index'))
+	return redirect(url_for('selfservice.index'))
 
 def send_mail_verification(loginname, newmail):
 	session = db.session

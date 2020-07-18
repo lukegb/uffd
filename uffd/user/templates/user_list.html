@@ -11,7 +11,7 @@
 					<th scope="col">display name</th>
 					<th scope="col">
 						<p class="text-right">
-							<a type="button" class="btn btn-primary" href="{{ url_for(".user_show") }}">
+							<a type="button" class="btn btn-primary" href="{{ url_for("user.show") }}">
 								<i class="fa fa-plus" aria-hidden="true"></i> New
 							</a>
 						</p>
@@ -25,7 +25,7 @@
 						{{ user.uid }}
 					</th>
 					<td>
-						<a href="{{ url_for(".user_show", uid=user.uid) }}">
+						<a href="{{ url_for("user.show", uid=user.uid) }}">
 							{{ user.loginname }}
 						</a>
 					</td>
@@ -34,7 +34,7 @@
 					</td>
 					<td>
 						<p class="text-right">
-							<a href="{{ url_for(".user_show", uid=user.uid) }}" class="btn btn-primary">
+							<a href="{{ url_for("user.show", uid=user.uid) }}" class="btn btn-primary">
 								<i class="fa fa-edit" aria-hidden="true"></i> Edit
 							</a>
 						</p>
