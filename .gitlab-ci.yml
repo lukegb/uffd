@@ -1,4 +1,4 @@
-image: registry.git.cccv.de/infra/uffd/docker-images/stretch
+image: registry.git.cccv.de/infra/uffd/docker-images/buster
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
