@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="row">
+	<div class="col">
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th scope="col">name</th>
+					<th scope="col">description</th>
+					<th scope="col">
+						<p class="text-right">
+							<a type="button" class="btn btn-primary" href="{{ url_for("role.show") }}">
+								<i class="fa fa-plus" aria-hidden="true"></i> New
+							</a>
+						</p>
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for role in roles|sort(attribute="name") %}
+				<tr id="role-{{ role.id }}">
+					<th scope="row">
+						{{ role.name }}
+					</th>
+					<td>
+						{{ role.description }}
+					</td>
+					<td>
+						<p class="text-right">
+							<a href="{{ url_for("role.show", roleid=role.id) }}" class="btn btn-primary">
+								<i class="fa fa-edit" aria-hidden="true"></i> Edit
+							</a>
+						</p>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</dev>
+{% endblock %}
