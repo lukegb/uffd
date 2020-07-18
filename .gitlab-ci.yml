@@ -12,7 +12,6 @@ before_script:
 linter:
   stage: test
   script:
-  - pip3 install pylint
   - python3 -m pylint --rcfile .pylintrc --output-format=text uffd | tee pylint.txt
   artifacts:
       paths:
