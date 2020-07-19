@@ -20,12 +20,7 @@ def group_acl_check():
 @bp.route("/")
 @register_navbar('Groups', icon='layer-group', blueprint=bp, visible=group_acl_check)
 def index():
-	conn = get_conn()
-	conn.search(current_app.config["LDAP_BASE_GROUPS"], '(objectclass=groupOfUniqueNames)')
-	groups = []
-	for i in conn.entries:
-		groups.append(Group.from_ldap(i))
-	return render_template('group_list.html', groups=groups)
+	return render_template('group_list.html', groups=Group.from_ldap_all())
 
 @bp.route("/<int:gid>")
 def show(gid):

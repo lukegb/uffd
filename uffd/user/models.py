@@ -106,12 +106,13 @@ class User():
 		return True
 
 class Group():
-	def __init__(self, gid=None, name='', members=None, description=''):
+	def __init__(self, gid=None, name='', members=None, description='', dn=None):
 		self.gid = gid
 		self.name = name
 		self.members_ldap = members
 		self._members = None
 		self.description = description
+		self.dn = dn
 
 	@classmethod
 	def from_ldap(cls, ldapobject):
@@ -120,6 +121,7 @@ class Group():
 				name=ldapobject['cn'].value,
 				members=ldap.get_ldap_array_attribute_safe(ldapobject, 'uniqueMember'),
 				description=ldap.get_ldap_attribute_safe(ldapobject, 'description') or '',
+				dn=ldapobject.entry_dn,
 			)
 
 	@classmethod
@@ -129,6 +131,15 @@ class Group():
 		if not len(conn.entries) == 1:
 			return None
 		return Group.from_ldap(conn.entries[0])
+
+	@classmethod
+	def from_ldap_all(cls):
+		conn = ldap.get_conn()
+		conn.search(current_app.config["LDAP_BASE_GROUPS"], '(objectclass=groupOfUniqueNames)')
+		groups = []
+		for i in conn.entries:
+			groups.append(Group.from_ldap(i))
+		return groups
 
 	def to_ldap(self, new):
 		pass

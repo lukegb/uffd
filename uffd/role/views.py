@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
-from uffd.role.models import Role
+from uffd.role.models import Role, RoleGroup
+from uffd.user import Group
 from uffd.session import get_current_user, login_required, is_valid_session
 from uffd.database import db
 
@@ -29,7 +30,8 @@ def show(roleid=False):
 		role = Role()
 	else:
 		role = Role.query.get_or_404(roleid)
-	return render_template('role.html', role=role)
+	groups = Group.from_ldap_all()
+	return render_template('role.html', role=role, groups=groups)
 
 @bp.route("/<int:roleid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
@@ -44,7 +46,20 @@ def update(roleid=False):
 		role = session.query(Role).get_or_404(roleid)
 	role.name = request.values['name']
 	role.description = request.values['description']
-	print(role)
+
+	groups = Group.from_ldap_all()
+	role_group_dns = list(role.group_dns())
+	for group in groups:
+		if request.values.get('group-{}'.format(group.gid), False):
+			if group.dn in role_group_dns:
+				continue
+			newmapping = RoleGroup()
+			newmapping.dn = group.dn
+			newmapping.role = role
+			session.add(newmapping)
+		elif group.dn in role_group_dns:
+			session.delete(RoleGroup.query.filter_by(role_id=role.id, dn=group.dn).one())
+
 	session.commit()
 	return redirect(url_for('role.index'))
 
