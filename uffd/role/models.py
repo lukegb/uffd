@@ -21,12 +21,12 @@ class LdapMapping():
 	id = Column(Integer(), primary_key=True, autoincrement=True)
 	dn = Column(String(128))
 	@declared_attr
-	def role_id(cls):
+	def role_id(self):
 		return Column(ForeignKey('role.id'))
 	ldapclass = None
 
 	def get_ldap(self):
-		return self.ldapclass.from_ldap_dn(dn)
+		return self.ldapclass.from_ldap_dn(self.dn)
 
 	def set_ldap(self, value):
 		self.dn = value['dn']
@@ -38,4 +38,3 @@ class RoleGroup(LdapMapping, db.Model):
 class RoleUser(LdapMapping, db.Model):
 	__tablename__ = 'role-user'
 	ldapclass = Group
-

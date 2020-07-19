@@ -2,10 +2,8 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
-from uffd.user.models import User, Group
 from uffd.role.models import Role
 from uffd.session import get_current_user, login_required, is_valid_session
-from uffd.ldap import loginname_to_dn
 from uffd.database import db
 
 bp = Blueprint("role", __name__, template_folder='templates', url_prefix='/role/')

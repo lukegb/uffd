@@ -2,7 +2,7 @@ import string
 
 from flask import Blueprint, current_app
 from ldap3.utils.conv import escape_filter_chars
-from ldap3.core.exceptions import LDAPBindError
+from ldap3.core.exceptions import LDAPBindError, LDAPCursorError
 
 from ldap3 import Server, Connection, ALL, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES
 
@@ -42,8 +42,7 @@ def uid_to_dn(uid):
 def loginname_to_dn(loginname):
 	if loginname_is_safe(loginname):
 		return 'uid={},{}'.format(loginname, current_app.config["LDAP_BASE_USER"])
-	else:
-		raise Exception('unsafe login name')
+	raise Exception('unsafe login name')
 
 def loginname_is_safe(value):
 	if len(value) > 32 or len(value) < 1:
@@ -68,3 +67,25 @@ def get_next_uid():
 	if uid_to_dn(next_uid):
 		raise Exception('No free uid found')
 	return next_uid
+
+def get_ldap_attribute_safe(ldapobject, attribute):
+	try:
+		result = ldapobject[attribute].value if attribute in ldapobject  else None
+	# we have to catch LDAPCursorError here, because ldap3 in older versions has a broken __contains__ function
+	# see https://github.com/cannatag/ldap3/issues/493
+	# fixed in version 2.5
+	# debian buster ships 2.4.1
+	except LDAPCursorError:
+		result = None
+	return result
+
+def get_ldap_array_attribute_safe(ldapobject, attribute):
+	# if the aray is empty, the attribute does not exist.
+	# if there is only one elemtent, ldap returns a string and not an array with one element
+	# we sanitize this to always be an array
+	result = get_ldap_attribute_safe(ldapobject, attribute)
+	if not result:
+		result = []
+	if isinstance(result, str):
+		result = [result]
+	return result
