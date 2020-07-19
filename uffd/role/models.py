@@ -23,6 +23,11 @@ class Role(db.Model):
 	def get_for_user(cls, user):
 		return Role.query.join(Role.members, aliased=True).filter_by(dn=user.dn)
 
+	def member_ldap(self):
+		result = []
+		for dn in self.member_dns():
+			result.append(User.from_ldap_dn(dn))
+		return result
 	def member_dns(self):
 		return list(map(attrgetter('dn'), self.members))
 	def add_member(self, member):

@@ -57,10 +57,14 @@ def update(roleid=False):
 		elif group.dn in role_group_dns:
 			role.del_group(group)
 
-#	usergroups = set()
-#	for role in Role.get_for_user(user).all():
-#		usergroups.update(role.group_dns())
-#	user.replace_group_dns(usergroups)
+	members = role.member_ldap()
+	for user in members:
+		usergroups = set()
+		for role in Role.get_for_user(user).all():
+			usergroups.update(role.group_dns())
+		user.replace_group_dns(usergroups)
+		if not user.to_ldap():
+			flash('updating group membership for user {} failed'.format(user.loginname))
 
 	session.commit()
 	return redirect(url_for('role.index'))
