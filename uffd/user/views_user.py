@@ -5,6 +5,8 @@ from uffd.csrf import csrf_protect
 from uffd.selfservice import send_passwordreset
 from uffd.ldap import get_conn, escape_filter_chars
 from uffd.session import login_required, is_valid_session, get_current_user
+from uffd.role.models import Role
+from uffd.database import db
 
 from .models import User
 
@@ -41,7 +43,7 @@ def show(uid=None):
 		assert len(conn.entries) == 1
 		user = User.from_ldap(conn.entries[0])
 		ldif = conn.entries[0].entry_to_ldif()
-	return render_template('user.html', user=user, user_ldif=ldif)
+	return render_template('user.html', user=user, user_ldif=ldif, roles=Role.query.all())
 
 @bp.route("/<int:uid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
@@ -60,23 +62,42 @@ def update(uid=False):
 		user = User.from_ldap(conn.entries[0])
 	if not user.set_mail(request.form['mail']):
 		flash('Mail is invalide.')
-		return redirect(url_for('.user_show'))
+		return redirect(url_for('user.show', uid=uid))
 	new_displayname = request.form['displayname'] if request.form['displayname'] else request.form['loginname']
 	if not user.set_displayname(new_displayname):
 		flash('Display name does not meet requirements')
-		return redirect(url_for('user.show'))
+		return redirect(url_for('user.show', uid=uid))
 	new_password = request.form.get('password')
 	if new_password and not is_newuser:
 		user.set_password(new_password)
+
+	session = db.session
+	roles = Role.query.all()
+	for role in roles:
+		role_member_dns = role.member_dns()
+		if request.values.get('role-{}'.format(role.id), False):
+			if user.dn in role_member_dns:
+				continue
+			role.add_member(user)
+		elif user.dn in role_member_dns:
+			role.del_member(user)
+	usergroups = set()
+	for role in Role.get_for_user(user).all():
+		usergroups.update(role.group_dns())
+	user.replace_group_dns(usergroups)
+
 	if user.to_ldap(new=is_newuser):
 		if is_newuser:
 			send_passwordreset(user.loginname)
 			flash('User created. We sent the user a password reset link by mail')
+			session.commit()
 		else:
 			flash('User updated')
+			session.commit()
 	else:
 		flash('Error updating user: {}'.format(conn.result['message']))
-	return redirect(url_for('user.index'))
+		session.rollback()
+	return redirect(url_for('user.show', uid=user.uid))
 
 @bp.route("/<int:uid>/del")
 @csrf_protect(blueprint=bp)

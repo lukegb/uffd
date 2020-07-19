@@ -1,18 +1,24 @@
-from ldap3 import MODIFY_REPLACE, HASHED_SALTED_SHA512
+import secrets
+
+from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD, HASHED_SALTED_SHA512
 from ldap3.utils.hashed import hashed
 from flask import current_app
 
 from uffd import ldap
 
 class User():
-	def __init__(self, uid=None, loginname='', displayname='', mail='', groups=None):
+	def __init__(self, uid=None, loginname='', displayname='', mail='', groups=None, dn=None):
 		self.uid = uid
 		self.loginname = loginname
 		self.displayname = displayname
 		self.mail = mail
-		self.groups_ldap = groups or []
-		self._groups = None
 		self.newpassword = None
+		self.dn = dn
+
+		self.groups_ldap = groups or []
+		self.initial_groups_ldap = groups or []
+		self.groups_changed = False
+		self._groups = None
 
 	@classmethod
 	def from_ldap(cls, ldapobject):
@@ -21,7 +27,8 @@ class User():
 				loginname=ldapobject['uid'].value,
 				displayname=ldapobject['cn'].value,
 				mail=ldapobject['mail'].value,
-				groups=ldap.get_ldap_array_attribute_safe(ldapobject, 'memberOf')
+				groups=ldap.get_ldap_array_attribute_safe(ldapobject, 'memberOf'),
+				dn=ldapobject.entry_dn,
 			)
 
 	@classmethod
@@ -35,11 +42,13 @@ class User():
 	def to_ldap(self, new=False):
 		conn = ldap.get_conn()
 		if new:
+			self.uid = ldap.get_next_uid()
 			attributes = {
-				'uidNumber': ldap.get_next_uid(),
+				'uidNumber': self.uid,
 				'gidNumber': current_app.config['LDAP_USER_GID'],
 				'homeDirectory': '/home/'+self.loginname,
 				'sn': ' ',
+				'userPassword': hashed(HASHED_SALTED_SHA512, secrets.token_hex(128)),
 				# same as for update
 				'givenName': self.displayname,
 				'displayName': self.displayname,
@@ -59,6 +68,17 @@ class User():
 				attributes['userPassword'] = [(MODIFY_REPLACE, [hashed(HASHED_SALTED_SHA512, self.newpassword)])]
 			dn = ldap.uid_to_dn(self.uid)
 			result = conn.modify(dn, attributes)
+		self.dn = dn
+
+		group_conn = ldap.get_conn()
+		for group in self.initial_groups_ldap:
+			if not group in self.groups_ldap:
+				group_conn.modify(group, {'uniqueMember': [(MODIFY_DELETE, [self.dn])]})
+		for group in self.groups_ldap:
+			if not group in self.initial_groups_ldap:
+				group_conn.modify(group, {'uniqueMember': [(MODIFY_ADD, [self.dn])]})
+		self.groups_changed = False
+
 		return result
 
 	def get_groups(self):
@@ -71,6 +91,10 @@ class User():
 				groups.append(newgroup)
 		self._groups = groups
 		return groups
+	def replace_group_dns(self, values):
+		self._groups = None
+		self.groups_ldap = values
+		self.groups_changed = True
 
 	def is_in_group(self, name):
 		if not name:

@@ -3,7 +3,16 @@
 {% block body %}
 <form action="{{ url_for("user.update", uid=user.uid) }}" method="POST">
 <div class="align-self-center">
-	<ul class="nav nav-tabs " id="tablist" role="tablist">
+	<div class="float-sm-right pb-2">
+		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
+		<a href="{{ url_for("user.index") }}" class="btn btn-secondary">Cancel</a>
+		{% if user.uid %}
+			<a href="{{ url_for("user.delete", uid=user.uid) }}" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
+		{% else %}
+			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
+		{% endif %}
+	</div>
+	<ul class="nav nav-tabs pt-2 border-0" id="tablist" role="tablist">
 		<li class="nav-item">
 			<a class="nav-link active" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="true">Profile</a>
 		</li>
@@ -14,7 +23,7 @@
 			<a class="nav-link" id="ldif-tab" data-toggle="tab" href="#ldif" role="tab" aria-controls="ldif" aria-selected="false">LDIF</a>
 		</li>
 	</ul>
-	<div class="tab-content border border-top-0 mb-2 pt-2" id="tabcontent">
+	<div class="tab-content border mb-2 pt-2" id="tabcontent">
 		<div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="roles-tab">
 			<div class="form-group col">
 				<label for="user-uid">uid</label>
@@ -60,6 +69,34 @@
 		<div class="tab-pane fade" id="roles" role="tabpanel" aria-labelledby="roles-tab">
 			<div class="form-group col">
 				<span>Roles:</span>
+				<table class="table table-striped table-sm">
+					<thead>
+						<tr>
+							<th scope="col"></th>
+							<th scope="col">name</th>
+							<th scope="col">description</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for role in roles %}
+						<tr id="role-{{ role.id }}">
+							<td>
+								<div class="form-check">
+									<input class="form-check-input" type="checkbox" id="role-{{ role.id }}-checkbox" name="role-{{ role.id }}" value="1" aria-label="enabled" {% if user.dn in role.member_dns() %}checked{% endif %}>
+								</div>
+							</td>
+							<td>
+								<a href="{{ url_for("role.show", roleid=role.id) }}">
+									{{ role.name }}
+								</a>
+							</td>
+							<td>
+								{{ role.description }}
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
 			</div>
 			<div class="form-group col">
 				<span>Resulting groups (only updated after save):</span>
@@ -92,16 +129,6 @@
 				<pre>{{ user_ldif }}</pre>
 			</div>
 		</div>
-	</div>
-
-	<div class="form-group col pl-0">
-		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
-		<a href="{{ url_for("user.index") }}" class="btn btn-secondary">Cancel</a>
-		{% if user.uid %}
-			<a href="{{ url_for("user.delete", uid=user.uid) }}" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
-		{% else %}
-			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
-		{% endif %}
 	</div>
 </div>
 </form>

@@ -2,8 +2,8 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
-from uffd.role.models import Role, RoleGroup
-from uffd.user import Group
+from uffd.role.models import Role
+from uffd.user.models import Group
 from uffd.session import get_current_user, login_required, is_valid_session
 from uffd.database import db
 
@@ -48,17 +48,19 @@ def update(roleid=False):
 	role.description = request.values['description']
 
 	groups = Group.from_ldap_all()
-	role_group_dns = list(role.group_dns())
+	role_group_dns = role.group_dns()
 	for group in groups:
 		if request.values.get('group-{}'.format(group.gid), False):
 			if group.dn in role_group_dns:
 				continue
-			newmapping = RoleGroup()
-			newmapping.dn = group.dn
-			newmapping.role = role
-			session.add(newmapping)
+			role.add_group(group)
 		elif group.dn in role_group_dns:
-			session.delete(RoleGroup.query.filter_by(role_id=role.id, dn=group.dn).one())
+			role.del_group(group)
+
+#	usergroups = set()
+#	for role in Role.get_for_user(user).all():
+#		usergroups.update(role.group_dns())
+#	user.replace_group_dns(usergroups)
 
 	session.commit()
 	return redirect(url_for('role.index'))
