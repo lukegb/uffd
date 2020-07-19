@@ -29,7 +29,7 @@
 			</a>
 		{%- endmacro %}
 		{% macro navbaricon(data) -%}
-		<li class="nav-item {% if data.endpoint == request.endpoint %} active{% endif %}">
+		<li class="nav-item {% if data.endpoint == request.endpoint or data.blueprint.name|d(None) == request.blueprint%} active{% endif %}">
 			{{ navbarlink(data) }}
 		</li>
 		{%- endmacro %}
