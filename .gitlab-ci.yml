@@ -1,13 +1,14 @@
 image: registry.git.cccv.de/infra/uffd/docker-images/buster
 
 variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   DEBIAN_FRONTEND: noninteractive 
 
 before_script:
   - python3 -V
   - lsb_release -a
   - uname -a
+  - python3 -m pylint --version
+  - python3 -m coverage --version
 
 linter:
   stage: test
