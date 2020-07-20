@@ -29,7 +29,7 @@ def show(roleid=False):
 	if not roleid:
 		role = Role()
 	else:
-		role = Role.query.get_or_404(roleid)
+		role = Role.query.filter_by(id=roleid).one()
 	groups = Group.from_ldap_all()
 	return render_template('role.html', role=role, groups=groups)
 
@@ -43,7 +43,7 @@ def update(roleid=False):
 		role = Role()
 		session.add(role)
 	else:
-		role = session.query(Role).get_or_404(roleid)
+		role = Role.query.filter_by(id=roleid).one()
 	role.name = request.values['name']
 	role.description = request.values['description']
 
@@ -73,7 +73,7 @@ def update(roleid=False):
 @csrf_protect(blueprint=bp)
 def delete(roleid):
 	session = db.session
-	role = session.query(Role).get_or_404(roleid)
+	role = Role.query.filter_by(id=roleid).one()
 	session.delete(role)
 	session.commit()
 	return redirect(url_for('role.index'))
