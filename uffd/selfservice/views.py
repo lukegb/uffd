@@ -110,7 +110,8 @@ def token_mail(token):
 def send_mail_verification(loginname, newmail):
 	session = db.session
 	expired_tokens = MailToken.query.filter(MailToken.created < (datetime.datetime.now() - datetime.timedelta(days=2))).all()
-	for i in expired_tokens:
+	duplicate_tokens = MailToken.query.filter(MailToken.loginname == loginname).all()
+	for i in expired_tokens + duplicate_tokens:
 		session.delete(i)
 	token = MailToken()
 	token.loginname = loginname
@@ -128,7 +129,8 @@ def send_mail_verification(loginname, newmail):
 def send_passwordreset(loginname):
 	session = db.session
 	expired_tokens = PasswordToken.query.filter(PasswordToken.created < (datetime.datetime.now() - datetime.timedelta(days=2))).all()
-	for i in expired_tokens:
+	duplicate_tokens = PasswordToken.query.filter(PasswordToken.loginname == loginname).all()
+	for i in expired_tokens + duplicate_tokens:
 		session.delete(i)
 	token = PasswordToken()
 	token.loginname = loginname
