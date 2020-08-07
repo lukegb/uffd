@@ -109,6 +109,7 @@ class User():
 		if not ldap.loginname_is_safe(value):
 			return False
 		self.loginname = value
+		self.dn = ldap.loginname_to_dn(self.loginname)
 		return True
 
 	def set_displayname(self, value):
