@@ -105,8 +105,18 @@ def delete(uid):
 	conn = get_conn()
 	conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
 	assert len(conn.entries) == 1
+	user = User.from_ldap(conn.entries[0])
+
+	session = db.session
+	roles = Role.query.all()
+	for role in roles:
+		if user.dn in role.member_dns():
+			role.del_member(user)
+
 	if conn.delete(conn.entries[0].entry_dn):
 		flash('Deleted user')
+		session.commit()
 	else:
 		flash('Could not delete user: {}'.format(conn.result['message']))
+		session.rollback()
 	return redirect(url_for('user.index'))
