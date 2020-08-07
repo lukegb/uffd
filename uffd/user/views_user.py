@@ -75,7 +75,7 @@ def update(uid=False):
 	roles = Role.query.all()
 	for role in roles:
 		role_member_dns = role.member_dns()
-		if request.values.get('role-{}'.format(role.id), False):
+		if request.values.get('role-{}'.format(role.id), False) or role.name in current_app.config["ROLES_BASEROLES"]:
 			if user.dn in role_member_dns:
 				continue
 			role.add_member(user)
