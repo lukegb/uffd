@@ -1,3 +1,6 @@
+import csv
+import io
+
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
 
 from uffd.navbar import register_navbar
@@ -81,19 +84,19 @@ def update(uid=False):
 			role.add_member(user)
 		elif user.dn in role_member_dns:
 			role.del_member(user)
-	usergroups = set()
-	for role in Role.get_for_user(user).all():
-		usergroups.update(role.group_dns())
-	user.replace_group_dns(usergroups)
 
 	if user.to_ldap(new=is_newuser):
 		if is_newuser:
 			send_passwordreset(user.loginname)
 			flash('User created. We sent the user a password reset link by mail')
-			session.commit()
 		else:
 			flash('User updated')
-			session.commit()
+
+		usergroups = set()
+		for role in Role.get_for_user(user).all():
+			usergroups.update(role.group_dns())
+		user.replace_group_dns(usergroups)
+		session.commit()
 	else:
 		flash('Error updating user: {}'.format(conn.result['message']))
 		session.rollback()
@@ -119,4 +122,56 @@ def delete(uid):
 	else:
 		flash('Could not delete user: {}'.format(conn.result['message']))
 		session.rollback()
+	return redirect(url_for('user.index'))
+
+@bp.route("/csv", methods=['POST'])
+@csrf_protect(blueprint=bp)
+def csvimport():
+	csvdata = request.values.get('csv')
+	if not csvdata:
+		flash('No data for csv import!')
+		return redirect(url_for('user.index'))
+
+	roles = Role.query.all()
+	usersadded = 0
+	with io.StringIO(initial_value=csvdata) as csvfile:
+		csvreader = csv.reader(csvfile)
+		for row in csvreader:
+			if not len(row) == 3:
+				flash("invalid line, ignored : {}".format(row))
+				continue
+			newuser = User()
+			if not newuser.set_loginname(row[0]) or not newuser.set_displayname(row[0]):
+				flash("invalid login name, skipped : {}".format(row))
+				continue
+			if not newuser.set_mail(row[1]):
+				flash("invalid mail address, skipped : {}".format(row))
+				continue
+			session = db.session
+
+			for role in roles:
+				role_member_dns = role.member_dns()
+				if (str(role.id) in row[2].split(';')) or role.name in current_app.config["ROLES_BASEROLES"]:
+					if newuser.dn in role_member_dns:
+						continue
+					role.add_member(newuser)
+
+			result = newuser.to_ldap(new=True)
+			print(result)
+			if result:
+				send_passwordreset(newuser.loginname)
+
+				usergroups = set()
+				for role in Role.get_for_user(newuser).all():
+					usergroups.update(role.group_dns())
+				newuser.replace_group_dns(usergroups)
+
+				session.commit()
+				usersadded += 1
+			else:
+				flash('Error adding user {}'.format(row[0]))
+				session.rollback()
+				continue
+
+	flash('Added {} new users'.format(usersadded))
 	return redirect(url_for('user.index'))

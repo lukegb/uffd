@@ -14,6 +14,9 @@
 							<a type="button" class="btn btn-primary" href="{{ url_for("user.show") }}">
 								<i class="fa fa-plus" aria-hidden="true"></i> New
 							</a>
+							<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#csvimport">
+								<i class="fa fa-file-csv" aria-hidden="true"></i> CSV import
+							</button>
 						</p>
 					</th>
 				</tr>
@@ -44,5 +47,38 @@
 			</tbody>
 		</table>
 	</div>
-</dev>
+</div>
+
+<div class="modal fade" id="csvimport" tabindex="-1" role="dialog" aria-hidden="true">
+	<form action="{{ url_for("user.csvimport") }}" method="POST">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalLabel">Import a csv formated list of users</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p>
+					The format should be "loginname,mailaddres,groupid1;groupid2;".
+					Neither setting the display name, nor setting roles or passwords is supported (yet).
+					Example:
+				</p>
+				<pre>
+testuser1,foobar@example.com
+testuser5,foobsdfar@example.com
+testuser5,foobadfar@example.com
+testuser2,foobaadsfr@example.com
+				</pre>
+				<textarea rows="10" class="form-control" name="csv"></textarea>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+				<button type="submit" class="btn btn-primary">Import</button>
+			</div>
+		</div>
+	</div>
+	</form>
+</div>
 {% endblock %}
