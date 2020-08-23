@@ -50,9 +50,11 @@
 		<p>
 			Members
 		</p>
+		<ul>
 		{% for member in role.members %}
-			{{ member.dn }}
+		<li>{{ member.dn }}</li>
 		{% endfor %}
+		</ul>
 	</div>
 
 	<div class="form-group col">
