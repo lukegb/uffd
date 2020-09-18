@@ -6,6 +6,7 @@
 		<table class="table table-striped">
 			<thead>
 				<tr>
+					<th scope="col">id</th>
 					<th scope="col">name</th>
 					<th scope="col">description</th>
 					<th scope="col">
@@ -20,6 +21,9 @@
 			<tbody>
 				{% for role in roles|sort(attribute="name") %}
 				<tr id="role-{{ role.id }}">
+					<td>
+						{{ role.id }}
+					</td>
 					<th scope="row">
 						{{ role.name }}
 					</th>
