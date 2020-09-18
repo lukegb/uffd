@@ -32,42 +32,19 @@ class Mail():
 	def to_ldap(self, new=False):
 		conn = ldap.get_conn()
 		if new:
-			self.uid = ldap.get_next_uid()
 			attributes = {
-				'uidNumber': self.uid,
-				'gidNumber': current_app.config['LDAP_USER_GID'],
-				'homeDirectory': '/home/'+self.loginname,
-				'sn': ' ',
-				'userPassword': hashed(HASHED_SALTED_SHA512, secrets.token_hex(128)),
+				'uid': self.uid,
 				# same as for update
-				'givenName': self.displayname,
-				'displayName': self.displayname,
-				'cn': self.displayname,
-				'mail': self.mail,
+				'mailacceptinggeneralid': self.receivers,
+				'maildrop': self.destinations,
 			}
-			dn = ldap.loginname_to_dn(self.loginname)
-			result = conn.add(dn, current_app.config['LDAP_USER_OBJECTCLASSES'], attributes)
+			self.dn = ldap.mail_to_dn(self.uid)
+			result = conn.add(self.dn, current_app.config['MAIL_LDAP_OBJECTCLASSES'], attributes)
 		else:
 			attributes = {
-				'givenName': [(MODIFY_REPLACE, [self.displayname])],
-				'displayName': [(MODIFY_REPLACE, [self.displayname])],
-				'cn': [(MODIFY_REPLACE, [self.displayname])],
-				'mail': [(MODIFY_REPLACE, [self.mail])],
+				'mailacceptinggeneralid': [(MODIFY_REPLACE, self.receivers)],
+				'maildrop': [(MODIFY_REPLACE, self.destinations)],
 				}
-			if self.newpassword:
-				attributes['userPassword'] = [(MODIFY_REPLACE, [hashed(HASHED_SALTED_SHA512, self.newpassword)])]
-			dn = ldap.uid_to_dn(self.uid)
-			result = conn.modify(dn, attributes)
-		self.dn = dn
-
-		group_conn = ldap.get_conn()
-		for group in self.initial_groups_ldap:
-			if not group in self.groups_ldap:
-				group_conn.modify(group, {'uniqueMember': [(MODIFY_DELETE, [self.dn])]})
-		for group in self.groups_ldap:
-			if not group in self.initial_groups_ldap:
-				group_conn.modify(group, {'uniqueMember': [(MODIFY_ADD, [self.dn])]})
-		self.groups_changed = False
-
+			result = conn.modify(self.dn, attributes)
 		return result
 

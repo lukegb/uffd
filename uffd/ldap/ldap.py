@@ -44,6 +44,11 @@ def loginname_to_dn(loginname):
 		return 'uid={},{}'.format(loginname, current_app.config["LDAP_BASE_USER"])
 	raise Exception('unsafe login name')
 
+def mail_to_dn(uid):
+	if mailname_is_safe(uid):
+		return 'uid={},{}'.format(uid, current_app.config["LDAP_BASE_MAIL"])
+	raise Exception('unsafe mail name')
+
 def loginname_is_safe(value):
 	if len(value) > 32 or len(value) < 1:
 		return False
@@ -51,6 +56,9 @@ def loginname_is_safe(value):
 		if not char in string.ascii_lowercase + string.digits + '_':
 			return False
 	return True
+
+def mailname_is_safe(value):
+	return loginname_is_safe(value)
 
 def get_next_uid():
 	conn = get_conn()
