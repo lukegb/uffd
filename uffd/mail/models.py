@@ -1,15 +1,13 @@
-import secrets
-
-from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD, HASHED_SALTED_SHA512
+from ldap3 import MODIFY_REPLACE
 from flask import current_app
 
 from uffd import ldap
 
 class Mail():
-	def __init__(self, uid=None, destinations=[], receivers=[], dn=None):
+	def __init__(self, uid=None, destinations=None, receivers=None, dn=None):
 		self.uid = uid
-		self.receivers = receivers
-		self.destinations = destinations
+		self.receivers = receivers if receivers else []
+		self.destinations = destinations if destinations else []
 		self.dn = dn
 
 	@classmethod
@@ -47,4 +45,3 @@ class Mail():
 				}
 			result = conn.modify(self.dn, attributes)
 		return result
-

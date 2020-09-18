@@ -26,7 +26,6 @@ def index():
 	mails = []
 	for i in conn.entries:
 		mails.append(Mail.from_ldap(i))
-	print(mails)
 	return render_template('mail_list.html', mails=mails)
 
 @bp.route("/<uid>")
@@ -57,8 +56,8 @@ def update(uid=False):
 
 	if is_newmail:
 		mail.uid = request.form.get('mail-uid')
-	mail.receivers = request.form.get('mail-receivers', '').splitlines();
-	mail.destinations = request.form.get('mail-destinations', '').splitlines();
+	mail.receivers = request.form.get('mail-receivers', '').splitlines()
+	mail.destinations = request.form.get('mail-destinations', '').splitlines()
 
 	if mail.to_ldap(new=is_newmail):
 		flash('Mail mapping updated.')
