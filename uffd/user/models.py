@@ -119,7 +119,7 @@ class User():
 		return True
 
 	def set_password(self, value):
-		if len(value) < 8:
+		if len(value) < 8 or len(value) > 256:
 			return False
 		self.newpassword = value
 		return True
