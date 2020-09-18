@@ -145,13 +145,18 @@ def send_passwordreset(loginname):
 	send_mail(user.mail, msg)
 
 def send_mail(to_address, msg):
-	server = smtplib.SMTP(host=current_app.config['MAIL_SERVER'], port=current_app.config['MAIL_PORT'])
-	if current_app.config['MAIL_USE_STARTTLS']:
-		server.starttls()
-	server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
-	msg['From'] = current_app.config['MAIL_FROM_ADDRESS']
-	msg['To'] = to_address
-	msg['Date'] = email.utils.formatdate(localtime=1)
-	msg['Message-ID'] = email.utils.make_msgid()
-	server.send_message(msg)
-	server.quit()
+	try:
+		server = smtplib.SMTP(host=current_app.config['MAIL_SERVER'], port=current_app.config['MAIL_PORT'])
+		if current_app.config['MAIL_USE_STARTTLS']:
+			server.starttls()
+		server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
+		msg['From'] = current_app.config['MAIL_FROM_ADDRESS']
+		msg['To'] = to_address
+		msg['Date'] = email.utils.formatdate(localtime=1)
+		msg['Message-ID'] = email.utils.make_msgid()
+		server.send_message(msg)
+		server.quit()
+		return True
+	except SMTPException:
+		flash('Mail to "{}" could not be sent!'.format(to_address))
+		return False
