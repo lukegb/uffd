@@ -8,6 +8,7 @@ A web service to manage LDAP users, groups and permissions.
 - python3-ldap3
 - python3-flask
 - python3-flask-sqlalchemy
+- git (cli utility, musst be in path)
 
 ## deployment
 
