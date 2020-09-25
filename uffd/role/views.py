@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.role.models import Role
+from uffd.role.utils import recalculate_user_groups
 from uffd.user.models import Group
 from uffd.session import get_current_user, login_required, is_valid_session
 from uffd.database import db
@@ -59,10 +60,7 @@ def update(roleid=False):
 
 	members = role.member_ldap()
 	for user in members:
-		usergroups = set()
-		for role in Role.get_for_user(user).all():
-			usergroups.update(role.group_dns())
-		user.replace_group_dns(usergroups)
+		recalculate_user_groups(user)
 		if not user.to_ldap():
 			flash('updating group membership for user {} failed'.format(user.loginname))
 

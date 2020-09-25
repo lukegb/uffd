@@ -9,6 +9,7 @@ from uffd.selfservice import send_passwordreset
 from uffd.ldap import get_conn, escape_filter_chars
 from uffd.session import login_required, is_valid_session, get_current_user
 from uffd.role.models import Role
+from uffd.role.utils import recalculate_user_groups
 from uffd.database import db
 
 from .models import User
@@ -92,10 +93,9 @@ def update(uid=False):
 		else:
 			flash('User updated')
 
-		usergroups = set()
-		for role in Role.get_for_user(user).all():
-			usergroups.update(role.group_dns())
-		user.replace_group_dns(usergroups)
+		recalculate_user_groups(user)
+		if not user.to_ldap():
+			flash('updating group membership for user {} failed'.format(user.loginname))
 		session.commit()
 	else:
 		flash('Error updating user: {}'.format(conn.result['message']))
