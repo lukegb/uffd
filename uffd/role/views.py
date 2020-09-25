@@ -72,6 +72,12 @@ def update(roleid=False):
 def delete(roleid):
 	session = db.session
 	role = Role.query.filter_by(id=roleid).one()
+	members = role.member_ldap()
 	session.delete(role)
+	session.commit()
+	for user in members:
+		recalculate_user_groups(user)
+		if not user.to_ldap():
+			flash('updating group membership for user {} failed'.format(user.loginname))
 	session.commit()
 	return redirect(url_for('role.index'))

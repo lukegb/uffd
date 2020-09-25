@@ -111,8 +111,7 @@ def delete(uid):
 	user = User.from_ldap(conn.entries[0])
 
 	session = db.session
-	roles = Role.query.all()
-	for role in roles:
+	for role in Role.get_for_user(user).all():
 		if user.dn in role.member_dns():
 			role.del_member(user)
 
