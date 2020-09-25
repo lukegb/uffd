@@ -97,7 +97,13 @@
 
 		<footer class="footer">
 			{% block footer %}
-			{{ config["FOOTER_CONTENT"]|safe }}
+			<div class="container">
+				<ul class="list-inline">
+					{% for link in config["FOOTER_LINKS"]%}
+					<li class="list-inline-item"><a href="{{ link.url }}">{{ link.title }}</a></li>
+					{% endfor %}
+				</ul>
+			</div>
 			{% endblock footer %}
 		</footer>
 
