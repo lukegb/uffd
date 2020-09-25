@@ -95,5 +95,11 @@
 			{% endblock body %}
 		</main>
 
+		<footer class="footer">
+			{% block footer %}
+			{{ config["FOOTER_CONTENT"]|safe }}
+			{% endblock footer %}
+		</footer>
+
 	</body>
 </html>
