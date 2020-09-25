@@ -8,7 +8,7 @@ def register_template_helper(app):
 		return a == b
 
 	@app.url_defaults
-	def static_version_inject(endpoint, values):
+	def static_version_inject(endpoint, values): #pylint: disable=unused-variable
 		if endpoint == 'static':
 			values['v'] = app.jinja_env.globals['gitversion']['longhash'] #pylint: disable=no-member
 
@@ -23,5 +23,5 @@ def register_template_helper(app):
 	app.add_template_global(equalto, name='equalto')
 
 	# get git commit
-	GITOUTPUT = subprocess.check_output(['git', "log", "-g", "-1", "--pretty=%H#%h#%d#%s"]).decode('UTF-8').split('#', 3)
-	app.jinja_env.globals['gitversion'] = {'hash': GITOUTPUT[1], 'longhash': GITOUTPUT[0], 'branch': GITOUTPUT[2], 'msg': GITOUTPUT[3]} #pylint: disable=no-member
+	git_output = subprocess.check_output(['git', "log", "-g", "-1", "--pretty=%H#%h#%d#%s"]).decode('UTF-8').split('#', 3)
+	app.jinja_env.globals['gitversion'] = {'hash': git_output[1], 'longhash': git_output[0], 'branch': git_output[2], 'msg': git_output[3]} #pylint: disable=no-member
