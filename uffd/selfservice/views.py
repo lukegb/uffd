@@ -157,6 +157,6 @@ def send_mail(to_address, msg):
 		server.send_message(msg)
 		server.quit()
 		return True
-	except SMTPException:
+	except smtplib.SMTPException:
 		flash('Mail to "{}" could not be sent!'.format(to_address))
 		return False
