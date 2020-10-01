@@ -1,11 +1,26 @@
+from flask import Markup
+
+import qrcode, qrcode.image.svg
+
 import random
 import subprocess
 from datetime import timedelta, datetime
+import io
 
 def register_template_helper(app):
 	# debian ships jinja2 without this test...
 	def equalto(a, b):
 		return a == b
+
+	@app.template_filter()
+	def qrcode_svg(content, **attrs):
+		img = qrcode.make(content, image_factory=qrcode.image.svg.SvgPathImage)
+		svg = img.get_image()
+		for key, value, in attrs.items():
+			svg.set(key, value)
+		buf = io.BytesIO()
+		img.save(buf)
+		return Markup(buf.getvalue().decode())
 
 	@app.url_defaults
 	def static_version_inject(endpoint, values): #pylint: disable=unused-variable
