@@ -4,7 +4,7 @@ from flask import Blueprint, current_app
 from ldap3.utils.conv import escape_filter_chars
 from ldap3.core.exceptions import LDAPBindError, LDAPCursorError
 
-from ldap3 import Server, Connection, ALL, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES
+from ldap3 import Server, Connection, ALL, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES, MOCK_SYNC
 
 bp = Blueprint("ldap", __name__)
 
@@ -16,13 +16,38 @@ def fix_connection(conn):
 	conn.search = search
 	return conn
 
+def get_mock_conn():
+	if not current_app.debug:
+		raise Exception('LDAP_SERVICE_MOCK cannot be enabled on production instances')
+	# Entries are stored in-memory in the mocked `Connection` object. To make
+	# changes persistent across requests we reuse the same `Connection` object
+	# for all calls to `service_conn()` and `user_conn()`.
+	if not hasattr(current_app, 'ldap_mock'):
+		server = Server.from_definition('ldap_mock', 'ldap_server_info.json', 'ldap_server_schema.json')
+		current_app.ldap_mock = fix_connection(Connection(server, client_strategy=MOCK_SYNC))
+		current_app.ldap_mock.strategy.entries_from_json('ldap_server_entries.json')
+		current_app.ldap_mock.bind()
+	return current_app.ldap_mock
+
 def service_conn():
+	if current_app.config.get('LDAP_SERVICE_MOCK', False):
+		return get_mock_conn()
 	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
 	return fix_connection(Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"], current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=True))
 
 def user_conn(loginname, password):
 	if not loginname_is_safe(loginname):
 		return False
+	if current_app.config.get('LDAP_SERVICE_MOCK', False):
+		conn = get_mock_conn()
+		# Since we reuse the same conn for all calls to `user_conn()` we
+		# simulate the password check by rebinding. Note that ldap3's mocking
+		# implementation just compares the string in the objects's userPassword
+		# field with the password, no support for hashing or OpenLDAP-style
+		# password-prefixes ("{PLAIN}..." or "{ssha512}...").
+		if not conn.rebind(loginname_to_dn(loginname), password):
+			return False
+		return get_mock_conn()
 	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
 	try:
 		return fix_connection(Connection(server, loginname_to_dn(loginname), password, auto_bind=True))
