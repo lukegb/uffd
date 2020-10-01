@@ -1,0 +1,301 @@
+{
+    "entries": [
+        {
+						"dn": "uid=testuser,ou=users,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "testuser"
+                ],
+                "createTimestamp": [
+                    "20200101000000Z"
+                ],
+                "creatorsName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "displayName": [
+                    "Test User"
+                ],
+                "entryDN": [
+                    "uid=testuser,ou=users,dc=example,dc=com"
+                ],
+                "entryUUID": [
+                    "75e62c6a-03c2-11eb-adc1-0242ac120002"
+                ],
+                "gidNumber": [
+                    "20001"
+                ],
+                "givenName": [
+                    "testuser"
+                ],
+                "hasSubordinates": [
+                    "FALSE"
+                ],
+                "homeDirectory": [
+                    "/home/testuser"
+                ],
+                "mail": [
+                    "testuser@example.com"
+                ],
+                "memberOf": [
+                    "cn=uffd_access,ou=groups,dc=example,dc=com",
+                    "cn=users,ou=groups,dc=example,dc=com"
+                ],
+                "modifiersName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "modifyTimestamp": [
+                    "20200101000000Z"
+                ],
+                "objectClass": [
+                    "top",
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "posixAccount"
+                ],
+                "sn": [
+                    " "
+                ],
+                "structuralObjectClass": [
+                    "inetOrgPerson"
+                ],
+                "subschemaSubentry": [
+                    "cn=Subschema"
+                ],
+                "uid": [
+                    "testuser"
+                ],
+                "uidNumber": [
+                    "10000"
+                ],
+                "userPassword": [
+									"userpassword"
+                ]
+            }
+        },
+				{
+            "dn": "uid=testadmin,ou=users,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "testadmin"
+                ],
+                "createTimestamp": [
+                    "20200101000000Z"
+                ],
+                "creatorsName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "displayName": [
+                    "Test Admin"
+                ],
+                "entryDN": [
+                    "uid=testadmin,ou=users,dc=example,dc=com"
+                ],
+                "entryUUID": [
+                    "678c8470-03c2-11eb-adc1-0242ac120002"
+                ],
+                "gidNumber": [
+                    "20001"
+                ],
+                "givenName": [
+                    "Testadmin"
+                ],
+                "hasSubordinates": [
+                    "FALSE"
+                ],
+                "homeDirectory": [
+                    "/home/testadmin"
+                ],
+                "mail": [
+                    "testadmin@example.com"
+                ],
+                "memberOf": [
+                    "cn=users,ou=groups,dc=example,dc=com",
+                    "cn=uffd_access,ou=groups,dc=example,dc=com",
+                    "cn=uffd_admin,ou=groups,dc=example,dc=com"
+                ],
+                "modifiersName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "modifyTimestamp": [
+                    "20200101000000Z"
+                ],
+                "objectClass": [
+                    "top",
+                    "inetOrgPerson",
+                    "organizationalPerson",
+                    "person",
+                    "posixAccount"
+                ],
+                "sn": [
+                    " "
+                ],
+                "structuralObjectClass": [
+                    "inetOrgPerson"
+                ],
+                "subschemaSubentry": [
+                    "cn=Subschema"
+                ],
+                "uid": [
+                    "testadmin"
+                ],
+                "uidNumber": [
+                    "10001"
+                ],
+                "userPassword": [
+									"adminpassword"
+                ]
+            }
+        },
+        {
+            "dn": "cn=users,ou=groups,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "users"
+                ],
+                "createTimestamp": [
+                    "20200101000000Z"
+                ],
+                "creatorsName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "description": [
+                    "Base group for all users"
+                ],
+                "entryDN": [
+                    "cn=users,ou=groups,dc=example,dc=com"
+                ],
+                "entryUUID": [
+                    "1aec0e8c-03c3-11eb-adc1-0242ac120002"
+                ],
+                "gidNumber": [
+                    "20001"
+                ],
+                "hasSubordinates": [
+                    "FALSE"
+                ],
+                "modifiersName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "modifyTimestamp": [
+                    "20200101000000Z"
+                ],
+                "objectClass": [
+                    "posixGroup",
+                    "groupOfUniqueNames",
+                    "top"
+                ],
+                "structuralObjectClass": [
+                    "groupOfUniqueNames"
+                ],
+                "subschemaSubentry": [
+                    "cn=Subschema"
+                ],
+                "uniqueMember": [
+                    "uid=testuser,ou=users,dc=example,dc=com",
+                    "uid=testadmin,ou=users,dc=example,dc=com"
+                ]
+            }
+        },
+        {
+            "dn": "cn=uffd_access,ou=groups,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "uffd_access"
+                ],
+                "createTimestamp": [
+                    "20200101000000Z"
+                ],
+                "creatorsName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "description": [
+                    "User access to uffd selfservice"
+                ],
+                "entryDN": [
+                    "cn=uffd_access,ou=groups,dc=example,dc=com"
+                ],
+                "entryUUID": [
+                    "4fc8dd60-03c3-11eb-adc1-0242ac120002"
+                ],
+                "gidNumber": [
+                    "20002"
+                ],
+                "hasSubordinates": [
+                    "FALSE"
+                ],
+                "modifiersName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "modifyTimestamp": [
+                    "20200101000000Z"
+                ],
+                "objectClass": [
+                    "posixGroup",
+                    "groupOfUniqueNames",
+                    "top"
+                ],
+                "structuralObjectClass": [
+                    "groupOfUniqueNames"
+                ],
+                "subschemaSubentry": [
+                    "cn=Subschema"
+                ],
+                "uniqueMember": [
+                    "cn=dummy,ou=system,dc=example,dc=com",
+                    "uid=testuser,ou=users,dc=example,dc=com",
+                    "uid=testadmin,ou=users,dc=example,dc=com"
+                ]
+            }
+        },
+        {
+            "dn": "cn=uffd_admin,ou=groups,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "uffd_admin"
+                ],
+                "createTimestamp": [
+                    "20200101000000Z"
+                ],
+                "creatorsName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "description": [
+                    "Admin access to uffd selfservice"
+                ],
+                "entryDN": [
+                    "cn=uffd_admin,ou=groups,dc=example,dc=com"
+                ],
+                "entryUUID": [
+                    "b5d869d6-03c3-11eb-adc1-0242ac120002"
+                ],
+                "gidNumber": [
+                    "20003"
+                ],
+                "hasSubordinates": [
+                    "FALSE"
+                ],
+                "modifiersName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "modifyTimestamp": [
+                    "20200101000000Z"
+                ],
+                "objectClass": [
+                    "posixGroup",
+                    "groupOfUniqueNames",
+                    "top"
+                ],
+                "structuralObjectClass": [
+                    "groupOfUniqueNames"
+                ],
+                "subschemaSubentry": [
+                    "cn=Subschema"
+                ],
+                "uniqueMember": [
+                    "uid=testadmin,ou=users,dc=example,dc=com"
+                ]
+            }
+        }
+    ]
+}
