@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
+
 <form action="{{ url_for("mfa.auth_finish", ref=ref) }}" method="POST">
 <div class="row mt-2 justify-content-center">
 	<div class="col-lg-6 col-md-10" style="background: #f7f7f7; box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3); padding: 30px;">
@@ -10,8 +11,20 @@
 		<div class="col-12">
 			<h2 class="text-center">Two-Factor Authentication</h2>
 		</div>
+		{% if webauthn_methods %}
+		<div class="form-group col-12 d-none webauthn-group">
+			<div id="webauthn-alert" class="alert alert-warning d-none" role="alert">
+			</div>
+			<label for="webauthn-btn">FIDO token</label>
+			<button type="button" id="webauthn-btn" class="btn btn-primary btn-block">
+				<span id="webauthn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+				<span id="webauthn-btn-text">Authenticate with FIDO token</span>
+			</button>
+		</div>
+		<div class="text-center text-muted d-none webauthn-group">- or -</div>
+		{% endif %}
 		<div class="form-group col-12">
-			<label for="mfa-code">Two-factor authentication code</label>
+			<label for="mfa-code">Authentication code</label>
 			<input type="text" class="form-control" id="mfa-code" name="code" required="required" tabindex="1">
 		</div>
 		<div class="form-group col-12">
@@ -20,4 +33,57 @@
 	</div>
 </div>
 </form>
+
+{% if webauthn_methods %}
+<script src="{{ url_for('static', filename="cbor.js") }}"></script>
+<script>
+function begin_webauthn() {
+	$('#webauthn-alert').addClass('d-none');
+	$('#webauthn-spinner').removeClass('d-none');
+	$('#webauthn-btn-text').text('Fetching credential data');
+	$('#webauthn-btn').prop('disabled', true);
+	fetch({{ url_for('mfa.auth_webauthn_begin')|tojson }}, {
+		method: 'POST',
+	}).then(function(response) {
+		if(response.ok) return response.arrayBuffer();
+		throw new Error('No credential available to authenticate!');
+	}).then(CBOR.decode).then(function(options) {
+		$('#webauthn-btn-text').text('Waiting for response from your device');
+		return navigator.credentials.get(options);
+	}).then(function(assertion) {
+		$('#webauthn-btn-text').text('Verifing response');
+		return fetch({{ url_for('mfa.auth_webauthn_begin')|tojson }}, {
+			method: 'POST',
+			headers: {'Content-Type': 'application/cbor'},
+			body: CBOR.encode({
+				"credentialId": new Uint8Array(assertion.rawId),
+				"authenticatorData": new Uint8Array(assertion.response.authenticatorData),
+				"clientDataJSON": new Uint8Array(assertion.response.clientDataJSON),
+				"signature": new Uint8Array(assertion.response.signature)
+			})
+		})
+	}).then(function(response) {
+		if (response.ok) {
+			$('#webauthn-spinner').addClass('d-none');
+			$('#webauthn-btn-text').text('Success, redirecting');
+			window.location = {{ (ref or url_for('index'))|tojson }};
+		} else {
+			throw new Error('Response from authenticator rejected');
+		}
+	}, function(reason) {
+		$('#webauthn-alert').text('Authentication with your FIDO token failed!');
+		$('#webauthn-alert').removeClass('d-none');
+		$('#webauthn-spinner').addClass('d-none');
+		$('#webauthn-btn-text').text('Try FIDO token again');
+		$('#webauthn-btn').prop('disabled', false);
+	});
+}
+
+$('#webauthn-btn').on('click', begin_webauthn);
+if (typeof(PublicKeyCredential) != "undefined") {
+	$('.webauthn-group').removeClass('d-none');
+}
+</script>
+{% endif %}
+
 {% endblock %}

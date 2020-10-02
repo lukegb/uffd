@@ -4,9 +4,10 @@
 
 <div class="btn-toolbar">
 	<a class="btn btn-primary mb-2 ml-auto" href="{{ url_for('mfa.setup_totp') }}">Setup TOTP</a>
+	<a class="btn btn-primary mb-2 ml-2" href="{{ url_for('mfa.setup_webauthn') }}">Setup FIDO</a>
 </div>
 
-{% if methods %}
+{% if totp_methods or webauthn_methods %}
 <table class="table">
 	<thead>
 		<tr>
@@ -16,12 +17,20 @@
 		</tr>
 	</thead>
 	<tbody>
-		{% for method in methods %}
+		{% for method in totp_methods %}
 		<tr>
 			<td style="width: 0.5em;"><i class="fas fa-mobile-alt"></i></td>
 			<td>{{ method.name }}</td>
 			<td>{{ method.created }}</td>
 			<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_totp', id=method.id) }}">Delete</a></td>
+		</tr>
+		{% endfor %}
+		{% for method in webauthn_methods %}
+		<tr>
+			<td style="width: 0.5em;"><i class="fab fa-usb"></i></td>
+			<td>{{ method.name }}</td>
+			<td>{{ method.created }}</td>
+			<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_webauthn', id=method.id) }}">Delete</a></td>
 		</tr>
 		{% endfor %}
 	</tbody>

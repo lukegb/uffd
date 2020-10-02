@@ -3,13 +3,16 @@ import datetime
 import secrets, time, struct, hmac, hashlib, base64, urllib.parse
 
 from flask import request, current_app
-from sqlalchemy import Column, Integer, Enum, Boolean, String, DateTime
+from sqlalchemy import Column, Integer, Enum, Boolean, String, DateTime, Text
+
+from fido2.ctap2 import AuthenticatorData
 
 from uffd.database import db
 from uffd.user.models import User
 
 class MFAType(enum.Enum):
 	TOTP = 1
+	WEBAUTHN = 2
 
 class MFAMethod(db.Model):
 	__tablename__ = 'mfa_method'
@@ -90,4 +93,23 @@ class TOTPMethod(MFAMethod):
 		if _hotp(counter-1, self.raw_key) == code or _hotp(counter, self.raw_key) == code:
 			return True
 		return False
+
+class WebauthnMethod(MFAMethod):
+	_cred = Column('webauthn_cred', Text())
+
+	__mapper_args__ = {
+		'polymorphic_identity': MFAType.WEBAUTHN
+	}
+
+	def __init__(self, user, cred_data, name=None):
+		super().__init__(user, name)
+		self.cred_data = cred_data
+
+	@property
+	def cred_data(self):
+		return AuthenticatorData(base64.b64decode(self._cred))
+
+	@cred_data.setter
+	def cred_data(self, d):
+		self._cred = base64.b64encode(bytes(d))
 
