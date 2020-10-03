@@ -4,6 +4,7 @@ import qrcode, qrcode.image.svg
 
 import random
 import subprocess
+import base64
 from datetime import timedelta, datetime
 import io
 
@@ -21,6 +22,10 @@ def register_template_helper(app):
 		buf = io.BytesIO()
 		img.save(buf)
 		return Markup(buf.getvalue().decode())
+
+	@app.template_filter()
+	def datauri(data, mimetype='text/plain'):
+		return Markup('data:%s;base64,%s'%(mimetype, base64.b64encode(data.encode()).decode()))
 
 	@app.url_defaults
 	def static_version_inject(endpoint, values): #pylint: disable=unused-variable

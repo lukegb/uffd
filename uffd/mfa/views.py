@@ -8,7 +8,7 @@ from fido2.ctap2 import AttestationObject, AuthenticatorData
 from fido2 import cbor
 
 from uffd.database import db
-from uffd.mfa.models import TOTPMethod, WebauthnMethod
+from uffd.mfa.models import MFAMethod, TOTPMethod, WebauthnMethod, RecoveryCodeMethod
 from uffd.session.views import get_current_user, login_required
 
 bp = Blueprint('mfa', __name__, template_folder='templates', url_prefix='/mfa/')
@@ -17,9 +17,37 @@ bp = Blueprint('mfa', __name__, template_folder='templates', url_prefix='/mfa/')
 @login_required()
 def setup():
 	user = get_current_user()
+	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=user.dn).all()
 	totp_methods = TOTPMethod.query.filter_by(dn=user.dn).all()
 	webauthn_methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
-	return render_template('setup.html', totp_methods=totp_methods, webauthn_methods=webauthn_methods)
+	return render_template('setup.html', totp_methods=totp_methods, webauthn_methods=webauthn_methods, recovery_methods=recovery_methods)
+
+@bp.route('/setup/disable', methods=['GET'])
+@login_required()
+def disable():
+	return render_template('disable.html')
+
+@bp.route('/setup/disable', methods=['POST'])
+@login_required()
+def disable_confirm():
+	user = get_current_user()
+	MFAMethod.query.filter_by(dn=user.dn).delete()
+	db.session.commit()
+	return redirect(url_for('mfa.setup'))
+
+@bp.route('/setup/recovery', methods=['POST'])
+@login_required()
+def setup_recovery():
+	user = get_current_user()
+	for method in RecoveryCodeMethod.query.filter_by(dn=user.dn).all():
+		db.session.delete(method)
+	methods = []
+	for _ in range(10):
+		method = RecoveryCodeMethod(user)
+		methods.append(method)
+		db.session.add(method)
+	db.session.commit()
+	return render_template('setup_recovery.html', methods=methods)
 
 @bp.route('/setup/totp', methods=['GET'])
 @login_required()
@@ -33,8 +61,10 @@ def setup_totp():
 @login_required()
 def setup_totp_finish():
 	user = get_current_user()
-	method = TOTPMethod(user, name=request.values['name'], key=session['mfa_totp_key'])
-	del session['mfa_totp_key']
+	if not RecoveryCodeMethod.query.filter_by(dn=user.dn).all():
+		flash('Generate recovery codes first!')
+		return redirect(url_for('mfa.setup'))
+	method = TOTPMethod(user, name=request.values['name'], key=session.pop('mfa_totp_key'))
 	if method.verify(request.form['code']):
 		db.session.add(method)
 		db.session.commit()
@@ -51,12 +81,6 @@ def delete_totp(id):
 	db.session.commit()
 	return redirect(url_for('mfa.setup'))
 
-@bp.route('/setup/webauthn', methods=['GET'])
-@login_required()
-def setup_webauthn():
-	user = get_current_user()
-	return render_template('setup_webauthn.html')
-
 def get_webauthn_server():
 	return Fido2Server(PublicKeyCredentialRpEntity(urllib.parse.urlsplit(request.url).hostname, "uffd"))
 
@@ -64,6 +88,8 @@ def get_webauthn_server():
 @login_required()
 def setup_webauthn_begin():
 	user = get_current_user()
+	if not RecoveryCodeMethod.query.filter_by(dn=user.dn).all():
+		abort(403)
 	methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
 	creds = [method.cred_data.credential_data for method in methods]
 	server = get_webauthn_server()
@@ -72,13 +98,12 @@ def setup_webauthn_begin():
 			"id": user.loginname.encode(),
 			"name": user.loginname,
 			"displayName": user.displayname,
-			"icon": "https://example.com/image.png",
 		},
 		creds,
 		user_verification=UserVerificationRequirement.DISCOURAGED,
 		authenticator_attachment="cross-platform",
 	)
-	session["state"] = state
+	session["webauthn-state"] = state
 	return cbor.encode(registration_data)
 
 @bp.route('/setup/webauthn/complete', methods=['POST'])
@@ -89,7 +114,7 @@ def setup_webauthn_complete():
 	data = cbor.decode(request.get_data())
 	client_data = ClientData(data["clientDataJSON"])
 	att_obj = AttestationObject(data["attestationObject"])
-	auth_data = server.register_complete(session["state"], client_data, att_obj)
+	auth_data = server.register_complete(session["webauthn-state"], client_data, att_obj)
 	method = WebauthnMethod(user, auth_data, name=data['name'])
 	db.session.add(method)
 	db.session.commit()
@@ -115,7 +140,7 @@ def auth_webauthn_begin():
 	if not creds:
 		abort(404)
 	auth_data, state = server.authenticate_begin(creds, user_verification=UserVerificationRequirement.DISCOURAGED)
-	session["state"] = state
+	session["webauthn-state"] = state
 	return cbor.encode(auth_data)
 
 @bp.route("/auth/webauthn/complete", methods=["POST"])
@@ -148,19 +173,33 @@ def auth_webauthn_complete():
 @login_required()
 def auth():
 	user = get_current_user()
+	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=user.dn).all()
 	totp_methods = TOTPMethod.query.filter_by(dn=user.dn).all()
 	webauthn_methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
 	return render_template('auth.html', ref=request.values.get('ref'), totp_methods=totp_methods,
-			webauthn_methods=webauthn_methods)
+			webauthn_methods=webauthn_methods, recovery_methods=recovery_methods)
 
 @bp.route('/auth', methods=['POST'])
 @login_required()
 def auth_finish():
 	user = get_current_user()
-	methods = TOTPMethod.query.filter_by(dn=user.dn).all()
-	for method in methods:
+	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=user.dn).all()
+	totp_methods = TOTPMethod.query.filter_by(dn=user.dn).all()
+	for method in totp_methods:
 		if method.verify(request.form['code']):
 			session['mfa_verifed'] = True
+			return redirect(request.values.get('ref', url_for('index')))
+	for method in recovery_methods:
+		if method.verify(request.form['code']):
+			db.session.delete(method)
+			db.session.commit()
+			session['mfa_verifed'] = True
+			if len(recovery_methods) <= 1:
+				flash('You have exhausted your recovery codes. Please generate new ones now!')
+				return redirect(url_for('mfa.setup'))
+			elif len(recovery_methods) <= 5:
+				flash('You only have a few recovery codes remaining. Make sure to generate new ones before they run out.')
+				return redirect(url_for('mfa.setup'))
 			return redirect(request.values.get('ref', url_for('index')))
 	flash('Two-factor authentication failed')
 	return redirect(url_for('mfa.auth', ref=request.values.get('ref')))

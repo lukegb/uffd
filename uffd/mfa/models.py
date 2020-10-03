@@ -1,6 +1,7 @@
 import enum
 import datetime
 import secrets, time, struct, hmac, hashlib, base64, urllib.parse
+import crypt
 
 from flask import request, current_app
 from sqlalchemy import Column, Integer, Enum, Boolean, String, DateTime, Text
@@ -11,6 +12,7 @@ from uffd.database import db
 from uffd.user.models import User
 
 class MFAType(enum.Enum):
+	RECOVERY_CODE = 0
 	TOTP = 1
 	WEBAUTHN = 2
 
@@ -38,6 +40,26 @@ class MFAMethod(db.Model):
 	@user.setter
 	def user(self, u):
 		self.dn = u.dn
+
+class RecoveryCodeMethod(MFAMethod):
+	code_salt = Column('recovery_salt', String(64))
+	code_hash = Column('recovery_hash', String(256))
+
+	__mapper_args__ = {
+		'polymorphic_identity': MFAType.RECOVERY_CODE
+	}
+
+	def __init__(self, user):
+		super().__init__(user, None)
+		self.code = secrets.token_hex(8).replace(' ', '').lower()
+		self.code_hash = crypt.crypt(self.code)
+
+	def verify(self, code):
+		code = code.replace(' ', '').lower()
+		if crypt.crypt(code, self.code_hash) == self.code_hash:
+			return True
+		else:
+			return False
 
 def _hotp(counter, key, digits=6):
 	'''Generates HMAC-based one-time password according to RFC4226

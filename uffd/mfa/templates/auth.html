@@ -8,24 +8,29 @@
 		<div class="text-center">
 			<img src="{{ url_for("static", filename="chaosknoten.png") }}" class="col-lg-8 col-md-12" >
 		</div>
-		<div class="col-12">
+		<div class="col-12 mb-3">
 			<h2 class="text-center">Two-Factor Authentication</h2>
 		</div>
 		{% if webauthn_methods %}
-		<div class="form-group col-12 d-none webauthn-group">
-			<div id="webauthn-alert" class="alert alert-warning d-none" role="alert">
+		<noscript>
+			<div class="form-group col-12">
+				<div id="webauthn-nojs" class="alert alert-warning" role="alert">Enable javascript for authentication with U2F/FIDO2 devices</div>
 			</div>
-			<label for="webauthn-btn">FIDO token</label>
+		</noscript>
+		<div id="webauthn-unsupported" class="form-group col-12 d-none">
+			<div class="alert alert-warning" role="alert">Authentication with U2F/FIDO2 devices is not supported by your browser</div>
+		</div>
+		<div class="form-group col-12 d-none webauthn-group">
+			<div id="webauthn-alert" class="alert alert-warning d-none" role="alert"></div>
 			<button type="button" id="webauthn-btn" class="btn btn-primary btn-block">
 				<span id="webauthn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-				<span id="webauthn-btn-text">Authenticate with FIDO token</span>
+				<span id="webauthn-btn-text">Authenticate with U2F/FIDO2 device</span>
 			</button>
 		</div>
-		<div class="text-center text-muted d-none webauthn-group">- or -</div>
+		<div class="text-center text-muted d-none webauthn-group mb-3">- or -</div>
 		{% endif %}
-		<div class="form-group col-12">
-			<label for="mfa-code">Authentication code</label>
-			<input type="text" class="form-control" id="mfa-code" name="code" required="required" tabindex="1">
+		<div class="form-group col-12 mb-2">
+			<input type="text" class="form-control" id="mfa-code" name="code" required="required" tabindex="1" placeholder="Code from your authenticator app or recovery code">
 		</div>
 		<div class="form-group col-12">
 			<button type="submit" class="btn btn-primary btn-block" tabindex="2">Verify</button>
@@ -82,6 +87,8 @@ function begin_webauthn() {
 $('#webauthn-btn').on('click', begin_webauthn);
 if (typeof(PublicKeyCredential) != "undefined") {
 	$('.webauthn-group').removeClass('d-none');
+} else {
+	$('#webauthn-unsupported').removeClass('d-none');
 }
 </script>
 {% endif %}
