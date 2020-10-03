@@ -57,7 +57,7 @@ function begin_webauthn() {
 		return navigator.credentials.get(options);
 	}).then(function(assertion) {
 		$('#webauthn-btn-text').text('Verifing response');
-		return fetch({{ url_for('mfa.auth_webauthn_begin')|tojson }}, {
+		return fetch({{ url_for('mfa.auth_webauthn_complete')|tojson }}, {
 			method: 'POST',
 			headers: {'Content-Type': 'application/cbor'},
 			body: CBOR.encode({

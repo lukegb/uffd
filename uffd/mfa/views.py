@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session, request, redirect, url_for, flash
+from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app
 import urllib.parse
 
 from fido2.webauthn import PublicKeyCredentialRpEntity, UserVerificationRequirement
@@ -9,7 +9,10 @@ from fido2 import cbor
 
 from uffd.database import db
 from uffd.mfa.models import MFAMethod, TOTPMethod, WebauthnMethod, RecoveryCodeMethod
-from uffd.session.views import get_current_user, login_required
+from uffd.session.views import get_current_user, login_required, is_valid_session
+from uffd.ldap import uid_to_dn
+from uffd.user.models import User
+from uffd.csrf import csrf_protect
 
 bp = Blueprint('mfa', __name__, template_folder='templates', url_prefix='/mfa/')
 
@@ -29,14 +32,31 @@ def disable():
 
 @bp.route('/setup/disable', methods=['POST'])
 @login_required()
+@csrf_protect(blueprint=bp)
 def disable_confirm():
 	user = get_current_user()
 	MFAMethod.query.filter_by(dn=user.dn).delete()
 	db.session.commit()
 	return redirect(url_for('mfa.setup'))
 
+@bp.route('/admin/<int:uid>/disable')
+@login_required()
+@csrf_protect(blueprint=bp)
+def admin_disable(uid):
+	# Group cannot be checked with login_required kwarg, because the config
+	# variable is not available when the decorator is processed
+	if not get_current_user().is_in_group(current_app.config['ACL_ADMIN_GROUP']):
+		flash('Access denied')
+		return redirect(url_for('index'))
+	user = User.from_ldap_dn(uid_to_dn(uid))
+	MFAMethod.query.filter_by(dn=user.dn).delete()
+	db.session.commit()
+	flash('Two-factor authentication was reset')
+	return redirect(url_for('user.show', uid=uid))
+
 @bp.route('/setup/recovery', methods=['POST'])
 @login_required()
+@csrf_protect(blueprint=bp)
 def setup_recovery():
 	user = get_current_user()
 	for method in RecoveryCodeMethod.query.filter_by(dn=user.dn).all():
@@ -59,6 +79,7 @@ def setup_totp():
 
 @bp.route('/setup/totp', methods=['POST'])
 @login_required()
+@csrf_protect(blueprint=bp)
 def setup_totp_finish():
 	user = get_current_user()
 	if not RecoveryCodeMethod.query.filter_by(dn=user.dn).all():
@@ -74,6 +95,7 @@ def setup_totp_finish():
 
 @bp.route('/setup/totp/<int:id>/delete')
 @login_required()
+@csrf_protect(blueprint=bp)
 def delete_totp(id):
 	user = get_current_user()
 	method = TOTPMethod.query.filter_by(dn=user.dn, id=id).first_or_404()
@@ -86,6 +108,7 @@ def get_webauthn_server():
 
 @bp.route('/setup/webauthn/begin', methods=['POST'])
 @login_required()
+@csrf_protect(blueprint=bp)
 def setup_webauthn_begin():
 	user = get_current_user()
 	if not RecoveryCodeMethod.query.filter_by(dn=user.dn).all():
@@ -108,6 +131,7 @@ def setup_webauthn_begin():
 
 @bp.route('/setup/webauthn/complete', methods=['POST'])
 @login_required()
+@csrf_protect(blueprint=bp)
 def setup_webauthn_complete():
 	user = get_current_user()
 	server = get_webauthn_server()
@@ -123,6 +147,7 @@ def setup_webauthn_complete():
 
 @bp.route('/setup/webauthn/<int:id>/delete')
 @login_required()
+@csrf_protect(blueprint=bp)
 def delete_webauthn(id):
 	user = get_current_user()
 	method = WebauthnMethod.query.filter_by(dn=user.dn, id=id).first_or_404()
@@ -136,7 +161,6 @@ def auth_webauthn_begin():
 	server = get_webauthn_server()
 	methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
 	creds = [method.cred_data.credential_data for method in methods]
-	print(creds)
 	if not creds:
 		abort(404)
 	auth_data, state = server.authenticate_begin(creds, user_verification=UserVerificationRequirement.DISCOURAGED)
@@ -156,44 +180,46 @@ def auth_webauthn_complete():
 	client_data = ClientData(data["clientDataJSON"])
 	auth_data = AuthenticatorData(data["authenticatorData"])
 	signature = data["signature"]
-	print("clientData", client_data)
-	print("AuthenticatorData", auth_data)
 	server.authenticate_complete(
-		session.pop("state"),
+		session.pop("webauthn-state"),
 		creds,
 		credential_id,
 		client_data,
 		auth_data,
 		signature,
 	)
-	print("ASSERTION OK")
+	session['user_mfa'] = True
 	return cbor.encode({"status": "OK"})
 
 @bp.route('/auth', methods=['GET'])
-@login_required()
+@login_required(skip_mfa=True)
 def auth():
 	user = get_current_user()
 	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=user.dn).all()
 	totp_methods = TOTPMethod.query.filter_by(dn=user.dn).all()
 	webauthn_methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
+	if not totp_methods and not webauthn_methods:
+		session['user_mfa'] = True
+	if session.get('user_mfa'):
+		return redirect(request.values.get('ref', url_for('index')))
 	return render_template('auth.html', ref=request.values.get('ref'), totp_methods=totp_methods,
 			webauthn_methods=webauthn_methods, recovery_methods=recovery_methods)
 
 @bp.route('/auth', methods=['POST'])
-@login_required()
+@login_required(skip_mfa=True)
 def auth_finish():
 	user = get_current_user()
 	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=user.dn).all()
 	totp_methods = TOTPMethod.query.filter_by(dn=user.dn).all()
 	for method in totp_methods:
 		if method.verify(request.form['code']):
-			session['mfa_verifed'] = True
+			session['user_mfa'] = True
 			return redirect(request.values.get('ref', url_for('index')))
 	for method in recovery_methods:
 		if method.verify(request.form['code']):
 			db.session.delete(method)
 			db.session.commit()
-			session['mfa_verifed'] = True
+			session['user_mfa'] = True
 			if len(recovery_methods) <= 1:
 				flash('You have exhausted your recovery codes. Please generate new ones now!')
 				return redirect(url_for('mfa.setup'))

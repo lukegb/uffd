@@ -22,11 +22,9 @@ def login():
 	username = request.form['loginname']
 	password = request.form['password']
 	conn = user_conn(username, password)
-	if not conn:
-		flash('Login name or password is wrong')
-		return redirect(url_for('.login'))
-	conn.search(conn.user, '(objectClass=person)')
-	if not len(conn.entries) == 1:
+	if conn:
+		conn.search(conn.user, '(objectClass=person)')
+	if not conn or len(conn.entries) != 1:
 		flash('Login name or password is wrong')
 		return render_template('login.html', ref=request.values.get('ref'))
 	user = User.from_ldap(conn.entries[0])
@@ -36,7 +34,7 @@ def login():
 	session['user_uid'] = user.uid
 	session['logintime'] = datetime.datetime.now().timestamp()
 	session['_csrf_token'] = secrets.token_hex(128)
-	return redirect(request.values.get('ref', url_for('index')))
+	return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
 
 def get_current_user():
 	if not session.get('user_uid'):
@@ -45,22 +43,32 @@ def get_current_user():
 		request.current_user = User.from_ldap_dn(uid_to_dn(session['user_uid']))
 	return request.current_user
 
-def is_valid_session():
+def login_valid():
 	user = get_current_user()
 	if not user:
 		return False
 	if datetime.datetime.now().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
 		return False
 	return True
+
+def is_valid_session():
+	if not login_valid():
+		return False
+	if not session.get('user_mfa'):
+		return False
+	return True
 bp.add_app_template_global(is_valid_session)
 
-def login_required(group=None):
+def login_required(group=None, skip_mfa=False):
 	def wrapper(func):
 		@functools.wraps(func)
 		def decorator(*args, **kwargs):
-			if not is_valid_session():
+			if not login_valid():
 				flash('You need to login first')
 				return redirect(url_for('session.login', ref=request.url))
+			if not skip_mfa and not session.get('user_mfa'):
+				print('redirecting login_required', skip_mfa, session.get('user_mfa'))
+				return redirect(url_for('mfa.auth', ref=request.url))
 			if not get_current_user().is_in_group(group):
 				flash('Access denied')
 				return redirect(url_for('index'))

@@ -27,7 +27,7 @@ You need to setup at least one authentication method to enable two-factor authen
 		<button type="submit" class="btn btn-danger mb-2">Disable two-factor authentication</button>
 	</form>
 	{% else %}
-	<form class="form float-right" action="{{ url_for('mfa.disable') }}" method="POST">
+	<form class="form float-right" action="{{ url_for('mfa.disable_confirm') }}" method="POST">
 		<button type="submit" class="btn btn-light mb-2">Reset two-factor configuration</button>
 	</form>
 	{% endif %}
