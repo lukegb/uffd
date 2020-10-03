@@ -1,44 +1,163 @@
 {% extends 'base.html' %}
 
 {% block body %}
-
-<div class="btn-toolbar">
-	<a class="btn btn-primary mb-2 ml-auto" href="{{ url_for('mfa.setup_totp') }}">Setup TOTP</a>
-	<a class="btn btn-primary mb-2 ml-2" href="{{ url_for('mfa.setup_webauthn') }}">Setup FIDO</a>
-</div>
-
 {% if totp_methods or webauthn_methods %}
-<table class="table">
-	<thead>
-		<tr>
-			<th scope="col" colspan=2>Name</th>
-			<th scope="col">Registered On</th>
-			<th scope="col"></th>
-		</tr>
-	</thead>
-	<tbody>
-		{% for method in totp_methods %}
-		<tr>
-			<td style="width: 0.5em;"><i class="fas fa-mobile-alt"></i></td>
-			<td>{{ method.name }}</td>
-			<td>{{ method.created }}</td>
-			<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_totp', id=method.id) }}">Delete</a></td>
-		</tr>
-		{% endfor %}
-		{% for method in webauthn_methods %}
-		<tr>
-			<td style="width: 0.5em;"><i class="fab fa-usb"></i></td>
-			<td>{{ method.name }}</td>
-			<td>{{ method.created }}</td>
-			<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_webauthn', id=method.id) }}">Delete</a></td>
-		</tr>
-		{% endfor %}
-	</tbody>
-</table>
+<p>Two-factor authentication is currently <strong>enabled</strong>. Delete all registered methods to disable it.</p>
 {% else %}
-<div class="alert alert-info" role="alert">
-	You have not setup any two-factor methods yet!
-</div>
+<p>Two-factor authentication is currently <strong>disabled</strong>. Setup an authentication method below to enable it.</p>
 {% endif %}
+
+<hr>
+
+<div class="row mt-3">
+	<div class="col-12 col-md-5">
+		<h4>Authenticator Apps</h4>
+		<p>Use an authenticator application on your mobile device as a second factor.</p>
+		<p>The authenticator app generates a 6-digit one-time code each time you login.
+		Compatible apps are freely available for most phones.</p>
+	</div>
+
+	<div class="col-12 col-md-7">
+		<form class="form mb-3" action="{{ url_for('mfa.setup_totp') }}">
+			<div class="row m-0">
+				<label class="sr-only" for="totp-name">Name</label>
+				<input type="text" name="name" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="totp-name" placeholder="Name" required>
+				<button type="submit" id="totp-submit" class="btn btn-primary mb-2 col">Setup new authenticator</button>
+			</div>
+		</form>
+
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">Name</th>
+					<th scope="col">Registered On</th>
+					<th scope="col"></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for method in totp_methods %}
+				<tr>
+					<td>{{ method.name }}</td>
+					<td>{{ method.created.strftime('%b %d, %Y') }}</td>
+					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_totp', id=method.id) }}">Delete</a></td>
+				</tr>
+				{% endfor %}
+				{% if not totp_methods %}
+				<tr class="table-secondary">
+					<td colspan=3 class="text-center">No authenticator apps registered yet</td>
+				</tr>
+				{% endif %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<hr>
+
+<div class="row">
+	<div class="col-12 col-md-5">
+		<h4>U2F and FIDO2 Devices</h4>
+		<p>Use an U2F or FIDO2 compatible hardware security key as a second factor.</p>
+		<p>U2F and FIDO2 devices are not supported by all browsers and can be particularly difficult to use on mobile devices.
+		<strong>It is strongly recommended to also setup an authenticator app</strong> to be able to login on all browsers.</p>
+	</div>
+
+	<div class="col-12 col-md-7">
+		<noscript>
+			<div class="alert alert-warning" role="alert">Enable javascript in your browser to use U2F and FIDO2 devices!</div>
+		</noscript>
+		<div id="webauthn-alert" class="alert alert-warning d-none" role="alert"></div>
+		<form id="webauthn-form" class="form mb-3">
+			<div class="row m-0">
+				<label class="sr-only" for="webauthn-name">Name</label>
+				<input type="text" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="webauthn-name" placeholder="Name" required>
+				<button type="submit" id="webauthn-btn" class="btn btn-primary mb-2 col" disabled>
+					<span id="webauthn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+					<span id="webauthn-btn-text">Setup new device</span>
+				</button>
+			</div>
+		</form>
+
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">Name</th>
+					<th scope="col">Registered On</th>
+					<th scope="col"></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for method in webauthn_methods %}
+				<tr>
+					<td>{{ method.name }}</td>
+					<td>{{ method.created.strftime('%b %d, %Y') }}</td>
+					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_webauthn', id=method.id) }}">Delete</a></td>
+				</tr>
+				{% endfor %}
+				{% if not webauthn_methods %}
+				<tr class="table-secondary">
+					<td colspan=3 class="text-center">No devices registered yet</td>
+				</tr>
+				{% endif %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<!-- spacer for floating footer -->
+<div class="mb-5"></div>
+
+<script src="{{ url_for('static', filename="cbor.js") }}"></script>
+<script>
+
+$('#webauthn-form').on('submit', function(e) {
+	$('#webauthn-alert').addClass('d-none');
+	$('#webauthn-spinner').removeClass('d-none');
+	$('#webauthn-btn-text').text('Contacting server');
+	$('#webauthn-btn').prop('disabled', true);
+	fetch({{ url_for('mfa.setup_webauthn_begin')|tojson }}, {
+		method: 'POST',
+	}).then(function(response) {
+		if(response.ok) return response.arrayBuffer();
+		throw new Error('Error getting registration data!');
+	}).then(CBOR.decode).then(function(options) {
+		$('#webauthn-btn-text').text('Waiting for response from your device');
+		return navigator.credentials.create(options);
+	}).then(function(attestation) {
+		return fetch({{ url_for('mfa.setup_webauthn_complete')|tojson }}, {
+			method: 'POST',
+			headers: {'Content-Type': 'application/cbor'},
+			body: CBOR.encode({
+				"attestationObject": new Uint8Array(attestation.response.attestationObject),
+				"clientDataJSON": new Uint8Array(attestation.response.clientDataJSON),
+				"name": $('#webauthn-name').val()
+			})
+		});
+	}).then(function(response) {
+		if (response.ok) {
+			$('#webauthn-spinner').addClass('d-none');
+			$('#webauthn-btn-text').text('Success');
+			window.location = {{ url_for('mfa.setup')|tojson }};
+		} else {
+		throw new Error('Server rejected authenticator response');
+		}
+	}, function(reason) {
+		$('#webauthn-alert').text('Registration failed!');
+		$('#webauthn-alert').removeClass('d-none');
+		$('#webauthn-spinner').addClass('d-none');
+		$('#webauthn-btn-text').text('Retry registration');
+		$('#webauthn-btn').prop('disabled', false);
+	});
+	return false;
+});
+
+if (typeof(PublicKeyCredential) != "undefined") {
+	$('#webauthn-btn').prop('disabled', false);
+} else {
+	$('#webauthn-alert').text('U2F and FIDO2 devices are not supported by your browser!');
+	$('#webauthn-alert').removeClass('d-none');
+}
+
+</script>
 
 {% endblock %}

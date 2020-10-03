@@ -27,13 +27,13 @@ def setup_totp():
 	user = get_current_user()
 	method = TOTPMethod(user)
 	session['mfa_totp_key'] = method.key
-	return render_template('setup_totp.html', method=method)
+	return render_template('setup_totp.html', method=method, name=request.values['name'])
 
 @bp.route('/setup/totp', methods=['POST'])
 @login_required()
 def setup_totp_finish():
 	user = get_current_user()
-	method = TOTPMethod(user, name=request.form['name'], key=session['mfa_totp_key'])
+	method = TOTPMethod(user, name=request.values['name'], key=session['mfa_totp_key'])
 	del session['mfa_totp_key']
 	if method.verify(request.form['code']):
 		db.session.add(method)
@@ -64,6 +64,8 @@ def get_webauthn_server():
 @login_required()
 def setup_webauthn_begin():
 	user = get_current_user()
+	methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
+	creds = [method.cred_data.credential_data for method in methods]
 	server = get_webauthn_server()
 	registration_data, state = server.register_begin(
 		{
@@ -72,7 +74,7 @@ def setup_webauthn_begin():
 			"displayName": user.displayname,
 			"icon": "https://example.com/image.png",
 		},
-		[],
+		creds,
 		user_verification=UserVerificationRequirement.DISCOURAGED,
 		authenticator_attachment="cross-platform",
 	)

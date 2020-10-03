@@ -14,7 +14,7 @@ def register_template_helper(app):
 
 	@app.template_filter()
 	def qrcode_svg(content, **attrs):
-		img = qrcode.make(content, image_factory=qrcode.image.svg.SvgPathImage)
+		img = qrcode.make(content, image_factory=qrcode.image.svg.SvgPathImage, border=0)
 		svg = img.get_image()
 		for key, value, in attrs.items():
 			svg.set(key, value)

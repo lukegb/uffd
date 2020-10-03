@@ -73,9 +73,17 @@ class TOTPMethod(MFAMethod):
 		return base64.b32decode(s.encode())
 
 	@property
+	def issuer(self):
+		return urllib.parse.urlsplit(request.url).hostname
+
+	@property
+	def accountname(self):
+		return self.user.loginname
+
+	@property
 	def key_uri(self):
-		issuer = urllib.parse.quote(urllib.parse.urlsplit(request.url).netloc)
-		accountname = urllib.parse.quote(self.user.loginname.encode())
+		issuer = urllib.parse.quote(self.issuer)
+		accountname = urllib.parse.quote(self.accountname)
 		params = {'secret': self.key, 'issuer': issuer}
 		if 'MFA_ICON_URL' in current_app.config:
 			params['image'] = current_app.config['MFA_ICON_URL']
