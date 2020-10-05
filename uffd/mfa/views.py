@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app, abort
-import urllib.parse
 from warnings import warn
+import urllib.parse
+
+from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app, abort
 
 from uffd.database import db
 from uffd.mfa.models import MFAMethod, TOTPMethod, WebauthnMethod, RecoveryCodeMethod
-from uffd.session.views import get_current_user, login_required, is_valid_session
+from uffd.session.views import get_current_user, login_required
 from uffd.ldap import uid_to_dn
 from uffd.user.models import User
 from uffd.csrf import csrf_protect
@@ -91,7 +92,7 @@ def setup_totp_finish():
 @bp.route('/setup/totp/<int:id>/delete')
 @login_required()
 @csrf_protect(blueprint=bp)
-def delete_totp(id):
+def delete_totp(id): #pylint: disable=redefined-builtin
 	user = get_current_user()
 	method = TOTPMethod.query.filter_by(dn=user.dn, id=id).first_or_404()
 	db.session.delete(method)
@@ -106,14 +107,14 @@ try:
 	from fido2.server import Fido2Server, RelyingParty
 	from fido2.ctap2 import AttestationObject, AuthenticatorData
 	from fido2 import cbor
-	webauthn_supported = True
-except ImportError as e:
-	warn('2FA WebAuthn support disabled because import of the fido2 module failed (%s)'%e)
-	webauthn_supported = False
+	WEBAUTHN_SUPPORTED = True
+except ImportError as err:
+	warn('2FA WebAuthn support disabled because import of the fido2 module failed (%s)'%err)
+	WEBAUTHN_SUPPORTED = False
 
-bp.add_app_template_global(webauthn_supported, name='webauthn_supported')
+bp.add_app_template_global(WEBAUTHN_SUPPORTED, name='webauthn_supported')
 
-if webauthn_supported:
+if WEBAUTHN_SUPPORTED:
 	def get_webauthn_server():
 		return Fido2Server(RelyingParty(current_app.config.get('MFA_RP_ID', urllib.parse.urlsplit(request.url).hostname), current_app.config['MFA_RP_NAME']))
 
@@ -195,7 +196,7 @@ if webauthn_supported:
 @bp.route('/setup/webauthn/<int:id>/delete')
 @login_required()
 @csrf_protect(blueprint=bp)
-def delete_webauthn(id):
+def delete_webauthn(id): #pylint: disable=redefined-builtin
 	user = get_current_user()
 	method = WebauthnMethod.query.filter_by(dn=user.dn, id=id).first_or_404()
 	db.session.delete(method)
@@ -234,7 +235,7 @@ def auth_finish():
 			if len(recovery_methods) <= 1:
 				flash('You have exhausted your recovery codes. Please generate new ones now!')
 				return redirect(url_for('mfa.setup'))
-			elif len(recovery_methods) <= 5:
+			if len(recovery_methods) <= 5:
 				flash('You only have a few recovery codes remaining. Make sure to generate new ones before they run out.')
 				return redirect(url_for('mfa.setup'))
 			return redirect(request.values.get('ref', url_for('index')))

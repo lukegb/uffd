@@ -1,10 +1,18 @@
 import enum
 import datetime
-import secrets, time, struct, hmac, hashlib, base64, urllib.parse
+import secrets
+# imports for totp
+import time
+import struct
+import hmac
+import hashlib
+import base64
+import urllib.parse
+# imports for recovery codes
 import crypt
 
 from flask import request, current_app
-from sqlalchemy import Column, Integer, Enum, Boolean, String, DateTime, Text
+from sqlalchemy import Column, Integer, Enum, String, DateTime, Text
 
 from uffd.database import db
 from uffd.user.models import User
@@ -29,15 +37,15 @@ class MFAMethod(db.Model):
 	def __init__(self, user, name=None):
 		self.user = user
 		self.name = name
-		self.created = datetime.datetime.now();
+		self.created = datetime.datetime.now()
 
 	@property
 	def user(self):
 		return User.from_ldap_dn(self.dn)
-	
+
 	@user.setter
-	def user(self, u):
-		self.dn = u.dn
+	def user(self, new_user):
+		self.dn = new_user.dn
 
 class RecoveryCodeMethod(MFAMethod):
 	code_salt = Column('recovery_salt', String(64))
@@ -54,18 +62,14 @@ class RecoveryCodeMethod(MFAMethod):
 
 	def verify(self, code):
 		code = code.replace(' ', '').lower()
-		if crypt.crypt(code, self.code_hash) == self.code_hash:
-			return True
-		else:
-			return False
+		return crypt.crypt(code, self.code_hash) == self.code_hash
 
 def _hotp(counter, key, digits=6):
 	'''Generates HMAC-based one-time password according to RFC4226
-	
+
 	:param counter: Positive integer smaller than 2**64
 	:param key: Bytes object of arbitrary length (should be at least 160 bits)
-	:param digits: Length of resulting value (integer between 1 and 9, minimum
-	               of 6 is recommended)
+	:param digits: Length of resulting value (integer between 1 and 9, minimum of 6 is recommended)
 
 	:returns: String object representing human-readable HOTP value'''
 	msg = struct.pack('>Q', counter)
@@ -89,8 +93,8 @@ class TOTPMethod(MFAMethod):
 
 	@property
 	def raw_key(self):
-		s = self.key + '='*(8 - (len(self.key) % 8))
-		return base64.b32decode(s.encode())
+		tmp = self.key + '='*(8 - (len(self.key) % 8))
+		return base64.b32decode(tmp.encode())
 
 	@property
 	def issuer(self):
@@ -135,10 +139,9 @@ class WebauthnMethod(MFAMethod):
 
 	@property
 	def cred(self):
-		from fido2.ctap2 import AttestedCredentialData
+		from fido2.ctap2 import AttestedCredentialData #pylint: disable=import-outside-toplevel
 		return AttestedCredentialData(base64.b64decode(self._cred))
 
 	@cred.setter
-	def cred(self, d):
-		self._cred = base64.b64encode(bytes(d))
-
+	def cred(self, newcred):
+		self._cred = base64.b64encode(bytes(newcred))

@@ -1,12 +1,13 @@
-from flask import Markup
-
-import qrcode, qrcode.image.svg
-
 import random
 import subprocess
 import base64
 from datetime import timedelta, datetime
 import io
+
+from flask import Markup
+
+import qrcode
+import qrcode.image.svg
 
 def register_template_helper(app):
 	# debian ships jinja2 without this test...
@@ -14,7 +15,7 @@ def register_template_helper(app):
 		return a == b
 
 	@app.template_filter()
-	def qrcode_svg(content, **attrs):
+	def qrcode_svg(content, **attrs): #pylint: disable=unused-variable
 		img = qrcode.make(content, image_factory=qrcode.image.svg.SvgPathImage, border=0)
 		svg = img.get_image()
 		for key, value, in attrs.items():
@@ -24,7 +25,7 @@ def register_template_helper(app):
 		return Markup(buf.getvalue().decode())
 
 	@app.template_filter()
-	def datauri(data, mimetype='text/plain'):
+	def datauri(data, mimetype='text/plain'): #pylint: disable=unused-variable
 		return Markup('data:%s;base64,%s'%(mimetype, base64.b64encode(data.encode()).decode()))
 
 	@app.url_defaults
