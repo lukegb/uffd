@@ -57,6 +57,8 @@ class RecoveryCodeMethod(MFAMethod):
 
 	def __init__(self, user):
 		super().__init__(user, None)
+		# The code attribute is only available in newly created objects as only
+		# it's hash is stored in the database
 		self.code = secrets.token_hex(8).replace(' ', '').lower()
 		self.code_hash = crypt.crypt(self.code)
 
