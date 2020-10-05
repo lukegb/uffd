@@ -113,7 +113,7 @@ def setup_webauthn_begin():
 	if not RecoveryCodeMethod.query.filter_by(dn=user.dn).all():
 		abort(403)
 	methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
-	creds = [method.cred_data.credential_data for method in methods]
+	creds = [method.cred for method in methods]
 	server = get_webauthn_server()
 	registration_data, state = server.register_begin(
 		{
@@ -137,7 +137,7 @@ def setup_webauthn_complete():
 	client_data = ClientData(data["clientDataJSON"])
 	att_obj = AttestationObject(data["attestationObject"])
 	auth_data = server.register_complete(session["webauthn-state"], client_data, att_obj)
-	method = WebauthnMethod(user, auth_data, name=data['name'])
+	method = WebauthnMethod(user, auth_data.credential_data, name=data['name'])
 	db.session.add(method)
 	db.session.commit()
 	return cbor.dumps({"status": "OK"})
@@ -157,7 +157,7 @@ def auth_webauthn_begin():
 	user = get_current_user()
 	server = get_webauthn_server()
 	methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
-	creds = [method.cred_data.credential_data for method in methods]
+	creds = [method.cred for method in methods]
 	if not creds:
 		abort(404)
 	auth_data, state = server.authenticate_begin(creds, user_verification='discouraged')
@@ -169,7 +169,7 @@ def auth_webauthn_complete():
 	user = get_current_user()
 	server = get_webauthn_server()
 	methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
-	creds = [method.cred_data.credential_data for method in methods]
+	creds = [method.cred for method in methods]
 	if not creds:
 		abort(404)
 	data = cbor.loads(request.get_data())[0]

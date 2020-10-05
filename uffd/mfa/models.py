@@ -6,7 +6,7 @@ import crypt
 from flask import request, current_app
 from sqlalchemy import Column, Integer, Enum, Boolean, String, DateTime, Text
 
-from fido2.ctap2 import AuthenticatorData
+from fido2.ctap2 import AttestedCredentialData
 
 from uffd.database import db
 from uffd.user.models import User
@@ -131,15 +131,15 @@ class WebauthnMethod(MFAMethod):
 		'polymorphic_identity': MFAType.WEBAUTHN
 	}
 
-	def __init__(self, user, cred_data, name=None):
+	def __init__(self, user, cred, name=None):
 		super().__init__(user, name)
-		self.cred_data = cred_data
+		self.cred = cred
 
 	@property
-	def cred_data(self):
-		return AuthenticatorData(base64.b64decode(self._cred))
+	def cred(self):
+		return AttestedCredentialData(base64.b64decode(self._cred))
 
-	@cred_data.setter
-	def cred_data(self, d):
+	@cred.setter
+	def cred(self, d):
 		self._cred = base64.b64encode(bytes(d))
 
