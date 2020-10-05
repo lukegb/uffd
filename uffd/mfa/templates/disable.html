@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<p>When you proceed, all recovery codes, registered authenticator applications and devices will be invalidated. 
+You can later generate new recovery codes and setup your applications and devices again.</p>
+
+<form class="form" action="{{ url_for('mfa.disable_confirm') }}" method="POST">
+	<button type="submit" class="btn btn-danger btn-block">Disable two-factor authentication</button>
+</form>
+
+{% endblock %}

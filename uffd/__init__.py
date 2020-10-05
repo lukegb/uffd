@@ -39,10 +39,10 @@ def create_app(test_config=None):
 
 	db.init_app(app)
 	# pylint: disable=C0415
-	from uffd import user, selfservice, role, mail, session, csrf, ldap
+	from uffd import user, selfservice, role, mail, session, csrf, ldap, mfa
 	# pylint: enable=C0415
 
-	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + ldap.bp:
+	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + ldap.bp + mfa.bp:
 		app.register_blueprint(i)
 
 	@app.route("/")

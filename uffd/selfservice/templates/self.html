@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 
 {% block body %}
+
+<div class="btn-toolbar">
+	<a class="ml-auto mb-3 btn btn-primary" href="{{ url_for('mfa.setup') }}">Manage two-factor authentication</a>
+</div>
+
 <form action="{{ url_for("selfservice.update") }}" method="POST" onInput="
 	password2.setCustomValidity(password1.value != password2.value ? 'Passwords do not match.' : '');
 	password1.setCustomValidity((password1.value.length < 8 || password1.value.length == 0) ? 'Password is too short' : '') ">

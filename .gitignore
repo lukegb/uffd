@@ -147,3 +147,7 @@ Sessionx.vim
 tags
 # Persistent undo
 [._]*.un~
+
+# Auto-generated development key/certificate
+devcert.crt
+devcert.key

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<form action="{{ url_for("mfa.auth_finish", ref=ref) }}" method="POST">
+<div class="row mt-2 justify-content-center">
+	<div class="col-lg-6 col-md-10" style="background: #f7f7f7; box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3); padding: 30px;">
+		<div class="text-center">
+			<img src="{{ url_for("static", filename="chaosknoten.png") }}" class="col-lg-8 col-md-12" >
+		</div>
+		<div class="col-12 mb-3">
+			<h2 class="text-center">Two-Factor Authentication</h2>
+		</div>
+		{% if webauthn_methods %}
+		<noscript>
+			<div class="form-group col-12">
+				<div id="webauthn-nojs" class="alert alert-warning" role="alert">Enable javascript for authentication with U2F/FIDO2 devices</div>
+			</div>
+		</noscript>
+		<div id="webauthn-unsupported" class="form-group col-12 d-none">
+			<div class="alert alert-warning" role="alert">Authentication with U2F/FIDO2 devices is not supported by your browser</div>
+		</div>
+		<div class="form-group col-12 d-none webauthn-group">
+			<div id="webauthn-alert" class="alert alert-warning d-none" role="alert"></div>
+			<button type="button" id="webauthn-btn" class="btn btn-primary btn-block">
+				<span id="webauthn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+				<span id="webauthn-btn-text">Authenticate with U2F/FIDO2 device</span>
+			</button>
+		</div>
+		<div class="text-center text-muted d-none webauthn-group mb-3">- or -</div>
+		{% endif %}
+		<div class="form-group col-12 mb-2">
+			<input type="text" class="form-control" id="mfa-code" name="code" required="required" placeholder="Code from your authenticator app or recovery code" autocomplete="off" autofocus>
+		</div>
+		<div class="form-group col-12">
+			<button type="submit" class="btn btn-primary btn-block">Verify</button>
+		</div>
+	</div>
+</div>
+</form>
+
+{% if webauthn_supported and webauthn_methods %}
+<script src="{{ url_for('static', filename="cbor.js") }}"></script>
+<script>
+function begin_webauthn() {
+	$('#webauthn-alert').addClass('d-none');
+	$('#webauthn-spinner').removeClass('d-none');
+	$('#webauthn-btn-text').text('Fetching credential data');
+	$('#webauthn-btn').prop('disabled', true);
+	fetch({{ url_for('mfa.auth_webauthn_begin')|tojson }}, {
+		method: 'POST',
+	}).then(function(response) {
+		if (response.ok) {
+			return response.arrayBuffer();
+		} else if (response.status == 403) {
+			window.location = {{ request.url|tojson }}; /* reload */
+			throw new Error('Session timed out');
+		} else if (response.status == 404) {
+			throw new Error('You have not registered any U2F/FIDO2 devices for your account');
+		} else {
+			throw new Error('Server error');
+		}
+	}).then(CBOR.decode).then(function(options) {
+		$('#webauthn-btn-text').text('Waiting for response from your device');
+		return navigator.credentials.get(options);
+	}).then(function(assertion) {
+		$('#webauthn-btn-text').text('Verifing response');
+		return fetch({{ url_for('mfa.auth_webauthn_complete')|tojson }}, {
+			method: 'POST',
+			headers: {'Content-Type': 'application/cbor'},
+			body: CBOR.encode({
+				"credentialId": new Uint8Array(assertion.rawId),
+				"authenticatorData": new Uint8Array(assertion.response.authenticatorData),
+				"clientDataJSON": new Uint8Array(assertion.response.clientDataJSON),
+				"signature": new Uint8Array(assertion.response.signature)
+			})
+		})
+	}).then(function(response) {
+		if (response.ok) {
+			$('#webauthn-spinner').addClass('d-none');
+			$('#webauthn-btn-text').text('Success, redirecting');
+			window.location = {{ (ref or url_for('index'))|tojson }};
+		} else if (response.status == 403) {
+			window.location = {{ request.url|tojson }}; /* reload */
+			throw new Error('Session timed out');
+		} else {
+			throw new Error('Response from authenticator rejected');
+		}
+	}).catch(function(err) {
+		console.log(err);
+		/* various webauthn errors */
+		if (err.name == 'NotAllowedError')
+			$('#webauthn-alert').text('Authentication timed out, was aborted or not allowed');
+		else if (err.name == 'InvalidStateError')
+			$('#webauthn-alert').text('Device is not registered for your account');
+		else if (err.name == 'AbortError')
+			$('#webauthn-alert').text('Authentication was aborted');
+		else if (err.name == 'NotSupportedError')
+			$('#webauthn-alert').text('U2F and FIDO2 devices are not supported by your browser');
+		/* errors from fetch() */
+		else if (err.name == 'TypeError')
+			$('#webauthn-alert').text('Could not connect to server');
+		/* our own errors */
+		else if (err.name == 'Error')
+			$('#webauthn-alert').text(err.message);
+		/* fallback */
+		else
+			$('#webauthn-alert').text('Authentication failed ('+err+')');
+		$('#webauthn-alert').removeClass('d-none');
+		$('#webauthn-spinner').addClass('d-none');
+		$('#webauthn-btn-text').text('Try FIDO token again');
+		$('#webauthn-btn').prop('disabled', false);
+	});
+}
+
+$('#webauthn-btn').on('click', begin_webauthn);
+if (typeof(PublicKeyCredential) != "undefined") {
+	$('.webauthn-group').removeClass('d-none');
+	begin_webauthn();
+} else {
+	$('#webauthn-unsupported').removeClass('d-none');
+}
+</script>
+{% endif %}
+
+{% endblock %}
