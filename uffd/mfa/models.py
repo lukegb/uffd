@@ -6,8 +6,6 @@ import crypt
 from flask import request, current_app
 from sqlalchemy import Column, Integer, Enum, Boolean, String, DateTime, Text
 
-from fido2.ctap2 import AttestedCredentialData
-
 from uffd.database import db
 from uffd.user.models import User
 
@@ -137,6 +135,7 @@ class WebauthnMethod(MFAMethod):
 
 	@property
 	def cred(self):
+		from fido2.ctap2 import AttestedCredentialData
 		return AttestedCredentialData(base64.b64decode(self._cred))
 
 	@cred.setter

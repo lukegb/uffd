@@ -1,10 +1,6 @@
 from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app, abort
 import urllib.parse
-
-from fido2.client import ClientData
-from fido2.server import Fido2Server, RelyingParty
-from fido2.ctap2 import AttestationObject, AuthenticatorData
-from fido2 import cbor
+from warnings import warn
 
 from uffd.database import db
 from uffd.mfa.models import MFAMethod, TOTPMethod, WebauthnMethod, RecoveryCodeMethod
@@ -102,45 +98,99 @@ def delete_totp(id):
 	db.session.commit()
 	return redirect(url_for('mfa.setup'))
 
-def get_webauthn_server():
-	return Fido2Server(RelyingParty(current_app.config.get('MFA_RP_ID', urllib.parse.urlsplit(request.url).hostname), current_app.config['MFA_RP_NAME']))
+# WebAuthn support is optional because fido2 has a pretty unstable
+# interface (v0.5.0 on buster and current version are completely
+# incompatible) and might be difficult to install with the correct version
+try:
+	from fido2.client import ClientData
+	from fido2.server import Fido2Server, RelyingParty
+	from fido2.ctap2 import AttestationObject, AuthenticatorData
+	from fido2 import cbor
+	webauthn_supported = True
+except ImportError as e:
+	warn('2FA WebAuthn support disabled because import of the fido2 module failed (%s)'%e)
+	webauthn_supported = False
 
-@bp.route('/setup/webauthn/begin', methods=['POST'])
-@login_required()
-@csrf_protect(blueprint=bp)
-def setup_webauthn_begin():
-	user = get_current_user()
-	if not RecoveryCodeMethod.query.filter_by(dn=user.dn).all():
-		abort(403)
-	methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
-	creds = [method.cred for method in methods]
-	server = get_webauthn_server()
-	registration_data, state = server.register_begin(
-		{
-			"id": user.dn.encode(),
-			"name": user.loginname,
-			"displayName": user.displayname,
-		},
-		creds,
-		user_verification='discouraged',
-	)
-	session["webauthn-state"] = state
-	return cbor.dumps(registration_data)
+bp.add_app_template_global(webauthn_supported, name='webauthn_supported')
 
-@bp.route('/setup/webauthn/complete', methods=['POST'])
-@login_required()
-@csrf_protect(blueprint=bp)
-def setup_webauthn_complete():
-	user = get_current_user()
-	server = get_webauthn_server()
-	data = cbor.loads(request.get_data())[0]
-	client_data = ClientData(data["clientDataJSON"])
-	att_obj = AttestationObject(data["attestationObject"])
-	auth_data = server.register_complete(session["webauthn-state"], client_data, att_obj)
-	method = WebauthnMethod(user, auth_data.credential_data, name=data['name'])
-	db.session.add(method)
-	db.session.commit()
-	return cbor.dumps({"status": "OK"})
+if webauthn_supported:
+	def get_webauthn_server():
+		return Fido2Server(RelyingParty(current_app.config.get('MFA_RP_ID', urllib.parse.urlsplit(request.url).hostname), current_app.config['MFA_RP_NAME']))
+
+	@bp.route('/setup/webauthn/begin', methods=['POST'])
+	@login_required()
+	@csrf_protect(blueprint=bp)
+	def setup_webauthn_begin():
+		user = get_current_user()
+		if not RecoveryCodeMethod.query.filter_by(dn=user.dn).all():
+			abort(403)
+		methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
+		creds = [method.cred for method in methods]
+		server = get_webauthn_server()
+		registration_data, state = server.register_begin(
+			{
+				"id": user.dn.encode(),
+				"name": user.loginname,
+				"displayName": user.displayname,
+			},
+			creds,
+			user_verification='discouraged',
+		)
+		session["webauthn-state"] = state
+		return cbor.dumps(registration_data)
+
+	@bp.route('/setup/webauthn/complete', methods=['POST'])
+	@login_required()
+	@csrf_protect(blueprint=bp)
+	def setup_webauthn_complete():
+		user = get_current_user()
+		server = get_webauthn_server()
+		data = cbor.loads(request.get_data())[0]
+		client_data = ClientData(data["clientDataJSON"])
+		att_obj = AttestationObject(data["attestationObject"])
+		auth_data = server.register_complete(session["webauthn-state"], client_data, att_obj)
+		method = WebauthnMethod(user, auth_data.credential_data, name=data['name'])
+		db.session.add(method)
+		db.session.commit()
+		return cbor.dumps({"status": "OK"})
+
+	@bp.route("/auth/webauthn/begin", methods=["POST"])
+	def auth_webauthn_begin():
+		user = get_current_user()
+		server = get_webauthn_server()
+		methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
+		creds = [method.cred for method in methods]
+		if not creds:
+			abort(404)
+		auth_data, state = server.authenticate_begin(creds, user_verification='discouraged')
+		session["webauthn-state"] = state
+		return cbor.dumps(auth_data)
+
+	@bp.route("/auth/webauthn/complete", methods=["POST"])
+	def auth_webauthn_complete():
+		user = get_current_user()
+		server = get_webauthn_server()
+		methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
+		creds = [method.cred for method in methods]
+		if not creds:
+			abort(404)
+		data = cbor.loads(request.get_data())[0]
+		credential_id = data["credentialId"]
+		client_data = ClientData(data["clientDataJSON"])
+		auth_data = AuthenticatorData(data["authenticatorData"])
+		signature = data["signature"]
+		# authenticate_complete() (as of python-fido2 v0.5.0, the version in Debian Buster)
+		# does not check signCount, although the spec recommends it
+		server.authenticate_complete(
+			session.pop("webauthn-state"),
+			creds,
+			credential_id,
+			client_data,
+			auth_data,
+			signature,
+		)
+		session['user_mfa'] = True
+		return cbor.dumps({"status": "OK"})
 
 @bp.route('/setup/webauthn/<int:id>/delete')
 @login_required()
@@ -151,44 +201,6 @@ def delete_webauthn(id):
 	db.session.delete(method)
 	db.session.commit()
 	return redirect(url_for('mfa.setup'))
-
-@bp.route("/auth/webauthn/begin", methods=["POST"])
-def auth_webauthn_begin():
-	user = get_current_user()
-	server = get_webauthn_server()
-	methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
-	creds = [method.cred for method in methods]
-	if not creds:
-		abort(404)
-	auth_data, state = server.authenticate_begin(creds, user_verification='discouraged')
-	session["webauthn-state"] = state
-	return cbor.dumps(auth_data)
-
-@bp.route("/auth/webauthn/complete", methods=["POST"])
-def auth_webauthn_complete():
-	user = get_current_user()
-	server = get_webauthn_server()
-	methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
-	creds = [method.cred for method in methods]
-	if not creds:
-		abort(404)
-	data = cbor.loads(request.get_data())[0]
-	credential_id = data["credentialId"]
-	client_data = ClientData(data["clientDataJSON"])
-	auth_data = AuthenticatorData(data["authenticatorData"])
-	signature = data["signature"]
-	# authenticate_complete() (as of python-fido2 v0.5.0, the version in Debian Buster)
-	# does not check signCount, although the spec recommends it
-	server.authenticate_complete(
-		session.pop("webauthn-state"),
-		creds,
-		credential_id,
-		client_data,
-		auth_data,
-		signature,
-	)
-	session['user_mfa'] = True
-	return cbor.dumps({"status": "OK"})
 
 @bp.route('/auth', methods=['GET'])
 @login_required(skip_mfa=True)
