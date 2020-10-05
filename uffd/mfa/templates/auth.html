@@ -51,7 +51,7 @@ function begin_webauthn() {
 		method: 'POST',
 	}).then(function(response) {
 		if(response.ok) return response.arrayBuffer();
-		throw new Error('No credential available to authenticate!');
+		throw new Error('You have not registered any U2F/FIDO2 devices for your account');
 	}).then(CBOR.decode).then(function(options) {
 		$('#webauthn-btn-text').text('Waiting for response from your device');
 		return navigator.credentials.get(options);
@@ -75,8 +75,26 @@ function begin_webauthn() {
 		} else {
 			throw new Error('Response from authenticator rejected');
 		}
-	}, function(reason) {
-		$('#webauthn-alert').text('Authentication with your FIDO token failed!');
+	}, function(err) {
+		console.log(err);
+		/* various webauthn errors */
+		if (err.name == 'NotAllowedError')
+			$('#webauthn-alert').text('Authentication timed out, was aborted or not allowed');
+		else if (err.name == 'InvalidStateError')
+			$('#webauthn-alert').text('Device is not registered for your account');
+		else if (err.name == 'AbortError')
+			$('#webauthn-alert').text('Authentication was aborted');
+		else if (err.name == 'NotSupportedError')
+			$('#webauthn-alert').text('U2F and FIDO2 devices are not supported by your browser');
+		/* errors from fetch() */
+		else if (err.name == 'TypeError')
+			$('#webauthn-alert').text('Could not connect to server');
+		/* our own errors */
+		else if (err.name == 'Error')
+			$('#webauthn-alert').text(err.message);
+		/* fallback */
+		else
+			$('#webauthn-alert').text('Authentication failed ('+err+')');
 		$('#webauthn-alert').removeClass('d-none');
 		$('#webauthn-spinner').addClass('d-none');
 		$('#webauthn-btn-text').text('Try FIDO token again');

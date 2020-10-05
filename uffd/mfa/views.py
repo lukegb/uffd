@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app, abort
 import urllib.parse
 
 from fido2.client import ClientData
@@ -117,7 +117,7 @@ def setup_webauthn_begin():
 	server = get_webauthn_server()
 	registration_data, state = server.register_begin(
 		{
-			"id": user.loginname.encode(),
+			"id": user.dn.encode(),
 			"name": user.loginname,
 			"displayName": user.displayname,
 		},
@@ -140,7 +140,6 @@ def setup_webauthn_complete():
 	method = WebauthnMethod(user, auth_data, name=data['name'])
 	db.session.add(method)
 	db.session.commit()
-	print("REGISTERED CREDENTIAL:", auth_data.credential_data)
 	return cbor.dumps({"status": "OK"})
 
 @bp.route('/setup/webauthn/<int:id>/delete')
@@ -178,6 +177,8 @@ def auth_webauthn_complete():
 	client_data = ClientData(data["clientDataJSON"])
 	auth_data = AuthenticatorData(data["authenticatorData"])
 	signature = data["signature"]
+	# authenticate_complete() (as of python-fido2 v0.5.0, the version in Debian Buster)
+	# does not check signCount, although the spec recommends it
 	server.authenticate_complete(
 		session.pop("webauthn-state"),
 		creds,

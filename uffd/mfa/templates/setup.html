@@ -128,7 +128,7 @@ You need to setup at least one authentication method to enable two-factor authen
 		<form id="webauthn-form" class="form mb-2">
 			<div class="row m-0">
 				<label class="sr-only" for="webauthn-name">Name</label>
-				<input type="text" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="webauthn-name" placeholder="Name" required {{ 'disabled' if mfa_init }}>
+				<input type="text" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="webauthn-name" placeholder="Name" required disabled>
 				<button type="submit" id="webauthn-btn" class="btn btn-primary mb-2 col" disabled>
 					<span id="webauthn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
 					<span id="webauthn-btn-text">Setup new device</span>
@@ -173,8 +173,11 @@ $('#webauthn-form').on('submit', function(e) {
 	fetch({{ url_for('mfa.setup_webauthn_begin')|tojson }}, {
 		method: 'POST',
 	}).then(function(response) {
-		if(response.ok) return response.arrayBuffer();
-		throw new Error('Error getting registration data!');
+		if (response.ok)
+			return response.arrayBuffer();
+		if (response.status == 403)
+			throw new Error('You need to generate recovery codes first');
+		throw new Error('Server error');
 	}).then(CBOR.decode).then(function(options) {
 		$('#webauthn-btn-text').text('Waiting for response from your device');
 		return navigator.credentials.create(options);
@@ -194,10 +197,28 @@ $('#webauthn-form').on('submit', function(e) {
 			$('#webauthn-btn-text').text('Success');
 			window.location = {{ url_for('mfa.setup')|tojson }};
 		} else {
-		throw new Error('Server rejected authenticator response');
+			throw new Error('Response from authenticator rejected');
 		}
-	}, function(reason) {
-		$('#webauthn-alert').text('Registration failed!');
+	}, function(err) {
+		console.log(err);
+		/* various webauthn errors */
+		if (err.name == 'NotAllowedError')
+			$('#webauthn-alert').text('Registration timed out, was aborted or not allowed');
+		else if (err.name == 'InvalidStateError')
+			$('#webauthn-alert').text('You attempted to register a device that is already registered');
+		else if (err.name == 'AbortError')
+			$('#webauthn-alert').text('Registration was aborted');
+		else if (err.name == 'NotSupportedError')
+			$('#webauthn-alert').text('U2F and FIDO2 devices are not supported by your browser');
+		/* errors from fetch() */
+		else if (err.name == 'TypeError')
+			$('#webauthn-alert').text('Could not connect to server');
+		/* our own errors */
+		else if (err.name == 'Error')
+			$('#webauthn-alert').text(err.message);
+		/* fallback */
+		else
+			$('#webauthn-alert').text('Registration failed ('+err+')');
 		$('#webauthn-alert').removeClass('d-none');
 		$('#webauthn-spinner').addClass('d-none');
 		$('#webauthn-btn-text').text('Retry registration');
@@ -212,7 +233,7 @@ if (typeof(PublicKeyCredential) != "undefined") {
 	$('#webauthn-name').prop('disabled', false);
 	{% endif %}
 } else {
-	$('#webauthn-alert').text('U2F and FIDO2 devices are not supported by your browser!');
+	$('#webauthn-alert').text('U2F and FIDO2 devices are not supported by your browser');
 	$('#webauthn-alert').removeClass('d-none');
 }
 
