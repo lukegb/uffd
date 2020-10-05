@@ -90,7 +90,7 @@ def setup_totp_finish():
 		db.session.commit()
 		return redirect(url_for('mfa.setup'))
 	flash('Code is invalid')
-	return redirect(url_for('mfa.setup_totp'))
+	return redirect(url_for('mfa.setup_totp', name=request.values['name']))
 
 @bp.route('/setup/totp/<int:id>/delete')
 @login_required()
@@ -103,7 +103,7 @@ def delete_totp(id):
 	return redirect(url_for('mfa.setup'))
 
 def get_webauthn_server():
-	return Fido2Server(RelyingParty(urllib.parse.urlsplit(request.url).hostname, "uffd"))
+	return Fido2Server(RelyingParty(current_app.config.get('MFA_RP_ID', urllib.parse.urlsplit(request.url).hostname), current_app.config['MFA_RP_NAME']))
 
 @bp.route('/setup/webauthn/begin', methods=['POST'])
 @login_required()
