@@ -80,7 +80,7 @@ You need to setup at least one authentication method to enable two-factor authen
 			<div class="row m-0">
 				<label class="sr-only" for="totp-name">Name</label>
 				<input type="text" name="name" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="totp-name" placeholder="Name" required {{ 'disabled' if mfa_init }}>
-				<button type="submit" id="totp-submit" class="btn btn-primary mb-2 col" {{ 'disabled' if mfa_init }}>Setup new authenticator</button>
+				<button type="submit" id="totp-submit" class="btn btn-primary mb-2 col" {{ 'disabled' if mfa_init }}>Setup new app</button>
 			</div>
 		</form>
 
@@ -154,7 +154,7 @@ You need to setup at least one authentication method to enable two-factor authen
 				{% endfor %}
 				{% if not webauthn_methods %}
 				<tr class="table-secondary">
-					<td colspan=3 class="text-center">No devices registered yet</td>
+					<td colspan=3 class="text-center">No U2F/FIDO2 devices registered yet</td>
 				</tr>
 				{% endif %}
 			</tbody>

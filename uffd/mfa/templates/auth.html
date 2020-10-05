@@ -30,10 +30,10 @@
 		<div class="text-center text-muted d-none webauthn-group mb-3">- or -</div>
 		{% endif %}
 		<div class="form-group col-12 mb-2">
-			<input type="text" class="form-control" id="mfa-code" name="code" required="required" tabindex="1" placeholder="Code from your authenticator app or recovery code">
+			<input type="text" class="form-control" id="mfa-code" name="code" required="required" placeholder="Code from your authenticator app or recovery code" autocomplete="off" autofocus>
 		</div>
 		<div class="form-group col-12">
-			<button type="submit" class="btn btn-primary btn-block" tabindex="2">Verify</button>
+			<button type="submit" class="btn btn-primary btn-block">Verify</button>
 		</div>
 	</div>
 </div>
@@ -105,6 +105,7 @@ function begin_webauthn() {
 $('#webauthn-btn').on('click', begin_webauthn);
 if (typeof(PublicKeyCredential) != "undefined") {
 	$('.webauthn-group').removeClass('d-none');
+	begin_webauthn();
 } else {
 	$('#webauthn-unsupported').removeClass('d-none');
 }
