@@ -2,7 +2,7 @@ import datetime
 import secrets
 import functools
 
-from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session
+from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session, abort
 
 from uffd.user.models import User
 from uffd.ldap import user_conn, uid_to_dn
@@ -59,15 +59,28 @@ def is_valid_session():
 	return True
 bp.add_app_template_global(is_valid_session)
 
-def login_required(group=None, skip_mfa=False):
+def pre_mfa_login_required(no_redirect=False):
+	def wrapper(func):
+		@functools.wraps(func)
+		def decorator(*args, **kwargs):
+			if not login_valid() or datetime.datetime.now().timestamp() > session['logintime'] + 10*60:
+				session.clear()
+				if no_redirect:
+					abort(403)
+				flash('You need to login first')
+				return redirect(url_for('session.login', ref=request.url))
+			return func(*args, **kwargs)
+		return decorator
+	return wrapper
+
+def login_required(group=None):
 	def wrapper(func):
 		@functools.wraps(func)
 		def decorator(*args, **kwargs):
 			if not login_valid():
 				flash('You need to login first')
 				return redirect(url_for('session.login', ref=request.url))
-			if not skip_mfa and not session.get('user_mfa'):
-				print('redirecting login_required', skip_mfa, session.get('user_mfa'))
+			if not session.get('user_mfa'):
 				return redirect(url_for('mfa.auth', ref=request.url))
 			if not get_current_user().is_in_group(group):
 				flash('Access denied')

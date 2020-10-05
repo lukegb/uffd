@@ -50,8 +50,16 @@ function begin_webauthn() {
 	fetch({{ url_for('mfa.auth_webauthn_begin')|tojson }}, {
 		method: 'POST',
 	}).then(function(response) {
-		if(response.ok) return response.arrayBuffer();
-		throw new Error('You have not registered any U2F/FIDO2 devices for your account');
+		if (response.ok) {
+			return response.arrayBuffer();
+		} else if (response.status == 403) {
+			window.location = {{ request.url|tojson }}; /* reload */
+			throw new Error('Session timed out');
+		} else if (response.status == 404) {
+			throw new Error('You have not registered any U2F/FIDO2 devices for your account');
+		} else {
+			throw new Error('Server error');
+		}
 	}).then(CBOR.decode).then(function(options) {
 		$('#webauthn-btn-text').text('Waiting for response from your device');
 		return navigator.credentials.get(options);
@@ -72,10 +80,13 @@ function begin_webauthn() {
 			$('#webauthn-spinner').addClass('d-none');
 			$('#webauthn-btn-text').text('Success, redirecting');
 			window.location = {{ (ref or url_for('index'))|tojson }};
+		} else if (response.status == 403) {
+			window.location = {{ request.url|tojson }}; /* reload */
+			throw new Error('Session timed out');
 		} else {
 			throw new Error('Response from authenticator rejected');
 		}
-	}, function(err) {
+	}).catch(function(err) {
 		console.log(err);
 		/* various webauthn errors */
 		if (err.name == 'NotAllowedError')

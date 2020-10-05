@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, session, request, redirect, url_fo
 
 from uffd.database import db
 from uffd.mfa.models import MFAMethod, TOTPMethod, WebauthnMethod, RecoveryCodeMethod
-from uffd.session.views import get_current_user, login_required
+from uffd.session.views import get_current_user, login_required, pre_mfa_login_required
 from uffd.ldap import uid_to_dn
 from uffd.user.models import User
 from uffd.csrf import csrf_protect
@@ -156,6 +156,7 @@ if WEBAUTHN_SUPPORTED:
 		return cbor.dumps({"status": "OK"})
 
 	@bp.route("/auth/webauthn/begin", methods=["POST"])
+	@pre_mfa_login_required(no_redirect=True)
 	def auth_webauthn_begin():
 		user = get_current_user()
 		server = get_webauthn_server()
@@ -168,6 +169,7 @@ if WEBAUTHN_SUPPORTED:
 		return cbor.dumps(auth_data)
 
 	@bp.route("/auth/webauthn/complete", methods=["POST"])
+	@pre_mfa_login_required(no_redirect=True)
 	def auth_webauthn_complete():
 		user = get_current_user()
 		server = get_webauthn_server()
@@ -204,7 +206,7 @@ def delete_webauthn(id): #pylint: disable=redefined-builtin
 	return redirect(url_for('mfa.setup'))
 
 @bp.route('/auth', methods=['GET'])
-@login_required(skip_mfa=True)
+@pre_mfa_login_required()
 def auth():
 	user = get_current_user()
 	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=user.dn).all()
@@ -218,7 +220,7 @@ def auth():
 			webauthn_methods=webauthn_methods, recovery_methods=recovery_methods)
 
 @bp.route('/auth', methods=['POST'])
-@login_required(skip_mfa=True)
+@pre_mfa_login_required()
 def auth_finish():
 	user = get_current_user()
 	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=user.dn).all()
