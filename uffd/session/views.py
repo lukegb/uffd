@@ -31,6 +31,7 @@ def login():
 	if not user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
 		flash('You do not have access to this service')
 		return render_template('login.html', ref=request.values.get('ref'))
+	session.clear()
 	session['user_uid'] = user.uid
 	session['logintime'] = datetime.datetime.now().timestamp()
 	session['_csrf_token'] = secrets.token_hex(128)
