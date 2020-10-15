@@ -6,8 +6,8 @@
 	<div class="float-sm-right pb-2">
 		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
 		<a href="{{ url_for("user.index") }}" class="btn btn-secondary">Cancel</a>
-		<a href="{{ url_for("mfa.admin_disable", uid=user.uid) }}" class="btn btn-secondary">Reset 2FA</a>
 		{% if user.uid %}
+			<a href="{{ url_for("mfa.admin_disable", uid=user.uid) }}" class="btn btn-secondary">Reset 2FA</a>
 			<a href="{{ url_for("user.delete", uid=user.uid) }}" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
 		{% else %}
 			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
