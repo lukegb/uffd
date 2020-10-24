@@ -26,3 +26,30 @@ Use uwsgi.
 ## python style conventions
 
 tabs.
+
+## OAuth2 Single-Sign-On Provider
+
+Other services can use uffd as an OAuth2.0-based authentication provider.
+The required credentials (client_id, client_secret and redirect_uris) for these services are defined in the config.
+The services need to be setup to use the following URLs with the Authorization Code Flow:
+
+* `/oauth2/authorize`: authorization endpoint
+* `/oauth2/token`: token request endpoint
+* `/oauth2/userinfo`: endpoint that provides information about the current user
+
+The userinfo endpoint returns json data with the following structure:
+
+```
+{
+  "id": 10000,
+  "name": "Test User",
+  "nickname": "testuser"
+  "email": "testuser@example.com",
+  "groups": [
+    "uffd_access",
+    "users"
+  ],
+}
+```
+
+`id` is the uidNumber, `name` the display name (cn) and `nickname` the uid of the user's LDAP object.
