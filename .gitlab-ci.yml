@@ -13,20 +13,46 @@ before_script:
 linter:
   stage: test
   script:
-  - python3 -m pylint --rcfile .pylintrc --output-format=text uffd | tee pylint.txt
+  - pip3 install pylint-gitlab # this force-updates jinja2 and some other packages!
+  - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabCodeClimateReporter uffd > codeclimate.json
+  - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabPagesHtmlReporter uffd > pylint.html
+  - python3 -m pylint --rcfile .pylintrc --output-format=text uffd
   artifacts:
-      paths:
-      - pylint.txt
+    when: always
+    paths:
+    - pylint.html
+    reports:
+      codequality: codeclimate.json
 
-#unittest:
-#  stage: test
-#  script:
-#  - python3 -m coverage run runTests.py
-#  - python3 -m coverage report --include "./*"
-#  - python3 -m coverage report -m  --include "./*" > report.txt
-#  - python3 -m coverage html --include "./*"
-#  artifacts:
-#      paths:
-#      - htmlcov/*
-#      - .coverage
-#      - report.txt
+unittests:
+  stage: test
+  script:
+  - python3-coverage run --include './*.py' --omit 'tests/*.py' -m pytest --junitxml=report.xml
+  - python3-coverage report -m
+  - python3-coverage html
+  - python3-coverage xml
+  artifacts:
+    when: always
+    paths:
+    - htmlcov/index.html
+    - htmlcov
+    expose_as: 'Coverage Report'
+    reports:
+      cobertura: coverage.xml
+      junit: report.xml
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
+
+html5validator:
+  stage: test
+  script:
+  - rm -rf pages
+  - mkdir -p pages
+  - cp -r uffd/static pages/static
+  - DUMP_PAGES=pages python3 -m unittest discover tests
+  - sed -i -e 's/href="\/static\//href=".\/static\//g' -e 's/src="\/static\//src=".\/static\//g' pages/*.html
+  - html5validator --root pages 2>&1 | tee html5validator.log
+  artifacts:
+    when: on_failure
+    paths:
+    - pages
+    - html5validator.log
