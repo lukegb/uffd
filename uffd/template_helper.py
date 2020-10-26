@@ -22,7 +22,7 @@ def register_template_helper(app):
 			svg.set(key, value)
 		buf = io.BytesIO()
 		img.save(buf)
-		return Markup(buf.getvalue().decode())
+		return Markup(buf.getvalue().decode().replace('<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n', ''))
 
 	@app.template_filter()
 	def datauri(data, mimetype='text/plain'): #pylint: disable=unused-variable

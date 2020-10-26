@@ -11,7 +11,7 @@
 					<th scope="col">display name</th>
 					<th scope="col">
 						<p class="text-right">
-							<a type="button" class="btn btn-primary" href="{{ url_for("user.show") }}">
+							<a class="btn btn-primary" href="{{ url_for("user.show") }}">
 								<i class="fa fa-plus" aria-hidden="true"></i> New
 							</a>
 							<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#csvimport">
@@ -61,8 +61,8 @@
 			</div>
 			<div class="modal-body">
 				<p>
-					The format should be "loginname,mailaddres,groupid1;groupid2;".
-					Neither setting the display name, nor setting roles or passwords is supported (yet).
+					The format should be "loginname,mailaddres,roleid1;roleid2".
+					Neither setting the display name nor setting passwords is supported (yet).
 					Example:
 				</p>
 				<pre>

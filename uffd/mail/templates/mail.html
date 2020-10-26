@@ -11,14 +11,14 @@
 	</div>
 	<div class="form-group col">
 		<label for="mail-receivers">Receiving addresses</label>
-		<textarea rows="10" class="form-control" name="mail-receivers">{{ mail.receivers|join('\n') }}</textarea>
+		<textarea rows="10" class="form-control" id="mail-receivers" name="mail-receivers">{{ mail.receivers|join('\n') }}</textarea>
 		<small class="form-text text-muted">
 			One address per line
 		</small>
 	</div>
 	<div class="form-group col">
 		<label for="mail-destinations">Destinations</label>
-		<textarea rows="10" class="form-control" name="mail-destinations">{{ mail.destinations|join('\n') }}</textarea>
+		<textarea rows="10" class="form-control" id="mail-destinations" name="mail-destinations">{{ mail.destinations|join('\n') }}</textarea>
 		<small class="form-text text-muted">
 			One address per line
 		</small>

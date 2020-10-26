@@ -4,7 +4,7 @@
 						"dn": "uid=testuser,ou=users,dc=example,dc=com",
             "raw": {
                 "cn": [
-                    "testuser"
+                    "Test User"
                 ],
                 "createTimestamp": [
                     "20200101000000Z"
@@ -25,7 +25,7 @@
                     "20001"
                 ],
                 "givenName": [
-                    "testuser"
+                    "Test User"
                 ],
                 "hasSubordinates": [
                     "FALSE"
@@ -77,7 +77,7 @@
             "dn": "uid=testadmin,ou=users,dc=example,dc=com",
             "raw": {
                 "cn": [
-                    "testadmin"
+                    "Test Admin"
                 ],
                 "createTimestamp": [
                     "20200101000000Z"
@@ -98,7 +98,7 @@
                     "20001"
                 ],
                 "givenName": [
-                    "Testadmin"
+                    "Test Admin"
                 ],
                 "hasSubordinates": [
                     "FALSE"
@@ -294,6 +294,52 @@
                 ],
                 "uniqueMember": [
                     "uid=testadmin,ou=users,dc=example,dc=com"
+                ]
+            }
+        },
+        {
+            "dn": "uid=test,ou=postfix,dc=example,dc=com",
+            "raw": {
+                "createTimestamp": [
+                    "20200101000000Z"
+                ],
+                "creatorsName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "entryDN": [
+                    "uid=test,ou=postfix,dc=example,dc=com"
+                ],
+                "entryUUID": [
+                    "926e5273-a545-4dfe-8f20-d1eeaf41d796"
+                ],
+                "hasSubordinates": [
+                    "FALSE"
+                ],
+                "mailacceptinggeneralid": [
+                    "test1@example.com",
+                    "test2@example.com"
+                ],
+                "maildrop": [
+                    "testuser@mail.example.com"
+                ],
+                "modifiersName": [
+                    "cn=admin,dc=example,dc=com"
+                ],
+                "modifyTimestamp": [
+                    "20200101000000Z"
+                ],
+                "objectClass": [
+                    "top",
+                    "postfixVirtual"
+                ],
+                "structuralObjectClass": [
+                    "postfixVirtual"
+                ],
+                "subschemaSubentry": [
+                    "cn=Subschema"
+                ],
+                "uid": [
+                    "test"
                 ]
             }
         }
