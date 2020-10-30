@@ -78,7 +78,7 @@ def loginname_is_safe(value):
 	if len(value) > 32 or len(value) < 1:
 		return False
 	for char in value:
-		if not char in string.ascii_lowercase + string.digits + '_':
+		if not char in string.ascii_lowercase + string.digits + '_-':
 			return False
 	return True
 
