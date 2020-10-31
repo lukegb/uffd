@@ -103,6 +103,7 @@ def userinfo():
 		nickname=user.loginname,
 		email=user.mail,
 		ldap_dn=user.dn,
+		ldap_uuid=user.uuid,
 		groups=[group.name for group in user.get_groups()]
 	)
 
