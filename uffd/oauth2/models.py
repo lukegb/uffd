@@ -5,7 +5,7 @@ from uffd.database import db
 from uffd.user.models import User
 
 class OAuth2Client:
-	def __init__(self, client_id, client_secret, redirect_uris, required_group=None):
+	def __init__(self, client_id, client_secret, redirect_uris, required_group=None, logout_urls=None):
 		self.client_id = client_id
 		self.client_secret = client_secret
 		# We only support the Authorization Code Flow for confidential (server-side) clients
@@ -13,6 +13,12 @@ class OAuth2Client:
 		self.redirect_uris = redirect_uris
 		self.default_scopes = ['profile']
 		self.required_group = required_group
+		self.logout_urls = []
+		for url in (logout_urls or []):
+			if isinstance(url, str):
+				self.logout_urls.append(['GET', url])
+			else:
+				self.logout_urls.append(url)
 
 	@classmethod
 	def from_id(cls, client_id):

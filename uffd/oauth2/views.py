@@ -1,7 +1,7 @@
 import datetime
 import functools
 
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, session, redirect
 from werkzeug.datastructures import ImmutableMultiDict
 
 from flask_oauthlib.provider import OAuth2Provider
@@ -86,6 +86,9 @@ def authorize(*args, **kwargs): # pylint: disable=unused-argument
 	# service access to his data. Since we only have trusted services (the
 	# clients defined in the server config), we don't ask for consent.
 	client = kwargs['request'].client
+	session['oauth2-clients'] = session.get('oauth2-clients', [])
+	if client.client_id not in session['oauth2-clients']:
+		session['oauth2-clients'].append(client.client_id)
 	return client.access_allowed(get_current_user())
 
 @bp.route('/token', methods=['GET', 'POST'])
@@ -113,3 +116,17 @@ def error():
 	err = args.pop('error', 'unknown')
 	error_description = args.pop('error_description', '')
 	return render_template('error.html', error=err, error_description=error_description, args=args)
+
+@bp.app_url_defaults
+def inject_logout_params(endpoint, values):
+	if endpoint != 'oauth2.logout' or not session.get('oauth2-clients'):
+		return
+	values['client_ids'] = ','.join(session['oauth2-clients'])
+
+@bp.route('/logout')
+def logout():
+	if not request.values.get('client_ids'):
+		return redirect(request.values.get('ref', '/'))
+	client_ids = request.values['client_ids'].split(',')
+	clients = [OAuth2Client.from_id(client_id) for client_id in client_ids]
+	return render_template('logout.html', clients=clients)

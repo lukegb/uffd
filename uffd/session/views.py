@@ -11,8 +11,11 @@ bp = Blueprint("session", __name__, template_folder='templates', url_prefix='/')
 
 @bp.route("/logout")
 def logout():
+	# The oauth2 module takes data from `session` and injects it into the url,
+	# so we need to build the url BEFORE we clear the session!
+	resp = redirect(url_for('oauth2.logout', ref=url_for('.login')))
 	session.clear()
-	return redirect(url_for('.login'))
+	return resp
 
 @bp.route("/login", methods=('GET', 'POST'))
 def login():
