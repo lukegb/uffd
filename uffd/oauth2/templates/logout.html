@@ -56,11 +56,7 @@ function logout_services() {
 		});
 		elem.data('urls').forEach(function (url) {
 			p = p.then(function () {
-				return fetch(url[1], {method: url[0], credentials: 'include'})
-				.then(function (resp) {
-					if (!resp.ok)
-						throw new Error('Server error');
-				});
+				return fetch(url[1], {method: url[0], credentials: 'include', mode: 'no-cors'});
 			});
 		});
 		p = p.then(function () {
