@@ -7,7 +7,7 @@ from flask import current_app
 from uffd import ldap
 
 class User():
-	def __init__(self, uid=None, loginname='', displayname='', mail='', groups=None, dn=None, uuid=None):
+	def __init__(self, uid=None, loginname='', displayname='', mail='', groups=None, dn=None, uuid=None): # pylint: disable=too-many-arguments
 		self.uid = uid
 		self.loginname = loginname
 		self.displayname = displayname
@@ -30,7 +30,12 @@ class User():
 				mail=ldapobject['mail'].value,
 				groups=ldap.get_ldap_array_attribute_safe(ldapobject, 'memberOf'),
 				dn=ldapobject.entry_dn,
-				uuid=ldapobject['entryUUID'].value
+				# The LDAP mock does not generate UUIDs for newly created LDAP objects,
+				# so we use a dummy value if the attribute is missing (only for testing!)
+				uuid=ldapobject['entryUUID'].value \
+					if 'entryUUID' in ldapobject.entry_attributes_as_dict \
+					or not current_app.config.get('LDAP_SERVICE_MOCK', False) \
+					else '00000000-0000-0000-0000-000000000000'
 			)
 
 	@classmethod
