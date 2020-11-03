@@ -124,7 +124,6 @@ class TestSession(UffdTestCase):
 		time.sleep(3)
 		self.assertLogout()
 
-	@unittest.skip('Not implemented, see #10')
 	def test_ratelimit(self):
 		for i in range(20):
 			self.client.post(path=url_for('session.login'),

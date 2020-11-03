@@ -13,8 +13,11 @@ from uffd.session import get_current_user, login_required, is_valid_session
 from uffd.ldap import loginname_to_dn
 from uffd.selfservice.models import PasswordToken, MailToken
 from uffd.database import db
+from uffd.ratelimit import host_ratelimit, Ratelimit, format_delay
 
 bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix='/self/')
+
+reset_ratelimit = Ratelimit('passwordreset', 1*60*60, 3)
 
 @bp.route("/")
 @register_navbar('Selfservice', icon='portrait', blueprint=bp, visible=is_valid_session)
@@ -53,6 +56,16 @@ def forgot_password():
 
 	loginname = request.values['loginname']
 	mail = request.values['mail']
+	reset_delay = reset_ratelimit.get_delay(loginname+'/'+mail)
+	host_delay = host_ratelimit.get_delay()
+	if reset_delay or host_delay:
+		if reset_delay > host_delay:
+			flash('We received too many password reset requests for this user! Please wait at least %s.'%format_delay(reset_delay))
+		else:
+			flash('We received too many requests from your ip address/network! Please wait at least %s.'%format_delay(host_delay))
+		return redirect(url_for('.forgot_password'))
+	reset_ratelimit.log(loginname+'/'+mail)
+	host_ratelimit.log()
 	flash("We sent a mail to this users mail address if you entered the correct mail and login name combination")
 	user = User.from_ldap_dn(loginname_to_dn(loginname))
 	if user and user.mail == mail:

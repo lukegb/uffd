@@ -401,7 +401,6 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(is_valid_session())
 
-	@unittest.skip('Not implemented, see #10')
 	def test_auth_ratelimit(self):
 		self.add_recovery_codes()
 		self.add_totp()

@@ -6,8 +6,11 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 
 from uffd.user.models import User
 from uffd.ldap import user_conn, uid_to_dn
+from uffd.ratelimit import Ratelimit, host_ratelimit, format_delay
 
 bp = Blueprint("session", __name__, template_folder='templates', url_prefix='/')
+
+login_ratelimit = Ratelimit('login', 1*60, 3)
 
 @bp.route("/logout")
 def logout():
@@ -24,10 +27,20 @@ def login():
 
 	username = request.form['loginname']
 	password = request.form['password']
+	login_delay = login_ratelimit.get_delay(username)
+	host_delay = host_ratelimit.get_delay()
+	if login_delay or host_delay:
+		if login_delay > host_delay:
+			flash('We received too many invalid login attempts for this user! Please wait at least %s.'%format_delay(login_delay))
+		else:
+			flash('We received too many requests from your ip address/network! Please wait at least %s.'%format_delay(host_delay))
+		return render_template('login.html', ref=request.values.get('ref'))
 	conn = user_conn(username, password)
 	if conn:
 		conn.search(conn.user, '(objectClass=person)')
 	if not conn or len(conn.entries) != 1:
+		login_ratelimit.log(username)
+		host_ratelimit.log()
 		flash('Login name or password is wrong')
 		return render_template('login.html', ref=request.values.get('ref'))
 	user = User.from_ldap(conn.entries[0])

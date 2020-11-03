@@ -9,8 +9,11 @@ from uffd.session.views import get_current_user, login_required, pre_mfa_login_r
 from uffd.ldap import uid_to_dn
 from uffd.user.models import User
 from uffd.csrf import csrf_protect
+from uffd.ratelimit import Ratelimit, format_delay
 
 bp = Blueprint('mfa', __name__, template_folder='templates', url_prefix='/mfa/')
+
+mfa_ratelimit = Ratelimit('mfa', 1*60, 3)
 
 @bp.route('/', methods=['GET'])
 @login_required()
@@ -223,6 +226,10 @@ def auth():
 @pre_mfa_login_required()
 def auth_finish():
 	user = get_current_user()
+	delay = mfa_ratelimit.get_delay(user.dn)
+	if delay:
+		flash('We received too many invalid attempts! Please wait at least %s.'%format_delay(delay))
+		return redirect(url_for('mfa.auth', ref=request.values.get('ref')))
 	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=user.dn).all()
 	totp_methods = TOTPMethod.query.filter_by(dn=user.dn).all()
 	for method in totp_methods:
@@ -241,5 +248,6 @@ def auth_finish():
 				flash('You only have a few recovery codes remaining. Make sure to generate new ones before they run out.')
 				return redirect(url_for('mfa.setup'))
 			return redirect(request.values.get('ref', url_for('index')))
+	mfa_ratelimit.log(user.dn)
 	flash('Two-factor authentication failed')
 	return redirect(url_for('mfa.auth', ref=request.values.get('ref')))
