@@ -67,7 +67,10 @@ def forgot_password():
 	reset_ratelimit.log(loginname+'/'+mail)
 	host_ratelimit.log()
 	flash("We sent a mail to this users mail address if you entered the correct mail and login name combination")
-	user = User.from_ldap_dn(loginname_to_dn(loginname))
+	try:
+		user = User.from_ldap_dn(loginname_to_dn(loginname))
+	except ValueError:
+		user = None
 	if user and user.mail == mail:
 		send_passwordreset(loginname)
 	return redirect(url_for('session.login'))

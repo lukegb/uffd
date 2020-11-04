@@ -176,6 +176,15 @@ class TestSelfservice(UffdTestCase):
 		self.assertFalse(hasattr(self.app, 'last_mail'))
 		self.assertEqual(len(PasswordToken.query.all()), 0)
 
+	# Regression test for #31
+	def test_forgot_password_invalid_user(self):
+		r = self.client.post(path=url_for('selfservice.forgot_password'),
+			data={'loginname': '=', 'mail': 'test@example.com'}, follow_redirects=True)
+		dump('forgot_password_submit_invalid_user', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertFalse(hasattr(self.app, 'last_mail'))
+		self.assertEqual(len(PasswordToken.query.all()), 0)
+
 	def test_token_password(self):
 		user = User.from_ldap_dn('uid=testuser,ou=users,dc=example,dc=com')
 		oldpw = get_ldap_password()

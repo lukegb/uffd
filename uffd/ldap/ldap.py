@@ -67,7 +67,7 @@ def uid_to_dn(uid):
 def loginname_to_dn(loginname):
 	if loginname_is_safe(loginname):
 		return 'uid={},{}'.format(loginname, current_app.config["LDAP_BASE_USER"])
-	raise Exception('unsafe login name')
+	raise ValueError('unsafe login name')
 
 def mail_to_dn(uid):
 	if mailname_is_safe(uid):
