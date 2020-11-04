@@ -2,7 +2,7 @@ import string
 
 from flask import Blueprint, current_app
 from ldap3.utils.conv import escape_filter_chars
-from ldap3.core.exceptions import LDAPBindError, LDAPCursorError
+from ldap3.core.exceptions import LDAPBindError, LDAPCursorError, LDAPPasswordIsMandatoryError
 
 from ldap3 import Server, Connection, ALL, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES, MOCK_SYNC
 
@@ -45,13 +45,16 @@ def user_conn(loginname, password):
 		# implementation just compares the string in the objects's userPassword
 		# field with the password, no support for hashing or OpenLDAP-style
 		# password-prefixes ("{PLAIN}..." or "{ssha512}...").
-		if not conn.rebind(loginname_to_dn(loginname), password):
+		try:
+			if not conn.rebind(loginname_to_dn(loginname), password):
+				return False
+		except (LDAPBindError, LDAPPasswordIsMandatoryError):
 			return False
 		return get_mock_conn()
 	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
 	try:
 		return fix_connection(Connection(server, loginname_to_dn(loginname), password, auto_bind=True))
-	except LDAPBindError:
+	except (LDAPBindError, LDAPPasswordIsMandatoryError):
 		return False
 
 def get_conn():

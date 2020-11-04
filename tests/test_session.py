@@ -75,7 +75,6 @@ class TestSession(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertLogout()
 
-	@unittest.skip('See #27')
 	def test_empty_password(self):
 		r = self.client.post(path=url_for('session.login'),
 			data={'loginname': 'testuser', 'password': ''}, follow_redirects=True)
