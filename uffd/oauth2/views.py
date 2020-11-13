@@ -71,7 +71,7 @@ def inject_scope(func):
 	@functools.wraps(func)
 	def decorator(*args, **kwargs):
 		args = request.args.to_dict()
-		if 'profile' not in args:
+		if not args.get('scope'):
 			args['scope'] = 'profile'
 		request.args = ImmutableMultiDict(args)
 		return func(*args, **kwargs)
