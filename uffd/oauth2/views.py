@@ -1,5 +1,6 @@
 import datetime
 import functools
+import urllib.parse
 
 from flask import Blueprint, request, jsonify, render_template, session, redirect
 from werkzeug.datastructures import ImmutableMultiDict
@@ -73,7 +74,7 @@ def inject_scope(func):
 		args = request.args.to_dict()
 		if not args.get('scope'):
 			args['scope'] = 'profile'
-		request.args = ImmutableMultiDict(args)
+			return redirect(request.base_url+'?'+urllib.parse.urlencode(args))
 		return func(*args, **kwargs)
 	return decorator
 
