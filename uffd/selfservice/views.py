@@ -142,7 +142,7 @@ def send_mail_verification(loginname, newmail):
 	msg['Subject'] = 'Mail verification'
 	send_mail(newmail, msg)
 
-def send_passwordreset(loginname):
+def send_passwordreset(loginname, new=False):
 	session = db.session
 	expired_tokens = PasswordToken.query.filter(PasswordToken.created < (datetime.datetime.now() - datetime.timedelta(days=2))).all()
 	duplicate_tokens = PasswordToken.query.filter(PasswordToken.loginname == loginname).all()
@@ -156,8 +156,12 @@ def send_passwordreset(loginname):
 	user = User.from_ldap_dn(loginname_to_dn(loginname))
 
 	msg = EmailMessage()
-	msg.set_content(render_template('passwordreset.mail.txt', user=user, token=token.token))
-	msg['Subject'] = 'Password reset'
+	if new:
+		msg.set_content(render_template('newuser.mail.txt', user=user, token=token.token))
+		msg['Subject'] = 'Welcome to the CCCV infrastructure'
+	else:
+		msg.set_content(render_template('passwordreset.mail.txt', user=user, token=token.token))
+		msg['Subject'] = 'Password reset'
 	send_mail(user.mail, msg)
 
 def send_mail(to_address, msg):

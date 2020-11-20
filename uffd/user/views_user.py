@@ -88,7 +88,7 @@ def update(uid=False):
 
 	if user.to_ldap(new=is_newuser):
 		if is_newuser:
-			send_passwordreset(user.loginname)
+			send_passwordreset(user.loginname, new=True)
 			flash('User created. We sent the user a password reset link by mail')
 		else:
 			flash('User updated')
@@ -158,7 +158,7 @@ def csvimport():
 			result = newuser.to_ldap(new=True)
 			print(result)
 			if result:
-				send_passwordreset(newuser.loginname)
+				send_passwordreset(newuser.loginname, new=True)
 
 				usergroups = set()
 				for role in Role.get_for_user(newuser).all():
