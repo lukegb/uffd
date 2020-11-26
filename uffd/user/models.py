@@ -7,14 +7,13 @@ from flask import current_app
 from uffd import ldap
 
 class User():
-	def __init__(self, uid=None, loginname='', displayname='', mail='', groups=None, dn=None, uuid=None):
+	def __init__(self, uid=None, loginname='', displayname='', mail='', groups=None, dn=None):
 		self.uid = uid
 		self.loginname = loginname
 		self.displayname = displayname
 		self.mail = mail
 		self.newpassword = None
 		self.dn = dn
-		self.uuid = uuid
 
 		self.groups_ldap = groups or []
 		self.initial_groups_ldap = groups or []
@@ -30,7 +29,6 @@ class User():
 				mail=ldapobject['mail'].value,
 				groups=ldap.get_ldap_array_attribute_safe(ldapobject, 'memberOf'),
 				dn=ldapobject.entry_dn,
-				uuid=ldapobject['entryUUID'].value
 			)
 
 	@classmethod
