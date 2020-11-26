@@ -100,6 +100,9 @@ def token():
 @oauth.require_oauth('profile')
 def userinfo():
 	user = request.oauth.user
+	# We once exposed the entryUUID here as "ldap_uuid" until realising that it
+	# can (and does!) change randomly and is therefore entirely useless as an
+	# indentifier.
 	return jsonify(
 		id=user.uid,
 		name=user.displayname,
