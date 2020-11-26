@@ -46,6 +46,7 @@ The userinfo endpoint returns json data with the following structure:
   "name": "Test User",
   "nickname": "testuser"
   "email": "testuser@example.com",
+  "ldap_dn": "uid=testuser,ou=users,dc=example,dc=com",
   "groups": [
     "uffd_access",
     "users"
