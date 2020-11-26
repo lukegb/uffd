@@ -3,7 +3,6 @@ import functools
 import urllib.parse
 
 from flask import Blueprint, request, jsonify, render_template, session, redirect
-from werkzeug.datastructures import ImmutableMultiDict
 
 from flask_oauthlib.provider import OAuth2Provider
 
