@@ -87,6 +87,10 @@ class TestViews(UffdTestCase):
 			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
 		state = 'teststate'
 		r = self.client.get(path=url_for('oauth2.authorize', response_type='code', client_id='test', state=state, redirect_uri='http://localhost:5009/callback'), follow_redirects=False)
+		while True:
+			if r.status_code != 302 or r.location.startswith('http://localhost:5009/callback'):
+				break
+			r = self.client.get(r.location, follow_redirects=False)
 		self.assertEqual(r.status_code, 302)
 		self.assertTrue(r.location.startswith('http://localhost:5009/callback'))
 		args = parse_qs(urlparse(r.location).query)

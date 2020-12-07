@@ -13,6 +13,9 @@ A web service to manage LDAP users, groups and permissions.
 - python3-flask-oauthlib
 - git (cli utility, musst be in path)
 
+Some of the dependencies (especially fido2 and flask-oauthlib) changed their API in recent versions, so make sure to install the versions from Debian Buster.
+You can also use virtualenv with the supplied `requirements.txt`.
+
 ## development
 
 During development, you may want to enable LDAP mocking, as you otherwise need to have access to an actual LDAP server with the required schema.
@@ -46,6 +49,7 @@ The userinfo endpoint returns json data with the following structure:
   "name": "Test User",
   "nickname": "testuser"
   "email": "testuser@example.com",
+  "ldap_dn": "uid=testuser,ou=users,dc=example,dc=com",
   "groups": [
     "uffd_access",
     "users"

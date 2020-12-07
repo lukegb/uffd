@@ -3,7 +3,6 @@ import functools
 import urllib.parse
 
 from flask import Blueprint, request, jsonify, render_template, session, redirect
-from werkzeug.datastructures import ImmutableMultiDict
 
 from flask_oauthlib.provider import OAuth2Provider
 
@@ -101,13 +100,15 @@ def token():
 @oauth.require_oauth('profile')
 def userinfo():
 	user = request.oauth.user
+	# We once exposed the entryUUID here as "ldap_uuid" until realising that it
+	# can (and does!) change randomly and is therefore entirely useless as an
+	# indentifier.
 	return jsonify(
 		id=user.uid,
 		name=user.displayname,
 		nickname=user.loginname,
 		email=user.mail,
 		ldap_dn=user.dn,
-		ldap_uuid=user.uuid,
 		groups=[group.name for group in user.get_groups()]
 	)
 
