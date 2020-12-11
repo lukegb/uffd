@@ -79,7 +79,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{% for role in roles %}
+						{% for role in roles|sort(attribute="name") %}
 						<tr id="role-{{ role.id }}">
 							<td>
 								<div class="form-check">
