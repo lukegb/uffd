@@ -8,7 +8,7 @@
 
 <form action="{{ url_for("selfservice.update") }}" method="POST" onInput="
 	password2.setCustomValidity(password1.value != password2.value ? 'Passwords do not match.' : '');
-	password1.setCustomValidity((password1.value.length < 8 || password1.value.length == 0) ? 'Password is too short' : '') ">
+	password1.setCustomValidity((password1.value.length < 8 && password1.value.length > 0) ? 'Password is too short' : '') ">
 <div class="align-self-center row">
 	<div class="form-group col-md-6">
 		<label for="user-uid">Uid</label>
