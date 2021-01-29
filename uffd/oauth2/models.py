@@ -29,18 +29,7 @@ class OAuth2Client:
 		return self.redirect_uris[0]
 
 	def access_allowed(self, user):
-		if not self.required_group:
-			return True
-		user_groups = {group.name for group in user.get_groups()}
-		group_sets = self.required_group
-		if isinstance(group_sets, str):
-			group_sets = [group_sets]
-		for group_set in group_sets:
-			if isinstance(group_set, str):
-				group_set = [group_set]
-			if set(group_set) - user_groups == set():
-				return True
-		return False
+		return user.has_permission(self.required_group)
 
 class OAuth2Grant(db.Model):
 	__tablename__ = 'oauth2grant'

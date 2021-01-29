@@ -91,6 +91,7 @@ class User():
 				groups.append(newgroup)
 		self._groups = groups
 		return groups
+
 	def replace_group_dns(self, values):
 		self._groups = None
 		self.groups_ldap = values
@@ -102,6 +103,20 @@ class User():
 		groups = self.get_groups()
 		for i in groups:
 			if i.name == name:
+				return True
+		return False
+
+	def has_permission(self, required_group=None):
+		if not required_group:
+			return True
+		group_names = {group.name for group in self.get_groups()}
+		group_sets = required_group
+		if isinstance(group_sets, str):
+			group_sets = [group_sets]
+		for group_set in group_sets:
+			if isinstance(group_set, str):
+				group_set = [group_set]
+			if set(group_set) - group_names == set():
 				return True
 		return False
 

@@ -26,6 +26,31 @@ def get_user_password():
 def get_admin():
 	return User.from_ldap_dn('uid=testadmin,ou=users,dc=example,dc=com')
 
+class TestUserModel(UffdTestCase):
+	def test_has_permission(self):
+		user = get_user() # has 'users' and 'uffd_access' group
+		admin = get_admin() # has 'users', 'uffd_access' and 'uffd_admin' group
+		self.assertTrue(user.has_permission(None))
+		self.assertTrue(admin.has_permission(None))
+		self.assertTrue(user.has_permission('users'))
+		self.assertTrue(admin.has_permission('users'))
+		self.assertFalse(user.has_permission('notagroup'))
+		self.assertFalse(admin.has_permission('notagroup'))
+		self.assertFalse(user.has_permission('uffd_admin'))
+		self.assertTrue(admin.has_permission('uffd_admin'))
+		self.assertFalse(user.has_permission(['uffd_admin']))
+		self.assertTrue(admin.has_permission(['uffd_admin']))
+		self.assertFalse(user.has_permission(['uffd_admin', 'notagroup']))
+		self.assertTrue(admin.has_permission(['uffd_admin', 'notagroup']))
+		self.assertFalse(user.has_permission(['notagroup', 'uffd_admin']))
+		self.assertTrue(admin.has_permission(['notagroup', 'uffd_admin']))
+		self.assertTrue(user.has_permission(['uffd_admin', 'users']))
+		self.assertTrue(admin.has_permission(['uffd_admin', 'users']))
+		self.assertTrue(user.has_permission([['uffd_admin', 'users'], ['users', 'uffd_access']]))
+		self.assertTrue(admin.has_permission([['uffd_admin', 'users'], ['users', 'uffd_access']]))
+		self.assertFalse(user.has_permission(['uffd_admin', ['users', 'notagroup']]))
+		self.assertTrue(admin.has_permission(['uffd_admin', ['users', 'notagroup']]))
+
 class TestUserViews(UffdTestCase):
 	def setUp(self):
 		super().setUp()

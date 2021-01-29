@@ -41,39 +41,10 @@ class TestOAuth2Client(UffdTestCase):
 	def test_access_allowed(self):
 		user = get_user() # has 'users' and 'uffd_access' group
 		admin = get_admin() # has 'users', 'uffd_access' and 'uffd_admin' group
-		client = OAuth2Client('test', '', [''], None)
-		self.assertTrue(client.access_allowed(user))
-		self.assertTrue(client.access_allowed(admin))
-		client = OAuth2Client('test', '', [''], 'users')
-		self.assertTrue(client.access_allowed(user))
-		self.assertTrue(client.access_allowed(admin))
-		client = OAuth2Client('test', '', [''], 'notagroup')
-		self.assertFalse(client.access_allowed(user))
-		self.assertFalse(client.access_allowed(admin))
-		client = OAuth2Client('test', '', [''], 'uffd_admin')
-		self.assertFalse(client.access_allowed(user))
-		self.assertTrue(client.access_allowed(admin))
-		client = OAuth2Client('test', '', [''], ['uffd_admin'])
-		self.assertFalse(client.access_allowed(user))
-		self.assertTrue(client.access_allowed(admin))
-		client = OAuth2Client('test', '', [''], ['uffd_admin', 'notagroup'])
-		self.assertFalse(client.access_allowed(user))
-		self.assertTrue(client.access_allowed(admin))
-		client = OAuth2Client('test', '', [''], ['notagroup', 'uffd_admin' ])
-		self.assertFalse(client.access_allowed(user))
-		self.assertTrue(client.access_allowed(admin))
-		client = OAuth2Client('test', '', [''], ['uffd_admin', 'users'])
-		self.assertTrue(client.access_allowed(user))
-		self.assertTrue(client.access_allowed(admin))
-		client = OAuth2Client('test', '', [''], ['uffd_admin', 'users'])
-		self.assertTrue(client.access_allowed(user))
-		self.assertTrue(client.access_allowed(admin))
-		client = OAuth2Client('test', '', [''], [['uffd_admin', 'users'], ['users', 'uffd_access']])
-		self.assertTrue(client.access_allowed(user))
-		self.assertTrue(client.access_allowed(admin))
 		client = OAuth2Client('test', '', [''], ['uffd_admin', ['users', 'notagroup']])
 		self.assertFalse(client.access_allowed(user))
 		self.assertTrue(client.access_allowed(admin))
+		# More required_group values are tested by TestUserModel.test_has_permission
 
 class TestViews(UffdTestCase):
 	def setUpApp(self):

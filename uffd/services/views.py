@@ -26,11 +26,11 @@ def get_services(user=None):
 			'links': [],
 		}
 		if service_data.get('required_group'):
-			if not user or not user.is_in_group(service_data['required_group']):
+			if not user or not user.has_permission(service_data['required_group']):
 				service['has_access'] = False
 		for permission_data in service_data.get('permission_levels', []):
 			if permission_data.get('required_group'):
-				if not user or not user.is_in_group(permission_data['required_group']):
+				if not user or not user.has_permission(permission_data['required_group']):
 					continue
 			if not permission_data.get('name'):
 				continue
@@ -40,14 +40,14 @@ def get_services(user=None):
 			continue
 		for group_data in service_data.get('groups', []):
 			if group_data.get('required_group'):
-				if not user or not user.is_in_group(group_data['required_group']):
+				if not user or not user.has_permission(group_data['required_group']):
 					continue
 			if not group_data.get('name'):
 				continue
 			service['groups'].append(group_data)
 		for info_data in service_data.get('infos', []):
 			if info_data.get('required_group'):
-				if not user or not user.is_in_group(info_data['required_group']):
+				if not user or not user.has_permission(info_data['required_group']):
 					continue
 			if not info_data.get('title') or not info_data.get('html'):
 				continue
@@ -59,7 +59,7 @@ def get_services(user=None):
 			service['infos'].append(info)
 		for link_data in service_data.get('links', []):
 			if link_data.get('required_group'):
-				if not user or not user.is_in_group(link_data['required_group']):
+				if not user or not user.has_permission(link_data['required_group']):
 					continue
 			if not link_data.get('url') or not link_data.get('title'):
 				continue
