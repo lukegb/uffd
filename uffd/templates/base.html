@@ -36,17 +36,18 @@
 
 		<nav class="navbar navbar-expand-md navbar-dark bg-dark static-top" >
 			<a class="navbar-brand" href="{{ url_for('index') }}">uffd</a>
+			{% if getnavbar() %}
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#baseNavbar" aria-controls="baseNavbar" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
 			</button>
 
 			<div class="collapse navbar-collapse" id="baseNavbar">
 				<ul class="navbar-nav mr-auto">
-					{% for n in navbar if (not n.group) and (not n.visible or n.visible()) %}
+					{% for n in getnavbar() if not n.group %}
 					{{ navbaricon(n) }}
 					{% endfor %}
 
-					{% for grouper, list in navbar|rejectattr("group", "none")|groupby("group")  %}
+					{% for grouper, list in getnavbar()|rejectattr("group", "none")|groupby("group")  %}
 					<li class="nav-item dropdown {% if request.endpoint in list|map(attribute='endpoint') %} active{% endif %}">
 						<a
 							class="nav-link dropdown-toggle dropdow-clickable"
@@ -76,9 +77,8 @@
 					</li>
 				</ul>
 				{% endif %}
-
-
 			</div>
+			{% endif %}
 		</nav>
 		{% endblock navbar %}
 

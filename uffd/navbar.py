@@ -3,7 +3,7 @@ navbarList = []
 # pylint: enable=invalid-name
 
 def setup_navbar(app):
-	app.jinja_env.globals['navbar'] = navbarList
+	app.jinja_env.globals['getnavbar'] = lambda: [n for n in navbarList if n['visible']()]
 
 # iconlib can be 'bootstrap'
 # ( see: http://getbootstrap.com/components/#glyphicons )
@@ -27,7 +27,7 @@ def register_navbar(name, iconlib='fa', icon=None, group=None, endpoint=None, bl
 		item['endpoint'] = urlendpoint
 		item['name'] = name
 		item['blueprint'] = blueprint
-		item['visible'] = visible
+		item['visible'] = visible or (lambda: True)
 		navbarList.append(item)
 		return func
 	return wrapper
