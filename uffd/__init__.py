@@ -18,6 +18,7 @@ def create_app(test_config=None):
 	app.config.from_mapping(
 		SECRET_KEY=secrets.token_hex(128),
 		SQLALCHEMY_DATABASE_URI="sqlite:///{}".format(os.path.join(app.instance_path, 'uffd.sqlit3')),
+		BRANDING_LOGO_URL=url_for("static", filename="empty.png")
 	)
 	app.config.from_pyfile('default_config.cfg')
 
