@@ -83,3 +83,6 @@ class TestViews(UffdTestCase):
 		self.assertEqual(r.json['nickname'], user.loginname)
 		self.assertEqual(r.json['email'], user.mail)
 		self.assertTrue(r.json.get('groups'))
+
+class TestViewsOL(TestViews):
+	use_openldap = True

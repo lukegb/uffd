@@ -132,3 +132,6 @@ class TestSession(UffdTestCase):
 		dump('login_ratelimit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(is_valid_session())
+
+class TestSessionOL(TestSession):
+	use_openldap = True

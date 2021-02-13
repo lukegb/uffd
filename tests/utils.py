@@ -17,17 +17,31 @@ def dump(basename, resp):
 		f.write(resp.data)
 
 class UffdTestCase(unittest.TestCase):
+	use_openldap = False
+
 	def setUp(self):
 		self.dir = tempfile.mkdtemp()
 		# It would be far better to create a minimal app here, but since the
 		# session module depends on almost everything else, that is not really feasable
-		self.app = create_app({
+		config = {
 			'TESTING': True,
 			'DEBUG': True,
 			'SQLALCHEMY_DATABASE_URI': 'sqlite:///%s/db.sqlite'%self.dir,
 			'SECRET_KEY': 'DEBUGKEY',
 			'LDAP_SERVICE_MOCK': True,
-		})
+		}
+		if self.use_openldap:
+			if not os.environ.get('UNITTEST_OPENLDAP'):
+				self.skipTest('OPENLDAP_TESTING not set')
+			config['LDAP_SERVICE_MOCK'] = False
+			config['LDAP_SERVICE_URL'] = 'ldap://localhost'
+			config['LDAP_SERVICE_BIND_DN'] = 'cn=uffd,ou=system,dc=example,dc=com'
+			config['LDAP_SERVICE_BIND_PASSWORD'] = 'uffd-ldap-password'
+			os.system("ldapdelete -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w 'uffd-ldap-password' -H 'ldap://localhost' -f ldap_server_entries_cleanup.ldif > /dev/null 2>&1")
+			os.system("ldapadd -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w 'uffd-ldap-password' -H 'ldap://localhost' -f ldap_server_entries_add.ldif")
+			os.system("ldapmodify -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w 'uffd-ldap-password' -H 'ldap://localhost' -f ldap_server_entries_modify.ldif")
+			os.system("/usr/sbin/slapcat -n 1 -l /dev/stdout")
+		self.app = create_app(config)
 		self.setUpApp()
 		self.client = self.app.test_client()
 		self.client.__enter__()

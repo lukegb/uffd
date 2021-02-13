@@ -1,0 +1,42 @@
+version: 1
+dn: uid=testuser,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: posixAccount
+cn: Test User
+displayName: Test User
+gidNumber: 20001
+givenName: Test User
+homeDirectory: /home/testuser
+mail: testuser@example.com
+sn:: IA==
+uid: testuser
+uidNumber: 10000
+userPassword: {ssha512}P6mPgcE974bMZkYHnowsXheE74lqtR0HemVUjZxZT7cgPlEhE7fSU1DYEhOx1ZYhOTuE7Ei3EaMFSSoi9Jqf5MHHcjG9oVWL
+
+dn: uid=testadmin,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: posixAccount
+cn: Test Admin
+displayName: Test Admin
+gidNumber: 20001
+givenName: Test Admin
+homeDirectory: /home/testadmin
+mail: testadmin@example.com
+sn:: IA==
+uid: testadmin
+uidNumber: 10001
+userPassword: {ssha512}SGARsM9lNP9PQ4S+M/pmA7MIDvdyF9WZ8Ki2JvjvxIlMLene5+s+M+Qfi0lfJHOSqucd6CR0F7vDl32rEJNd1ZPCLbCO20pB
+
+dn: uid=test,ou=postfix,dc=example,dc=com
+objectClass: top
+objectClass: postfixVirtual
+uid: test
+mailacceptinggeneralid: test1@example.com
+mailacceptinggeneralid: test2@example.com
+maildrop: testuser@mail.example.com

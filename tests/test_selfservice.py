@@ -265,3 +265,5 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(oldpw, get_ldap_password())
 
+class TestSelfserviceOL(TestSelfservice):
+	use_openldap = True

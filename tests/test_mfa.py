@@ -422,3 +422,6 @@ class TestMfaViews(UffdTestCase):
 		self.assertFalse(is_valid_session())
 
 	# TODO: webauthn auth tests
+
+class TestMfaViewsOL(TestMfaViews):
+	use_openldap = True

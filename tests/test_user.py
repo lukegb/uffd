@@ -51,6 +51,9 @@ class TestUserModel(UffdTestCase):
 		self.assertFalse(user.has_permission(['uffd_admin', ['users', 'notagroup']]))
 		self.assertTrue(admin.has_permission(['uffd_admin', ['users', 'notagroup']]))
 
+class TestUserModelOL(TestUserModel):
+	use_openldap = True
+
 class TestUserViews(UffdTestCase):
 	def setUp(self):
 		super().setUp()
@@ -323,6 +326,9 @@ newuser12,newuser12@example.com,{role1.id};{role1.id}
 		self.assertEqual(user.mail, 'newuser12@example.com')
 		self.assertEqual(roles, ['base', 'role1'])
 
+class TestUserViewsOL(TestUserViews):
+	use_openldap = True
+
 class TestGroupViews(UffdTestCase):
 	def setUp(self):
 		super().setUp()
@@ -339,3 +345,5 @@ class TestGroupViews(UffdTestCase):
 		dump('group_show', r)
 		self.assertEqual(r.status_code, 200)
 
+class TestGroupViewsOL(TestGroupViews):
+	use_openldap = True

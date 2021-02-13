@@ -90,3 +90,6 @@ class TestMailViews(UffdTestCase):
 		dump('mail_delete', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(get_mail())
+
+class TestMailViewsOL(TestMailViews):
+	use_openldap = True

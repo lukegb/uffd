@@ -91,3 +91,6 @@ class TestRoleViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(Role.query.get(role_id))
 		# TODO: verify that group memberships are updated (currently not possible with ldap mock!)
+
+class TestRoleViewsOL(TestRoleViews):
+	use_openldap = True
