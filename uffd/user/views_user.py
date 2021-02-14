@@ -155,16 +155,11 @@ def csvimport():
 						continue
 					role.add_member(newuser)
 
+			recalculate_user_groups(newuser)
+
 			result = newuser.to_ldap(new=True)
-			print(result)
 			if result:
 				send_passwordreset(newuser.loginname, new=True)
-
-				usergroups = set()
-				for role in Role.get_for_user(newuser).all():
-					usergroups.update(role.group_dns())
-				newuser.replace_group_dns(usergroups)
-
 				session.commit()
 				usersadded += 1
 			else:
