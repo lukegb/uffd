@@ -48,7 +48,7 @@ class TestRoleViews(UffdTestCase):
 		role = Role('base', 'Base role description')
 		db.session.add(role)
 		db.session.commit()
-		role.add_group(Group.from_ldap_dn('cn=uffd_admin,ou=groups,dc=example,dc=com'))
+		role.add_group(Group.ldap_get('cn=uffd_admin,ou=groups,dc=example,dc=com'))
 		db.session.commit()
 		self.assertEqual(role.name, 'base')
 		self.assertEqual(role.description, 'Base role description')

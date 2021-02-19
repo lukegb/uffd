@@ -36,6 +36,29 @@ def get_conn():
 	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
 	return fix_connection(Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"], current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=True))
 
+def user_conn(dn, password):
+	if current_app.config.get('LDAP_SERVICE_MOCK', False):
+		conn = get_mock_conn()
+		# Since we reuse the same conn for all calls to `user_conn()` we
+		# simulate the password check by rebinding. Note that ldap3's mocking
+		# implementation just compares the string in the objects's userPassword
+		# field with the password, no support for hashing or OpenLDAP-style
+		# password-prefixes ("{PLAIN}..." or "{ssha512}...").
+		try:
+			if not conn.rebind(dn, password):
+				return False
+		except (LDAPBindError, LDAPPasswordIsMandatoryError):
+			return False
+		return get_mock_conn()
+	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
+	try:
+		return fix_connection(Connection(server, dn, password, auto_bind=True))
+	except (LDAPBindError, LDAPPasswordIsMandatoryError):
+		return False
+
+class LDAPCommitError(Exception):
+	pass
+
 class LDAPSession:
 	def __init__(self):
 		self.__objects = {} # dn -> instance
@@ -66,8 +89,6 @@ class LDAPSession:
 			self.__relations[key].add(srcobj)
 
 	def add(self, obj):
-		if obj.ldap_created:
-			raise Exception()
 		self.register(obj)
 
 	def delete(self, obj):
@@ -78,7 +99,7 @@ class LDAPSession:
 	def commit(self):
 		while self.__to_delete:
 			self.__to_delete.pop(0).ldap_delete()
-		for obj in self.__objects.values():
+		for obj in list(self.__objects.values()):
 			if not obj.ldap_created:
 				obj.ldap_create()
 			elif obj.ldap_dirty:
@@ -171,10 +192,9 @@ class LDAPBackref:
 		srccls.ldap_relations.add(srcattr)
 
 	def init(self, obj):
-		if self.srcattr in obj.ldap_relation_data:
-			return
-		# The query instanciates all related objects that in turn add their relations to session
-		self.srccls.ldap_filter_by(**{self.srcattr: obj.dn})
+		if self.srcattr not in obj.ldap_relation_data and obj.ldap_created:
+			# The query instanciates all related objects that in turn add their relations to session
+			self.srccls.ldap_filter_by_raw(**{self.srcattr: obj.dn})
 		obj.ldap_relation_data.add(self.srcattr)
 
 	def __get__(self, obj, objtype=None):
@@ -261,7 +281,13 @@ class LDAPModel:
 		return '<%s %s>'%(name, self.__ldap_dn)
 
 	def build_dn(self):
-		return '%s=%s,%s'%(self.ldap_dn_attribute, self.__attributes[self.ldap_dn_attribute][0], self.ldap_dn_base)
+		if self.ldap_dn_attribute is None:
+			return None
+		if self.ldap_dn_base is None:
+			return None
+		if self.__attributes.get(self.ldap_dn_attribute) is None:
+			return None
+		return '%s=%s,%s'%(self.ldap_dn_attribute, escape_filter_chars(self.__attributes[self.ldap_dn_attribute][0]), self.ldap_dn_base)
 
 	@property
 	def dn(self):
@@ -295,7 +321,7 @@ class LDAPModel:
 		return res
 
 	@classmethod
-	def ldap_filter_by(cls, **kwargs):
+	def ldap_filter_by_raw(cls, **kwargs):
 		filters = [cls.ldap_filter]
 		for key, value in kwargs.items():
 			filters.append('(%s=%s)'%(key, escape_filter_chars(value)))
@@ -308,6 +334,14 @@ class LDAPModel:
 				obj = ldap.session.register(cls(_ldap_dn=entry['dn'], _ldap_attributes=entry['attributes']))
 			res.append(obj)
 		return res
+
+	@classmethod
+	def ldap_filter_by(cls, **kwargs):
+		_kwargs = {}
+		for key, value in kwargs.items():
+			attr = getattr(cls, key)
+			_kwargs[attr.name] = attr.encode(value)
+		return cls.ldap_filter_by_raw(**_kwargs)
 
 	def ldap_reset(self):
 		for name in (self.ldap_relations or []):
@@ -348,7 +382,7 @@ class LDAPModel:
 				self.__changes[key] = [(MODIFY_REPLACE, values)]
 		success = conn.add(self.dn, self.ldap_object_classes, self.__attributes)
 		if not success:
-			raise Exception()
+			raise LDAPCommitError()
 		self.__changes = {}
 		self.__ldap_attributes = deepcopy(self.__attributes)
 
@@ -358,42 +392,3 @@ class LDAPModel:
 		if not success:
 			raise Exception()
 		self.__ldap_attributes = {}
-
-from ldap3.utils.hashed import hashed
-import secrets
-
-class User(LDAPModel):
-	ldap_base = 'ou=users,dc=example,dc=com'
-	ldap_dn_attribute = 'uid'
-	ldap_dn_base = 'ou=users,dc=example,dc=com'
-	ldap_filter = '(objectClass=person)'
-	ldap_object_classes = ['top', 'inetOrgPerson', 'organizationalPerson', 'person', 'posixAccount']
-
-	uid = LDAPAttribute('uidNumber')
-	loginname = LDAPAttribute('uid')
-	displayname = LDAPAttribute('cn')
-	mail = LDAPAttribute('mail')
-	pwhash = LDAPAttribute('userPassword', default=lambda: hashed(HASHED_SALTED_SHA512, secrets.token_hex(128)))
-
-	def password(self, value):
-		self.pwhash = hashed(HASHED_SALTED_SHA512, value)
-	password = property(fset=password)
-
-class Group(LDAPModel):
-	ldap_base = 'ou=groups,dc=example,dc=com'
-	ldap_filter = '(objectClass=groupOfUniqueNames)'
-
-	gid = LDAPAttribute('gidNumber')
-	name = LDAPAttribute('cn')
-	description = LDAPAttribute('description', default='')
-	member_dns= LDAPAttribute('uniqueMember', multi=True)
-
-	members = LDAPRelation('uniqueMember', User, backref='groups')
-
-class Mail(LDAPModel):
-	ldap_base = 'ou=postfix,dc=example,dc=com'
-	ldap_dn_attribute = 'uid'
-	ldap_dn_base = 'ou=postfix,dc=example,dc=com'
-	ldap_filter = '(objectClass=postfixVirtual)'
-	ldap_object_classes = ['top', 'postfixVirtual']
-

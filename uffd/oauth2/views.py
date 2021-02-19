@@ -109,7 +109,7 @@ def userinfo():
 		nickname=user.loginname,
 		email=user.mail,
 		ldap_dn=user.dn,
-		groups=[group.name for group in user.get_groups()]
+		groups=[group.name for group in user.groups]
 	)
 
 @bp.route('/error')

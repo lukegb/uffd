@@ -20,12 +20,8 @@ def group_acl_check():
 @bp.route("/")
 @register_navbar('Groups', icon='layer-group', blueprint=bp, visible=group_acl_check)
 def index():
-	return render_template('group_list.html', groups=Group.from_ldap_all())
+	return render_template('group_list.html', groups=Group.ldap_all())
 
 @bp.route("/<int:gid>")
 def show(gid):
-	conn = get_conn()
-	conn.search(current_app.config["LDAP_BASE_GROUPS"], '(&(objectclass=groupOfUniqueNames)(gidNumber={}))'.format((escape_filter_chars(gid))))
-	assert len(conn.entries) == 1
-	group = Group.from_ldap(conn.entries[0])
-	return render_template('group.html', group=group)
+	return render_template('group.html', group=Group.ldap_filter_by(gid=gid)[0])

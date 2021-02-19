@@ -6,8 +6,7 @@ from flask import Blueprint, render_template, session, request, redirect, url_fo
 from uffd.database import db
 from uffd.mfa.models import MFAMethod, TOTPMethod, WebauthnMethod, RecoveryCodeMethod
 from uffd.session.views import get_current_user, login_required, pre_mfa_login_required
-from uffd.ldap import uid_to_dn
-from uffd.user.models import User
+from uffd.user.models import User, Group
 from uffd.csrf import csrf_protect
 from uffd.ratelimit import Ratelimit, format_delay
 
@@ -47,7 +46,7 @@ def admin_disable(uid):
 	if not get_current_user().is_in_group(current_app.config['ACL_ADMIN_GROUP']):
 		flash('Access denied')
 		return redirect(url_for('index'))
-	user = User.from_ldap_dn(uid_to_dn(uid))
+	user = User.ldap_filter_by(uid=uid)[0]
 	MFAMethod.query.filter_by(dn=user.dn).delete()
 	db.session.commit()
 	flash('Two-factor authentication was reset')

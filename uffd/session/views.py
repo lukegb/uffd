@@ -4,13 +4,26 @@ import functools
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session, abort
 
-from uffd.user.models import User
-from uffd.ldap import user_conn, uid_to_dn
+from uffd.user.models import User, Group
+from uffd.ldap import user_conn
 from uffd.ratelimit import Ratelimit, host_ratelimit, format_delay
 
 bp = Blueprint("session", __name__, template_folder='templates', url_prefix='/')
 
 login_ratelimit = Ratelimit('login', 1*60, 3)
+
+def login_get_user(loginname, password):
+	print('login with', loginname, password)
+	dn = User(loginname=loginname).dn
+	conn = user_conn(dn, password)
+	if not conn:
+		print('conn is None')
+		return None
+	conn.search(conn.user, '(objectClass=person)')
+	if len(conn.entries) != 1:
+		print('wrong number of entries', conn.entries)
+		return None
+	return User.ldap_get(dn)
 
 @bp.route("/logout")
 def logout():
@@ -35,34 +48,30 @@ def login():
 		else:
 			flash('We received too many requests from your ip address/network! Please wait at least %s.'%format_delay(host_delay))
 		return render_template('login.html', ref=request.values.get('ref'))
-	conn = user_conn(username, password)
-	if conn:
-		conn.search(conn.user, '(objectClass=person)')
-	if not conn or len(conn.entries) != 1:
+	user = login_get_user(username, password)
+	if user is None:
 		login_ratelimit.log(username)
 		host_ratelimit.log()
 		flash('Login name or password is wrong')
 		return render_template('login.html', ref=request.values.get('ref'))
-	user = User.from_ldap(conn.entries[0])
 	if not user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
 		flash('You do not have access to this service')
 		return render_template('login.html', ref=request.values.get('ref'))
 	session.clear()
-	session['user_uid'] = user.uid
+	session['user_dn'] = user.dn
 	session['logintime'] = datetime.datetime.now().timestamp()
 	session['_csrf_token'] = secrets.token_hex(128)
 	return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
 
 def get_current_user():
-	if not session.get('user_uid'):
+	if 'user_dn' not in session:
+		print(session)
 		return None
-	if not hasattr(request, 'current_user'):
-		request.current_user = User.from_ldap_dn(uid_to_dn(session['user_uid']))
-	return request.current_user
+	return User.ldap_get(session['user_dn'])
 
 def login_valid():
 	user = get_current_user()
-	if not user:
+	if user is None:
 		return False
 	if datetime.datetime.now().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
 		return False

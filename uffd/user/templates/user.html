@@ -111,7 +111,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{% for group in user.get_groups()|sort(attribute="name") %}
+						{% for group in user.groups|sort(attribute="name") %}
 						<tr id="group-{{ group.gid }}">
 							<td>
 								<a href="{{ url_for("group.show", gid=group.gid) }}">
@@ -129,7 +129,7 @@
 		</div>
 		<div class="tab-pane fade" id="ldif" role="tabpanel" aria-labelledby="ldif-tab">
 			<div class="form-group col">
-				<pre>{{ user_ldif }}</pre>
+				<pre>{{ user.ldif }}</pre>
 			</div>
 		</div>
 	</div>

@@ -14,10 +14,10 @@ from uffd import create_app, db, ldap
 from utils import dump, UffdTestCase
 
 def get_user():
-	return User.from_ldap_dn('uid=testuser,ou=users,dc=example,dc=com')
+	return User.ldap_get('uid=testuser,ou=users,dc=example,dc=com')
 
 def get_admin():
-	return User.from_ldap_dn('uid=testadmin,ou=users,dc=example,dc=com')
+	return User.ldap_get('uid=testadmin,ou=users,dc=example,dc=com')
 
 class TestOAuth2Client(UffdTestCase):
 	def setUpApp(self):

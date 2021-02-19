@@ -26,13 +26,16 @@ class Role(db.Model):
 	def member_ldap(self):
 		result = []
 		for dn in self.member_dns():
-			result.append(User.from_ldap_dn(dn))
+			result.append(User.ldap_get(dn))
 		return result
+
 	def member_dns(self):
 		return list(map(attrgetter('dn'), self.members))
+
 	def add_member(self, member):
 		newmapping = RoleUser(member.dn, self)
 		self.members.append(newmapping)
+
 	def del_member(self, member):
 		for i in self.members:
 			if i.dn == member.dn:
@@ -41,9 +44,11 @@ class Role(db.Model):
 
 	def group_dns(self):
 		return list(map(attrgetter('dn'), self.groups))
+
 	def add_group(self, group):
 		newmapping = RoleGroup(group.dn, self)
 		self.groups.append(newmapping)
+
 	def del_group(self, group):
 		for i in self.groups:
 			if i.dn == group.dn:
@@ -66,7 +71,7 @@ class LdapMapping():
 		self.role = role
 
 	def get_ldap(self):
-		return self.ldapclass.from_ldap_dn(self.dn)
+		return self.ldapclass.ldap_get(self.dn)
 
 	def set_ldap(self, value):
 		self.dn = value['dn']

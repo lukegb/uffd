@@ -10,9 +10,9 @@ from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.user.models import User
 from uffd.session import get_current_user, login_required, is_valid_session
-from uffd.ldap import loginname_to_dn
 from uffd.selfservice.models import PasswordToken, MailToken
 from uffd.database import db
+from uffd.ldap import ldap
 from uffd.ratelimit import host_ratelimit, Ratelimit, format_delay
 
 bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix='/self/')
@@ -46,7 +46,7 @@ def update():
 	if request.values['mail'] != user.mail:
 		send_mail_verification(user.loginname, request.values['mail'])
 		flash('We sent you an email, please verify your mail address.')
-	user.to_ldap()
+	ldap.session.commit()
 	return redirect(url_for('selfservice.index'))
 
 @bp.route("/passwordreset", methods=(['GET', 'POST']))
@@ -67,23 +67,19 @@ def forgot_password():
 	reset_ratelimit.log(loginname+'/'+mail)
 	host_ratelimit.log()
 	flash("We sent a mail to this users mail address if you entered the correct mail and login name combination")
-	try:
-		user = User.from_ldap_dn(loginname_to_dn(loginname))
-	except ValueError:
-		user = None
+	user = (User.ldap_filter_by(loginname=loginname) or [None])[0]
 	if user and user.mail == mail:
-		send_passwordreset(loginname)
+		send_passwordreset(user)
 	return redirect(url_for('session.login'))
 
 @bp.route("/token/password/<token>", methods=(['POST', 'GET']))
 def token_password(token):
-	session = db.session
 	dbtoken = PasswordToken.query.get(token)
 	if not dbtoken or dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
 		flash('Token expired, please try again.')
 		if dbtoken:
-			session.delete(dbtoken)
-			session.commit()
+			db.session.delete(dbtoken)
+			db.session.commit()
 		return redirect(url_for('session.login'))
 	if request.method == 'GET':
 		return render_template('set_password.html', token=token)
@@ -93,67 +89,62 @@ def token_password(token):
 	if not request.values['password1'] == request.values['password2']:
 		flash('Passwords do not match, please try again.')
 		return render_template('set_password.html', token=token)
-	user = User.from_ldap_dn(loginname_to_dn(dbtoken.loginname))
+	user = User.ldap_filter_by(loginname=dbtoken.loginname)[0]
 	if not user.set_password(request.values['password1']):
 		flash('Password ist not valid, please try again.')
 		return render_template('set_password.html', token=token)
-	user.to_ldap()
+	db.session.delete(dbtoken)
 	flash('New password set')
-	session.delete(dbtoken)
-	session.commit()
+	ldap.session.commit()
+	db.session.commit()
 	return redirect(url_for('session.login'))
 
 @bp.route("/token/mail_verification/<token>")
 @login_required()
 def token_mail(token):
-	session = db.session
 	dbtoken = MailToken.query.get(token)
 	if not dbtoken or dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
 		flash('Token expired, please try again.')
 		if dbtoken:
-			session.delete(dbtoken)
-			session.commit()
+			db.session.delete(dbtoken)
+			db.session.commit()
 		return redirect(url_for('selfservice.index'))
 
-	user = User.from_ldap_dn(loginname_to_dn(dbtoken.loginname))
+	user = User.ldap_filter_by(loginname=dbtoken.loginname)[0]
 	user.set_mail(dbtoken.newmail)
-	user.to_ldap()
 	flash('New mail set')
-	session.delete(dbtoken)
-	session.commit()
+	db.session.delete(dbtoken)
+	ldap.session.commit()
+	db.session.commit()
 	return redirect(url_for('selfservice.index'))
 
 def send_mail_verification(loginname, newmail):
-	session = db.session
 	expired_tokens = MailToken.query.filter(MailToken.created < (datetime.datetime.now() - datetime.timedelta(days=2))).all()
 	duplicate_tokens = MailToken.query.filter(MailToken.loginname == loginname).all()
 	for i in expired_tokens + duplicate_tokens:
-		session.delete(i)
+		db.session.delete(i)
 	token = MailToken()
 	token.loginname = loginname
 	token.newmail = newmail
-	session.add(token)
-	session.commit()
+	db.session.add(token)
+	db.session.commit()
 
-	user = User.from_ldap_dn(loginname_to_dn(loginname))
+	user = User.ldap_filter_by(loginname=loginname)[0]
 
 	msg = EmailMessage()
 	msg.set_content(render_template('mailverification.mail.txt', user=user, token=token.token))
 	msg['Subject'] = 'Mail verification'
 	send_mail(newmail, msg)
 
-def send_passwordreset(loginname, new=False):
-	session = db.session
+def send_passwordreset(user, new=False):
 	expired_tokens = PasswordToken.query.filter(PasswordToken.created < (datetime.datetime.now() - datetime.timedelta(days=2))).all()
-	duplicate_tokens = PasswordToken.query.filter(PasswordToken.loginname == loginname).all()
+	duplicate_tokens = PasswordToken.query.filter(PasswordToken.loginname == user.loginname).all()
 	for i in expired_tokens + duplicate_tokens:
-		session.delete(i)
+		db.session.delete(i)
 	token = PasswordToken()
-	token.loginname = loginname
-	session.add(token)
-	session.commit()
-
-	user = User.from_ldap_dn(loginname_to_dn(loginname))
+	token.loginname = user.loginname
+	db.session.add(token)
+	db.session.commit()
 
 	msg = EmailMessage()
 	if new:

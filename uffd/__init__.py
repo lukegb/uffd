@@ -5,6 +5,7 @@ from flask import Flask, redirect, url_for
 from werkzeug.routing import IntegerConverter
 
 from uffd.database import db, SQLAlchemyJSON
+from uffd.ldap import ldap
 from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
 
@@ -39,10 +40,10 @@ def create_app(test_config=None):
 
 	db.init_app(app)
 	# pylint: disable=C0415
-	from uffd import user, selfservice, role, mail, session, csrf, ldap, mfa, oauth2, services
+	from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services
 	# pylint: enable=C0415
 
-	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + ldap.bp + mfa.bp + oauth2.bp + services.bp:
+	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp:
 		app.register_blueprint(i)
 
 	@app.route("/")
