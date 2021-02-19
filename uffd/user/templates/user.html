@@ -84,7 +84,7 @@
 							<td>
 								<div class="form-check">
 									<input class="form-check-input" type="checkbox" id="role-{{ role.id }}-checkbox" name="role-{{ role.id }}" value="1" aria-label="enabled"
-										{% if user.dn in role.member_dns() or role.name in config["ROLES_BASEROLES"] %}checked {% endif %}
+										{% if user in role.members or role.name in config["ROLES_BASEROLES"] %}checked {% endif %}
 										{% if role.name in config["ROLES_BASEROLES"] %}disabled {% endif %}>
 								</div>
 							</td>

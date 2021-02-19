@@ -30,7 +30,7 @@
 				<tr id="group-{{ group.gid }}">
 					<td>
 						<div class="form-check">
-							<input class="form-check-input" type="checkbox" id="group-{{ group.gid }}-checkbox" name="group-{{ group.gid }}" value="1" aria-label="enabled" {% if group.dn in role.group_dns() %}checked{% endif %}>
+							<input class="form-check-input" type="checkbox" id="group-{{ group.gid }}-checkbox" name="group-{{ group.gid }}" value="1" aria-label="enabled" {% if group in role.groups %}checked{% endif %}>
 						</div>
 					</td>
 					<td>

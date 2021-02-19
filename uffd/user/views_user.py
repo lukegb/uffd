@@ -8,7 +8,6 @@ from uffd.csrf import csrf_protect
 from uffd.selfservice import send_passwordreset
 from uffd.session import login_required, is_valid_session, get_current_user
 from uffd.role.models import Role
-from uffd.role.utils import recalculate_user_groups
 from uffd.database import db
 from uffd.ldap import ldap, LDAPCommitError
 
@@ -57,15 +56,11 @@ def update(uid=None):
 	new_password = request.form.get('password')
 	if uid is not None and new_password:
 		user.set_password(new_password)
+	user.roles.clear()
 	for role in Role.query.all():
-		role_member_dns = role.member_dns()
 		if request.values.get('role-{}'.format(role.id), False) or role.name in current_app.config["ROLES_BASEROLES"]:
-			if user.dn in role_member_dns:
-				continue
-			role.add_member(user)
-		elif user.dn in role_member_dns:
-			role.del_member(user)
-	recalculate_user_groups(user)
+			user.roles.add(role)
+	user.update_groups()
 	ldap.session.add(user)
 	ldap.session.commit()
 	db.session.commit()
@@ -80,9 +75,7 @@ def update(uid=None):
 @csrf_protect(blueprint=bp)
 def delete(uid):
 	user = User.ldap_filter_by(uid=uid)[0]
-	for role in Role.get_for_user(user).all():
-		if user.dn in role.member_dns():
-			role.del_member(user)
+	user.roles.clear()
 	ldap.session.delete(user)
 	ldap.session.commit()
 	db.session.commit()
@@ -113,12 +106,9 @@ def csvimport():
 				flash("invalid mail address, skipped : {}".format(row))
 				continue
 			for role in roles:
-				role_member_dns = role.member_dns()
 				if (str(role.id) in row[2].split(';')) or role.name in current_app.config["ROLES_BASEROLES"]:
-					if newuser.dn in role_member_dns:
-						continue
-					role.add_member(newuser)
-			recalculate_user_groups(newuser)
+					role.members.add(newuser)
+			newuser.update_groups()
 			ldap.session.add(newuser)
 			try:
 				ldap.session.commit()

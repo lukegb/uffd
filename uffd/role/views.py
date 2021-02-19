@@ -3,10 +3,10 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.role.models import Role
-from uffd.role.utils import recalculate_user_groups
 from uffd.user.models import Group
 from uffd.session import get_current_user, login_required, is_valid_session
 from uffd.database import db
+from uffd.ldap import ldap
 
 bp = Blueprint("role", __name__, template_folder='templates', url_prefix='/role/')
 @bp.before_request
@@ -38,45 +38,32 @@ def show(roleid=False):
 @csrf_protect(blueprint=bp)
 def update(roleid=False):
 	is_newrole = bool(not roleid)
-	session = db.session
 	if is_newrole:
 		role = Role()
-		session.add(role)
+		db.session.add(role)
 	else:
 		role = Role.query.filter_by(id=roleid).one()
 	role.name = request.values['name']
 	role.description = request.values['description']
-
-	groups = Group.ldap_all()
-	role_group_dns = role.group_dns()
-	for group in groups:
+	for group in Group.ldap_all():
 		if request.values.get('group-{}'.format(group.gid), False):
-			if group.dn in role_group_dns:
-				continue
-			role.add_group(group)
-		elif group.dn in role_group_dns:
-			role.del_group(group)
-
-	members = role.member_ldap()
-	for user in members:
-		recalculate_user_groups(user)
-		if not user.to_ldap():
-			flash('updating group membership for user {} failed'.format(user.loginname))
-
-	session.commit()
+			role.groups.add(group)
+		else:
+			role.groups.discard(group)
+	role.update_member_groups()
+	db.session.commit()
+	ldap.session.commit()
 	return redirect(url_for('role.index'))
 
 @bp.route("/<int:roleid>/del")
 @csrf_protect(blueprint=bp)
 def delete(roleid):
-	session = db.session
 	role = Role.query.filter_by(id=roleid).one()
-	members = role.member_ldap()
-	session.delete(role)
-	session.commit()
-	for user in members:
-		recalculate_user_groups(user)
-		if not user.to_ldap():
-			flash('updating group membership for user {} failed'.format(user.loginname))
-	session.commit()
+	oldmembers = list(role.members)
+	role.members.clear()
+	db.session.delete(role)
+	for user in oldmembers:
+		user.update_groups()
+	db.session.commit()
+	ldap.session.commit()
 	return redirect(url_for('role.index'))

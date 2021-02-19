@@ -29,7 +29,8 @@ class User(LDAPModel):
 	mail = LDAPAttribute('mail')
 	pwhash = LDAPAttribute('userPassword', default=lambda: hashed(HASHED_SALTED_SHA512, secrets.token_hex(128)))
 
-	groups = [] # Shut up pylint, overwritten by LDAPBackref
+	groups = [] # Shuts up pylint, overwritten by back-reference
+	roles = [] # Shuts up pylint, overwritten by back-reference
 
 	def dummy_attribute_defaults(self):
 		if self.ldap_getattr('sn') == []:
@@ -107,3 +108,5 @@ class Group(LDAPModel):
 	name = LDAPAttribute('cn')
 	description = LDAPAttribute('description', default='')
 	members = LDAPRelation('uniqueMember', User, backref='groups')
+
+	roles = [] # Shuts up pylint, overwritten by back-reference
