@@ -192,6 +192,7 @@
                     "cn=Subschema"
                 ],
                 "uniqueMember": [
+                    "cn=dummy,ou=system,dc=example,dc=com",
                     "uid=testuser,ou=users,dc=example,dc=com",
                     "uid=testadmin,ou=users,dc=example,dc=com"
                 ]
@@ -242,6 +243,7 @@
                     "cn=Subschema"
                 ],
                 "uniqueMember": [
+                    "cn=dummy,ou=system,dc=example,dc=com",
                     "uid=testuser,ou=users,dc=example,dc=com",
                     "uid=testadmin,ou=users,dc=example,dc=com"
                 ]
@@ -292,6 +294,7 @@
                     "cn=Subschema"
                 ],
                 "uniqueMember": [
+                    "cn=dummy,ou=system,dc=example,dc=com",
                     "uid=testadmin,ou=users,dc=example,dc=com"
                 ]
             }

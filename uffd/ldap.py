@@ -133,13 +133,13 @@ class LDAPSet(MutableSet):
 		return repr(set(self))
 
 	def __contains__(self, value):
-		return self.__encode(value) in self.__getitems()
+		return value is not None and self.__encode(value) in self.__getitems()
 	
 	def __iter__(self):
-		return iter(map(self.__decode, self.__getitems()))
+		return iter(filter(lambda obj: obj is not None, map(self.__decode, self.__getitems())))
 
 	def __len__(self):
-		return len(self.__getitems())
+		return len(set(self))
 
 	def add(self, value):
 		if value not in self:
