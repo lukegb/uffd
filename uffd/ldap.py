@@ -149,24 +149,27 @@ class LDAPSet(MutableSet):
 		self.__delitem(self.__encode(value))
 
 class LDAPAttribute:
-	def __init__(self, name, multi=False, default=None, encode=None, decode=None):
+	def __init__(self, name, multi=False, default=None, encode=None, decode=None, aliases=None):
 		self.name = name
 		self.multi = multi
 		self.encode = encode or (lambda x: x)
 		self.decode = decode or (lambda x: x)
-		def default_wrapper():
-			values = default() if callable(default) else default
-			if not isinstance(values, list):
-				values = [values]
-			return [self.encode(value) for value in values]
-		self.default = default_wrapper
+		self.default_values = default
+		self.aliases = aliases or []
+
+	def default(self, obj):
+		if obj.ldap_getattr(self.name) == []:
+			values = self.default_values
+			if callable(values):
+				values = values()
+			self.__set__(obj, values)
+		for name in self.aliases:
+			obj.ldap_setattr(name, obj.ldap_getattr(self.name))
 
 	def __set_name__(self, cls, name):
 		if self.default is None:
 			return
-		if not cls.ldap_defaults:
-			cls.ldap_defaults = {}
-		cls.ldap_defaults[self.name] = self.default
+		cls.ldap_defaults = cls.ldap_defaults + [self.default]
 
 	def __get__(self, obj, objtype=None):
 		if obj is None:
@@ -187,9 +190,7 @@ class LDAPBackref:
 	def __init__(self, srccls, srcattr):
 		self.srccls = srccls
 		self.srcattr = srcattr
-		if srccls.ldap_relations is None:
-			srccls.ldap_relations = set()
-		srccls.ldap_relations.add(srcattr)
+		srccls.ldap_relations = srccls.ldap_relations + [srcattr]
 
 	def init(self, obj):
 		if self.srcattr not in obj.ldap_relation_data and obj.ldap_created:
@@ -229,8 +230,9 @@ class LDAPModel:
 	ldap_base = None
 	ldap_object_classes = None
 	ldap_filter = None
-	ldap_defaults = None # Populated by LDAPAttribute
-	ldap_relations = None # Populated by LDAPBackref
+	# Caution: Never mutate ldap_defaults and ldap_relations, always reassign!
+	ldap_defaults = []
+	ldap_relations = []
 
 	def __init__(self, _ldap_dn=None, _ldap_attributes=None, **kwargs):
 		self.ldap_relation_data = set()
@@ -247,11 +249,11 @@ class LDAPModel:
 			if not hasattr(self, key):
 				raise Exception()
 			setattr(self, key, value)
-		for name in (self.ldap_relations or []):
+		for name in self.ldap_relations:
 			self.__update_relations(name, add_dns=self.__attributes.get(name, []))
 
 	def __update_relations(self, name, delete_dns=None, add_dns=None):
-		if name in (self.ldap_relations or []):
+		if name in self.ldap_relations:
 			ldap.session.update_relations(self, name, delete_dns, add_dns)
 
 	def ldap_getattr(self, name):
@@ -344,11 +346,11 @@ class LDAPModel:
 		return cls.ldap_filter_by_raw(**_kwargs)
 
 	def ldap_reset(self):
-		for name in (self.ldap_relations or []):
+		for name in self.ldap_relations:
 			self.__update_relations(name, delete_dns=self.__attributes.get(name, []))
 		self.__changes = {}
 		self.__attributes = deepcopy(self.__ldap_attributes)
-		for name in (self.ldap_relations or {}):
+		for name in self.ldap_relations:
 			self.__update_relations(name, add_dns=self.__attributes.get(name, []))
 
 	@property
@@ -375,13 +377,11 @@ class LDAPModel:
 		if self.ldap_created:
 			raise Exception()
 		conn = get_conn()
-		for key, func in (self.ldap_defaults or {}).items():
-			if key not in self.__attributes:
-				values = func()
-				self.__attributes[key] = values
-				self.__changes[key] = [(MODIFY_REPLACE, values)]
+		for func in self.ldap_defaults:
+			func(self)
 		success = conn.add(self.dn, self.ldap_object_classes, self.__attributes)
 		if not success:
+			print('commit error', success, conn.result)
 			raise LDAPCommitError()
 		self.__changes = {}
 		self.__ldap_attributes = deepcopy(self.__attributes)

@@ -25,9 +25,19 @@ class User(LDAPModel):
 
 	uid = LDAPAttribute('uidNumber', default=get_next_uid)
 	loginname = LDAPAttribute('uid')
-	displayname = LDAPAttribute('cn')
+	displayname = LDAPAttribute('cn', aliases=['givenName', 'displayName'])
 	mail = LDAPAttribute('mail')
 	pwhash = LDAPAttribute('userPassword', default=lambda: hashed(HASHED_SALTED_SHA512, secrets.token_hex(128)))
+
+	def dummy_attribute_defaults(self):
+		if self.ldap_getattr('sn') == []:
+			self.ldap_setattr('sn', [' '])
+		if self.ldap_getattr('homeDirectory') == []:
+			self.ldap_setattr('homeDirectory', ['/home/%s'%self.loginname])
+		if self.ldap_getattr('gidNumber') == []:
+			self.ldap_setattr('gidNumber', [current_app.config['LDAP_USER_GID']])
+
+	ldap_defaults = LDAPModel.ldap_defaults + [dummy_attribute_defaults]
 
 	# Write-only property
 	def password(self, value):

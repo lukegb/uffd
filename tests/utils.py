@@ -40,7 +40,7 @@ class UffdTestCase(unittest.TestCase):
 			os.system("ldapdelete -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w 'uffd-ldap-password' -H 'ldap://localhost' -f ldap_server_entries_cleanup.ldif > /dev/null 2>&1")
 			os.system("ldapadd -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w 'uffd-ldap-password' -H 'ldap://localhost' -f ldap_server_entries_add.ldif")
 			os.system("ldapmodify -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w 'uffd-ldap-password' -H 'ldap://localhost' -f ldap_server_entries_modify.ldif")
-			os.system("/usr/sbin/slapcat -n 1 -l /dev/stdout")
+			#os.system("/usr/sbin/slapcat -n 1 -l /dev/stdout")
 		self.app = create_app(config)
 		self.setUpApp()
 		self.client = self.app.test_client()
