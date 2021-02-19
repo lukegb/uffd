@@ -4,7 +4,7 @@ from flask import Blueprint, current_app
 from ldap3.utils.conv import escape_filter_chars
 from ldap3.core.exceptions import LDAPBindError, LDAPCursorError, LDAPPasswordIsMandatoryError
 
-from ldap3 import Server, Connection, ALL, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES, MOCK_SYNC
+from ldap3 import Server, Connection, ALL, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES, MOCK_SYNC, AUTO_BIND_TLS_BEFORE_BIND
 
 bp = Blueprint("ldap", __name__)
 
@@ -33,7 +33,9 @@ def service_conn():
 	if current_app.config.get('LDAP_SERVICE_MOCK', False):
 		return get_mock_conn()
 	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
-	return fix_connection(Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"], current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=True))
+	return fix_connection(Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"],
+									 current_app.config["LDAP_SERVICE_BIND_PASSWORD"],
+									 auto_bind=AUTO_BIND_TLS_BEFORE_BIND if current_app.config["LDAP_SERVICE_USE_STARTTLS"] else True))
 
 def user_conn(loginname, password):
 	if not loginname_is_safe(loginname):
@@ -53,7 +55,8 @@ def user_conn(loginname, password):
 		return get_mock_conn()
 	server = Server(current_app.config["LDAP_SERVICE_URL"], get_info=ALL)
 	try:
-		return fix_connection(Connection(server, loginname_to_dn(loginname), password, auto_bind=True))
+		return fix_connection(Connection(server, loginname_to_dn(loginname), password,
+										 auto_bind=AUTO_BIND_TLS_BEFORE_BIND if current_app.config["LDAP_SERVICE_USE_STARTTLS"] else True))
 	except (LDAPBindError, LDAPPasswordIsMandatoryError):
 		return False
 
@@ -62,7 +65,8 @@ def get_conn():
 
 def uid_to_dn(uid):
 	conn = get_conn()
-	conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format(escape_filter_chars(uid)))
+	conn.search(current_app.config["LDAP_BASE_USER"],
+				'(&{}(uidNumber={}))'.format(current_app.config["LDAP_USER_FILTER"], escape_filter_chars(uid)))
 	if not len(conn.entries) == 1:
 		return None
 	return conn.entries[0].entry_dn
@@ -90,7 +94,7 @@ def mailname_is_safe(value):
 
 def get_next_uid():
 	conn = get_conn()
-	conn.search(current_app.config["LDAP_BASE_USER"], '(objectclass=person)')
+	conn.search(current_app.config["LDAP_BASE_USER"], current_app.config["LDAP_USER_FILTER"])
 	max_uid = current_app.config["LDAP_USER_MIN_UID"]
 	for i in conn.entries:
 		# skip out of range entries
@@ -106,7 +110,7 @@ def get_next_uid():
 
 def get_ldap_attribute_safe(ldapobject, attribute):
 	try:
-		result = ldapobject[attribute].value if attribute in ldapobject  else None
+		result = ldapobject[attribute].value if attribute in ldapobject else None
 	# we have to catch LDAPCursorError here, because ldap3 in older versions has a broken __contains__ function
 	# see https://github.com/cannatag/ldap3/issues/493
 	# fixed in version 2.5

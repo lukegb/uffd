@@ -37,7 +37,7 @@ def login():
 		return render_template('login.html', ref=request.values.get('ref'))
 	conn = user_conn(username, password)
 	if conn:
-		conn.search(conn.user, '(objectClass=person)')
+		conn.search(conn.user, current_app.config["LDAP_USER_FILTER"])
 	if not conn or len(conn.entries) != 1:
 		login_ratelimit.log(username)
 		host_ratelimit.log()

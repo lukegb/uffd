@@ -25,7 +25,8 @@ def index():
 @bp.route("/<int:gid>")
 def show(gid):
 	conn = get_conn()
-	conn.search(current_app.config["LDAP_BASE_GROUPS"], '(&(objectclass=groupOfUniqueNames)(gidNumber={}))'.format((escape_filter_chars(gid))))
+	conn.search(current_app.config["LDAP_BASE_GROUPS"],
+				'(&{}(gidNumber={}))'.format(current_app.config["LDAP_GROUP_FILTER"], escape_filter_chars(gid)))
 	assert len(conn.entries) == 1
 	group = Group.from_ldap(conn.entries[0])
 	return render_template('group.html', group=group)

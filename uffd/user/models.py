@@ -6,15 +6,20 @@ from flask import current_app
 
 from uffd import ldap
 
-class User():
-	def __init__(self, uid=None, loginname='', displayname='', mail='', groups=None, dn=None):
-		self.uid = uid
-		self.loginname = loginname
-		self.displayname = displayname
-		self.mail = mail
-		self.newpassword = None
-		self.dn = dn
 
+class BaseUser:
+	def __init__(self, attributes=None, groups=None, dn=None):
+		self.uid = None
+		self.mail = ''
+		self.loginname = ''
+		self.displayname = ''
+
+		if attributes is not None:
+			for attribute_name, attribute_value in attributes.items():
+				setattr(self, attribute_name, attribute_value)
+
+		self.dn = dn
+		self.newpassword = None
 		self.groups_ldap = groups or []
 		self.initial_groups_ldap = groups or []
 		self.groups_changed = False
@@ -22,19 +27,30 @@ class User():
 
 	@classmethod
 	def from_ldap(cls, ldapobject):
+		ldap_attributes = {
+			"loginname": ldap.get_ldap_attribute_safe(ldapobject, "uid"),
+			"uid": ldap.get_ldap_attribute_safe(ldapobject, current_app.config["LDAP_USER_ATTRIBUTE_UID"]),
+			"displayname": ldap.get_ldap_attribute_safe(ldapobject, current_app.config["LDAP_USER_ATTRIBUTE_DISPLAYNAME"]),
+			"mail": ldap.get_ldap_attribute_safe(ldapobject, current_app.config["LDAP_USER_ATTRIBUTE_MAIL"]),
+		}
+
+		for user_attribute, ldap_attribute in current_app.config["LDAP_USER_ATTRIBUTE_EXTRA"].items():
+			ldap_attribute_name = ldap_attribute.get("name", "")
+			if ldap_attribute.get("type", "single"):
+				ldap_attributes[user_attribute] = ldap.get_ldap_attribute_safe(ldapobject, ldap_attribute_name)
+			else:
+				ldap_attributes[user_attribute] = ldap.get_ldap_array_attribute_safe(ldapobject, ldap_attribute_name)
+
 		return User(
-				uid=ldapobject['uidNumber'].value,
-				loginname=ldapobject['uid'].value,
-				displayname=ldapobject['cn'].value,
-				mail=ldapobject['mail'].value,
 				groups=ldap.get_ldap_array_attribute_safe(ldapobject, 'memberOf'),
 				dn=ldapobject.entry_dn,
+				attributes=ldap_attributes,
 			)
 
 	@classmethod
 	def from_ldap_dn(cls, dn):
 		conn = ldap.get_conn()
-		conn.search(dn, '(objectClass=person)')
+		conn.search(dn, current_app.config["LDAP_USER_FILTER"])
 		if not len(conn.entries) == 1:
 			return None
 		return User.from_ldap(conn.entries[0])
@@ -44,7 +60,9 @@ class User():
 		if new:
 			self.uid = ldap.get_next_uid()
 			attributes = {
-				'uidNumber': self.uid,
+				current_app.config["LDAP_USER_ATTRIBUTE_UID"]: self.uid,
+				current_app.config["LDAP_USER_ATTRIBUTE_DISPLAYNAME"]: self.displayname,
+				current_app.config["LDAP_USER_ATTRIBUTE_MAIL"]: self.mail,
 				'gidNumber': current_app.config['LDAP_USER_GID'],
 				'homeDirectory': '/home/'+self.loginname,
 				'sn': ' ',
@@ -52,8 +70,6 @@ class User():
 				# same as for update
 				'givenName': self.displayname,
 				'displayName': self.displayname,
-				'cn': self.displayname,
-				'mail': self.mail,
 			}
 			dn = ldap.loginname_to_dn(self.loginname)
 			result = conn.add(dn, current_app.config['LDAP_USER_OBJECTCLASSES'], attributes)
@@ -61,8 +77,8 @@ class User():
 			attributes = {
 				'givenName': [(MODIFY_REPLACE, [self.displayname])],
 				'displayName': [(MODIFY_REPLACE, [self.displayname])],
-				'cn': [(MODIFY_REPLACE, [self.displayname])],
-				'mail': [(MODIFY_REPLACE, [self.mail])],
+				current_app.config["LDAP_USER_ATTRIBUTE_DISPLAYNAME"]: [(MODIFY_REPLACE, [self.displayname])],
+				current_app.config["LDAP_USER_ATTRIBUTE_MAIL"]: [(MODIFY_REPLACE, [self.mail])],
 				}
 			if self.newpassword:
 				attributes['userPassword'] = [(MODIFY_REPLACE, [hashed(HASHED_SALTED_SHA512, self.newpassword)])]
@@ -145,7 +161,11 @@ class User():
 		self.mail = value
 		return True
 
-class Group():
+
+User = BaseUser
+
+
+class Group:
 	def __init__(self, gid=None, name='', members=None, description='', dn=None):
 		self.gid = gid
 		self.name = name
@@ -167,7 +187,7 @@ class Group():
 	@classmethod
 	def from_ldap_dn(cls, dn):
 		conn = ldap.get_conn()
-		conn.search(dn, '(objectClass=groupOfUniqueNames)')
+		conn.search(dn, current_app.config["LDAP_GROUP_FILTER"])
 		if not len(conn.entries) == 1:
 			return None
 		return Group.from_ldap(conn.entries[0])
@@ -175,7 +195,7 @@ class Group():
 	@classmethod
 	def from_ldap_all(cls):
 		conn = ldap.get_conn()
-		conn.search(current_app.config["LDAP_BASE_GROUPS"], '(objectclass=groupOfUniqueNames)')
+		conn.search(current_app.config["LDAP_BASE_GROUPS"], current_app.config["LDAP_GROUP_FILTER"])
 		groups = []
 		for i in conn.entries:
 			groups.append(Group.from_ldap(i))

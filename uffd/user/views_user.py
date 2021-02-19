@@ -29,7 +29,7 @@ def user_acl_check():
 @register_navbar('Users', icon='users', blueprint=bp, visible=user_acl_check)
 def index():
 	conn = get_conn()
-	conn.search(current_app.config["LDAP_BASE_USER"], '(objectclass=person)')
+	conn.search(current_app.config["LDAP_BASE_USER"], current_app.config["LDAP_USER_FILTER"])
 	users = []
 	for i in conn.entries:
 		users.append(User.from_ldap(i))
@@ -43,7 +43,8 @@ def show(uid=None):
 		ldif = '<none yet>'
 	else:
 		conn = get_conn()
-		conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
+		conn.search(current_app.config["LDAP_BASE_USER"],
+					'(&{}(uidNumber={}))'.format(current_app.config["LDAP_USER_FILTER"], escape_filter_chars(uid)))
 		assert len(conn.entries) == 1
 		user = User.from_ldap(conn.entries[0])
 		ldif = conn.entries[0].entry_to_ldif()
@@ -61,7 +62,8 @@ def update(uid=False):
 			flash('Login name does not meet requirements')
 			return redirect(url_for('user.show'))
 	else:
-		conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
+		conn.search(current_app.config["LDAP_BASE_USER"],
+					'(&{}(uidNumber={}))'.format(current_app.config["LDAP_USER_FILTER"], escape_filter_chars(uid)))
 		assert len(conn.entries) == 1
 		user = User.from_ldap(conn.entries[0])
 	if not user.set_mail(request.form['mail']):
@@ -106,7 +108,8 @@ def update(uid=False):
 @csrf_protect(blueprint=bp)
 def delete(uid):
 	conn = get_conn()
-	conn.search(current_app.config["LDAP_BASE_USER"], '(&(objectclass=person)(uidNumber={}))'.format((escape_filter_chars(uid))))
+	conn.search(current_app.config["LDAP_BASE_USER"],
+				'(&{}(uidNumber={}))'.format(current_app.config["LDAP_USER_FILTER"], escape_filter_chars(uid)))
 	assert len(conn.entries) == 1
 	user = User.from_ldap(conn.entries[0])
 
