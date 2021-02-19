@@ -246,11 +246,11 @@ class LDAPModel:
 	ldap_pre_create_hooks = []
 	ldap_relations = []
 
-	def __init__(self, _ldap_dn=None, _ldap_attributes=None, **kwargs):
+	def __init__(self, _ldap_response=None, **kwargs):
 		self.ldap_relation_data = set()
-		self.__ldap_dn = _ldap_dn
+		self.__ldap_dn = None if _ldap_response is None else _ldap_response['dn']
 		self.__ldap_attributes = {}
-		for key, values in (_ldap_attributes or {}).items():
+		for key, values in (_ldap_response or {}).get('attributes', {}).items():
 			if isinstance(values, list):
 				self.__ldap_attributes[key] = values
 			else:
@@ -319,7 +319,7 @@ class LDAPModel:
 				return None
 			if len(conn.response) != 1:
 				raise Exception()
-			obj = ldap.session.register(cls(_ldap_dn=conn.response[0]['dn'], _ldap_attributes=conn.response[0]['attributes']))
+			obj = ldap.session.register(cls(_ldap_response=conn.response[0]))
 		return obj
 
 	@classmethod
@@ -330,7 +330,7 @@ class LDAPModel:
 		for entry in conn.response:
 			obj = ldap.session.lookup(entry['dn'])
 			if obj is None:
-				obj = ldap.session.register(cls(_ldap_dn=entry['dn'], _ldap_attributes=entry['attributes']))
+				obj = ldap.session.register(cls(_ldap_response=entry))
 			res.append(obj)
 		return res
 
@@ -345,7 +345,7 @@ class LDAPModel:
 		for entry in conn.response:
 			obj = ldap.session.lookup(entry['dn'])
 			if obj is None:
-				obj = ldap.session.register(cls(_ldap_dn=entry['dn'], _ldap_attributes=entry['attributes']))
+				obj = ldap.session.register(cls(_ldap_response=entry))
 			res.append(obj)
 		return res
 
