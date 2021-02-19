@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, session, request, redirect, url_fo
 from uffd.database import db
 from uffd.mfa.models import MFAMethod, TOTPMethod, WebauthnMethod, RecoveryCodeMethod
 from uffd.session.views import get_current_user, login_required, pre_mfa_login_required
-from uffd.user.models import User, Group
+from uffd.user.models import User
 from uffd.csrf import csrf_protect
 from uffd.ratelimit import Ratelimit, format_delay
 

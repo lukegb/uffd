@@ -4,7 +4,6 @@ from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.ldap import ldap
 from uffd.session import login_required, is_valid_session, get_current_user
-from uffd.user.models import Group
 
 from uffd.mail.models import Mail
 

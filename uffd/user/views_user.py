@@ -10,9 +10,9 @@ from uffd.session import login_required, is_valid_session, get_current_user
 from uffd.role.models import Role
 from uffd.role.utils import recalculate_user_groups
 from uffd.database import db
-from uffd.ldap import ldap
+from uffd.ldap import ldap, LDAPCommitError
 
-from .models import User, Group
+from .models import User
 
 bp = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/')
 @bp.before_request
@@ -123,7 +123,7 @@ def csvimport():
 			try:
 				ldap.session.commit()
 				db.session.commit()
-			except: # TODO
+			except LDAPCommitError:
 				flash('Error adding user {}'.format(row[0]))
 				ldap.session.rollback()
 				db.session.rollback()

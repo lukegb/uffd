@@ -1,3 +1,4 @@
+from uffd.user.models import Group
 from uffd.role.models import Role
 
 def recalculate_user_groups(user):

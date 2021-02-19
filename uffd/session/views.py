@@ -4,7 +4,7 @@ import functools
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session, abort
 
-from uffd.user.models import User, Group
+from uffd.user.models import User
 from uffd.ldap import user_conn
 from uffd.ratelimit import Ratelimit, host_ratelimit, format_delay
 

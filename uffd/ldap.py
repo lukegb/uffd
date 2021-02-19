@@ -4,8 +4,8 @@ from collections.abc import MutableSet
 from flask import current_app, request
 
 from ldap3.utils.conv import escape_filter_chars
-from ldap3.core.exceptions import LDAPBindError, LDAPCursorError, LDAPPasswordIsMandatoryError
-from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD, HASHED_SALTED_SHA512
+from ldap3.core.exceptions import LDAPBindError, LDAPPasswordIsMandatoryError
+from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD
 
 from ldap3 import Server, Connection, ALL, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES, MOCK_SYNC
 
@@ -95,7 +95,7 @@ class LDAPSession:
 		if obj.dn in self.__objects:
 			del self.__objects[obj.dn]
 		self.__to_delete.append(obj)
-		
+
 	def commit(self):
 		while self.__to_delete:
 			self.__to_delete.pop(0).ldap_delete()
@@ -134,7 +134,7 @@ class LDAPSet(MutableSet):
 
 	def __contains__(self, value):
 		return value is not None and self.__encode(value) in self.__getitems()
-	
+
 	def __iter__(self):
 		return iter(filter(lambda obj: obj is not None, map(self.__decode, self.__getitems())))
 
@@ -214,8 +214,7 @@ class LDAPBackref:
 
 class LDAPRelation(LDAPAttribute):
 	def __init__(self, name, dest, backref=None):
-		super().__init__(name, multi=True, encode=lambda value: value.dn,
-		                 decode=lambda value: dest.ldap_get(value))
+		super().__init__(name, multi=True, encode=lambda value: value.dn, decode=dest.ldap_get)
 		self.name = name
 		self.dest = dest
 		self.backref = backref

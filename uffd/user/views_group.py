@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, url_for, redirect, flash, current_app
 
 from uffd.navbar import register_navbar
-from uffd.ldap import get_conn, escape_filter_chars
 from uffd.session import login_required, is_valid_session, get_current_user
 
 from .models import Group
