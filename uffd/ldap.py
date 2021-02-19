@@ -163,21 +163,28 @@ class LDAPAttribute:
 			if callable(values):
 				values = values()
 			self.__set__(obj, values)
+
+	def additem(self, obj, value):
+		obj.ldap_attradd(self.name, value)
 		for name in self.aliases:
-			obj.ldap_setattr(name, obj.ldap_getattr(self.name))
+			obj.ldap_attradd(name, value)
+
+	def delitem(self, obj, value):
+		obj.ldap_attradd(self.name, value)
+		for name in self.aliases:
+			obj.ldap_attradd(name, value)
 
 	def __set_name__(self, cls, name):
-		if self.default is None:
-			return
-		cls.ldap_defaults = cls.ldap_defaults + [self.default]
+		if self.default_values is not None:
+			cls.ldap_pre_create_hooks = cls.ldap_pre_create_hooks + [self.default]
 
 	def __get__(self, obj, objtype=None):
 		if obj is None:
 			return self
 		if self.multi:
 			return LDAPSet(getitems=lambda: obj.ldap_getattr(self.name),
-			               additem=lambda value: obj.ldap_attradd(self.name, value),
-			               delitem=lambda value: obj.ldap_attrdel(self.name, value),
+			               additem=lambda value: self.additem(obj, value),
+			               delitem=lambda value: self.delitem(obj, value),
 			               encode=self.encode, decode=self.decode)
 		return self.decode((obj.ldap_getattr(self.name) or [None])[0])
 
@@ -185,6 +192,8 @@ class LDAPAttribute:
 		if not self.multi:
 			values = [values]
 		obj.ldap_setattr(self.name, [self.encode(value) for value in values])
+		for name in self.aliases:
+			obj.ldap_setattr(name, [self.encode(value) for value in values])
 
 class LDAPBackref:
 	def __init__(self, srccls, srcattr):
@@ -229,8 +238,8 @@ class LDAPModel:
 	ldap_base = None
 	ldap_object_classes = None
 	ldap_filter = None
-	# Caution: Never mutate ldap_defaults and ldap_relations, always reassign!
-	ldap_defaults = []
+	# Caution: Never mutate ldap_pre_create_hooks and ldap_relations, always reassign!
+	ldap_pre_create_hooks = []
 	ldap_relations = []
 
 	def __init__(self, _ldap_dn=None, _ldap_attributes=None, **kwargs):
@@ -376,7 +385,7 @@ class LDAPModel:
 		if self.ldap_created:
 			raise Exception()
 		conn = get_conn()
-		for func in self.ldap_defaults:
+		for func in self.ldap_pre_create_hooks:
 			func(self)
 		success = conn.add(self.dn, self.ldap_object_classes, self.__attributes)
 		if not success:

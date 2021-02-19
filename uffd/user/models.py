@@ -39,7 +39,7 @@ class User(LDAPModel):
 		if self.ldap_getattr('gidNumber') == []:
 			self.ldap_setattr('gidNumber', [current_app.config['LDAP_USER_GID']])
 
-	ldap_defaults = LDAPModel.ldap_defaults + [dummy_attribute_defaults]
+	ldap_pre_create_hooks = LDAPModel.ldap_pre_create_hooks + [dummy_attribute_defaults]
 
 	# Write-only property
 	def password(self, value):
