@@ -5,6 +5,7 @@ from flask import current_app
 from ldap3.utils.hashed import hashed, HASHED_SALTED_SHA512
 
 from uffd.ldap import LDAPModel, LDAPAttribute, LDAPRelation
+from uffd.lazyconfig import lazyconfig_str, lazyconfig_list
 
 def get_next_uid():
 	max_uid = current_app.config['LDAP_USER_MIN_UID']
@@ -17,11 +18,11 @@ def get_next_uid():
 	return next_uid
 
 class User(LDAPModel):
-	ldap_base = 'ou=users,dc=example,dc=com'
+	ldap_base = lazyconfig_str('LDAP_BASE_USER')
 	ldap_dn_attribute = 'uid'
-	ldap_dn_base = 'ou=users,dc=example,dc=com'
+	ldap_dn_base = lazyconfig_str('LDAP_BASE_USER')
 	ldap_filter = '(objectClass=person)'
-	ldap_object_classes = ['top', 'inetOrgPerson', 'organizationalPerson', 'person', 'posixAccount']
+	ldap_object_classes = lazyconfig_list('LDAP_USER_OBJECTCLASSES')
 
 	uid = LDAPAttribute('uidNumber', default=get_next_uid)
 	loginname = LDAPAttribute('uid')
@@ -101,7 +102,7 @@ class User(LDAPModel):
 		return True
 
 class Group(LDAPModel):
-	ldap_base = 'ou=groups,dc=example,dc=com'
+	ldap_base = lazyconfig_str('LDAP_BASE_GROUPS')
 	ldap_filter = '(objectClass=groupOfUniqueNames)'
 
 	gid = LDAPAttribute('gidNumber')
