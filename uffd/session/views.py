@@ -4,8 +4,11 @@ import functools
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session, abort
 
+import ldap3
+from ldap3.core.exceptions import LDAPBindError, LDAPPasswordIsMandatoryError
+
 from uffd.user.models import User
-from uffd.ldap import user_conn
+from uffd.ldap import ldap
 from uffd.ratelimit import Ratelimit, host_ratelimit, format_delay
 
 bp = Blueprint("session", __name__, template_folder='templates', url_prefix='/')
@@ -13,15 +16,27 @@ bp = Blueprint("session", __name__, template_folder='templates', url_prefix='/')
 login_ratelimit = Ratelimit('login', 1*60, 3)
 
 def login_get_user(loginname, password):
-	print('login with', loginname, password)
 	dn = User(loginname=loginname).dn
-	conn = user_conn(dn, password)
-	if not conn:
-		print('conn is None')
-		return None
+	if current_app.config.get('LDAP_SERVICE_MOCK', False):
+		conn = ldap.connect()
+		# Since we reuse the same conn for all calls to `user_conn()` we
+		# simulate the password check by rebinding. Note that ldap3's mocking
+		# implementation just compares the string in the objects's userPassword
+		# field with the password, no support for hashing or OpenLDAP-style
+		# password-prefixes ("{PLAIN}..." or "{ssha512}...").
+		try:
+			if not conn.rebind(dn, password):
+				return None
+		except (LDAPBindError, LDAPPasswordIsMandatoryError):
+			return None
+	else:
+		server = ldap3.Server(current_app.config["LDAP_SERVICE_URL"], get_info=ldap3.ALL)
+		try:
+			conn = ldap3.Connection(server, dn, password, auto_bind=True)
+		except (LDAPBindError, LDAPPasswordIsMandatoryError):
+			return None
 	conn.search(conn.user, '(objectClass=person)')
 	if len(conn.entries) != 1:
-		print('wrong number of entries', conn.entries)
 		return None
 	return User.ldap_get(dn)
 

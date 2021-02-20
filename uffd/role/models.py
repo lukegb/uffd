@@ -2,8 +2,9 @@ from sqlalchemy import Column, String, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
 
+from ldap3_mapper.db_relation import DB2LDAPRelation
+
 from uffd.database import db
-from uffd.ldap import DB2LDAPRelation
 from uffd.user.models import User, Group
 
 class LdapMapping:

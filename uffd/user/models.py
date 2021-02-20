@@ -4,7 +4,7 @@ import string
 from flask import current_app
 from ldap3.utils.hashed import hashed, HASHED_SALTED_SHA512
 
-from uffd.ldap import LDAPModel, LDAPAttribute, LDAPRelation
+from uffd.ldap import ldap
 from uffd.lazyconfig import lazyconfig_str, lazyconfig_list
 
 def get_next_uid():
@@ -17,18 +17,18 @@ def get_next_uid():
 		raise Exception('No free uid found')
 	return next_uid
 
-class User(LDAPModel):
+class User(ldap.Model):
 	ldap_base = lazyconfig_str('LDAP_BASE_USER')
 	ldap_dn_attribute = 'uid'
 	ldap_dn_base = lazyconfig_str('LDAP_BASE_USER')
 	ldap_filter = '(objectClass=person)'
 	ldap_object_classes = lazyconfig_list('LDAP_USER_OBJECTCLASSES')
 
-	uid = LDAPAttribute('uidNumber', default=get_next_uid)
-	loginname = LDAPAttribute('uid')
-	displayname = LDAPAttribute('cn', aliases=['givenName', 'displayName'])
-	mail = LDAPAttribute('mail')
-	pwhash = LDAPAttribute('userPassword', default=lambda: hashed(HASHED_SALTED_SHA512, secrets.token_hex(128)))
+	uid = ldap.Attribute('uidNumber', default=get_next_uid)
+	loginname = ldap.Attribute('uid')
+	displayname = ldap.Attribute('cn', aliases=['givenName', 'displayName'])
+	mail = ldap.Attribute('mail')
+	pwhash = ldap.Attribute('userPassword', default=lambda: hashed(HASHED_SALTED_SHA512, secrets.token_hex(128)))
 
 	groups = [] # Shuts up pylint, overwritten by back-reference
 	roles = [] # Shuts up pylint, overwritten by back-reference
@@ -41,7 +41,7 @@ class User(LDAPModel):
 		if self.ldap_getattr('gidNumber') == []:
 			self.ldap_setattr('gidNumber', [current_app.config['LDAP_USER_GID']])
 
-	ldap_pre_create_hooks = LDAPModel.ldap_pre_create_hooks + [dummy_attribute_defaults]
+	ldap_pre_create_hooks = ldap.Model.ldap_pre_create_hooks + [dummy_attribute_defaults]
 
 	# Write-only property
 	def password(self, value):
@@ -101,13 +101,13 @@ class User(LDAPModel):
 		self.mail = value
 		return True
 
-class Group(LDAPModel):
+class Group(ldap.Model):
 	ldap_base = lazyconfig_str('LDAP_BASE_GROUPS')
 	ldap_filter = '(objectClass=groupOfUniqueNames)'
 
-	gid = LDAPAttribute('gidNumber')
-	name = LDAPAttribute('cn')
-	description = LDAPAttribute('description', default='')
-	members = LDAPRelation('uniqueMember', User, backref='groups')
+	gid = ldap.Attribute('gidNumber')
+	name = ldap.Attribute('cn')
+	description = ldap.Attribute('description', default='')
+	members = ldap.Relation('uniqueMember', User, backref='groups')
 
 	roles = [] # Shuts up pylint, overwritten by back-reference

@@ -5,7 +5,6 @@ from flask import Flask, redirect, url_for
 from werkzeug.routing import IntegerConverter
 
 from uffd.database import db, SQLAlchemyJSON
-from uffd.ldap import ldap
 from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
 
