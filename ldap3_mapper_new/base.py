@@ -71,6 +71,7 @@ class Session:
 	ldap_mapper = None
 
 	def __init__(self):
+		self.__objects = {}
 		self.__operations = []
 
 	def record(self, obj, oper):
@@ -94,7 +95,7 @@ class Session:
 		self.__operations.append((obj, oper))
 
 	def commit(self):
-		conn = self.ldap_mapper.connect()
+		conn = self.mapper.connect()
 		while self.__operations:
 			obj, oper = self.__operations.pop(0)
 			try:
@@ -108,6 +109,38 @@ class Session:
 		while self.__operations:
 			obj, oper = self.__operations.pop(0)
 			obj.ldap_state.current = obj.ldap_state.committed.copy()
+
+	def query_get(self, cls, dn):
+		if dn in self.__objects:
+			return self.__objects[dn]
+		if dn in self.__deleted_objects:
+			return None
+		conn = self.mapper.connect()
+		conn.search(dn, cls.ldap_filter, attributes=[ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES])
+		if not conn.response:
+			return None
+		self.__objects[dn] = cls(__ldap_response=conn.response[0])
+		return self.__objects[dn]
+
+	def query_search(self, cls, filters=None):
+		filters = [cls.ldap_filter] + (filters or [])
+		if len(filters) == 1:
+			expr = filters[0]
+		else:
+			expr = '(&%s)'%(''.join(filters))
+		conn = self.mapper.connect()
+		conn.search(cls.ldap_base, cls.ldap_filter, attributes=[ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES])
+		res = []
+		for response in conn.response:
+			dn = response['dn']
+			if dn in self.__objects:
+				res.append(self.__objects[dn])
+			elif dn in self.__deleted_objects:
+				continue
+			else:
+				self.__objects[dn] = cls(__ldap_response=response)
+				res.append(self.__objects[dn])
+		return res
 
 # This is only a seperate class to keep SessionObject's namespace cleaner
 class SessionObjectState:
@@ -142,12 +175,15 @@ class SessionObjectState:
 			self.session.record(self.obj, oper)
 		oper.apply(self.current)
 
+# This is only a seperate class to keep SessionObject's namespace cleaner
 class SessionObject:
 	ldap_mapper = None
 	ldap_object_classes = None
+	ldap_base = None
+	ldap_filter = None
 
-	def __init__(self, response=None):
-		self.ldap_state = SessionObjectState(self, response)
+	def __init__(self, __ldap_response=None):
+		self.ldap_state = SessionObjectState(self, __ldap_response)
 
 	@property
 	def dn(self):
