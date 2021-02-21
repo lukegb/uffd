@@ -1,27 +1,21 @@
 import ldap3
 
-from .types import LDAPCommitError
-from . import base
+from . import model
 
-class BaseModel(base.SessionObject)::
-	def __init__(self, _ldap_response=None, **kwargs):
-		super().__init__(_ldap_response)
-		for key, value, in kwargs.items():
-			if not hasattr(type(self), key):
-				raise Exception()
-			setattr(self, key, value)
+__all__ = ['LDAP3Mapper']
 
 class LDAP3Mapper:
 	def __init__(self, server=None, bind_dn=None, bind_password=None):
 
-		class Session(base.Session):
+		class Session(model.Session):
 			ldap_mapper = self
 
-		class Model(BaseModel):
+		class Model(model.Model):
 			ldap_mapper = self
 
 		self.Session = Session # pylint: disable=invalid-name
 		self.Model = Model # pylint: disable=invalid-name
+		self.Attribute = model.Attribute # pylint: disable=invalid-name
 
 		if not hasattr(type(self), 'server'):
 			self.server = server
@@ -30,7 +24,7 @@ class LDAP3Mapper:
 		if not hasattr(type(self), 'bind_password'):
 			self.bind_password = bind_password
 		if not hasattr(type(self), 'session'):
-			self.session = self.Session()
+			self.session = self.Session(self.get_connection)
 
-	def connect(self):
+	def get_connection(self):
 		return ldap3.Connection(self.server, self.bind_dn, self.bind_password, auto_bind=True)
