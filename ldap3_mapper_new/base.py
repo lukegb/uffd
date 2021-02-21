@@ -1,5 +1,10 @@
 from copy import deepcopy
 
+from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES
+
+class LDAPCommitError(Exception):
+	pass
+
 class SessionState:
 	def __init__(self, objects=None, deleted_objects=None, references=None):
 		self.objects = objects or {}
@@ -11,14 +16,15 @@ class SessionState:
 
 	def ref(self, obj, attr, values):
 		for value in values:
+			key = (attr, value)
 			if key not in self.references:
-				self.references[key] = {self.obj}
+				self.references[key] = {obj}
 			else:
-				self.references[key].add(self.obj)
+				self.references[key].add(obj)
 
 	def unref(self, obj, attr, values):
 		for value in values:
-			self.references.get((name, value), set()).discard(obj)
+			self.references.get((attr, value), set()).discard(obj)
 
 class ObjectState:
 	def __init__(self, session=None, attributes=None, dn=None):
@@ -93,7 +99,7 @@ class ModifyOperation:
 		for attr, changes in self.changes.items():
 			for action, values in changes:
 				if action == MODIFY_REPLACE:
-					session_state.unref(self.obj, attr, self.attributes.get(attr, [])
+					session_state.unref(self.obj, attr, self.attributes.get(attr, []))
 					session_state.ref(self.obj, attr, values)
 				elif action == MODIFY_ADD:
 					session_state.ref(self.obj, attr, values)
@@ -141,9 +147,9 @@ class Session:
 			oper = self.changes.pop(0)
 			try:
 				oper.apply_ldap(conn)
-			except e:
+			except Exception as err:
 				self.changes.insert(0, oper)
-				raise e
+				raise err
 			oper.apply_object(oper.obj.committed_state)
 			oper.apply_session(self.committed_state)
 		self.committed_state = self.state.copy()
@@ -207,21 +213,21 @@ class Object:
 
 	def setattr(self, name, values):
 		oper = ModifyOperation(self, {name: [(MODIFY_REPLACE, [values])]})
-		oper.apply_object(obj.state)
+		oper.apply_object(self.state)
 		if self.state.session:
 			oper.apply_session(self.state.session.state)
 			self.state.session.changes.append(oper)
 
 	def attr_append(self, name, value):
 		oper = ModifyOperation(self, {name: [(MODIFY_ADD, [value])]})
-		oper.apply_object(obj.state)
+		oper.apply_object(self.state)
 		if self.state.session:
 			oper.apply_session(self.state.session.state)
 			self.state.session.changes.append(oper)
 
 	def attr_remove(self, name, value):
 		oper = ModifyOperation(self, {name: [(MODIFY_DELETE, [value])]})
-		oper.apply_object(obj.state)
+		oper.apply_object(self.state)
 		if self.state.session:
 			oper.apply_session(self.state.session.state)
 			self.state.session.changes.append(oper)
