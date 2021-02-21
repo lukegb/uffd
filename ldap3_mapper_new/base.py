@@ -124,6 +124,7 @@ class Session:
 		assert obj.state.session is None
 		oper = AddOperation(obj, dn, object_classes)
 		oper.apply_object(obj.state)
+		obj.state.session = self
 		oper.apply_session(self.state)
 		self.changes.append(oper)
 
@@ -205,14 +206,15 @@ class Object:
 			self.committed_state = ObjectState()
 		else:
 			assert session is not None
-			self.committed_state = ObjectState(session, response['attributes'], response['dn'])
+			attrs = {attr: value if isinstance(value, list) else [value] for attr, value in response['attributes'].items()}
+			self.committed_state = ObjectState(session, attrs, response['dn'])
 		self.state = self.committed_state.copy()
 
 	def getattr(self, name):
 		return self.state.attributes.get(name, [])
 
 	def setattr(self, name, values):
-		oper = ModifyOperation(self, {name: [(MODIFY_REPLACE, [values])]})
+		oper = ModifyOperation(self, {name: [(MODIFY_REPLACE, values)]})
 		oper.apply_object(self.state)
 		if self.state.session:
 			oper.apply_session(self.state.session.state)
