@@ -1,5 +1,7 @@
 from collections.abc import MutableSet
 
+from .model import add_to_session
+
 class DBRelationshipSet(MutableSet):
 	def __init__(self, dbobj, relattr, ldapcls):
 		self.__dbobj = dbobj
@@ -27,7 +29,7 @@ class DBRelationshipSet(MutableSet):
 		if not isinstance(value, self.__ldapcls):
 			raise TypeError()
 		if value.ldap_object.session is not None:
-			self.__ldapcls.ldap_mapper.session.add(value)
+			add_to_session(value, self.__ldapcls.ldap_mapper.session)
 		if value.ldap_object.dn not in self.__get_dns():
 			getattr(self.__dbobj, self.__relattr).append(self.__ldapcls(dn=value.ldap_object.dn))
 

@@ -38,10 +38,19 @@ class AttributeList(MutableSequence):
 		self.__set(tmp)
 
 class Attribute:
-	def __init__(self, name, aliases=None, multi=False):
+	def __init__(self, name, aliases=None, multi=False, default=None):
 		self.name = name
 		self.aliases = aliases or []
 		self.multi = multi
+		self.default = default
+
+	def add_hook(self, obj):
+		if obj.ldap_object.getattr(self.name) == []:
+			self.__set__(self.name, self.default() if callable(self.default) else self.default)
+
+	def __set_name__(self, cls, name):
+		if self.default is not None:
+			cls.ldap_add_hooks = cls.ldap_add_hooks + (self.add_hook,)
 
 	def __get__(self, obj, objtype=None):
 		if obj is None:

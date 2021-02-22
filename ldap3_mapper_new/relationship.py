@@ -1,6 +1,6 @@
 from collections.abc import MutableSet
 
-from .model import make_modelobj, make_modelobjs
+from .model import make_modelobj, make_modelobjs, add_to_session
 
 class UnboundObjectError(Exception):
 	pass
@@ -38,7 +38,7 @@ class RelationshipSet(MutableSet):
 	def add(self, value):
 		self.__modify_check(value)
 		if value.ldap_object.session is None:
-			self.__ldap_object.session.add(value.ldap_object)
+			add_to_session(value, self.__ldap_object.session)
 		assert value.ldap_object.session == self.__ldap_object.session
 		self.__ldap_object.attradd(self.__name, value.dn)
 
@@ -102,7 +102,7 @@ class BackreferenceSet(MutableSet):
 	def add(self, value):
 		self.__modify_check(value)
 		if value.ldap_object.session is None:
-			self.__ldap_object.session.add(value.ldap_object)
+			add_to_session(value, self.__ldap_object.session)
 		assert value.ldap_object.session == self.__ldap_object.session
 		if self.__ldap_object.dn not in value.ldap_object.getattr(self.__name):
 			value.ldap_object.attradd(self.__name, self.__ldap_object.dn)

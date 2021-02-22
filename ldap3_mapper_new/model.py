@@ -1,4 +1,3 @@
-
 try:
 	# Added in v2.5
 	from ldap3.utils.dn import escape_rdn
@@ -14,14 +13,19 @@ except ImportError:
 			rdn = ''.join((rdn[:-1], '\\ '))
 		return rdn
 
-from . import base
+from . import core
+
+def add_to_session(obj, session):
+	for func in obj.ldap_add_hooks:
+		func(obj)
+	session.add(obj.ldap_object, obj.dn, obj.ldap_object_classes)
 
 class Session:
 	def __init__(self, get_connection):
-		self.ldap_session = base.Session(get_connection)
+		self.ldap_session = core.Session(get_connection)
 
 	def add(self, obj):
-		self.ldap_session.add(obj.ldap_object, obj.dn, obj.ldap_object_classes)
+		add_to_session(obj, self.ldap_session)
 
 	def delete(self, obj):
 		self.ldap_session.delete(obj.ldap_object)
@@ -76,6 +80,8 @@ class ModelQueryWrapper:
 class Model:
 	# Overwritten by mapper
 	ldap_mapper = None
+	query = ModelQueryWrapper()
+	ldap_add_hooks = tuple()
 
 	# Overwritten by models
 	ldap_search_base = None
@@ -84,10 +90,8 @@ class Model:
 	ldap_dn_base = None
 	ldap_dn_attribute = None
 
-	query = ModelQueryWrapper()
-
 	def __init__(self, **kwargs):
-		self.ldap_object = base.Object()
+		self.ldap_object = core.Object()
 		for key, value, in kwargs.items():
 			if not hasattr(self, key):
 				raise Exception()
