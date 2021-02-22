@@ -1,6 +1,18 @@
-from collections.abc import MutableSet
 
-from ldap3.utils.conv import escape_filter_chars
+try:
+	# Added in v2.5
+	from ldap3.utils.dn import escape_rdn
+except ImportError:
+	# From ldap3 source code, Copyright Giovanni Cannata, LGPL v3 license
+	def escape_rdn(rdn):
+		# '/' must be handled first or the escape slashes will be escaped!
+		for char in ['\\', ',', '+', '"', '<', '>', ';', '=', '\x00']:
+			rdn = rdn.replace(char, '\\' + char)
+		if rdn[0] == '#' or rdn[0] == ' ':
+			rdn = ''.join(('\\', rdn))
+		if rdn[-1] == ' ':
+			rdn = ''.join((rdn[:-1], '\\ '))
+		return rdn
 
 from . import base
 
@@ -89,74 +101,10 @@ class Model:
 		values = self.ldap_object.getattr(self.ldap_dn_attribute)
 		if not values:
 			return None
-		return '%s=%s,%s'%(self.ldap_dn_attribute, escape_filter_chars(values[0]), self.ldap_dn_base)
+		return '%s=%s,%s'%(self.ldap_dn_attribute, escape_rdn(values[0]), self.ldap_dn_base)
 
 	def __repr__(self):
 		cls_name = '%s.%s'%(type(self).__module__, type(self).__name__)
 		if self.dn is not None:
 			return '<%s %s>'%(cls_name, self.dn)
 		return '<%s>'%cls_name
-
-class SetView(MutableSet):
-	def __init__(self, getitems, additem, delitem, encode=None, decode=None):
-		self.__getitems = getitems
-		self.__additem = additem
-		self.__delitem = delitem
-		self.__encode = encode or (lambda x: x)
-		self.__decode = decode or (lambda x: x)
-
-	def __repr__(self):
-		return repr(set(self))
-
-	def __contains__(self, value):
-		return value is not None and self.__encode(value) in self.__getitems()
-
-	def __iter__(self):
-		return iter(filter(lambda obj: obj is not None, map(self.__decode, self.__getitems())))
-
-	def __len__(self):
-		return len(set(self))
-
-	def add(self, value):
-		if value not in self:
-			self.__additem(self.__encode(value))
-
-	def discard(self, value):
-		self.__delitem(self.__encode(value))
-
-	def update(self, values):
-		for value in values:
-			self.add(value)
-
-class Attribute:
-	def __init__(self, name, multi=False, encode=None, decode=None, aliases=None):
-		self.name = name
-		self.multi = multi
-		self.encode = encode or (lambda x: x)
-		self.decode = decode or (lambda x: x)
-		self.aliases = [name] + (aliases or [])
-
-	def additem(self, obj, value):
-		for name in self.aliases:
-			obj.ldap_object.attradd(name, value)
-
-	def delitem(self, obj, value):
-		for name in self.aliases:
-			obj.ldap_object.attrdel(name, value)
-
-	def __get__(self, obj, objtype=None):
-		if obj is None:
-			return self
-		if self.multi:
-			return SetView(getitems=lambda: obj.ldap_object.getattr(self.name),
-			               additem=lambda value: self.additem(obj, value),
-			               delitem=lambda value: self.delitem(obj, value),
-			               encode=self.encode, decode=self.decode)
-		return self.decode((obj.ldap_object.getattr(self.name) or [None])[0])
-
-	def __set__(self, obj, values):
-		if not self.multi:
-			values = [values]
-		values = [self.encode(value) for value in values]
-		for name in self.aliases:
-			obj.ldap_object.setattr(name, values)
