@@ -1,21 +1,20 @@
 import ldap3
 
-from . import model
+from . import model, attribute, relationship
 
-__all__ = ['LDAP3Mapper']
+__all__ = ['LDAPMapper']
 
-class LDAP3Mapper:
+class LDAPMapper:
 	def __init__(self, server=None, bind_dn=None, bind_password=None):
-
-		class Session(model.Session):
-			ldap_mapper = self
 
 		class Model(model.Model):
 			ldap_mapper = self
 
-		self.Session = Session # pylint: disable=invalid-name
 		self.Model = Model # pylint: disable=invalid-name
-		self.Attribute = model.Attribute # pylint: disable=invalid-name
+		self.Session = model.Session # pylint: disable=invalid-name
+		self.Attribute = attribute.Attribute # pylint: disable=invalid-name
+		self.Relationship = relationship.Relationship # pylint: disable=invalid-name
+		self.Backreference = relationship.Backreference # pylint: disable=invalid-name
 
 		if not hasattr(type(self), 'server'):
 			self.server = server
