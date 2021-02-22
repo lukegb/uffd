@@ -93,7 +93,8 @@ class ModifyOperation:
 					obj_state.attributes[attr] += values
 				elif action == MODIFY_DELETE:
 					for value in values:
-						obj_state.attributes[attr].remove(value)
+						if value in obj_state.attributes[attr]:
+							obj_state.attributes[attr].remove(value)
 
 	def apply_session(self, session_state):
 		for attr, changes in self.changes.items():
