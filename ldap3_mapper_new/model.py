@@ -30,23 +30,32 @@ def make_modelobj(obj, model):
 		return None
 	return obj.model
 
+def make_modelobjs(objs, model):
+	modelobjs = []
+	for obj in objs:
+		modelobj = make_modelobj(obj, model)
+		if modelobj is not None:
+			modelobjs.append(modelobj)
+	return modelobjs
+
 class ModelQuery:
 	def __init__(self, model):
 		self.model = model
 
 	def get(self, dn):
 		session = self.model.ldap_mapper.session.ldap_session
-		return make_modelobj(session.get(dn, self.model.ldap_search_filter), self.model)
+		return make_modelobj(session.get(dn, self.model.ldap_filter_params), self.model)
 
 	def all(self):
 		session = self.model.ldap_mapper.session.ldap_session
-		objs = session.search(self.model.ldap_search_base, self.model.ldap_search_filter)
-		# TODO: check cached objects for non-committed objects
-		objs = [make_modelobj(obj, self.model) for obj in objs]
-		return [obj for obj in objs if obj is not None]
+		objs = session.filter(self.model.ldap_search_base, self.model.ldap_filter_params)
+		return make_modelobjs(objs, self.model)
 
-	def filter_by(self, dn):
-		pass # TODO
+	def filter_by(self, **kwargs):
+		filter_params = self.model.ldap_filter_params + list(kwargs.items())
+		session = self.model.ldap_mapper.session.ldap_session
+		objs = session.filter(self.model.ldap_search_base, filter_params)
+		return make_modelobjs(objs, self.model)
 
 class ModelQueryWrapper:
 	def __get__(self, obj, objtype=None):
@@ -58,7 +67,7 @@ class Model:
 
 	# Overwritten by models
 	ldap_search_base = None
-	ldap_search_filter = None
+	ldap_filter_params = None
 	ldap_dn_base = None
 	ldap_dn_attribute = None
 
@@ -73,8 +82,8 @@ class Model:
 
 	@property
 	def dn(self):
-		if self.ldap_object.state.dn is not None:
-			return self.ldap_object.state.dn
+		if self.ldap_object.dn is not None:
+			return self.ldap_object.dn
 		if self.ldap_dn_base is None or self.ldap_dn_attribute is None:
 			return None
 		values = self.ldap_object.getattr(self.ldap_dn_attribute)
