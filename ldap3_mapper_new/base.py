@@ -3,11 +3,17 @@ from copy import deepcopy
 from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES
 from ldap3.utils.conv import escape_filter_chars
 
-def encode_filter(params):
-	return '(&%s)'%(''.join(['(%s=%s)'%(attr, escape_filter_chars(value)) for attr, value in params]))
+def encode_filter(filter_params):
+	return '(&%s)'%(''.join(['(%s=%s)'%(attr, escape_filter_chars(value)) for attr, value in filter_params]))
 
 def match_dn(dn, base):
 	return dn.endswith(base) # Probably good enougth for all valid dns
+
+def make_cache_key(search_base, filter_params):
+	res = [search_base]
+	for attr, value in sorted(filter_params):
+		res.append((attr, value))
+	return res
 
 class LDAPCommitError(Exception):
 	pass
@@ -125,6 +131,7 @@ class Session:
 		self.committed_state = SessionState()
 		self.state = SessionState()
 		self.changes = []
+		self.cached_searches = set()
 
 	def add(self, obj, dn, object_classes):
 		if self.state.objects.get(dn) == obj:
@@ -190,7 +197,7 @@ class Session:
 			self.state.ref(obj, attr, values)
 		return obj
 
-	def filter_local(self, search_base, filter_params):
+	def filter(self, search_base, filter_params):
 		if not filter_params:
 			matches = self.state.objects.values()
 		else:
@@ -198,12 +205,12 @@ class Session:
 			matches = submatches.pop(0)
 			while submatches:
 				matches = matches.intersection(submatches.pop(0))
-		return [obj for obj in matches if match_dn(obj.state.dn, search_base)]
-
-	def filter(self, search_base, filter_params):
+		res = [obj for obj in matches if match_dn(obj.state.dn, search_base)]
+		cache_key = make_cache_key(search_base, filter_params)
+		if cache_key in self.cached_searches:
+			return res
 		conn = self.get_connection()
 		conn.search(search_base, encode_filter(filter_params), attributes=[ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES])
-		res = []
 		for response in conn.response:
 			dn = response['dn']
 			if dn in self.state.objects or dn in self.state.deleted_objects:
@@ -214,7 +221,8 @@ class Session:
 			for attr, values in obj.state.attributes.items():
 				self.state.ref(obj, attr, values)
 			res.append(obj)
-		return res + self.filter_local(search_base, filter_params)
+		self.cached_searches.add(cache_key)
+		return res
 
 class Object:
 	def __init__(self, session=None, response=None):

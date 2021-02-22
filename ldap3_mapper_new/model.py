@@ -21,7 +21,7 @@ class Session:
 		self.ldap_session = base.Session(get_connection)
 
 	def add(self, obj):
-		self.ldap_session.add(obj.ldap_object, obj.dn, obj.object_classes)
+		self.ldap_session.add(obj.ldap_object, obj.dn, obj.ldap_object_classes)
 
 	def delete(self, obj):
 		self.ldap_session.delete(obj.ldap_object)
@@ -80,6 +80,7 @@ class Model:
 	# Overwritten by models
 	ldap_search_base = None
 	ldap_filter_params = None
+	ldap_object_classes = None
 	ldap_dn_base = None
 	ldap_dn_attribute = None
 
