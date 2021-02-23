@@ -17,29 +17,40 @@ def get_next_uid():
 		raise Exception('No free uid found')
 	return next_uid
 
-class User(ldap.Model):
-	ldap_search_base = lazyconfig_str('LDAP_BASE_USER')
-	ldap_filter_params = lazyconfig_list('LDAP_FILTER_USER')
-	ldap_object_classes = lazyconfig_list('LDAP_USER_OBJECTCLASSES')
-	ldap_dn_base = lazyconfig_str('LDAP_BASE_USER')
-	ldap_dn_attribute = 'uid'
+class DictView:
+	def __init__(self, obj):
+		self.obj = obj
 
-	uid = ldap.Attribute(lazyconfig_str('LDAP_USER_ATTRIBUTE_UID'), default=get_next_uid)
-	loginname = ldap.Attribute('uid')
-	displayname = ldap.Attribute(lazyconfig_str('LDAP_USER_ATTRIBUTE_DISPLAYNAME'), aliases=['givenName', 'displayName'])
-	mail = ldap.Attribute(lazyconfig_str('LDAP_USER_ATTRIBUTE_MAIL'))
+	def __getitem__(self, key):
+		return getattr(self.obj, key)
+
+class BaseUser(ldap.Model):
+	ldap_search_base = lazyconfig_str('LDAP_USER_SEARCH_BASE')
+	ldap_filter_params = lazyconfig_list('LDAP_USER_SEARCH_FILTER')
+	ldap_object_classes = lazyconfig_list('LDAP_USER_OBJECTCLASSES')
+	ldap_dn_base = lazyconfig_str('LDAP_USER_SEARCH_BASE')
+	ldap_dn_attribute = lazyconfig_str('LDAP_USER_DN_ATTRIBUTE')
+
+	uid = ldap.Attribute(lazyconfig_str('LDAP_USER_UID_ATTRIBUTE'), default=get_next_uid, aliases=lazyconfig_list('LDAP_USER_UID_ALIASES'))
+	loginname = ldap.Attribute(lazyconfig_str('LDAP_USER_LOGINNAME_ATTRIBUTE'), aliases=lazyconfig_list('LDAP_USER_LOGINNAME_ALIASES'))
+	displayname = ldap.Attribute(lazyconfig_str('LDAP_USER_DISPLAYNAME_ATTRIBUTE'), aliases=lazyconfig_list('LDAP_USER_DISPLAYNAME_ALIASES'))
+	mail = ldap.Attribute(lazyconfig_str('LDAP_USER_MAIL_ATTRIBUTE'), aliases=lazyconfig_list('LDAP_USER_MAIL_ALIASES'))
 	pwhash = ldap.Attribute('userPassword', default=lambda: hashed(HASHED_SALTED_SHA512, secrets.token_hex(128)))
 
 	groups = [] # Shuts up pylint, overwritten by back-reference
 	roles = [] # Shuts up pylint, overwritten by back-reference
 
 	def dummy_attribute_defaults(self):
-		if self.ldap_object.getattr('sn') == []:
-			self.ldap_object.setattr('sn', [' '])
-		if self.ldap_object.getattr('homeDirectory') == []:
-			self.ldap_object.setattr('homeDirectory', ['/home/%s'%self.loginname])
-		if self.ldap_object.getattr('gidNumber') == []:
-			self.ldap_object.setattr('gidNumber', [current_app.config['LDAP_USER_GID']])
+		for name, patterns in current_app.config['LDAP_USER_DEFAULT_ATTRIBUTES'].items():
+			if not isinstance(patterns, list):
+				patterns = [patterns]
+			values = []
+			for pattern in patterns:
+				if isinstance(pattern, str):
+					values.append(pattern.format_map(DictView(self)))
+				else:
+					values.append(pattern)
+			self.ldap_object.setattr(name, values)
 
 	ldap_add_hooks = ldap.Model.ldap_add_hooks + (dummy_attribute_defaults,)
 
@@ -101,13 +112,15 @@ class User(ldap.Model):
 		self.mail = value
 		return True
 
-class Group(ldap.Model):
-	ldap_search_base = lazyconfig_str('LDAP_BASE_GROUPS')
-	ldap_filter_params = lazyconfig_list('LDAP_FILTER_GROUP')
+User = BaseUser
 
-	gid = ldap.Attribute('gidNumber')
-	name = ldap.Attribute('cn')
-	description = ldap.Attribute('description', default='')
-	members = ldap.Relationship('uniqueMember', User, backref='groups')
+class Group(ldap.Model):
+	ldap_search_base = lazyconfig_str('LDAP_GROUP_SEARCH_BASE')
+	ldap_filter_params = lazyconfig_list('LDAP_GROUP_SEARCH_FILTER')
+
+	gid = ldap.Attribute(lazyconfig_str('LDAP_GROUP_GID_ATTRIBUTE'))
+	name = ldap.Attribute(lazyconfig_str('LDAP_GROUP_NAME_ATTRIBUTE'))
+	description = ldap.Attribute(lazyconfig_str('LDAP_GROUP_DESCRIPTION_ATTRIBUTE'), default='')
+	members = ldap.Relationship(lazyconfig_str('LDAP_GROUP_MEMBER_ATTRIBUTE'), User, backref='groups')
 
 	roles = [] # Shuts up pylint, overwritten by back-reference
