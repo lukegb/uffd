@@ -19,15 +19,15 @@ def get_next_uid():
 
 class User(ldap.Model):
 	ldap_search_base = lazyconfig_str('LDAP_BASE_USER')
-	ldap_filter_params = (('objectClass', 'person'),)
+	ldap_filter_params = lazyconfig_list('LDAP_FILTER_USER')
 	ldap_object_classes = lazyconfig_list('LDAP_USER_OBJECTCLASSES')
 	ldap_dn_base = lazyconfig_str('LDAP_BASE_USER')
 	ldap_dn_attribute = 'uid'
 
-	uid = ldap.Attribute('uidNumber', default=get_next_uid)
+	uid = ldap.Attribute(lazyconfig_str('LDAP_USER_ATTRIBUTE_UID'), default=get_next_uid)
 	loginname = ldap.Attribute('uid')
-	displayname = ldap.Attribute('cn', aliases=['givenName', 'displayName'])
-	mail = ldap.Attribute('mail')
+	displayname = ldap.Attribute(lazyconfig_str('LDAP_USER_ATTRIBUTE_DISPLAYNAME'), aliases=['givenName', 'displayName'])
+	mail = ldap.Attribute(lazyconfig_str('LDAP_USER_ATTRIBUTE_MAIL'))
 	pwhash = ldap.Attribute('userPassword', default=lambda: hashed(HASHED_SALTED_SHA512, secrets.token_hex(128)))
 
 	groups = [] # Shuts up pylint, overwritten by back-reference
@@ -103,7 +103,7 @@ class User(ldap.Model):
 
 class Group(ldap.Model):
 	ldap_search_base = lazyconfig_str('LDAP_BASE_GROUPS')
-	ldap_filter_params = (('objectClass', 'groupOfUniqueNames'),)
+	ldap_filter_params = lazyconfig_list('LDAP_FILTER_GROUP')
 
 	gid = ldap.Attribute('gidNumber')
 	name = ldap.Attribute('cn')
