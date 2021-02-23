@@ -28,7 +28,7 @@ class RelationshipSet(MutableSet):
 
 	def __iter__(self):
 		def get(dn):
-			return make_modelobj(self.__ldap_object.session.get(dn, self.__model.ldap_filter_params), self.__destmodel)
+			return make_modelobj(self.__ldap_object.session.get(dn, self.__destmodel.ldap_filter_params), self.__destmodel)
 		dns = set(self.__ldap_object.getattr(self.__name))
 		return iter(filter(lambda obj: obj is not None, map(get, dns)))
 

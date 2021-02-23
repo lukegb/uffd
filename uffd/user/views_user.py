@@ -105,11 +105,11 @@ def csvimport():
 			if not newuser.set_mail(row[1]):
 				flash("invalid mail address, skipped : {}".format(row))
 				continue
+			ldap.session.add(newuser)
 			for role in roles:
 				if (str(role.id) in row[2].split(';')) or role.name in current_app.config["ROLES_BASEROLES"]:
 					role.members.add(newuser)
 			newuser.update_groups()
-			ldap.session.add(newuser)
 			try:
 				ldap.session.commit()
 				db.session.commit()

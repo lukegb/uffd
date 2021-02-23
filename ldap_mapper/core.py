@@ -60,12 +60,14 @@ class AddOperation:
 	def apply_object(self, obj_state):
 		obj_state.dn = self.dn
 		obj_state.attributes = {name: values.copy() for name, values in self.attributes.items()}
+		obj_state.attributes['objectClass'] = obj_state.attributes.get('objectClass', []) + list(self.object_classes)
 
 	def apply_session(self, session_state):
 		assert self.dn not in session_state.objects
 		session_state.objects[self.dn] = self.obj
 		for name, values in self.attributes.items():
 			session_state.ref(self.obj, name, values)
+		session_state.ref(self.obj, 'objectClass', self.object_classes)
 
 	def apply_ldap(self, conn):
 		success = conn.add(self.dn, self.object_classes, self.attributes)
