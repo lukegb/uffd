@@ -59,10 +59,6 @@ class BaseUser(ldap.Model):
 		self.pwhash = hashed(HASHED_SALTED_SHA512, value)
 	password = property(fset=password)
 
-	@property
-	def ldif(self):
-		return '<none yet>' # TODO: Do we really need this?!
-
 	def is_in_group(self, name):
 		if not name:
 			return True
