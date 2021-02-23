@@ -1,12 +1,30 @@
-from flask import current_app, request
+from flask import current_app, request, abort
 
 import ldap3
 
 from ldapalchemy import LDAPMapper, LDAPCommitError # pylint: disable=unused-import
+from ldapalchemy.model import Query
+
+class FlaskQuery(Query):
+	def get_or_404(self, dn):
+		res = self.get(dn)
+		if res is None:
+			abort(404)
+		return res
+
+	def first_or_404(self):
+		res = self.first()
+		if res is None:
+			abort(404)
+		return res
 
 class FlaskLDAPMapper(LDAPMapper):
 	def __init__(self):
 		super().__init__()
+		class Model(self.Model):
+			query_class = FlaskQuery
+
+		self.Model = Model # pylint: disable=invalid-name
 
 	@property
 	def session(self):

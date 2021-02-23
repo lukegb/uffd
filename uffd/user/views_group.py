@@ -23,4 +23,4 @@ def index():
 
 @bp.route("/<int:gid>")
 def show(gid):
-	return render_template('group.html', group=Group.query.filter_by(gid=gid)[0])
+	return render_template('group.html', group=Group.query.filter_by(gid=gid).first_or_404())

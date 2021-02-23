@@ -44,6 +44,7 @@ class MFAMethod(db.Model):
 class RecoveryCodeMethod(MFAMethod):
 	code_salt = Column('recovery_salt', String(64))
 	code_hash = Column('recovery_hash', String(256))
+	user = DBRelationship('dn', User, backref='mfa_recovery_codes')
 
 	__mapper_args__ = {
 		'polymorphic_identity': MFAType.RECOVERY_CODE
@@ -76,6 +77,7 @@ def _hotp(counter, key, digits=6):
 
 class TOTPMethod(MFAMethod):
 	key = Column('totp_key', String(64))
+	user = DBRelationship('dn', User, backref='mfa_totp_methods')
 
 	__mapper_args__ = {
 		'polymorphic_identity': MFAType.TOTP
@@ -124,6 +126,7 @@ class TOTPMethod(MFAMethod):
 
 class WebauthnMethod(MFAMethod):
 	_cred = Column('webauthn_cred', Text())
+	user = DBRelationship('dn', User, backref='mfa_webauthn_methods')
 
 	__mapper_args__ = {
 		'polymorphic_identity': MFAType.WEBAUTHN

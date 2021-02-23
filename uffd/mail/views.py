@@ -28,7 +28,7 @@ def index():
 def show(uid=None):
 	mail = Mail()
 	if uid is not None:
-		mail = Mail.query.filter_by(uid=uid)[0]
+		mail = Mail.query.filter_by(uid=uid).first_or_404()
 	return render_template('mail.html', mail=mail)
 
 @bp.route("/<uid>/update", methods=['POST'])
@@ -36,7 +36,7 @@ def show(uid=None):
 @csrf_protect(blueprint=bp)
 def update(uid=None):
 	if uid is not None:
-		mail = Mail.query.filter_by(uid=uid)[0]
+		mail = Mail.query.filter_by(uid=uid).first_or_404()
 	else:
 		mail = Mail(uid=request.form.get('mail-uid'))
 	mail.receivers = request.form.get('mail-receivers', '').splitlines()
@@ -49,7 +49,7 @@ def update(uid=None):
 @bp.route("/<uid>/del")
 @csrf_protect(blueprint=bp)
 def delete(uid):
-	mail = Mail.query.filter_by(uid=uid)[0]
+	mail = Mail.query.filter_by(uid=uid).first_or_404()
 	ldap.session.delete(mail)
 	ldap.session.commit()
 	flash('Deleted mail mapping.')

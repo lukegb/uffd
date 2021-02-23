@@ -46,7 +46,7 @@ def admin_disable(uid):
 	if not get_current_user().is_in_group(current_app.config['ACL_ADMIN_GROUP']):
 		flash('Access denied')
 		return redirect(url_for('index'))
-	user = User.query.filter_by(uid=uid)[0]
+	user = User.query.filter_by(uid=uid).one()
 	MFAMethod.query.filter_by(dn=user.dn).delete()
 	db.session.commit()
 	flash('Two-factor authentication was reset')

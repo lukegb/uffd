@@ -67,7 +67,7 @@ def forgot_password():
 	reset_ratelimit.log(loginname+'/'+mail)
 	host_ratelimit.log()
 	flash("We sent a mail to this users mail address if you entered the correct mail and login name combination")
-	user = (User.query.filter_by(loginname=loginname) or [None])[0]
+	user = User.query.filter_by(loginname=loginname).one_or_none()
 	if user and user.mail == mail:
 		send_passwordreset(user)
 	return redirect(url_for('session.login'))
@@ -89,7 +89,7 @@ def token_password(token):
 	if not request.values['password1'] == request.values['password2']:
 		flash('Passwords do not match, please try again.')
 		return render_template('set_password.html', token=token)
-	user = User.query.filter_by(loginname=dbtoken.loginname)[0]
+	user = User.query.filter_by(loginname=dbtoken.loginname).one()
 	if not user.set_password(request.values['password1']):
 		flash('Password ist not valid, please try again.')
 		return render_template('set_password.html', token=token)
@@ -110,7 +110,7 @@ def token_mail(token):
 			db.session.commit()
 		return redirect(url_for('selfservice.index'))
 
-	user = User.query.filter_by(loginname=dbtoken.loginname)[0]
+	user = User.query.filter_by(loginname=dbtoken.loginname).one()
 	user.set_mail(dbtoken.newmail)
 	flash('New mail set')
 	db.session.delete(dbtoken)
@@ -129,7 +129,7 @@ def send_mail_verification(loginname, newmail):
 	db.session.add(token)
 	db.session.commit()
 
-	user = User.query.filter_by(loginname=loginname)[0]
+	user = User.query.filter_by(loginname=loginname).one()
 
 	msg = EmailMessage()
 	msg.set_content(render_template('mailverification.mail.txt', user=user, token=token.token))

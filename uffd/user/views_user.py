@@ -32,7 +32,7 @@ def index():
 @bp.route("/<int:uid>")
 @bp.route("/new")
 def show(uid=None):
-	user = User() if uid is None else User.query.filter_by(uid=uid)[0]
+	user = User() if uid is None else User.query.filter_by(uid=uid).first_or_404()
 	return render_template('user.html', user=user, roles=Role.query.all())
 
 @bp.route("/<int:uid>/update", methods=['POST'])
@@ -45,7 +45,7 @@ def update(uid=None):
 			flash('Login name does not meet requirements')
 			return redirect(url_for('user.show'))
 	else:
-		user = User.query.filter_by(uid=uid)[0]
+		user = User.query.filter_by(uid=uid).first_or_404()
 	if not user.set_mail(request.form['mail']):
 		flash('Mail is invalid')
 		return redirect(url_for('user.show', uid=uid))
@@ -74,7 +74,7 @@ def update(uid=None):
 @bp.route("/<int:uid>/del")
 @csrf_protect(blueprint=bp)
 def delete(uid):
-	user = User.query.filter_by(uid=uid)[0]
+	user = User.query.filter_by(uid=uid).first_or_404()
 	user.roles.clear()
 	ldap.session.delete(user)
 	ldap.session.commit()
