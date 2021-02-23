@@ -1,5 +1,6 @@
 from flask import current_app
 from sqlalchemy import Column, Integer, String, DateTime, Text
+from ldapalchemy.dbutils import DBRelationship
 
 from uffd.database import db
 from uffd.user.models import User
@@ -36,14 +37,7 @@ class OAuth2Grant(db.Model):
 	id = Column(Integer, primary_key=True)
 
 	user_dn = Column(String(128))
-
-	@property
-	def user(self):
-		return User.query.get(self.user_dn)
-
-	@user.setter
-	def user(self, newuser):
-		self.user_dn = newuser.dn
+	user = DBRelationship('user_dn', User, backref='oauth2_grants')
 
 	client_id = Column(String(40))
 
@@ -76,13 +70,7 @@ class OAuth2Token(db.Model):
 	id = Column(Integer, primary_key=True)
 
 	user_dn = Column(String(128))
-	@property
-	def user(self):
-		return User.query.get(self.user_dn)
-
-	@user.setter
-	def user(self, newuser):
-		self.user_dn = newuser.dn
+	user = DBRelationship('user_dn', User, backref='oauth2_tokens')
 
 	client_id = Column(String(40))
 

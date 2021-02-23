@@ -13,6 +13,7 @@ import crypt
 
 from flask import request, current_app
 from sqlalchemy import Column, Integer, Enum, String, DateTime, Text
+from ldapalchemy.dbutils import DBRelationship
 
 from uffd.database import db
 from uffd.user.models import User
@@ -29,6 +30,7 @@ class MFAMethod(db.Model):
 	created = Column(DateTime())
 	name = Column(String(128))
 	dn = Column(String(128))
+	user = DBRelationship('dn', User, backref='mfa_methods')
 
 	__mapper_args__ = {
 		'polymorphic_on': type,
@@ -38,14 +40,6 @@ class MFAMethod(db.Model):
 		self.user = user
 		self.name = name
 		self.created = datetime.datetime.now()
-
-	@property
-	def user(self):
-		return User.query.get(self.dn)
-
-	@user.setter
-	def user(self, new_user):
-		self.dn = new_user.dn
 
 class RecoveryCodeMethod(MFAMethod):
 	code_salt = Column('recovery_salt', String(64))
