@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
 
-from ldap3_mapper_new.dbutils import DBRelationship
+from ldap_mapper.dbutils import DBRelationship
 
 from uffd.database import db
 from uffd.user.models import User, Group

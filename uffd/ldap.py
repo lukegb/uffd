@@ -2,7 +2,7 @@ from flask import current_app, request
 
 import ldap3
 
-from ldap3_mapper_new import LDAPMapper, LDAPCommitError # pylint: disable=unused-import
+from ldap_mapper import LDAPMapper, LDAPCommitError # pylint: disable=unused-import
 
 class FlaskLDAPMapper(LDAPMapper):
 	def __init__(self):
