@@ -1,0 +1,3 @@
+[submodule "deps/ldapalchemy"]
+	path = deps/ldapalchemy
+	url = ../ldapalchemy.git

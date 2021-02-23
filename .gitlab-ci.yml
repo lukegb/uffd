@@ -2,6 +2,8 @@ image: registry.git.cccv.de/infra/uffd/docker-images/buster
 
 variables:
   DEBIAN_FRONTEND: noninteractive 
+  GIT_SUBMODULE_STRATEGY: normal
+  PYTHONPATH: deps/ldapalchemy
 
 before_script:
   - python3 -V
@@ -28,7 +30,7 @@ unittests:
   stage: test
   script:
   - service slapd start
-  - UNITTEST_OPENLDAP=1 python3-coverage run --include './*.py' --omit 'tests/*.py' -m pytest --junitxml=report.xml || true
+  - UNITTEST_OPENLDAP=1 python3-coverage run --include 'uffd/*.py' -m pytest --junitxml=report.xml || true
   - python3-coverage report -m
   - python3-coverage html
   - python3-coverage xml

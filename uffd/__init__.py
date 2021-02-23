@@ -1,13 +1,17 @@
 import os
 import secrets
+import sys
 
 from flask import Flask, redirect, url_for
 from werkzeug.routing import IntegerConverter
 
+sys.path.append('deps/ldapalchemy')
+
+# pylint: disable=wrong-import-position
 from uffd.database import db, SQLAlchemyJSON
 from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
-
+# pylint: enable=wrong-import-position
 
 def create_app(test_config=None):
 	# create and configure the app
