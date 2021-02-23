@@ -46,7 +46,7 @@ class Attribute:
 
 	def add_hook(self, obj):
 		if obj.ldap_object.getattr(self.name) == []:
-			self.__set__(self.name, self.default() if callable(self.default) else self.default)
+			self.__set__(obj, self.default() if callable(self.default) else self.default)
 
 	def __set_name__(self, cls, name):
 		if self.default is not None:
@@ -57,10 +57,10 @@ class Attribute:
 			return self
 		if self.multi:
 			return AttributeList(obj.ldap_object, self.name, self.aliases)
-		return obj.ldap_object.getattr(self.name)
+		return (obj.ldap_object.getattr(self.name) or [None])[0]
 
 	def __set__(self, obj, values):
 		if not self.multi:
 			values = [values]
-		for name in self.aliases:
+		for name in [self.name] + self.aliases:
 			obj.ldap_object.setattr(name, values)

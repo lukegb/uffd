@@ -31,7 +31,7 @@ def show(roleid=False):
 		role = Role()
 	else:
 		role = Role.query.filter_by(id=roleid).one()
-	return render_template('role.html', role=role, groups=Group.ldap_all())
+	return render_template('role.html', role=role, groups=Group.query.all())
 
 @bp.route("/<int:roleid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
@@ -45,7 +45,7 @@ def update(roleid=False):
 		role = Role.query.filter_by(id=roleid).one()
 	role.name = request.values['name']
 	role.description = request.values['description']
-	for group in Group.ldap_all():
+	for group in Group.query.all():
 		if request.values.get('group-{}'.format(group.gid), False):
 			role.groups.add(group)
 		else:

@@ -25,10 +25,10 @@ class TestMfaPrimitives(unittest.TestCase):
 		self.assertEqual(_hotp(2**64-1, b'abcde'), '899292')
 
 def get_user():
-	return User.ldap_get('uid=testuser,ou=users,dc=example,dc=com')
+	return User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 
 def get_admin():
-	return User.ldap_get('uid=testadmin,ou=users,dc=example,dc=com')
+	return User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
 
 def get_fido2_test_cred():
 	try:

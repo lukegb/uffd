@@ -9,7 +9,7 @@ from uffd.lazyconfig import lazyconfig_str, lazyconfig_list
 
 def get_next_uid():
 	max_uid = current_app.config['LDAP_USER_MIN_UID']
-	for user in User.ldap_all():
+	for user in User.query.all():
 		if user.uid <= current_app.config['LDAP_USER_MAX_UID']:
 			max_uid = max(user.uid, max_uid)
 	next_uid = max_uid + 1
@@ -18,11 +18,11 @@ def get_next_uid():
 	return next_uid
 
 class User(ldap.Model):
-	ldap_base = lazyconfig_str('LDAP_BASE_USER')
-	ldap_dn_attribute = 'uid'
-	ldap_dn_base = lazyconfig_str('LDAP_BASE_USER')
-	ldap_filter = '(objectClass=person)'
+	ldap_search_base = lazyconfig_str('LDAP_BASE_USER')
+	ldap_filter_params = (('objectClass', 'person'),)
 	ldap_object_classes = lazyconfig_list('LDAP_USER_OBJECTCLASSES')
+	ldap_dn_base = lazyconfig_str('LDAP_BASE_USER')
+	ldap_dn_attribute = 'uid'
 
 	uid = ldap.Attribute('uidNumber', default=get_next_uid)
 	loginname = ldap.Attribute('uid')
@@ -34,14 +34,14 @@ class User(ldap.Model):
 	roles = [] # Shuts up pylint, overwritten by back-reference
 
 	def dummy_attribute_defaults(self):
-		if self.ldap_getattr('sn') == []:
-			self.ldap_setattr('sn', [' '])
-		if self.ldap_getattr('homeDirectory') == []:
-			self.ldap_setattr('homeDirectory', ['/home/%s'%self.loginname])
-		if self.ldap_getattr('gidNumber') == []:
-			self.ldap_setattr('gidNumber', [current_app.config['LDAP_USER_GID']])
+		if self.ldap_object.getattr('sn') == []:
+			self.ldap_object.setattr('sn', [' '])
+		if self.ldap_object.getattr('homeDirectory') == []:
+			self.ldap_object.setattr('homeDirectory', ['/home/%s'%self.loginname])
+		if self.ldap_object.getattr('gidNumber') == []:
+			self.ldap_object.setattr('gidNumber', [current_app.config['LDAP_USER_GID']])
 
-	ldap_pre_create_hooks = ldap.Model.ldap_pre_create_hooks + [dummy_attribute_defaults]
+	ldap_add_hooks = ldap.Model.ldap_add_hooks + (dummy_attribute_defaults,)
 
 	# Write-only property
 	def password(self, value):
@@ -102,12 +102,12 @@ class User(ldap.Model):
 		return True
 
 class Group(ldap.Model):
-	ldap_base = lazyconfig_str('LDAP_BASE_GROUPS')
-	ldap_filter = '(objectClass=groupOfUniqueNames)'
+	ldap_search_base = lazyconfig_str('LDAP_BASE_GROUPS')
+	ldap_filter_params = (('objectClass', 'groupOfUniqueNames'),)
 
 	gid = ldap.Attribute('gidNumber')
 	name = ldap.Attribute('cn')
 	description = ldap.Attribute('description', default='')
-	members = ldap.Relation('uniqueMember', User, backref='groups')
+	members = ldap.Relationship('uniqueMember', User, backref='groups')
 
 	roles = [] # Shuts up pylint, overwritten by back-reference

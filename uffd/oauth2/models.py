@@ -39,7 +39,7 @@ class OAuth2Grant(db.Model):
 
 	@property
 	def user(self):
-		return User.ldap_get(self.user_dn)
+		return User.query.get(self.user_dn)
 
 	@user.setter
 	def user(self, newuser):
@@ -78,7 +78,7 @@ class OAuth2Token(db.Model):
 	user_dn = Column(String(128))
 	@property
 	def user(self):
-		return User.ldap_get(self.user_dn)
+		return User.query.get(self.user_dn)
 
 	@user.setter
 	def user(self, newuser):

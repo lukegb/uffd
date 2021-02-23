@@ -2,20 +2,19 @@ from flask import current_app, request
 
 import ldap3
 
-from ldap3_mapper import LDAP3Mapper, LDAPCommitError # pylint: disable=unused-import
-from ldap3_mapper.base import Session
+from ldap3_mapper_new import LDAPMapper, LDAPCommitError # pylint: disable=unused-import
 
-class FlaskLDAP3Mapper(LDAP3Mapper):
+class FlaskLDAPMapper(LDAPMapper):
 	def __init__(self):
 		super().__init__()
 
 	@property
 	def session(self):
 		if not hasattr(request, 'ldap_session'):
-			request.ldap_session = Session()
+			request.ldap_session = self.Session(self.get_connection)
 		return request.ldap_session
 
-	def connect(self):
+	def get_connection(self):
 		if current_app.config.get('LDAP_SERVICE_MOCK', False):
 			if not current_app.debug:
 				raise Exception('LDAP_SERVICE_MOCK cannot be enabled on production instances')
@@ -32,4 +31,4 @@ class FlaskLDAP3Mapper(LDAP3Mapper):
 		return ldap3.Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"],
 		                        current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=True)
 
-ldap = FlaskLDAP3Mapper()
+ldap = FlaskLDAPMapper()

@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
 
-from ldap3_mapper.db_relation import DB2LDAPRelation
+from ldap3_mapper_new.dbutils import DBRelationship
 
 from uffd.database import db
 from uffd.user.models import User, Group
@@ -37,10 +37,10 @@ class Role(db.Model):
 	description = Column(Text(), default='')
 
 	db_members = relationship("RoleUser", backref="role", cascade="all, delete-orphan")
-	members = DB2LDAPRelation('db_members', RoleUser, User, backattr='role', backref='roles')
+	members = DBRelationship('db_members', User, RoleUser, backattr='role', backref='roles')
 
 	db_groups = relationship("RoleGroup", backref="role", cascade="all, delete-orphan")
-	groups = DB2LDAPRelation('db_groups', RoleGroup, Group, backattr='role', backref='roles')
+	groups = DBRelationship('db_groups', Group, RoleGroup, backattr='role', backref='roles')
 
 	def update_member_groups(self):
 		for user in self.members:

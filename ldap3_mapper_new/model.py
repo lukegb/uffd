@@ -68,7 +68,8 @@ class ModelQuery:
 		return make_modelobjs(objs, self.model)
 
 	def filter_by(self, **kwargs):
-		filter_params = self.model.ldap_filter_params + list(kwargs.items())
+		filter_params = self.model.ldap_filter_params
+		filter_params += tuple((getattr(self.model, attr).name, value) for attr, value in kwargs.items())
 		session = self.model.ldap_mapper.session.ldap_session
 		objs = session.filter(self.model.ldap_search_base, filter_params)
 		return make_modelobjs(objs, self.model)
@@ -81,12 +82,12 @@ class Model:
 	# Overwritten by mapper
 	ldap_mapper = None
 	query = ModelQueryWrapper()
-	ldap_add_hooks = tuple()
+	ldap_add_hooks = ()
 
 	# Overwritten by models
 	ldap_search_base = None
-	ldap_filter_params = None
-	ldap_object_classes = None
+	ldap_filter_params = ()
+	ldap_object_classes = ()
 	ldap_dn_base = None
 	ldap_dn_attribute = None
 
@@ -106,7 +107,9 @@ class Model:
 		values = self.ldap_object.getattr(self.ldap_dn_attribute)
 		if not values:
 			return None
-		return '%s=%s,%s'%(self.ldap_dn_attribute, escape_rdn(values[0]), self.ldap_dn_base)
+		# escape_rdn can't handle empty strings
+		rdn = escape_rdn(values[0]) if values[0] else ''
+		return '%s=%s,%s'%(self.ldap_dn_attribute, rdn, self.ldap_dn_base)
 
 	def __repr__(self):
 		cls_name = '%s.%s'%(type(self).__module__, type(self).__name__)

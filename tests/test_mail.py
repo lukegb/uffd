@@ -14,7 +14,7 @@ from uffd import create_app, db
 from utils import dump, UffdTestCase
 
 def get_mail():
-	return Mail.ldap_get('uid=test,ou=postfix,dc=example,dc=com')
+	return Mail.query.get('uid=test,ou=postfix,dc=example,dc=com')
 
 class TestMailViews(UffdTestCase):
 	def setUp(self):
@@ -68,7 +68,7 @@ class TestMailViews(UffdTestCase):
 			'mail-destinations': 'testuser@mail.example.com\ntestadmin@mail.example.com'}, follow_redirects=True)
 		dump('mail_create', r)
 		self.assertEqual(r.status_code, 200)
-		m = Mail.ldap_get('uid=test1,ou=postfix,dc=example,dc=com')
+		m = Mail.query.get('uid=test1,ou=postfix,dc=example,dc=com')
 		self.assertEqual(m.uid, 'test1')
 		self.assertEqual(sorted(m.receivers), ['foo@bar.com', 'test@bar.com'])
 		self.assertEqual(sorted(m.destinations), ['testadmin@mail.example.com', 'testuser@mail.example.com'])

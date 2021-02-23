@@ -40,11 +40,15 @@ class RelationshipSet(MutableSet):
 		if value.ldap_object.session is None:
 			add_to_session(value, self.__ldap_object.session)
 		assert value.ldap_object.session == self.__ldap_object.session
-		self.__ldap_object.attradd(self.__name, value.dn)
+		self.__ldap_object.attr_append(self.__name, value.dn)
 
 	def discard(self, value):
 		self.__modify_check(value)
-		self.__ldap_object.attrdel(self.__name, value.dn)
+		self.__ldap_object.attr_remove(self.__name, value.dn)
+
+	def update(self, values):
+		for value in values:
+			self.add(value)
 
 class Relationship:
 	def __init__(self, name, destmodel, backref=None):
@@ -59,7 +63,7 @@ class Relationship:
 	def __get__(self, obj, objtype=None):
 		if obj is None:
 			return self
-		return RelationshipSet(obj, self.name, type(obj), self.destmodel)
+		return RelationshipSet(obj.ldap_object, self.name, type(obj), self.destmodel)
 
 	def __set__(self, obj, values):
 		tmp = self.__get__(obj)
@@ -83,7 +87,7 @@ class BackreferenceSet(MutableSet):
 	def __get(self):
 		if self.__ldap_object.session is None:
 			return set()
-		filter_params = self.__srcmodel.filter_params + [(self.__name, self.__ldap_object.dn)]
+		filter_params = self.__srcmodel.ldap_filter_params + ((self.__name, self.__ldap_object.dn),)
 		objs = self.__ldap_object.session.filter(self.__srcmodel.ldap_search_base, filter_params)
 		return set(make_modelobjs(objs, self.__srcmodel))
 
@@ -105,11 +109,15 @@ class BackreferenceSet(MutableSet):
 			add_to_session(value, self.__ldap_object.session)
 		assert value.ldap_object.session == self.__ldap_object.session
 		if self.__ldap_object.dn not in value.ldap_object.getattr(self.__name):
-			value.ldap_object.attradd(self.__name, self.__ldap_object.dn)
+			value.ldap_object.attr_append(self.__name, self.__ldap_object.dn)
 
 	def discard(self, value):
 		self.__modify_check(value)
-		value.ldap_object.attrdel(self.__name, self.__ldap_object.dn)
+		value.ldap_object.attr_remove(self.__name, self.__ldap_object.dn)
+
+	def update(self, values):
+		for value in values:
+			self.add(value)
 
 class Backreference:
 	def __init__(self, name, srcmodel):
@@ -119,7 +127,7 @@ class Backreference:
 	def __get__(self, obj, objtype=None):
 		if obj is None:
 			return self
-		return BackreferenceSet(obj, self.name, type(obj), self.srcmodel)
+		return BackreferenceSet(obj.ldap_object, self.name, type(obj), self.srcmodel)
 
 	def __set__(self, obj, values):
 		tmp = self.__get__(obj)

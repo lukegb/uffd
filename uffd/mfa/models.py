@@ -41,7 +41,7 @@ class MFAMethod(db.Model):
 
 	@property
 	def user(self):
-		return User.ldap_get(self.dn)
+		return User.query.get(self.dn)
 
 	@user.setter
 	def user(self, new_user):

@@ -18,7 +18,7 @@ login_ratelimit = Ratelimit('login', 1*60, 3)
 def login_get_user(loginname, password):
 	dn = User(loginname=loginname).dn
 	if current_app.config.get('LDAP_SERVICE_MOCK', False):
-		conn = ldap.connect()
+		conn = ldap.get_connection()
 		# Since we reuse the same conn for all calls to `user_conn()` we
 		# simulate the password check by rebinding. Note that ldap3's mocking
 		# implementation just compares the string in the objects's userPassword
@@ -38,7 +38,7 @@ def login_get_user(loginname, password):
 	conn.search(conn.user, '(objectClass=person)')
 	if len(conn.entries) != 1:
 		return None
-	return User.ldap_get(dn)
+	return User.query.get(dn)
 
 @bp.route("/logout")
 def logout():
@@ -80,9 +80,8 @@ def login():
 
 def get_current_user():
 	if 'user_dn' not in session:
-		print(session)
 		return None
-	return User.ldap_get(session['user_dn'])
+	return User.query.get(session['user_dn'])
 
 def login_valid():
 	user = get_current_user()

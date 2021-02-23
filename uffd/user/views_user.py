@@ -27,12 +27,12 @@ def user_acl_check():
 @bp.route("/")
 @register_navbar('Users', icon='users', blueprint=bp, visible=user_acl_check)
 def index():
-	return render_template('user_list.html', users=User.ldap_all())
+	return render_template('user_list.html', users=User.query.all())
 
 @bp.route("/<int:uid>")
 @bp.route("/new")
 def show(uid=None):
-	user = User() if uid is None else User.ldap_filter_by(uid=uid)[0]
+	user = User() if uid is None else User.query.filter_by(uid=uid)[0]
 	return render_template('user.html', user=user, roles=Role.query.all())
 
 @bp.route("/<int:uid>/update", methods=['POST'])
@@ -45,7 +45,7 @@ def update(uid=None):
 			flash('Login name does not meet requirements')
 			return redirect(url_for('user.show'))
 	else:
-		user = User.ldap_filter_by(uid=uid)[0]
+		user = User.query.filter_by(uid=uid)[0]
 	if not user.set_mail(request.form['mail']):
 		flash('Mail is invalid')
 		return redirect(url_for('user.show', uid=uid))
@@ -56,12 +56,12 @@ def update(uid=None):
 	new_password = request.form.get('password')
 	if uid is not None and new_password:
 		user.set_password(new_password)
+	ldap.session.add(user)
 	user.roles.clear()
 	for role in Role.query.all():
 		if request.values.get('role-{}'.format(role.id), False) or role.name in current_app.config["ROLES_BASEROLES"]:
 			user.roles.add(role)
 	user.update_groups()
-	ldap.session.add(user)
 	ldap.session.commit()
 	db.session.commit()
 	if uid is None:
@@ -74,7 +74,7 @@ def update(uid=None):
 @bp.route("/<int:uid>/del")
 @csrf_protect(blueprint=bp)
 def delete(uid):
-	user = User.ldap_filter_by(uid=uid)[0]
+	user = User.query.filter_by(uid=uid)[0]
 	user.roles.clear()
 	ldap.session.delete(user)
 	ldap.session.commit()

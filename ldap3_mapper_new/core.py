@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from ldap3 import MODIFY_REPLACE, MODIFY_DELETE, MODIFY_ADD, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES
 from ldap3.utils.conv import escape_filter_chars
 
@@ -10,9 +8,9 @@ def match_dn(dn, base):
 	return dn.endswith(base) # Probably good enougth for all valid dns
 
 def make_cache_key(search_base, filter_params):
-	res = [search_base]
+	res = (search_base,)
 	for attr, value in sorted(filter_params):
-		res.append((attr, value))
+		res += ((attr, value),)
 	return res
 
 class LDAPCommitError(Exception):
@@ -25,7 +23,10 @@ class SessionState:
 		self.references = references or {} # {(attr_name, value): {srcobj, ...}, ...}
 
 	def copy(self):
-		return SessionState(deepcopy(self.objects), deepcopy(self.deleted_objects), deepcopy(self.references))
+		objects = self.objects.copy()
+		deleted_objects = self.deleted_objects.copy()
+		references = {key: objs.copy() for key, objs in self.references.items()}
+		return SessionState(objects, deleted_objects, references)
 
 	def ref(self, obj, attr, values):
 		for value in values:
@@ -46,18 +47,19 @@ class ObjectState:
 		self.dn = dn
 
 	def copy(self):
-		return ObjectState(attributes=deepcopy(self.attributes), dn=self.dn, session=self.session)
+		attributes = {name: values.copy() for name, values in self.attributes.items()}
+		return ObjectState(attributes=attributes, dn=self.dn, session=self.session)
 
 class AddOperation:
 	def __init__(self, obj, dn, object_classes):
 		self.obj = obj
 		self.dn = dn
 		self.object_classes = object_classes
-		self.attributes = deepcopy(obj.state.attributes)
+		self.attributes = {name: values.copy() for name, values in obj.state.attributes.items()}
 
 	def apply_object(self, obj_state):
 		obj_state.dn = self.dn
-		obj_state.attributes = deepcopy(self.attributes)
+		obj_state.attributes = {name: values.copy() for name, values in self.attributes.items()}
 
 	def apply_session(self, session_state):
 		assert self.dn not in session_state.objects
@@ -74,7 +76,7 @@ class DeleteOperation:
 	def __init__(self, obj):
 		self.dn = obj.state.dn
 		self.obj = obj
-		self.attributes = deepcopy(obj.state.attributes)
+		self.attributes = {name: values.copy() for name, values in obj.state.attributes.items()}
 
 	def apply_object(self, obj_state):
 		obj_state.dn = None
@@ -94,8 +96,8 @@ class DeleteOperation:
 class ModifyOperation:
 	def __init__(self, obj, changes):
 		self.obj = obj
-		self.attributes = deepcopy(obj.state.attributes)
-		self.changes = deepcopy(changes)
+		self.attributes = {name: values.copy() for name, values in obj.state.attributes.items()}
+		self.changes = changes
 
 	def apply_object(self, obj_state):
 		for attr, changes in self.changes.items():
@@ -181,7 +183,7 @@ class Session:
 	def get(self, dn, filter_params):
 		if dn in self.state.objects:
 			obj = self.state.objects[dn]
-			return obj if obj.matches(filter_params) else None
+			return obj if obj.match(filter_params) else None
 		if dn in self.state.deleted_objects:
 			return None
 		conn = self.get_connection()

@@ -14,7 +14,7 @@ from uffd import create_app, db, ldap
 from utils import dump, UffdTestCase
 
 def get_ldap_password():
-	return User.ldap_get('uid=testuser,ou=users,dc=example,dc=com').pwhash
+	return User.query.get('uid=testuser,ou=users,dc=example,dc=com').pwhash
 
 class TestSelfservice(UffdTestCase):
 	def setUpApp(self):
@@ -111,7 +111,7 @@ class TestSelfservice(UffdTestCase):
 	def test_token_mail_wrong_user(self):
 		self.login()
 		user = get_current_user()
-		admin_user = User.ldap_get('uid=testadmin,ou=users,dc=example,dc=com')
+		admin_user = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
 		db.session.add(MailToken(loginname=user.loginname, newmail='newusermail@example.com'))
 		admin_token = MailToken(loginname='testadmin', newmail='newadminmail@example.com')
 		db.session.add(admin_token)
@@ -120,7 +120,7 @@ class TestSelfservice(UffdTestCase):
 		dump('token_mail_wrong_user', r)
 		self.assertEqual(r.status_code, 200)
 		_user = get_current_user()
-		_admin_user = User.ldap_get('uid=testadmin,ou=users,dc=example,dc=com')
+		_admin_user = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
 		self.assertEqual(_user.mail, user.mail)
 		self.assertEqual(_admin_user.mail, admin_user.mail)
 
@@ -140,7 +140,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(len(tokens), 0)
 
 	def test_forgot_password(self):
-		user = User.ldap_get('uid=testuser,ou=users,dc=example,dc=com')
+		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		r = self.client.get(path=url_for('selfservice.forgot_password'))
 		dump('forgot_password', r)
 		self.assertEqual(r.status_code, 200)
@@ -153,7 +153,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertIn(token.token, str(self.app.last_mail.get_content()))
 
 	def test_forgot_password_wrong_user(self):
-		user = User.ldap_get('uid=testuser,ou=users,dc=example,dc=com')
+		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		r = self.client.get(path=url_for('selfservice.forgot_password'))
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('selfservice.forgot_password'),
@@ -164,7 +164,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(len(PasswordToken.query.all()), 0)
 
 	def test_forgot_password_wrong_email(self):
-		user = User.ldap_get('uid=testuser,ou=users,dc=example,dc=com')
+		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		r = self.client.get(path=url_for('selfservice.forgot_password'), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('selfservice.forgot_password'),
@@ -184,7 +184,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(len(PasswordToken.query.all()), 0)
 
 	def test_token_password(self):
-		user = User.ldap_get('uid=testuser,ou=users,dc=example,dc=com')
+		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		oldpw = get_ldap_password()
 		token = PasswordToken(loginname=user.loginname)
 		db.session.add(token)
@@ -201,7 +201,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(len(PasswordToken.query.all()), 0)
 
 	def test_token_password_emptydb(self):
-		user = User.ldap_get('uid=testuser,ou=users,dc=example,dc=com')
+		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		oldpw = get_ldap_password()
 		r = self.client.get(path=url_for('selfservice.token_password', token='A'*128), follow_redirects=True)
 		dump('token_password_emptydb', r)
@@ -215,7 +215,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(oldpw, get_ldap_password())
 
 	def test_token_password_invalid(self):
-		user = User.ldap_get('uid=testuser,ou=users,dc=example,dc=com')
+		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		oldpw = get_ldap_password()
 		token = PasswordToken(loginname=user.loginname)
 		db.session.add(token)
@@ -232,7 +232,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(oldpw, get_ldap_password())
 
 	def test_token_password_expired(self):
-		user = User.ldap_get('uid=testuser,ou=users,dc=example,dc=com')
+		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		oldpw = get_ldap_password()
 		token = PasswordToken(loginname=user.loginname,
 			created=(datetime.datetime.now() - datetime.timedelta(days=10)))
@@ -250,7 +250,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(oldpw, get_ldap_password())
 
 	def test_token_password_different_passwords(self):
-		user = User.ldap_get('uid=testuser,ou=users,dc=example,dc=com')
+		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		oldpw = get_ldap_password()
 		token = PasswordToken(loginname=user.loginname)
 		db.session.add(token)

@@ -3,10 +3,11 @@ from collections.abc import MutableSet
 from .model import add_to_session
 
 class DBRelationshipSet(MutableSet):
-	def __init__(self, dbobj, relattr, ldapcls):
+	def __init__(self, dbobj, relattr, ldapcls, mapcls):
 		self.__dbobj = dbobj
 		self.__relattr = relattr
 		self.__ldapcls = ldapcls
+		self.__mapcls = mapcls
 
 	def __get_dns(self):
 		return [mapobj.dn for mapobj in getattr(self.__dbobj, self.__relattr)]
@@ -28,10 +29,10 @@ class DBRelationshipSet(MutableSet):
 	def add(self, value):
 		if not isinstance(value, self.__ldapcls):
 			raise TypeError()
-		if value.ldap_object.session is not None:
-			add_to_session(value, self.__ldapcls.ldap_mapper.session)
+		if value.ldap_object.session is None:
+			add_to_session(value, self.__ldapcls.ldap_mapper.session.ldap_session)
 		if value.ldap_object.dn not in self.__get_dns():
-			getattr(self.__dbobj, self.__relattr).append(self.__ldapcls(dn=value.ldap_object.dn))
+			getattr(self.__dbobj, self.__relattr).append(self.__mapcls(dn=value.ldap_object.dn))
 
 	def discard(self, value):
 		if not isinstance(value, self.__ldapcls):
@@ -57,7 +58,7 @@ class DBRelationship:
 	def __get__(self, obj, objtype=None):
 		if obj is None:
 			return self
-		return DBRelationshipSet(obj, self.relattr, self.ldapcls)
+		return DBRelationshipSet(obj, self.relattr, self.ldapcls, self.mapcls)
 
 	def __set__(self, obj, values):
 		tmp = self.__get__(obj)
@@ -69,7 +70,7 @@ class DBBackreferenceSet(MutableSet):
 	def __init__(self, ldapobj, dbcls, relattr, mapcls, backattr):
 		self.__ldapobj = ldapobj
 		self.__dbcls = dbcls
-		self.__relattr, = relattr
+		self.__relattr = relattr
 		self.__mapcls = mapcls
 		self.__backattr = backattr
 
@@ -94,6 +95,7 @@ class DBBackreferenceSet(MutableSet):
 
 	def add(self, value):
 		# TODO: add value to db session if necessary
+		assert self.__ldapobj.ldap_object.session is not None
 		if not isinstance(value, self.__dbcls):
 			raise TypeError()
 		rel = getattr(value, self.__relattr)

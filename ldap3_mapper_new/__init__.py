@@ -1,8 +1,9 @@
 import ldap3
 
+from .core import LDAPCommitError
 from . import model, attribute, relationship
 
-__all__ = ['LDAPMapper']
+__all__ = ['LDAPMapper', 'LDAPCommitError']
 
 class LDAPMapper:
 	def __init__(self, server=None, bind_dn=None, bind_password=None):
