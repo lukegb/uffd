@@ -47,6 +47,8 @@ class BaseUser(ldap.Model):
 
 	def add_default_attributes(self):
 		for name, values in current_app.config['LDAP_USER_DEFAULT_ATTRIBUTES'].items():
+			if self.ldap_object.getattr(name):
+				continue
 			if not isinstance(values, list):
 				values = [values]
 			formatted_values = []
