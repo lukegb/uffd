@@ -17,12 +17,17 @@ def get_next_uid():
 		raise Exception('No free uid found')
 	return next_uid
 
-class DictView:
+class ObjectAttributeDict:
 	def __init__(self, obj):
 		self.obj = obj
 
 	def __getitem__(self, key):
 		return getattr(self.obj, key)
+
+def format_with_attributes(fmtstr, obj):
+	# Do str.format-style string formatting with the attributes of an object
+	# E.g. format_with_attributes("/home/{loginname}", obj) = "/home/foobar" if obj.loginname = "foobar"
+	return fmtstr.format_map(ObjectAttributeDict(obj))
 
 class BaseUser(ldap.Model):
 	ldap_search_base = lazyconfig_str('LDAP_USER_SEARCH_BASE')
@@ -40,19 +45,18 @@ class BaseUser(ldap.Model):
 	groups = [] # Shuts up pylint, overwritten by back-reference
 	roles = [] # Shuts up pylint, overwritten by back-reference
 
-	def dummy_attribute_defaults(self):
-		for name, patterns in current_app.config['LDAP_USER_DEFAULT_ATTRIBUTES'].items():
-			if not isinstance(patterns, list):
-				patterns = [patterns]
-			values = []
-			for pattern in patterns:
-				if isinstance(pattern, str):
-					values.append(pattern.format_map(DictView(self)))
-				else:
-					values.append(pattern)
-			self.ldap_object.setattr(name, values)
+	def add_default_attributes(self):
+		for name, values in current_app.config['LDAP_USER_DEFAULT_ATTRIBUTES'].items():
+			if not isinstance(values, list):
+				values = [values]
+			formatted_values = []
+			for value in values:
+				if isinstance(value, str):
+					value = format_with_attributes(value, self)
+				formatted_values.append(value)
+			self.ldap_object.setattr(name, formatted_values)
 
-	ldap_add_hooks = ldap.Model.ldap_add_hooks + (dummy_attribute_defaults,)
+	ldap_add_hooks = ldap.Model.ldap_add_hooks + (add_default_attributes,)
 
 	# Write-only property
 	def password(self, value):
