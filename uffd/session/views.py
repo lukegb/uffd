@@ -6,6 +6,7 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 
 import ldap3
 from ldap3.core.exceptions import LDAPBindError, LDAPPasswordIsMandatoryError
+from ldapalchemy.core import encode_filter
 
 from uffd.user.models import User
 from uffd.ldap import ldap
@@ -31,11 +32,12 @@ def login_get_user(loginname, password):
 			return None
 	else:
 		server = ldap3.Server(current_app.config["LDAP_SERVICE_URL"], get_info=ldap3.ALL)
+		auto_bind = ldap3.AUTO_BIND_TLS_BEFORE_BIND if current_app.config["LDAP_SERVICE_USE_STARTTLS"] else True
 		try:
-			conn = ldap3.Connection(server, dn, password, auto_bind=True)
+			conn = ldap3.Connection(server, dn, password, auto_bind=auto_bind)
 		except (LDAPBindError, LDAPPasswordIsMandatoryError):
 			return None
-	conn.search(conn.user, '(objectClass=person)')
+	conn.search(conn.user, encode_filter(current_app.config["LDAP_USER_SEARCH_FILTER"]))
 	if len(conn.entries) != 1:
 		return None
 	return User.query.get(dn)
