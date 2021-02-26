@@ -51,8 +51,8 @@
 			Members
 		</p>
 		<ul>
-		{% for member in role.members %}
-		<li>{{ member.dn }}</li>
+		{% for dbmember in role.db_members %}
+		<li>{{ dbmember.dn }}</li>
 		{% endfor %}
 		</ul>
 	</div>
