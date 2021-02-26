@@ -18,10 +18,10 @@ class LdapMapping:
 		return Column(ForeignKey('role.id'))
 
 class RoleGroup(LdapMapping, db.Model):
-	pass
+	__tablename__ = 'role-group'
 
 class RoleUser(LdapMapping, db.Model):
-	pass
+	__tablename__ = 'role-user'
 
 def update_user_groups(user):
 	user.groups.clear()
