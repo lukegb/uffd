@@ -33,6 +33,8 @@ class FlaskLDAPMapper(LDAPMapper):
 		return request.ldap_session
 
 	def get_connection(self):
+		if hasattr(request, 'ldap_connection'):
+			return request.ldap_connection
 		if current_app.config.get('LDAP_SERVICE_MOCK', False):
 			if not current_app.debug:
 				raise Exception('LDAP_SERVICE_MOCK cannot be enabled on production instances')
@@ -47,7 +49,8 @@ class FlaskLDAPMapper(LDAPMapper):
 			return current_app.ldap_mock
 		server = ldap3.Server(current_app.config["LDAP_SERVICE_URL"], get_info=ldap3.ALL)
 		auto_bind = ldap3.AUTO_BIND_TLS_BEFORE_BIND if current_app.config["LDAP_SERVICE_USE_STARTTLS"] else True
-		return ldap3.Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"],
-		                        current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=auto_bind)
+		request.ldap_connection = ldap3.Connection(server, current_app.config["LDAP_SERVICE_BIND_DN"],
+			current_app.config["LDAP_SERVICE_BIND_PASSWORD"], auto_bind=auto_bind)
+		return request.ldap_connection
 
 ldap = FlaskLDAPMapper()
