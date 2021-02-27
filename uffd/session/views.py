@@ -50,6 +50,14 @@ def logout():
 	session.clear()
 	return resp
 
+def set_session(user, skip_mfa=False):
+	session.clear()
+	session['user_dn'] = user.dn
+	session['logintime'] = datetime.datetime.now().timestamp()
+	session['_csrf_token'] = secrets.token_hex(128)
+	if skip_mfa:
+		session['user_mfa'] = True
+
 @bp.route("/login", methods=('GET', 'POST'))
 def login():
 	if request.method == 'GET':
@@ -74,10 +82,7 @@ def login():
 	if not user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
 		flash('You do not have access to this service')
 		return render_template('login.html', ref=request.values.get('ref'))
-	session.clear()
-	session['user_dn'] = user.dn
-	session['logintime'] = datetime.datetime.now().timestamp()
-	session['_csrf_token'] = secrets.token_hex(128)
+	set_session(user)
 	return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
 
 def get_current_user():

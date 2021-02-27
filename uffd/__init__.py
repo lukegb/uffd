@@ -13,7 +13,7 @@ from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
 # pylint: enable=wrong-import-position
 
-def create_app(test_config=None):
+def create_app(test_config=None): # pylint: disable=too-many-locals
 	# create and configure the app
 	app = Flask(__name__, instance_relative_config=False)
 	app.json_encoder = SQLAlchemyJSON
@@ -43,10 +43,10 @@ def create_app(test_config=None):
 
 	db.init_app(app)
 	# pylint: disable=C0415
-	from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services
+	from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services, signup
 	# pylint: enable=C0415
 
-	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp:
+	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp + signup.bp:
 		app.register_blueprint(i)
 
 	@app.route("/")

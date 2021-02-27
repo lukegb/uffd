@@ -22,7 +22,9 @@
 			<button type="submit" class="btn btn-primary btn-block" tabindex = "3">Login</button>
 		</div>
 		<div class="clearfix col-12">
-			<a href="#" class="float-left">Register</a>
+			{% if config['SELF_SIGNUP'] %}
+			<a href="{{ url_for("signup.signup_start") }}" class="float-left">Register</a>
+			{% endif %}
 			<a href="{{ url_for("selfservice.forgot_password") }}" class="float-right">Forgot Password?</a>
 		</div>
 	</div>

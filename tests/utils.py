@@ -3,6 +3,8 @@ import tempfile
 import shutil
 import unittest
 
+from flask import request
+
 from uffd import create_app, db
 
 def dump(basename, resp):
@@ -15,6 +17,11 @@ def dump(basename, resp):
 	path = os.path.join(root, basename+suffix)
 	with open(path, 'xb') as f:
 		f.write(resp.data)
+
+def db_flush():
+	db.session = db.create_scoped_session()
+	if hasattr(request, 'ldap_connection'):
+		del request.ldap_session
 
 class UffdTestCase(unittest.TestCase):
 	use_openldap = False
@@ -29,6 +36,7 @@ class UffdTestCase(unittest.TestCase):
 			'SQLALCHEMY_DATABASE_URI': 'sqlite:///%s/db.sqlite'%self.dir,
 			'SECRET_KEY': 'DEBUGKEY',
 			'LDAP_SERVICE_MOCK': True,
+			'MAIL_SKIP_SEND': True,
 		}
 		if self.use_openldap:
 			if not os.environ.get('UNITTEST_OPENLDAP'):

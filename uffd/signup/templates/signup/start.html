@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<form action="{{ url_for('.signup_submit') }}" method="POST" onInput="password2.setCustomValidity(password1.value != password2.value ? 'Passwords do not match.' : '') ">
+<div class="row mt-2 justify-content-center">
+	<div class="col-lg-6 col-md-10" style="background: #f7f7f7; box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3); padding: 30px;">
+		<div class="text-center">
+			<img alt="branding logo" src="{{ config.get("BRANDING_LOGO_URL") }}" class="col-lg-8 col-md-12" >
+		</div>
+		<div class="col-12">
+			<h2 class="text-center">Account Registration</h2>
+		</div>
+		{% if error %}
+		<div class="form-group col-12">
+			<div class="alert alert-danger" role="alert">{{ error }}</div>
+		</div>
+		{% endif %}
+		<div class="form-group col-12">
+			<label for="user-loginname">Login Name</label>
+			<div class="js-only-input-group">
+				<input type="text" class="form-control" id="user-loginname" name="loginname" aria-describedby="loginname-feedback" value="{{ request.form.loginname }}" minlength=1 maxlength=32 pattern="[a-z0-9_-]*" required>
+				<div class="js-only-input-group-append d-none">
+					<button class="btn btn-outline-secondary rounded-right" type="button" id="check-loginname">Check</button>
+				</div>
+				<div id="loginname-feedback" class="invalid-feedback">foobar</div>
+			</div>
+			<small class="form-text text-muted">
+				At least one and at most 32 lower-case characters, digits, dashes ("-") or underscores ("_"). <b>Cannot be changed later!</b>
+			</small>
+		</div>
+		<div class="form-group col-12">
+			<label for="user-displayname">Display Name</label>
+			<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ request.form.displayname }}" minlength=1 maxlength=128 required>
+			<small class="form-text text-muted">
+				At least one and at most 128 characters, no other special requirements.
+			</small>
+		</div>
+		<div class="form-group col-12">
+			<label for="user-mail">E-Mail Address</label>
+			<input type="email" class="form-control" id="user-mail" name="mail" value="{{ request.form.mail }}" required>
+			<small class="form-text text-muted">
+				We will send a confirmation mail to this address that you need to complete the registration.
+			</small>
+		</div>
+		<div class="form-group col-12">
+			<label for="user-password1">Password</label>
+			<input type="password" class="form-control" id="user-password1" name="password1" minlength=8 maxlength=256 required>
+			<small class="form-text text-muted">
+				At least 8 and at most 256 characters, no other special requirements. But please don't be stupid, do use a password manager.
+			</small>
+		</div>
+		<div class="form-group col-12">
+			<label for="user-password2">Repeat Password</label>
+			<input type="password" class="form-control" id="user-password2" name="password2" required>
+		</div>
+		<div class="form-group col-12">
+			<button type="submit" class="btn btn-primary btn-block">Create Account</button>
+		</div>
+	</div>
+</div>
+</form>
+
+<script>
+$(".js-only-input-group").addClass("input-group");
+$(".js-only-input-group-append").removeClass("d-none");
+$(".js-only-input-group-append").addClass("input-group-append");
+
+let checkreq;
+$("#check-loginname").on("click", function () {
+	if (checkreq)
+		checkreq.abort();
+	$("#user-loginname").removeClass("is-valid");
+	$("#user-loginname").removeClass("is-invalid");
+	$("#check-loginname").prop("disabled", true);
+	checkreq = $.ajax({
+		url: {{ url_for('.signup_check')|tojson }},
+		method: "POST",
+		data: {"loginname": $("#user-loginname").val()},
+		success: function (resp) {
+			checkreq = null;
+			$("#check-loginname").prop("disabled", false);
+			if (resp.status == "ok") {
+				$("#user-loginname").addClass("is-valid");
+				$("#loginname-feedback").text("");
+			} else if (resp.status == 'exists') {
+				$("#loginname-feedback").text("The name is already taken");
+				$("#user-loginname").addClass("is-invalid");
+			} else if (resp.status == 'ratelimited') {
+				$("#loginname-feedback").text("Too many requests! Please wait a bit before trying again!");
+				$("#user-loginname").addClass("is-invalid");
+			} else {
+				$("#loginname-feedback").text("The name is invalid");
+				$("#user-loginname").addClass("is-invalid");
+			}
+		}
+	});
+});
+$("#user-loginname").on("input", function () {
+	if (checkreq)
+		checkreq.abort();
+	checkreq = null;
+	$("#user-loginname").removeClass("is-valid");
+	$("#user-loginname").removeClass("is-invalid");
+	$("#check-loginname").prop("disabled", false);
+});
+
+</script>
+{% endblock %}

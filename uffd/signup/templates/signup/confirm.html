@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<form action="{{ url_for(".signup_confirm_submit", token=signup.token) }}" method="POST">
+<div class="row mt-2 justify-content-center">
+	<div class="col-lg-6 col-md-10" style="background: #f7f7f7; box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3); padding: 30px;">
+		<div class="text-center">
+			<img alt="branding logo" src="{{ config.get("BRANDING_LOGO_URL") }}" class="col-lg-8 col-md-12" >
+		</div>
+		<div class="col-12">
+			<h2 class="text-center">Complete Registration</h2>
+		</div>
+		{% if error %}
+		<div class="alert alert-danger" role="alert">{{ error }}</div>
+		{% endif %}
+		<div class="form-group col-12">
+			<label for="user-password1">Please enter your password to complete the account registration</label>
+			<input type="password" class="form-control" id="user-password1" name="password" required="required">
+		</div>
+		<div class="form-group col-12">
+			<button type="submit" class="btn btn-primary btn-block">Complete Account Registration</button>
+		</div>
+	</div>
+</div>
+</form>
+{% endblock %}

@@ -42,8 +42,8 @@ class BaseUser(ldap.Model):
 	mail = ldap.Attribute(lazyconfig_str('LDAP_USER_MAIL_ATTRIBUTE'), aliases=lazyconfig_list('LDAP_USER_MAIL_ALIASES'))
 	pwhash = ldap.Attribute('userPassword', default=lambda: hashed(HASHED_SALTED_SHA512, secrets.token_hex(128)))
 
-	groups = [] # Shuts up pylint, overwritten by back-reference
-	roles = [] # Shuts up pylint, overwritten by back-reference
+	groups = set() # Shuts up pylint, overwritten by back-reference
+	roles = set() # Shuts up pylint, overwritten by back-reference
 
 	def add_default_attributes(self):
 		for name, values in current_app.config['LDAP_USER_DEFAULT_ATTRIBUTES'].items():

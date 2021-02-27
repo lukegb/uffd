@@ -17,9 +17,6 @@ def get_ldap_password():
 	return User.query.get('uid=testuser,ou=users,dc=example,dc=com').pwhash
 
 class TestSelfservice(UffdTestCase):
-	def setUpApp(self):
-		self.app.config['MAIL_SKIP_SEND'] = True
-
 	def login(self):
 		self.client.post(path=url_for('session.login'),
 			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)

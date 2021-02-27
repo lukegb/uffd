@@ -1,0 +1,13 @@
+Hi {{ signup.displayname }},
+
+an account was created on the CCCV infrastructure with this mail address.
+Please visit the following url to complete the account registration:
+
+{{ url_for('signup.signup_confirm', token=signup.token, _external=True) }}
+
+**The link is valid for 48h**
+
+You can find more information at https://docs.cccv.de/.
+
+If you have not requested an account on the CCCV infrastructure, you can
+ignore this mail.
