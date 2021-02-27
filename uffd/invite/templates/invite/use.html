@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<div class="row mt-2 justify-content-center">
+	<div class="col-lg-6 col-md-10" style="background: #f7f7f7; box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3); padding: 30px;">
+		<div class="text-center">
+			<img alt="branding logo" src="{{ config.get("BRANDING_LOGO_URL") }}" class="col-lg-8 col-md-12" >
+		</div>
+		<div class="col-12 mb-3">
+			<h2 class="text-center">Invite Link</h2>
+		</div>
+		{% if not is_valid_session() %}
+		<p>Welcome to the CCCV Single-Sign-On!</p>
+		{% endif %}
+
+		{% if invite.roles and invite.allow_signup %}
+		<p>With this link you can register a new user account with the following roles or add the roles to an existing account:</p>
+		{% elif invite.roles %}
+		<p>With this link you can add the following roles to an existing account:</p>
+		{% elif invite.allow_signup %}
+		<p>With this link you can register a new user account.</p>
+		{% endif %}
+		{% if invite.roles %}
+		<ul>
+			{% for role in invite.roles %}
+			<li>{{ role.name }}{% if role.description %}: {{ role.description }}{% endif %}</li>
+			{% endfor %}
+		</ul>
+		{% endif %}
+		{% if is_valid_session() %}
+			{% if invite.roles %}
+				<form method="POST" action="{{ url_for("invite.grant", token=invite.token) }}" class="mb-2">
+					<button type="submit" class="btn btn-primary btn-block">Add the roles to your account now</button>
+				</form>
+				<a href="{{ url_for("session.logout", ref=url_for("session.login", ref=request.url)) }}" class="btn btn-secondary btn-block">Logout and switch to a different account</a>
+			{% endif %}
+			{% if invite.allow_signup %}
+				<a href="{{ url_for("session.logout", ref=url_for("invite.signup_start", token=invite.token)) }}" class="btn btn-secondary btn-block">Logout to register a new account</a>
+			{% endif %}
+		{% else %}
+			{% if invite.allow_signup %}
+				<a href="{{ url_for("invite.signup_start", token=invite.token) }}" class="btn btn-primary btn-block">Register a new account</a>
+			{% endif %}
+			{% if invite.roles %}
+				<a href="{{ url_for("session.login", ref=request.url) }}" class="btn btn-primary btn-block">Login and add the roles to your account</a>
+			{% endif %}
+		{% endif %}
+	</div>
+</div>
+{% endblock %}

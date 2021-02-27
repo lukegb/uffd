@@ -46,7 +46,7 @@ def login_get_user(loginname, password):
 def logout():
 	# The oauth2 module takes data from `session` and injects it into the url,
 	# so we need to build the url BEFORE we clear the session!
-	resp = redirect(url_for('oauth2.logout', ref=url_for('.login')))
+	resp = redirect(url_for('oauth2.logout', ref=request.values.get('ref', url_for('.login'))))
 	session.clear()
 	return resp
 

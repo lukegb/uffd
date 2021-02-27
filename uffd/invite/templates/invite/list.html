@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<div class="btn-toolbar mb-2">
+	<a class="btn btn-primary ml-auto" href="{{ url_for("invite.new") }}"><i class="fa fa-plus" aria-hidden="true"></i> New</a>
+</div>
+<div class="table-responsive">
+	<table class="table">
+		<thead>
+			<tr>
+				<th scope="col">Link</th>
+				<th scope="col">Status</th>
+				<th scope="col">Created on</th>
+				<th scope="col">Expires after</th>
+				<th scope="col">Permissions</th>
+				<th scope="col">Usages</th>
+				<th scope="col"></th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for invite in invites|sort(attribute='created', reverse=True)|sort(attribute='active', reverse=True) %}
+			<tr>
+				<td><a style="width: 8em; display: inline-block;" class="text-truncate" href="{{ url_for('invite.use', token=invite.token) }}"><code>{{ invite.token }}</code></a></td>
+				<td>
+					{% if invite.disabled %}
+						Disabled
+					{% elif invite.voided %}
+						Voided
+					{% elif invite.expired %}
+						Expired
+					{% elif not invite.active %}
+						Invalid
+					{% elif invite.single_use %}
+						Valid once
+					{% else %}
+						Valid
+					{% endif %}
+				</td>
+				<td>{{ invite.created.strftime('%Y-%m-%d %H:%M') }}</td>
+				<td>{{ invite.valid_until.strftime('%Y-%m-%d %H:%M') }}</td>
+				<td>
+					{{ 'Signup' if invite.allow_signup }}{{ ', ' if invite.allow_signup and invite.roles }}
+					{% for role in invite.roles %}{{ ', ' if loop.index != 1 }}<a href="{{ url_for('role.show', roleid=role.id) }}" style="white-space: nowrap;"><i class="fas fa-key"></i>&thinsp;{{ role.name }}</a>{% endfor %}
+				</td>
+				<td>
+					<a href="#" data-toggle="modal" data-target="#modal-{{ invite.token }}">
+						<span style="white-space: nowrap;">{{ invite.signups|selectattr('completed')|list|length }} <i class="fas fa-users" title="user registrations"></i></span>,
+						<span style="white-space: nowrap;">{{ invite.grants|length }} <i class="fas fa-key" title="role grants"></i></span>
+					</a>
+				</td>
+				<td class="text-right">
+					{% if invite.active %}
+					<form action="{{ url_for('invite.disable', token=invite.token) }}" method="POST">
+					<button type="submit" class="btn btn-link btn-sm py-0" title="Disable"><i class="fas fa-ban" style="width: 1.5em;"></i></button>
+					</form>
+					{% else %}
+					<form action="{{ url_for('invite.reset', token=invite.token) }}" method="POST">
+					<button type="submit" class="btn btn-link btn-sm py-0" title="Reenable" {{ 'disabled' if invite.expired }}><i class="fas fa-redo" style="width: 1.5em;"></i></button>
+					</form>
+					{% endif %}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+
+{% for invite in invites %}
+<div class="modal" tabindex="-1" id="modal-{{ invite.token }}">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Invite Usages</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<ul>
+					{% for signup in invite.signups if signup.completed %}
+					<li>Registration of user <a href="{{ url_for('user.show', uid=signup.user.uid) }}">{{ signup.user.loginname }}</a></li>
+					{% endfor %}
+					{% for grant in invite.grants if grant.user %}
+					<li>Roles granted to <a href="{{ url_for('user.show', uid=grant.user.uid) }}">{{ grant.user.loginname }}</a></li>
+					{% endfor %}
+				</ul>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% endfor %}
+
+{% endblock %}

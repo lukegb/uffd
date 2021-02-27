@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<form action="{{ url_for("invite.new_submit") }}" method="POST" class="form">
+	<div class="form-group">
+		<label for="single-use">Link Type</label>
+		<select class="form-control" id="single-use" name="single-use">
+			<option value="1">Valid for a single successful use</option>
+			<option value="0">Multi-use</option>
+		</select>
+	</div>
+	<div class="form-group">
+		<label for="valid-until">Expires After</label>
+		<input class="form-control" type="datetime-local" id="valid-until" name="valid-until" value="{{ (datetime.now() + timedelta(hours=36)).replace(hour=23, minute=59, second=59, microsecond=0).isoformat(timespec='minutes') }}">
+	</div>
+	<div class="form-group">
+		<label for="allow-signup">Account Registration</label>
+		<select class="form-control" id="allow-signup" name="allow-signup">
+			<option value="1">Link allows account registration</option>
+			<option value="0">No account registration allowed</option>
+		</select>
+	</div>
+	<div class="form-group">
+		<label for="valid-until">Granted Roles</label>
+		<table class="table table-sm">
+			<thead>
+				<tr>
+					<th scope="col"></th>
+					<th scope="col">Name</th>
+					<th scope="col">Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for role in roles|sort(attribute="name") if role.name not in config['ROLES_BASEROLES'] %}
+				<tr>
+					<td>
+						<div class="form-check">
+							<input class="form-check-input" type="checkbox" id="role-{{ role.id }}" name="role-{{ role.id }}" value="1">
+						</div>
+					</td>
+					<td>{{ role.name }}</td>
+					<td>{{ role.description }}</td>
+				</tr>
+				{% endfor %}
+				{% if not roles %}
+				<tr><td colspan="3" class="bg-light text-muted text-center">There are no (non-base) roles yet</td></tr>
+				{% endif %}
+			</tbody>
+		</table>
+	</div>
+	<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Create Link</button>
+	<a href="{{ url_for("invite.index") }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}
