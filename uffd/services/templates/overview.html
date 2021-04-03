@@ -8,6 +8,14 @@
 <div class="alert alert-warning" role="alert">Some services may not be publicly listed! Log in to see all services you have access to.</div>
 {% endif %}
 
+{% if banner %}
+<div class="card">
+  <div class="card-body">
+    {{ banner|safe }}
+  </div>
+</div>
+{% endif %}
+
 {% macro service_card(service) %}
   <div class="col mb-4">
     <div class="card h-100 {{ 'text-muted' if not service.has_access }}">

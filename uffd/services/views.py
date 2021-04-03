@@ -83,4 +83,11 @@ def index():
 	services = get_services(user)
 	if not current_app.config['SERVICES']:
 		abort(404)
-	return render_template('overview.html', user=user, services=services)
+
+	banner = current_app.config.get('SERVICES_BANNER')
+
+	# Set the banner to None if it is not public and no user is logged in
+	if not (current_app.config["SERVICES_BANNER_PUBLIC"] or user):
+		banner = None
+
+	return render_template('overview.html', user=user, services=services, banner=banner)
