@@ -41,7 +41,7 @@
 					<div class="list-group-item"><i class="fas fa-users" {{ iconstyle }}></i> {{ group.name }}</div>
 				{% endfor %}
 				{% for info in service.infos %}
-					<a href="#" class="list-group-item list-group-item-action" data-toggle="modal" data-target="#info-modal-{{ info.id }}"><i class="fas fa-info-circle" {{ iconstyle }}></i> {{ info.title }}</a>
+					<a href="#" class="list-group-item list-group-item-action" data-toggle="modal" data-target="#info-modal-{{ info.id }}"><i class="fas fa-info-circle" {{ iconstyle }}></i> {{ info.button_text }}</a>
 				{% endfor %}
 				{% for link in service.links %}
 					<a href="{{ link.url }}" class="list-group-item list-group-item-action"><i class="fas fa-external-link-alt" {{ iconstyle }}></i> {{ link.title }}</a>

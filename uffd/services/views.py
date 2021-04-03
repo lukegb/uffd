@@ -53,6 +53,7 @@ def get_services(user=None):
 				continue
 			info = {
 				'title': info_data['title'],
+				'button_text': info_data.get('button_text', info_data['title']),
 				'html': info_data['html'],
 				'id': '%d-%d'%(len(services), len(service['infos'])),
 			}
