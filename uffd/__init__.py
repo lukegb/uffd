@@ -4,6 +4,9 @@ import sys
 
 from flask import Flask, redirect, url_for
 from werkzeug.routing import IntegerConverter
+from werkzeug.serving import make_ssl_devcert
+from werkzeug.contrib.profiler import ProfilerMiddleware
+from flask_migrate import Migrate
 
 sys.path.append('deps/ldapalchemy')
 
@@ -42,6 +45,7 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 		pass
 
 	db.init_app(app)
+	Migrate(app, db, render_as_batch=True)
 	# pylint: disable=C0415
 	from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services, signup, invite
 	# pylint: enable=C0415
@@ -53,8 +57,22 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	def index(): #pylint: disable=unused-variable
 		return redirect(url_for('selfservice.index'))
 
-	return app
+	@app.cli.command("gendevcert", help='Generates a self-signed TLS certificate for development')
+	def gendevcert(): #pylint: disable=unused-variable
+		if os.path.exists('devcert.crt') or os.path.exists('devcert.key'):
+			print('Refusing to overwrite existing "devcert.crt"/"devcert.key" file!')
+			return
+		make_ssl_devcert('devcert')
+		print('Certificate written to "devcert.crt", private key to "devcert.key".')
+		print('Run `flask run --cert devcert.crt --key devcert.key` to use it.')
 
-def init_db(app):
-	with app.app_context():
-		db.create_all()
+	@app.cli.command("profile", help='Runs app with profiler')
+	def profile(): #pylint: disable=unused-variable
+		# app.run() is silently ignored if executed from commands. We really want
+		# to do this, so we overwrite the check by overwriting the environment
+		# variable.
+		os.environ['FLASK_RUN_FROM_CLI'] = 'false'
+		app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
+		app.run(debug=True)
+
+	return app

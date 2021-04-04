@@ -8,6 +8,7 @@ A web service to manage LDAP users, groups and permissions.
 - python3-ldap3
 - python3-flask
 - python3-flask-sqlalchemy
+- python3-flask-migrate
 - python3-qrcode
 - python3-fido2 (version 0.5.0, optional)
 - python3-flask-oauthlib
@@ -18,6 +19,14 @@ You can also use virtualenv with the supplied `requirements.txt`.
 
 ## development
 
+Before running uffd, you need to create the database with `flask db upgrade`.
+Then use `flask run` to start the application:
+
+```
+FLASK_APP=uffd flask db upgrade
+FLASK_APP=uffd FLASK_ENV=development flask run
+```
+
 During development, you may want to enable LDAP mocking, as you otherwise need to have access to an actual LDAP server with the required schema.
 You can do so by setting `LDAP_SERVICE_MOCK=True` in the config.
 Afterwards you can login as a normal user with "testuser" and "userpassword", or as an admin with "testadmin" and "adminpassword".
@@ -25,7 +34,7 @@ Please note that the mocked LDAP functionality is very limited and many uffd fea
 
 ## deployment
 
-Use uwsgi.
+Use uwsgi. Make sure to run `flask db upgrade` after every update!
 
 ## python style conventions
 

@@ -12,6 +12,12 @@ before_script:
   - python3 -m pylint --version
   - python3 -m coverage --version
 
+db_migrations_updated:
+  stage: test
+  script:
+  - FLASK_APP=uffd flask db upgrade
+  - FLASK_APP=uffd flask db migrate 2>&1 | grep -q 'No changes in schema detected'
+
 linter:
   stage: test
   script:
