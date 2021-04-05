@@ -7,21 +7,31 @@ from ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
 from uffd.user.models import User, Group
 
-class LdapMapping:
-	id = Column(Integer(), primary_key=True, autoincrement=True)
-	dn = Column(String(128))
+class RoleGroup(db.Model):
+	__tablename__ = 'role-group'
 	__table_args__ = (
 		db.UniqueConstraint('dn', 'role_id'),
 	)
+
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	dn = Column(String(128))
+
 	@declared_attr
 	def role_id(self):
 		return Column(ForeignKey('role.id'))
 
-class RoleGroup(LdapMapping, db.Model):
-	__tablename__ = 'role-group'
-
-class RoleUser(LdapMapping, db.Model):
+class RoleUser(db.Model):
 	__tablename__ = 'role-user'
+	__table_args__ = (
+		db.UniqueConstraint('dn', 'role_id'),
+	)
+
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	dn = Column(String(128))
+
+	@declared_attr
+	def role_id(self):
+		return Column(ForeignKey('role.id'))
 
 # pylint: disable=E1101
 role_inclusion = db.Table('role-inclusion',
