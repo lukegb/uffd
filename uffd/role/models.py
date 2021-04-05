@@ -24,9 +24,18 @@ class RoleUser(LdapMapping, db.Model):
 	__tablename__ = 'role-user'
 
 def update_user_groups(user):
-	user.groups.clear()
+	current_groups = set(user.groups)
+	groups = set()
 	for role in user.roles:
-		user.groups.update(role.groups)
+		groups.update(role.groups)
+	if groups == current_groups:
+		return set(), set()
+	groups_added = groups - current_groups
+	groups_removed = current_groups - groups
+	for group in groups_removed:
+		user.groups.discard(group)
+	user.groups.update(groups_added)
+	return groups_added, groups_removed
 
 User.update_groups = update_user_groups
 
