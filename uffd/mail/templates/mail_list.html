@@ -3,19 +3,17 @@
 {% block body %}
 <div class="row">
 	<div class="col">
+		<p class="text-right">
+			<a class="btn btn-primary" href="{{ url_for("mail.show") }}">
+				<i class="fa fa-plus" aria-hidden="true"></i> New
+			</a>
+		</p>
 		<table class="table table-striped table-sm">
 			<thead>
 				<tr>
 					<th scope="col">name</th>
 					<th scope="col">receiving address</th>
 					<th scope="col">destinations</th>
-					<th scope="col">
-						<p class="text-right">
-							<a class="btn btn-primary" href="{{ url_for("mail.show") }}">
-								<i class="fa fa-plus" aria-hidden="true"></i> New
-							</a>
-						</p>
-					</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -27,25 +25,18 @@
 						</a>
 					</th>
 					<td>
-						<ul>
+						<ul class="m-0">
 							{% for i in mail.receivers %}
 							<li>{{ i }}</li>
 							{% endfor %}
 						</ul>
 					</td>
 					<td>
-						<ul>
+						<ul class="m-0">
 							{% for i in mail.destinations %}
 							<li>{{ i }}</li>
 							{% endfor %}
 						</ul>
-					</td>
-					<td>
-						<p class="text-right">
-							<a href="{{ url_for("mail.show", uid=mail.uid) }}" class="btn btn-primary">
-								<i class="fa fa-edit" aria-hidden="true"></i> Edit
-							</a>
-						</p>
 					</td>
 				</tr>
 				{% endfor %}
