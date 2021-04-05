@@ -54,6 +54,8 @@ def index():
 @bp.route("/<int:roleid>")
 @bp.route("/new")
 def show(roleid=False):
+	# prefetch all users so the ldap orm can cache them and doesn't run one ldap query per user
+	User.query.all()
 	if not roleid:
 		role = Role()
 	else:
@@ -85,7 +87,7 @@ def update(roleid=False):
 	role.update_member_groups()
 	db.session.commit()
 	ldap.session.commit()
-	return redirect(url_for('role.index'))
+	return redirect(url_for('role.show', roleid=roleid))
 
 @bp.route("/<int:roleid>/del")
 @csrf_protect(blueprint=bp)
