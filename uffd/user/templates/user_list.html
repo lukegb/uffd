@@ -3,6 +3,14 @@
 {% block body %}
 <div class="row">
 	<div class="col">
+		<p class="text-right">
+			<a class="btn btn-primary" href="{{ url_for("user.show") }}">
+				<i class="fa fa-plus" aria-hidden="true"></i> New
+			</a>
+			<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#csvimport">
+				<i class="fa fa-file-csv" aria-hidden="true"></i> CSV import
+			</button>
+		</p>
 		<table class="table table-striped table-sm">
 			<thead>
 				<tr>
@@ -10,16 +18,7 @@
 					<th scope="col">login name</th>
 					<th scope="col">display name</th>
 					<th scope="col">roles</th>
-					<th scope="col">
-						<p class="text-right">
-							<a class="btn btn-primary" href="{{ url_for("user.show") }}">
-								<i class="fa fa-plus" aria-hidden="true"></i> New
-							</a>
-							<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#csvimport">
-								<i class="fa fa-file-csv" aria-hidden="true"></i> CSV import
-							</button>
-						</p>
-					</th>
+					<th scope="col"></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -37,7 +36,7 @@
 						{{ user.displayname }}
 					</td>
 					<td>
-					{% for role in user.roles %}
+					{% for role in user.roles|sort(attribute="name") if not role.name in config["ROLES_BASEROLES"] %}
 						<a href="{{ url_for("role.show", roleid=role.id) }}">{{ role.name }}</a>{% if not loop.last %}, {% endif %}
 					{% endfor %}
 					</td>
