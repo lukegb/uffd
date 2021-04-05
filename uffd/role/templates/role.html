@@ -15,6 +15,47 @@
 		<small class="form-text text-muted">
 		</small>
 	</div>
+
+	<div class="form-group col">
+		<span>Roles to include groups from recursively</span>
+		<table class="table table-striped table-sm">
+			<thead>
+				<tr>
+					<th scope="col"></th>
+					<th scope="col">name</th>
+					<th scope="col">description</th>
+					<th scope="col">currently includes groups</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for r in roles|sort(attribute="name")|sort(attribute='name') %}
+				<tr id="include-role-{{ role.id }}">
+					<td>
+						<div class="form-check">
+							<input class="form-check-input" type="checkbox" id="include-role-{{ r.id }}-checkbox" name="include-role-{{ r.id }}" value="1" aria-label="enabled"
+								{% if r == role %}disabled{% endif %}
+								{% if r in role.included_roles %}checked{% endif %}>
+						</div>
+					</td>
+					<td>
+						<a href="{{ url_for("role.show", roleid=r.id) }}">
+							{{ r.name }}
+						</a>
+					</td>
+					<td>
+						{{ r.description }}
+					</td>
+					<td>
+						{% for group in r.included_groups.union(r.groups)|sort(attribute='name') %}
+							<a href="{{ url_for("group.show", gid=group.gid) }}">{{ group.name }}</a>{{ ', ' if not loop.last }}
+						{% endfor %}
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+
 	<div class="form-group col">
 		<span>Included groups</span>
 		<table class="table table-striped table-sm">
@@ -46,6 +87,7 @@
 			</tbody>
 		</table>
 	</div>
+
 	<div class="form-group col">
 		<p>
 			Members

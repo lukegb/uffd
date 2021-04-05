@@ -23,10 +23,32 @@ class RoleGroup(LdapMapping, db.Model):
 class RoleUser(LdapMapping, db.Model):
 	__tablename__ = 'role-user'
 
+# pylint: disable=E1101
+role_inclusion = db.Table('role-inclusion',
+	Column('role_id', Integer, ForeignKey('role.id'), primary_key=True),
+	Column('included_role_id', Integer, ForeignKey('role.id'), primary_key=True)
+)
+
+def flatten_recursive(objs, attr):
+	'''Returns a set of objects and all objects included in object.`attr` recursivly while avoiding loops'''
+	objs = set(objs)
+	new_objs = set(objs)
+	while new_objs:
+		for obj in getattr(new_objs.pop(), attr):
+			if obj not in objs:
+				objs.add(obj)
+				new_objs.add(obj)
+	return objs
+
+def get_roles_recursive(user):
+	return flatten_recursive(user.roles, 'included_roles')
+
+User.roles_recursive = property(get_roles_recursive)
+
 def update_user_groups(user):
 	current_groups = set(user.groups)
 	groups = set()
-	for role in user.roles:
+	for role in user.roles_recursive:
 		groups.update(role.groups)
 	if groups == current_groups:
 		return set(), set()
@@ -44,6 +66,11 @@ class Role(db.Model):
 	id = Column(Integer(), primary_key=True, autoincrement=True)
 	name = Column(String(32), unique=True)
 	description = Column(Text(), default='')
+	included_roles = relationship('Role', secondary=role_inclusion,
+	                               primaryjoin=id == role_inclusion.c.role_id,
+	                               secondaryjoin=id == role_inclusion.c.included_role_id,
+																 backref='including_roles')
+	including_roles = [] # overwritten by backref
 
 	db_members = relationship("RoleUser", backref="role", cascade="all, delete-orphan")
 	members = DBRelationship('db_members', User, RoleUser, backattr='role', backref='roles')
@@ -51,6 +78,24 @@ class Role(db.Model):
 	db_groups = relationship("RoleGroup", backref="role", cascade="all, delete-orphan")
 	groups = DBRelationship('db_groups', Group, RoleGroup, backattr='role', backref='roles')
 
+	@property
+	def indirect_members(self):
+		users = set()
+		for role in flatten_recursive(self.including_roles, 'including_roles'):
+			users.update(role.members)
+		return users
+
+	@property
+	def included_roles_recursive(self):
+		return flatten_recursive(self.included_roles, 'included_roles')
+
+	@property
+	def included_groups(self):
+		groups = set()
+		for role in self.included_roles_recursive:
+			groups.update(role.groups)
+		return groups
+
 	def update_member_groups(self):
-		for user in self.members:
+		for user in set(self.members).union(self.indirect_members):
 			user.update_groups()
