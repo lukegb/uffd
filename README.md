@@ -36,6 +36,27 @@ Please note that the mocked LDAP functionality is very limited and many uffd fea
 
 Use uwsgi. Make sure to run `flask db upgrade` after every update!
 
+### example uwsgi config
+
+```
+[uwsgi]
+plugin = python3
+env = PYTHONIOENCODING=UTF-8
+env = LANG=en_GB.utf8
+env = TZ=Europe/Berlin
+manage-script-name = true
+chdir = /var/www/uffd
+module = uffd:create_app()
+
+uid = uffd
+gid = uffd
+
+vacuum = true
+die-on-term = true
+
+hook-pre-app = exec:FLASK_APP=uffd flask db upgrade
+```
+
 ## python style conventions
 
 tabs.
