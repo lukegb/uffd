@@ -13,9 +13,9 @@
 	</div>
 	<div class="col"> 
 		<span>Members:</span>
-		<ul class="list-group">
+		<ul class="row">
 		{% for member in group.members %}
-		<li class="list-group-item"><a href="{{ url_for("user.show", uid=member.uid) }}">{{ member.loginname }}</a></li>
+			<li class="col-12 col-xs-6 col-sm-4 col-md-3 col-lg-2"><a href="{{ url_for("user.show", uid=member.uid) }}">{{ member.loginname }}</a></li>
 		{% endfor %}
 		</ul>
 	</div>
