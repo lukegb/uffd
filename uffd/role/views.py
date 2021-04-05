@@ -58,7 +58,7 @@ def show(roleid=False):
 		role = Role()
 	else:
 		role = Role.query.filter_by(id=roleid).one()
-	return render_template('role.html', role=role, groups=Group.query.all())
+	return render_template('role.html', role=role, groups=Group.query.all(), roles=Role.query.all())
 
 @bp.route("/<int:roleid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
@@ -72,6 +72,11 @@ def update(roleid=False):
 		role = Role.query.filter_by(id=roleid).one()
 	role.name = request.values['name']
 	role.description = request.values['description']
+	for included_role in Role.query.all():
+		if included_role != role and request.values.get('include-role-{}'.format(included_role.id)):
+			role.included_roles.append(included_role)
+		elif included_role in role.included_roles:
+			role.included_roles.remove(included_role)
 	for group in Group.query.all():
 		if request.values.get('group-{}'.format(group.gid), False):
 			role.groups.add(group)
@@ -86,7 +91,7 @@ def update(roleid=False):
 @csrf_protect(blueprint=bp)
 def delete(roleid):
 	role = Role.query.filter_by(id=roleid).one()
-	oldmembers = list(role.members)
+	oldmembers = set(role.members).union(role.indirect_members)
 	role.members.clear()
 	db.session.delete(role)
 	for user in oldmembers:

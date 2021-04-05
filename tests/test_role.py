@@ -6,11 +6,88 @@ from flask import url_for, session
 # These imports are required, because otherwise we get circular imports?!
 from uffd import ldap, user
 
-from uffd.user.models import Group
+from uffd.user.models import User, Group
 from uffd.role.models import Role
 from uffd import create_app, db
 
 from utils import dump, UffdTestCase
+
+class TestUserRoleAttributes(UffdTestCase):
+	def test_roles_recursive(self):
+		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+		user1.update_groups()
+		baserole = Role(name='base')
+		role1 = Role(name='role1', members=[user1], included_roles=[baserole])
+		role2 = Role(name='role2', included_roles=[baserole])
+		db.session.add_all([baserole, role1, role2])
+		self.assertSetEqual(user1.roles_recursive, {baserole, role1})
+		baserole.included_roles.append(role2)
+		self.assertSetEqual(user1.roles_recursive, {baserole, role1, role2})
+
+	def test_update_groups(self):
+		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+		user1.update_groups()
+		self.assertSetEqual(set(user1.groups), set())
+		group1 = Group.query.get('cn=users,ou=groups,dc=example,dc=com')
+		group2 = Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')
+		baserole = Role(name='base', groups=[group1])
+		role1 = Role(name='role1', groups=[group2], members=[user1])
+		db.session.add_all([baserole, role1])
+		user1.update_groups()
+		self.assertSetEqual(set(user1.groups), {group2})
+		role1.included_roles.append(baserole)
+		user1.update_groups()
+		self.assertSetEqual(set(user1.groups), {group1, group2})
+
+class TestRoleModel(UffdTestCase):
+	def test_indirect_members(self):
+		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+		user1.update_groups()
+		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
+		user2.update_groups()
+		baserole = Role(name='base', members=[user1])
+		role1 = Role(name='role1', included_roles=[baserole], members=[user2])
+		self.assertSetEqual(baserole.indirect_members, {user2})
+		self.assertSetEqual(role1.indirect_members, set())
+
+	def test_included_roles_recursive(self):
+		baserole = Role(name='base')
+		role1 = Role(name='role1', included_roles=[baserole])
+		role2 = Role(name='role2', included_roles=[baserole])
+		role3 = Role(name='role3', included_roles=[role1, role2])
+		self.assertSetEqual(role1.included_roles_recursive, {baserole})
+		self.assertSetEqual(role2.included_roles_recursive, {baserole})
+		self.assertSetEqual(role3.included_roles_recursive, {baserole, role1, role2})
+		baserole.included_roles.append(role1)
+		self.assertSetEqual(role3.included_roles_recursive, {baserole, role1, role2})
+
+	def test_included_groups(self):
+		group1 = Group.query.get('cn=users,ou=groups,dc=example,dc=com')
+		group2 = Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')
+		baserole = Role(name='base', groups=[group1])
+		role1 = Role(name='role1', groups=[group2], included_roles=[baserole])
+		self.assertSetEqual(baserole.included_groups, set())
+		self.assertSetEqual(role1.included_groups, {group1})
+
+	def test_update_member_groups(self):
+		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+		user1.update_groups()
+		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
+		user2.update_groups()
+		group1 = Group.query.get('cn=users,ou=groups,dc=example,dc=com')
+		group2 = Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')
+		group3 = Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')
+		baserole = Role(name='base', members=[user1], groups=[group1])
+		role1 = Role(name='role1', members=[user2], groups=[group2], included_roles=[baserole])
+		db.session.add_all([baserole, role1])
+		baserole.update_member_groups()
+		role1.update_member_groups()
+		self.assertSetEqual(set(user1.groups), {group1})
+		self.assertSetEqual(set(user2.groups), {group1, group2})
+		baserole.groups.add(group3)
+		baserole.update_member_groups()
+		self.assertSetEqual(set(user1.groups), {group1, group3})
+		self.assertSetEqual(set(user2.groups), {group1, group2, group3})
 
 class TestRoleViews(UffdTestCase):
 	def setUp(self):
