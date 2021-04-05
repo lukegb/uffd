@@ -9,6 +9,7 @@
 					<th scope="col">uid</th>
 					<th scope="col">login name</th>
 					<th scope="col">display name</th>
+					<th scope="col">roles</th>
 					<th scope="col">
 						<p class="text-right">
 							<a class="btn btn-primary" href="{{ url_for("user.show") }}">
@@ -36,8 +37,13 @@
 						{{ user.displayname }}
 					</td>
 					<td>
-						<p class="text-right">
-							<a href="{{ url_for("user.show", uid=user.uid) }}" class="btn btn-primary">
+					{% for role in user.roles %}
+						<a href="{{ url_for("role.show", roleid=role.id) }}">{{ role.name }}</a>{% if not loop.last %}, {% endif %}
+					{% endfor %}
+					</td>
+					<td>
+						<p class="text-right m-0">
+							<a href="{{ url_for("user.show", uid=user.uid) }}" class="btn btn-primary btn-sm">
 								<i class="fa fa-edit" aria-hidden="true"></i> Edit
 							</a>
 						</p>
