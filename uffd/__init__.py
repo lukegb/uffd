@@ -12,6 +12,7 @@ sys.path.append('deps/ldapalchemy')
 
 # pylint: disable=wrong-import-position
 from uffd.database import db, SQLAlchemyJSON
+from uffd.ldap import ldap
 from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
 # pylint: enable=wrong-import-position
@@ -52,6 +53,11 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 
 	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp + signup.bp + invite.bp:
 		app.register_blueprint(i)
+
+	@app.shell_context_processor
+	def push_request_context(): #pylint: disable=unused-variable
+		app.test_request_context().push() # LDAP ORM requires request context
+		return {'db': db, 'ldap': ldap}
 
 	@app.route("/")
 	def index(): #pylint: disable=unused-variable
