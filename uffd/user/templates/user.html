@@ -29,28 +29,36 @@
 			<div class="form-group col">
 				<label for="user-uid">uid</label>
 				{% if user.uid %}
-				<input type="number" class="form-control" id="user-uid" name="uid" value="{{ user.uid }}" readonly>
+				<input type="number" class="form-control" id="user-uid" name="uid" value="{{ user.uid or '' }}" readonly>
 				{% else %}
 				<input type="text" class="form-control" id="user-uid" name="uid" placeholder="will be choosen" readonly>
 				{% endif %}
 			</div>
 			<div class="form-group col">
 				<label for="user-loginname">Login Name</label>
-				<input type="text" class="form-control" id="user-loginname" name="loginname" value="{{ user.loginname }}" {% if user.uid %}readonly{% endif %}>
+				<input type="text" class="form-control" id="user-loginname" name="loginname" value="{{ user.loginname or '' }}" {% if user.uid %}readonly{% endif %}>
 				<small class="form-text text-muted">
 					Only letters, numbers and underscore ("_") are allowed. At most 32, at least 2 characters. There is a word blacklist. Musst be unique.
 				</small>
 			</div>
+			{% if not user.uid %}
+			<div class="form-group col">
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" id="ignore-loginname-blacklist" name="ignore-loginname-blacklist" value="1" aria-label="enabled">
+					<label class="form-check-label" for="ignore-loginname-blacklist">Ignore login name blacklist</label>
+				</div>
+			</div>
+			{% endif %}
 			<div class="form-group col">
 				<label for="user-loginname">Display Name</label>
-				<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ user.displayname }}">
+				<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ user.displayname or '' }}">
 				<small class="form-text text-muted">
 					If you leave this empty it will be set to the login name. At most 128, at least 2 characters. No character restrictions.
 				</small>
 			</div>
 			<div class="form-group col">
 				<label for="user-mail">Mail</label>
-				<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail }}">
+				<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail or '' }}">
 				<small class="form-text text-muted">
 					Do a sanity check here. A user can take over another account if both have the same mail address set.
 				</small>

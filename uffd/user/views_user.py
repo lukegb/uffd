@@ -41,7 +41,8 @@ def show(uid=None):
 def update(uid=None):
 	if uid is None:
 		user = User()
-		if not user.set_loginname(request.form['loginname']):
+		ignore_blacklist = request.form.get('ignore-loginname-blacklist', False)
+		if not user.set_loginname(request.form['loginname'], ignore_blacklist=ignore_blacklist):
 			flash('Login name does not meet requirements')
 			return redirect(url_for('user.show'))
 	else:
@@ -90,6 +91,8 @@ def csvimport():
 		flash('No data for csv import!')
 		return redirect(url_for('user.index'))
 
+	ignore_blacklist = request.values.get('ignore-loginname-blacklist', False)
+
 	roles = Role.query.all()
 	usersadded = 0
 	with io.StringIO(initial_value=csvdata) as csvfile:
@@ -99,7 +102,7 @@ def csvimport():
 				flash("invalid line, ignored : {}".format(row))
 				continue
 			newuser = User()
-			if not newuser.set_loginname(row[0]) or not newuser.set_displayname(row[0]):
+			if not newuser.set_loginname(row[0], ignore_blacklist=ignore_blacklist) or not newuser.set_displayname(row[0]):
 				flash("invalid login name, skipped : {}".format(row))
 				continue
 			if not newuser.set_mail(row[1]):

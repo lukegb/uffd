@@ -1,5 +1,6 @@
 import secrets
 import string
+import re
 
 from flask import current_app
 from ldap3.utils.hashed import hashed, HASHED_SALTED_SHA512
@@ -87,12 +88,16 @@ class BaseUser(ldap.Model):
 				return True
 		return False
 
-	def set_loginname(self, value):
+	def set_loginname(self, value, ignore_blacklist=False):
 		if len(value) > 32 or len(value) < 1:
 			return False
 		for char in value:
 			if not char in string.ascii_lowercase + string.digits + '_-':
 				return False
+		if not ignore_blacklist:
+			for expr in current_app.config['LOGINNAME_BLACKLIST']:
+				if re.match(expr, value):
+					return False
 		self.loginname = value
 		return True
 
