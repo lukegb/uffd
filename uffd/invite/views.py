@@ -57,25 +57,25 @@ def new_submit():
 	db.session.commit()
 	return redirect(url_for('invite.index'))
 
-@bp.route('/<token>/disable', methods=['POST'])
+@bp.route('/<int:invite_id>/disable', methods=['POST'])
 @invite_acl_required
 @csrf_protect(blueprint=bp)
-def disable(token):
-	Invite.query.get_or_404(token).disable()
+def disable(invite_id):
+	Invite.query.get_or_404(invite_id).disable()
 	db.session.commit()
 	return redirect(url_for('.index'))
 
-@bp.route('/<token>/reset', methods=['POST'])
+@bp.route('/<int:invite_id>/reset', methods=['POST'])
 @invite_acl_required
 @csrf_protect(blueprint=bp)
-def reset(token):
-	Invite.query.get_or_404(token).reset()
+def reset(invite_id):
+	Invite.query.get_or_404(invite_id).reset()
 	db.session.commit()
 	return redirect(url_for('.index'))
 
 @bp.route('/<token>')
 def use(token):
-	invite = Invite.query.get_or_404(token)
+	invite = Invite.query.filter_by(token=token).first_or_404()
 	if not invite.active:
 		flash('Invalid invite link')
 		return redirect('/')
@@ -84,7 +84,7 @@ def use(token):
 @bp.route('/<token>/grant', methods=['POST'])
 @login_required()
 def grant(token):
-	invite = Invite.query.get_or_404(token)
+	invite = Invite.query.filter_by(token=token).first_or_404()
 	invite_grant = InviteGrant(invite=invite, user=get_current_user())
 	db.session.add(invite_grant)
 	success, msg = invite_grant.apply()
@@ -103,7 +103,7 @@ def inject_invite_token(endpoint, values):
 
 @bp.route('/<token>/signup')
 def signup_start(token):
-	invite = Invite.query.get_or_404(token)
+	invite = Invite.query.filter_by(token=token).first_or_404()
 	if not invite.active:
 		flash('Invalid invite link')
 		return redirect('/')
@@ -117,7 +117,7 @@ def signup_check(token):
 	if host_ratelimit.get_delay():
 		return jsonify({'status': 'ratelimited'})
 	host_ratelimit.log()
-	invite = Invite.query.get_or_404(token)
+	invite = Invite.query.filter_by(token=token).first_or_404()
 	if not invite.active or not invite.allow_signup:
 		return jsonify({'status': 'error'}), 403
 	if not User().set_loginname(request.form['loginname']):
@@ -128,7 +128,7 @@ def signup_check(token):
 
 @bp.route('/<token>/signup', methods=['POST'])
 def signup_submit(token):
-	invite = Invite.query.get_or_404(token)
+	invite = Invite.query.filter_by(token=token).first_or_404()
 	if request.form['password1'] != request.form['password2']:
 		return render_template('signup/start.html', error='Passwords do not match')
 	signup_delay = signup_ratelimit.get_delay(request.form['mail'])

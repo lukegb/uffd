@@ -44,18 +44,18 @@
 					{% for role in invite.roles %}{{ ', ' if loop.index != 1 }}<a href="{{ url_for('role.show', roleid=role.id) }}" style="white-space: nowrap;"><i class="fas fa-key"></i>&thinsp;{{ role.name }}</a>{% endfor %}
 				</td>
 				<td>
-					<a href="#" data-toggle="modal" data-target="#modal-{{ invite.token }}">
+					<a href="#" data-toggle="modal" data-target="#modal-{{ invite.id }}">
 						<span style="white-space: nowrap;">{{ invite.signups|selectattr('completed')|list|length }} <i class="fas fa-users" title="user registrations"></i></span>,
 						<span style="white-space: nowrap;">{{ invite.grants|length }} <i class="fas fa-key" title="role grants"></i></span>
 					</a>
 				</td>
 				<td class="text-right">
 					{% if invite.active %}
-					<form action="{{ url_for('invite.disable', token=invite.token) }}" method="POST">
+					<form action="{{ url_for('invite.disable', invite_id=invite.id) }}" method="POST">
 					<button type="submit" class="btn btn-link btn-sm py-0" title="Disable"><i class="fas fa-ban" style="width: 1.5em;"></i></button>
 					</form>
 					{% else %}
-					<form action="{{ url_for('invite.reset', token=invite.token) }}" method="POST">
+					<form action="{{ url_for('invite.reset', invite_id=invite.id) }}" method="POST">
 					<button type="submit" class="btn btn-link btn-sm py-0" title="Reenable" {{ 'disabled' if invite.expired }}><i class="fas fa-redo" style="width: 1.5em;"></i></button>
 					</form>
 					{% endif %}
@@ -67,7 +67,7 @@
 </div>
 
 {% for invite in invites %}
-<div class="modal" tabindex="-1" id="modal-{{ invite.token }}">
+<div class="modal" tabindex="-1" id="modal-{{ invite.id }}">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">

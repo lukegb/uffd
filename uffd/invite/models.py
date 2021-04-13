@@ -11,13 +11,14 @@ from uffd.signup.models import Signup
 
 # pylint: disable=E1101
 invite_roles = db.Table('invite_roles',
-	Column('invite_token', String(128), ForeignKey('invite.token'), primary_key=True),
+	Column('invite_id', Integer(), ForeignKey('invite.id'), primary_key=True),
 	Column('role_id', Integer, ForeignKey('role.id'), primary_key=True)
 )
 
 class Invite(db.Model):
 	__tablename__ = 'invite'
-	token = Column(String(128), primary_key=True, default=lambda: secrets.token_hex(20))
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	token = Column(String(128), unique=True, nullable=False, default=lambda: secrets.token_hex(20))
 	created = Column(DateTime, default=datetime.datetime.now, nullable=False)
 	valid_until = Column(DateTime, nullable=False)
 	single_use = Column(Boolean, default=True, nullable=False)
@@ -50,7 +51,7 @@ class Invite(db.Model):
 class InviteGrant(db.Model):
 	__tablename__ = 'invite_grant'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	invite_token = Column(String(128), ForeignKey('invite.token'), nullable=False)
+	invite_id = Column(Integer(), ForeignKey('invite.id'), nullable=False)
 	user_dn = Column(String(128), nullable=False)
 	user = DBRelationship('user_dn', User)
 
@@ -70,7 +71,7 @@ class InviteGrant(db.Model):
 class InviteSignup(Signup):
 	__tablename__ = 'invite_signup'
 	token = Column(String(128), ForeignKey('signup.token'), primary_key=True)
-	invite_token = Column(String(128), ForeignKey('invite.token'), nullable=False)
+	invite_id = Column(Integer(), ForeignKey('invite.id'), nullable=False)
 	invite = relationship('Invite', back_populates='signups')
 
 	__mapper_args__ = {

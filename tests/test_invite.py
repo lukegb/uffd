@@ -333,11 +333,11 @@ class TestInviteViews(UffdTestCase):
 		invite = Invite(valid_until=valid_until)
 		db.session.add(invite)
 		db.session.commit()
-		token = invite.token
-		self.assertTrue(Invite.query.get(token).active)
-		r = self.client.post(path=url_for('invite.disable', token=token), follow_redirects=True)
+		id = invite.id
+		self.assertTrue(Invite.query.get(id).active)
+		r = self.client.post(path=url_for('invite.disable', invite_id=id), follow_redirects=True)
 		dump('invite_disable', r)
-		self.assertTrue(Invite.query.get(token).disabled)
+		self.assertTrue(Invite.query.get(id).disabled)
 
 	def test_reset_disabled(self):
 		self.login_admin()
@@ -345,11 +345,11 @@ class TestInviteViews(UffdTestCase):
 		invite = Invite(valid_until=valid_until, disabled=True)
 		db.session.add(invite)
 		db.session.commit()
-		token = invite.token
-		self.assertFalse(Invite.query.get(token).active)
-		r = self.client.post(path=url_for('invite.reset', token=token), follow_redirects=True)
+		id = invite.id
+		self.assertFalse(Invite.query.get(id).active)
+		r = self.client.post(path=url_for('invite.reset', invite_id=id), follow_redirects=True)
 		dump('invite_reset_disabled', r)
-		self.assertTrue(Invite.query.get(token).active)
+		self.assertTrue(Invite.query.get(id).active)
 
 	def test_reset_voided(self):
 		self.login_admin()
@@ -357,11 +357,11 @@ class TestInviteViews(UffdTestCase):
 		invite = Invite(valid_until=valid_until, single_use=True, used=True)
 		db.session.add(invite)
 		db.session.commit()
-		token = invite.token
-		self.assertFalse(Invite.query.get(token).active)
-		r = self.client.post(path=url_for('invite.reset', token=token), follow_redirects=True)
+		id = invite.id
+		self.assertFalse(Invite.query.get(id).active)
+		r = self.client.post(path=url_for('invite.reset', invite_id=id), follow_redirects=True)
 		dump('invite_reset_voided', r)
-		self.assertTrue(Invite.query.get(token).active)
+		self.assertTrue(Invite.query.get(id).active)
 
 	def test_use(self):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, roles=[Role(name='testrole1'), Role(name='testrole2')])
@@ -421,7 +421,7 @@ class TestInviteViews(UffdTestCase):
 		dump('invite_grant', r)
 		self.assertEqual(r.status_code, 200)
 		db_flush()
-		invite = Invite.query.get(token)
+		invite = Invite.query.filter_by(token=token).first()
 		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		self.assertTrue(invite.used)
 		self.assertIn('baserole', [role.name for role in user.roles])
@@ -439,7 +439,7 @@ class TestInviteViews(UffdTestCase):
 		r = self.client.post(path=url_for('invite.grant', token=token), follow_redirects=True)
 		dump('invite_grant_invalid_invite', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertFalse(Invite.query.get(token).used)
+		self.assertFalse(Invite.query.filter_by(token=token).first().used)
 
 	def test_grant_no_roles(self):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60))
@@ -450,7 +450,7 @@ class TestInviteViews(UffdTestCase):
 		r = self.client.post(path=url_for('invite.grant', token=token), follow_redirects=True)
 		dump('invite_grant_no_roles', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertFalse(Invite.query.get(token).used)
+		self.assertFalse(Invite.query.filter_by(token=token).first().used)
 
 	def test_grant_no_new_roles(self):
 		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
@@ -465,7 +465,7 @@ class TestInviteViews(UffdTestCase):
 		r = self.client.post(path=url_for('invite.grant', token=token), follow_redirects=True)
 		dump('invite_grant_no_new_roles', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertFalse(Invite.query.get(token).used)
+		self.assertFalse(Invite.query.filter_by(token=token).first().used)
 
 	def test_signup(self):
 		self.app.config['ROLES_BASEROLES'] = ['base']
