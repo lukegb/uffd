@@ -13,6 +13,7 @@
 		<label for="valid-until">Expires After</label>
 		<input class="form-control" type="datetime-local" id="valid-until" name="valid-until" value="{{ (datetime.now() + timedelta(hours=36)).replace(hour=23, minute=59, second=59, microsecond=0).isoformat(timespec='minutes') }}">
 	</div>
+	{% if allow_signup %}
 	<div class="form-group">
 		<label for="allow-signup">Account Registration</label>
 		<select class="form-control" id="allow-signup" name="allow-signup">
@@ -20,6 +21,9 @@
 			<option value="0">No account registration allowed</option>
 		</select>
 	</div>
+	{% else %}
+	<input type="hidden" name="allow-signup" value="0">
+	{% endif %}
 	<div class="form-group">
 		<label for="valid-until">Granted Roles</label>
 		<table class="table table-sm">

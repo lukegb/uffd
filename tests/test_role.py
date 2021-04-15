@@ -131,7 +131,7 @@ class TestRoleViews(UffdTestCase):
 		self.assertEqual(role.description, 'Base role description')
 		self.assertEqual([group.dn for group in role.groups], ['cn=uffd_admin,ou=groups,dc=example,dc=com'])
 		r = self.client.post(path=url_for('role.update', roleid=role.id),
-			data={'name': 'base1', 'description': 'Base role description1', 'group-20001': '1', 'group-20002': '1'},
+			data={'name': 'base1', 'description': 'Base role description1', 'moderator-group': '', 'group-20001': '1', 'group-20002': '1'},
 			follow_redirects=True)
 		dump('role_update', r)
 		self.assertEqual(r.status_code, 200)
@@ -145,7 +145,7 @@ class TestRoleViews(UffdTestCase):
 	def test_create(self):
 		self.assertIsNone(Role.query.filter_by(name='base').first())
 		r = self.client.post(path=url_for('role.update'),
-			data={'name': 'base', 'description': 'Base role description', 'group-20001': '1', 'group-20002': '1'},
+			data={'name': 'base', 'description': 'Base role description', 'moderator-group': '', 'group-20001': '1', 'group-20002': '1'},
 			follow_redirects=True)
 		dump('role_create', r)
 		self.assertEqual(r.status_code, 200)

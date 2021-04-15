@@ -46,6 +46,10 @@ class BaseUser(ldap.Model):
 	groups = set() # Shuts up pylint, overwritten by back-reference
 	roles = set() # Shuts up pylint, overwritten by back-reference
 
+	@property
+	def group_dns(self):
+		return [group.dn for group in self.groups]
+
 	def add_default_attributes(self):
 		for name, values in current_app.config['LDAP_USER_DEFAULT_ATTRIBUTES'].items():
 			if self.ldap_object.getattr(name):

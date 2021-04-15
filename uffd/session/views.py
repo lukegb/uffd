@@ -88,6 +88,7 @@ def get_current_user():
 	if 'user_dn' not in session:
 		return None
 	return User.query.get(session['user_dn'])
+bp.add_app_template_global(get_current_user)
 
 def login_valid():
 	user = get_current_user()

@@ -74,6 +74,10 @@ def update(roleid=False):
 		role = Role.query.filter_by(id=roleid).one()
 	role.name = request.values['name']
 	role.description = request.values['description']
+	if not request.values['moderator-group']:
+		role.moderator_group_dn = None
+	else:
+		role.moderator_group = Group.query.get(request.values['moderator-group'])
 	for included_role in Role.query.all():
 		if included_role != role and request.values.get('include-role-{}'.format(included_role.id)):
 			role.included_roles.append(included_role)

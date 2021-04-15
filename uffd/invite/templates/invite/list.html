@@ -21,7 +21,13 @@
 		<tbody>
 			{% for invite in invites|sort(attribute='created', reverse=True)|sort(attribute='active', reverse=True) %}
 			<tr>
-				<td><a style="width: 8em; display: inline-block;" class="text-truncate" href="{{ url_for('invite.use', token=invite.token) }}"><code>{{ invite.token }}</code></a></td>
+				<td>
+					{% if invite.creator == get_current_user() %}
+					<a href="{{ url_for('invite.use', token=invite.token) }}"><code>{{ invite.short_token }}</code></a>
+					{% else %}
+					<code>{{ invite.short_token }}</code>
+					{% endif %}
+				</td>
 				<td>
 					{% if invite.disabled %}
 						Disabled
@@ -54,9 +60,9 @@
 					<form action="{{ url_for('invite.disable', invite_id=invite.id) }}" method="POST">
 					<button type="submit" class="btn btn-link btn-sm py-0" title="Disable"><i class="fas fa-ban" style="width: 1.5em;"></i></button>
 					</form>
-					{% else %}
+					{% elif invite.creator == get_current_user() and not invite.expired and invite.permitted %}
 					<form action="{{ url_for('invite.reset', invite_id=invite.id) }}" method="POST">
-					<button type="submit" class="btn btn-link btn-sm py-0" title="Reenable" {{ 'disabled' if invite.expired }}><i class="fas fa-redo" style="width: 1.5em;"></i></button>
+					<button type="submit" class="btn btn-link btn-sm py-0" title="Reenable"><i class="fas fa-redo" style="width: 1.5em;"></i></button>
 					</form>
 					{% endif %}
 				</td>

@@ -39,6 +39,15 @@
 				</small>
 			</div>
 			<div class="form-group col">
+				<label for="moderator-group">Moderator Group</label>
+				<select class="form-control" id="moderator-group" name="moderator-group">
+					<option value="" class="text-muted">No Moderator Group</option>
+					{% for group in groups %}
+					<option value="{{ group.dn }}" {{ 'selected' if group == role.moderator_group }}>{{ group.name }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			<div class="form-group col">
 				<span>Members:</span>
 				<ul class="row">
 				{% for member in role.members|sort(attribute='loginname') %}

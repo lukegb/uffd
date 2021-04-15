@@ -1,6 +1,7 @@
 import secrets
 import datetime
 
+from flask import current_app
 from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from ldapalchemy.dbutils import DBRelationship
@@ -20,6 +21,8 @@ class Invite(db.Model):
 	id = Column(Integer(), primary_key=True, autoincrement=True)
 	token = Column(String(128), unique=True, nullable=False, default=lambda: secrets.token_hex(20))
 	created = Column(DateTime, default=datetime.datetime.now, nullable=False)
+	creator_dn = Column(String(128), nullable=True)
+	creator = DBRelationship('creator_dn', User)
 	valid_until = Column(DateTime, nullable=False)
 	single_use = Column(Boolean, default=True, nullable=False)
 	allow_signup = Column(Boolean, default=True, nullable=False)
@@ -38,8 +41,29 @@ class Invite(db.Model):
 		return self.single_use and self.used
 
 	@property
+	def permitted(self):
+		if self.creator_dn is None:
+			return True # Legacy invite link without creator
+		if self.creator is None:
+			return False # Creator does not exist (anymore)
+		if self.creator.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
+			return True
+		if self.allow_signup and not self.creator.is_in_group(current_app.config['ACL_SIGNUP_GROUP']):
+			return False
+		for role in self.roles:
+			if role.moderator_group is None or role.moderator_group not in self.creator.groups:
+				return False
+		return True
+
+	@property
 	def active(self):
-		return not self.disabled and not self.voided and not self.expired
+		return not self.disabled and not self.voided and not self.expired and self.permitted
+
+	@property
+	def short_token(self):
+		if len(self.token) < 30:
+			return '<too short>'
+		return self.token[:10] + '…'
 
 	def disable(self):
 		self.disabled = True

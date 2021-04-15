@@ -2,6 +2,7 @@ import datetime
 import functools
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
+import sqlalchemy
 
 from uffd.csrf import csrf_protect
 from uffd.database import db
@@ -18,8 +19,26 @@ from uffd.signup.views import signup_ratelimit
 
 bp = Blueprint('invite', __name__, template_folder='templates', url_prefix='/invite/')
 
+def user_may_disable(user, invite):
+	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
+		return True
+	if invite.creator == user:
+		return True
+	if [role.moderator_group in user.groups for role in invite.roles]:
+		return True
+	return False
+
 def invite_acl():
-	return is_valid_session() and get_current_user().is_in_group(current_app.config['ACL_ADMIN_GROUP'])
+	if not is_valid_session():
+		return False
+	user = get_current_user()
+	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
+		return True
+	if user.is_in_group(current_app.config['ACL_SIGNUP_GROUP']):
+		return True
+	if Role.query.filter(Role.moderator_group_dn.in_(user.group_dns)).count():
+		return True
+	return False
 
 def invite_acl_required(func):
 	@functools.wraps(func)
@@ -31,28 +50,55 @@ def invite_acl_required(func):
 		return func(*args, **kwargs)
 	return decorator
 
+def view_acl_filter(user):
+	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
+		return sqlalchemy.true()
+	creator_filter = (Invite.creator_dn == user.dn)
+	rolemod_filter = Invite.roles.any(Role.moderator_group_dn.in_(user.group_dns))
+	return creator_filter | rolemod_filter
+
+def reset_acl_filter(user):
+	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
+		return sqlalchemy.true()
+	return Invite.creator_dn == user.dn
+
 @bp.route('/')
 @register_navbar('Invites', icon='link', blueprint=bp, visible=invite_acl)
 @invite_acl_required
 def index():
-	return render_template('invite/list.html', invites=Invite.query.all())
+	invites = Invite.query.filter(view_acl_filter(get_current_user())).all()
+	return render_template('invite/list.html', invites=invites)
 
 @bp.route('/new')
 @invite_acl_required
 def new():
-	return render_template('invite/new.html', roles=Role.query.all())
+	user = get_current_user()
+	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
+		allow_signup = True
+		roles = Role.query.all()
+	else:
+		allow_signup = user.is_in_group(current_app.config['ACL_SIGNUP_GROUP'])
+		roles = Role.query.filter(Role.moderator_group_dn.in_(user.group_dns)).all()
+	return render_template('invite/new.html', roles=roles, allow_signup=allow_signup)
 
 @bp.route('/new', methods=['POST'])
 @invite_acl_required
 @csrf_protect(blueprint=bp)
 def new_submit():
-	invite = Invite(single_use=(request.values['single-use'] == '1'),
+	user = get_current_user()
+	invite = Invite(creator=user,
+	                single_use=(request.values['single-use'] == '1'),
 	                valid_until=datetime.datetime.fromisoformat(request.values['valid-until']),
 	                allow_signup=(request.values['allow-signup'] == '1'))
 	for key, value in request.values.items():
 		if key.startswith('role-') and value == '1':
-			role = Role.query.get(key[5:])
-			invite.roles.append(role)
+			invite.roles.append(Role.query.get(key[5:]))
+	if not invite.permitted:
+		flash('You are not allowed to create invite links with these permissions')
+		return redirect(url_for('invite.new'))
+	if not invite.allow_signup and not invite.roles:
+		flash('Invite link must either allow signup or grant at least one role')
+		return redirect(url_for('invite.new'))
 	db.session.add(invite)
 	db.session.commit()
 	return redirect(url_for('invite.index'))
@@ -61,7 +107,8 @@ def new_submit():
 @invite_acl_required
 @csrf_protect(blueprint=bp)
 def disable(invite_id):
-	Invite.query.get_or_404(invite_id).disable()
+	invite = Invite.query.filter(view_acl_filter(get_current_user())).filter_by(id=invite_id).first_or_404()
+	invite.disable()
 	db.session.commit()
 	return redirect(url_for('.index'))
 
@@ -69,7 +116,8 @@ def disable(invite_id):
 @invite_acl_required
 @csrf_protect(blueprint=bp)
 def reset(invite_id):
-	Invite.query.get_or_404(invite_id).reset()
+	invite = Invite.query.filter(reset_acl_filter(get_current_user())).filter_by(id=invite_id).first_or_404()
+	invite.reset()
 	db.session.commit()
 	return redirect(url_for('.index'))
 

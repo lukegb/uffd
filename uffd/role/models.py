@@ -82,6 +82,9 @@ class Role(db.Model):
 																 backref='including_roles')
 	including_roles = [] # overwritten by backref
 
+	moderator_group_dn = Column(String(128), nullable=True)
+	moderator_group = DBRelationship('moderator_group_dn', Group)
+
 	db_members = relationship("RoleUser", backref="role", cascade="all, delete-orphan")
 	members = DBRelationship('db_members', User, RoleUser, backattr='role', backref='roles')
 
