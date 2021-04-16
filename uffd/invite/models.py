@@ -19,7 +19,7 @@ invite_roles = db.Table('invite_roles',
 class Invite(db.Model):
 	__tablename__ = 'invite'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	token = Column(String(128), unique=True, nullable=False, default=lambda: secrets.token_hex(20))
+	token = Column(String(128), unique=True, nullable=False, default=lambda: secrets.token_urlsafe(32))
 	created = Column(DateTime, default=datetime.datetime.now, nullable=False)
 	creator_dn = Column(String(128), nullable=True)
 	creator = DBRelationship('creator_dn', User)

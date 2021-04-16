@@ -10,11 +10,10 @@
 		<thead>
 			<tr>
 				<th scope="col">Link</th>
-				<th scope="col">Status</th>
-				<th scope="col">Created on</th>
-				<th scope="col">Expires after</th>
+				<th scope="col">Created by</th>
 				<th scope="col">Permissions</th>
 				<th scope="col">Usages</th>
+				<th scope="col">Status</th>
 				<th scope="col"></th>
 			</tr>
 		</thead>
@@ -22,11 +21,30 @@
 			{% for invite in invites|sort(attribute='created', reverse=True)|sort(attribute='active', reverse=True) %}
 			<tr>
 				<td>
-					{% if invite.creator == get_current_user() %}
+					{% if invite.creator == get_current_user() and invite.active %}
 					<a href="{{ url_for('invite.use', token=invite.token) }}"><code>{{ invite.short_token }}</code></a>
+					<button type="button" class="btn btn-link btn-sm p-0 copy-clipboard" data-copy="{{ url_for('invite.use', token=invite.token, _external=True) }}" title="Copy link to clipboard"><i class="fas fa-clipboard"></i></button>
+					<button type="button" class="btn btn-link btn-sm p-0" data-toggle="modal" data-target="#modal-{{ invite.id }}-qrcode" title="Show link as QR code"><i class="fas fa-qrcode"></i></button>
 					{% else %}
 					<code>{{ invite.short_token }}</code>
 					{% endif %}
+				</td>
+				<td>
+					{% if not invite.creator_dn %}
+						{{ '<admin>' }}
+					{% elif not invite.creator %}
+						{{ '<deleted user>' }}
+					{% else %}
+						{{ invite.creator.loginname }}
+					{% endif %}
+				</td>
+				<td>
+					{{ 'Signup' if invite.allow_signup }}{{ ', ' if invite.allow_signup and invite.roles }}
+					{% for role in invite.roles %}{{ ', ' if loop.index != 1 }}<i class="fas fa-key"></i>&thinsp;{{ role.name }}{% endfor %}
+				</td>
+				<td>
+					<span style="white-space: nowrap;">{{ invite.signups|selectattr('completed')|list|length }} <i class="fas fa-users" title="user registrations"></i></span>,
+					<span style="white-space: nowrap;">{{ invite.grants|length }} <i class="fas fa-key" title="role grants"></i></span>
 				</td>
 				<td>
 					{% if invite.disabled %}
@@ -35,36 +53,18 @@
 						Voided
 					{% elif invite.expired %}
 						Expired
+					{% elif not invite.permitted %}
+						Invalid, unpermitted creator
 					{% elif not invite.active %}
 						Invalid
 					{% elif invite.single_use %}
-						Valid once
+						Valid once, expires {{ invite.valid_until.strftime('%Y-%m-%d') }}
 					{% else %}
-						Valid
+						Valid, expires {{ invite.valid_until.strftime('%Y-%m-%d') }}
 					{% endif %}
-				</td>
-				<td>{{ invite.created.strftime('%Y-%m-%d %H:%M') }}</td>
-				<td>{{ invite.valid_until.strftime('%Y-%m-%d %H:%M') }}</td>
-				<td>
-					{{ 'Signup' if invite.allow_signup }}{{ ', ' if invite.allow_signup and invite.roles }}
-					{% for role in invite.roles %}{{ ', ' if loop.index != 1 }}<a href="{{ url_for('role.show', roleid=role.id) }}" style="white-space: nowrap;"><i class="fas fa-key"></i>&thinsp;{{ role.name }}</a>{% endfor %}
-				</td>
-				<td>
-					<a href="#" data-toggle="modal" data-target="#modal-{{ invite.id }}">
-						<span style="white-space: nowrap;">{{ invite.signups|selectattr('completed')|list|length }} <i class="fas fa-users" title="user registrations"></i></span>,
-						<span style="white-space: nowrap;">{{ invite.grants|length }} <i class="fas fa-key" title="role grants"></i></span>
-					</a>
 				</td>
 				<td class="text-right">
-					{% if invite.active %}
-					<form action="{{ url_for('invite.disable', invite_id=invite.id) }}" method="POST">
-					<button type="submit" class="btn btn-link btn-sm py-0" title="Disable"><i class="fas fa-ban" style="width: 1.5em;"></i></button>
-					</form>
-					{% elif invite.creator == get_current_user() and not invite.expired and invite.permitted %}
-					<form action="{{ url_for('invite.reset', invite_id=invite.id) }}" method="POST">
-					<button type="submit" class="btn btn-link btn-sm py-0" title="Reenable"><i class="fas fa-redo" style="width: 1.5em;"></i></button>
-					</form>
-					{% endif %}
+					<button type="button" class="btn btn-link btn-sm p-0" data-toggle="modal" data-target="#modal-{{ invite.id }}"><i class="fas fa-ellipsis-h"></i></button>
 				</td>
 			</tr>
 			{% endfor %}
@@ -77,27 +77,82 @@
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title">Invite Usages</h5>
+				<h5 class="modal-title">Invite Link Details</h5>
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
 			<div class="modal-body">
-				<ul>
-					{% for signup in invite.signups if signup.completed %}
-					<li>Registration of user <a href="{{ url_for('user.show', uid=signup.user.uid) }}">{{ signup.user.loginname }}</a></li>
-					{% endfor %}
-					{% for grant in invite.grants if grant.user %}
-					<li>Roles granted to <a href="{{ url_for('user.show', uid=grant.user.uid) }}">{{ grant.user.loginname }}</a></li>
-					{% endfor %}
+				<ul class="list-unstyled">
+					<li><b>Type:</b> {% if invite.single_use %}Single-use{% else %}Multi-use{% endif %}</li>
+					<li><b>Created:</b> {{ invite.created.strftime('%Y-%m-%d %H:%M:%S') }}</li>
+					<li><b>Expires:</b> {{ invite.valid_until.strftime('%Y-%m-%d %H:%M:%S') }}</li>
+					<li><b>Permissions:</b>
+						<ul>
+							{% if invite.signup %}
+							<li>Link allows account registration</li>
+							{% else %}
+							<li>No account registration allowed</li>
+							{% endif %}
+							{% for role in invite.roles %}
+							<li>Link grants users the role "{{ role.name }}"</li>
+							{% endfor %}
+						</ul>
+					</li>
+					<li><b>Usages:</b>
+						{% if not invite.signups and not invite.grants %}
+						Never used
+						{% else %}
+						<ul>
+							{% for signup in invite.signups if signup.completed %}
+							<li>Registration of user <a href="{{ url_for('user.show', uid=signup.user.uid) }}">{{ signup.user.loginname }}</a></li>
+							{% endfor %}
+							{% for grant in invite.grants if grant.user %}
+							<li>Roles granted to <a href="{{ url_for('user.show', uid=grant.user.uid) }}">{{ grant.user.loginname }}</a></li>
+							{% endfor %}
+						</ul>
+						{% endif %}
+					</li>
 				</ul>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+				{% if invite.active %}
+				<form action="{{ url_for('invite.disable', invite_id=invite.id) }}" method="POST">
+				<button type="submit" class="btn btn-primary">Disable Link</button>
+				</form>
+				{% elif invite.creator == get_current_user() and not invite.expired and invite.permitted %}
+				<form action="{{ url_for('invite.reset', invite_id=invite.id) }}" method="POST">
+				<button type="submit" class="btn btn-primary">Reenable Link</button>
+				</form>
+				{% endif %}
 			</div>
 		</div>
 	</div>
 </div>
 {% endfor %}
 
+{% for invite in invites if invite.creator == get_current_user() %}
+<div class="modal" tabindex="-1" id="modal-{{ invite.id }}-qrcode">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Invite</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				{{ url_for('invite.use', token=invite.token, _external=True)|qrcode_svg(width='100%', height='100%') }}
+			</div>
+		</div>
+	</div>
+</div>
+{% endfor %}
+
+<script>
+$(".copy-clipboard").on("click", function() {
+	navigator.clipboard.writeText($(this).data("copy"));
+});
+</script>
 {% endblock %}
