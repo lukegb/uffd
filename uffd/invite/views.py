@@ -131,6 +131,7 @@ def use(token):
 
 @bp.route('/<token>/grant', methods=['POST'])
 @login_required()
+@csrf_protect(blueprint=bp)
 def grant(token):
 	invite = Invite.query.filter_by(token=token).first_or_404()
 	invite_grant = InviteGrant(invite=invite, user=get_current_user())

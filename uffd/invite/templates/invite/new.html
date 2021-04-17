@@ -39,7 +39,7 @@
 				<tr>
 					<td>
 						<div class="form-check">
-							<input class="form-check-input" type="checkbox" id="role-{{ role.id }}" name="role-{{ role.id }}" value="1">
+							<input class="form-check-input" type="checkbox" id="role-{{ role.id }}" name="role-{{ role.id }}" value="1" {{ 'checked' if 'role-%d'%role.id in request.values }}>
 						</div>
 					</td>
 					<td>{{ role.name }}</td>

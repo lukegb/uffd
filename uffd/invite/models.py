@@ -30,7 +30,7 @@ class Invite(db.Model):
 	disabled = Column(Boolean, default=False, nullable=False)
 	roles = relationship('Role', secondary=invite_roles)
 	signups = relationship('InviteSignup', back_populates='invite', lazy=True)
-	grants = relationship('InviteGrant', backref='invite', lazy=True)
+	grants = relationship('InviteGrant', back_populates='invite', lazy=True)
 
 	@property
 	def expired(self):
@@ -76,6 +76,7 @@ class InviteGrant(db.Model):
 	__tablename__ = 'invite_grant'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
 	invite_id = Column(Integer(), ForeignKey('invite.id'), nullable=False)
+	invite = relationship('Invite', back_populates='grants')
 	user_dn = Column(String(128), nullable=False)
 	user = DBRelationship('user_dn', User)
 

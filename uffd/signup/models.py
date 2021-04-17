@@ -35,7 +35,7 @@ class Signup(db.Model):
 	mail = Column(Text)
 	pwhash = Column(Text)
 	user_dn = Column(String(128)) # Set after successful confirmation
-	user = DBRelationship('user_dn', User)
+	user = DBRelationship('user_dn', User, backref='signups')
 
 	type = Column(String(50))
 	__mapper_args__ = {

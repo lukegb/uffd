@@ -49,10 +49,10 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	db.init_app(app)
 	Migrate(app, db, render_as_batch=True)
 	# pylint: disable=C0415
-	from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services, signup, invite
+	from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services, signup, rolemod, invite
 	# pylint: enable=C0415
 
-	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp:
+	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp + rolemod.bp:
 		app.register_blueprint(i)
 
 	if app.config['LDAP_SERVICE_USER_BIND'] and (app.config['ENABLE_INVITE'] or

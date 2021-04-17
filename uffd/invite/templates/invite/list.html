@@ -89,7 +89,7 @@
 					<li><b>Expires:</b> {{ invite.valid_until.strftime('%Y-%m-%d %H:%M:%S') }}</li>
 					<li><b>Permissions:</b>
 						<ul>
-							{% if invite.signup %}
+							{% if invite.allow_signup %}
 							<li>Link allows account registration</li>
 							{% else %}
 							<li>No account registration allowed</li>
