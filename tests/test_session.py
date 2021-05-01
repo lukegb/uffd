@@ -135,3 +135,6 @@ class TestSession(UffdTestCase):
 
 class TestSessionOL(TestSession):
 	use_openldap = True
+
+class TestSessionOLUser(TestSessionOL):
+	use_userconnection = True

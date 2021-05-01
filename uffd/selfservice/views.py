@@ -4,7 +4,7 @@ import smtplib
 from email.message import EmailMessage
 import email.utils
 
-from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
+from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
@@ -29,6 +29,7 @@ def index():
 @csrf_protect(blueprint=bp)
 @login_required()
 def update():
+	password_changed = False
 	user = get_current_user()
 	if request.values['displayname'] != user.displayname:
 		if user.set_displayname(request.values['displayname']):
@@ -41,12 +42,16 @@ def update():
 		else:
 			if user.set_password(request.values['password1']):
 				flash('Password changed.')
+				password_changed = True
 			else:
 				flash('Password could not be set.')
 	if request.values['mail'] != user.mail:
 		send_mail_verification(user.loginname, request.values['mail'])
 		flash('We sent you an email, please verify your mail address.')
 	ldap.session.commit()
+	# When using a user_connection, update the connection on password-change
+	if password_changed and current_app.config['LDAP_SERVICE_USER_BIND']:
+		session['user_pw'] = request.values['password1']
 	return redirect(url_for('selfservice.index'))
 
 @bp.route("/passwordreset", methods=(['GET', 'POST']))

@@ -58,7 +58,7 @@ class TestInviteModel(UffdTestCase):
 		invite.reset()
 		self.assertFalse(invite.active)
 
-	def test_reset_disabled(self):
+	def test_reset_single_use(self):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), single_use=False)
 		invite.used = True
 		invite.disable()

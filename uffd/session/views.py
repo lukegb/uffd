@@ -4,12 +4,8 @@ import functools
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session, abort
 
-import ldap3
-from ldap3.core.exceptions import LDAPBindError, LDAPPasswordIsMandatoryError
-from ldapalchemy.core import encode_filter
-
 from uffd.user.models import User
-from uffd.ldap import ldap
+from uffd.ldap import ldap, test_user_bind, LDAPInvalidDnError, LDAPBindError, LDAPPasswordIsMandatoryError
 from uffd.ratelimit import Ratelimit, host_ratelimit, format_delay
 
 bp = Blueprint("session", __name__, template_folder='templates', url_prefix='/')
@@ -18,29 +14,29 @@ login_ratelimit = Ratelimit('login', 1*60, 3)
 
 def login_get_user(loginname, password):
 	dn = User(loginname=loginname).dn
-	if current_app.config.get('LDAP_SERVICE_MOCK', False):
-		conn = ldap.get_connection()
-		# Since we reuse the same conn for all calls to `user_conn()` we
-		# simulate the password check by rebinding. Note that ldap3's mocking
-		# implementation just compares the string in the objects's userPassword
-		# field with the password, no support for hashing or OpenLDAP-style
-		# password-prefixes ("{PLAIN}..." or "{ssha512}...").
-		try:
-			if not conn.rebind(dn, password):
-				return None
-		except (LDAPBindError, LDAPPasswordIsMandatoryError):
+
+	# If we use a service connection, test user bind seperately
+	if not current_app.config['LDAP_SERVICE_USER_BIND'] or current_app.config.get('LDAP_SERVICE_MOCK', False):
+		if not test_user_bind(dn, password):
 			return None
+	# If we use a user connection, just create the connection normally
 	else:
-		server = ldap3.Server(current_app.config["LDAP_SERVICE_URL"], get_info=ldap3.ALL)
-		auto_bind = ldap3.AUTO_BIND_TLS_BEFORE_BIND if current_app.config["LDAP_SERVICE_USE_STARTTLS"] else True
+		# ldap.get_connection gets the credentials from the session, so set it here initially
+		session['user_dn'] = dn
+		session['user_pw'] = password
 		try:
-			conn = ldap3.Connection(server, dn, password, auto_bind=auto_bind)
+			ldap.get_connection()
 		except (LDAPBindError, LDAPPasswordIsMandatoryError):
+			session.clear()
 			return None
-	conn.search(conn.user, encode_filter(current_app.config["LDAP_USER_SEARCH_FILTER"]))
-	if len(conn.entries) != 1:
-		return None
-	return User.query.get(dn)
+
+	try:
+		user = User.query.get(dn)
+		if user:
+			return user
+	except LDAPInvalidDnError:
+		pass
+	return None
 
 @bp.route("/logout")
 def logout():
@@ -50,9 +46,12 @@ def logout():
 	session.clear()
 	return resp
 
-def set_session(user, skip_mfa=False):
+def set_session(user, password='', skip_mfa=False):
 	session.clear()
 	session['user_dn'] = user.dn
+	# only save the password if we use a user connection
+	if password and current_app.config['LDAP_SERVICE_USER_BIND']:
+		session['user_pw'] = password
 	session['logintime'] = datetime.datetime.now().timestamp()
 	session['_csrf_token'] = secrets.token_hex(128)
 	if skip_mfa:
@@ -82,7 +81,7 @@ def login():
 	if not user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
 		flash('You do not have access to this service')
 		return render_template('login.html', ref=request.values.get('ref'))
-	set_session(user)
+	set_session(user, password=password)
 	return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
 
 def get_current_user():

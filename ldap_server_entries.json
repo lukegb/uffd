@@ -1,7 +1,7 @@
 {
     "entries": [
         {
-						"dn": "uid=testuser,ou=users,dc=example,dc=com",
+            "dn": "uid=testuser,ou=users,dc=example,dc=com",
             "raw": {
                 "cn": [
                     "Test User"

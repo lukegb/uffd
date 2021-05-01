@@ -15,6 +15,7 @@ from uffd.navbar import register_navbar
 from uffd.ratelimit import host_ratelimit, format_delay
 from uffd.signup.views import signup_ratelimit
 
+
 bp = Blueprint('invite', __name__, template_folder='templates', url_prefix='/invite/')
 
 def invite_acl():

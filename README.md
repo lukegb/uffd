@@ -61,6 +61,16 @@ hook-pre-app = exec:FLASK_APP=uffd flask db upgrade
 
 tabs.
 
+## Bind with service account or as user?
+
+Uffd can use a dedicated service account for LDAP operations by setting `LDAP_SERVICE_BIND_DN`.
+Leave that variable blank to use anonymouse bind.
+Or set `LDAP_SERVICE_USER_BIND` to use the credentials of the currently logged in user.
+
+If you choose to run with user credentials, some features are not available, like password resets
+or self signup, since in both cases, no user credentials can exist. 
+
+
 ## OAuth2 Single-Sign-On Provider
 
 Other services can use uffd as an OAuth2.0-based authentication provider.

@@ -97,6 +97,6 @@ def signup_confirm_submit(token):
 		return render_template('signup/confirm.html', signup=signup, error=msg)
 	db.session.commit()
 	ldap.session.commit()
-	set_session(user, skip_mfa=True)
+	set_session(user, password=request.form['password'], skip_mfa=True)
 	flash('Your account was successfully created')
 	return redirect(url_for('selfservice.index'))

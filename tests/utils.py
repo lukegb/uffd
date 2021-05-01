@@ -15,7 +15,7 @@ def dump(basename, resp):
 		return
 	os.makedirs(root, exist_ok=True)
 	path = os.path.join(root, basename+suffix)
-	with open(path, 'xb') as f:
+	with open(path, 'wb') as f:
 		f.write(resp.data)
 
 def db_flush():
@@ -25,6 +25,7 @@ def db_flush():
 
 class UffdTestCase(unittest.TestCase):
 	use_openldap = False
+	use_userconnection = False
 
 	def setUp(self):
 		self.dir = tempfile.mkdtemp()
@@ -37,13 +38,22 @@ class UffdTestCase(unittest.TestCase):
 			'SECRET_KEY': 'DEBUGKEY',
 			'LDAP_SERVICE_MOCK': True,
 			'MAIL_SKIP_SEND': True,
+			'SELF_SIGNUP': True,
+			'ENABLE_INVITE': True,
+			'ENABLE_PASSWORDRESET': True
 		}
 		if self.use_openldap:
 			if not os.environ.get('UNITTEST_OPENLDAP'):
 				self.skipTest('OPENLDAP_TESTING not set')
 			config['LDAP_SERVICE_MOCK'] = False
 			config['LDAP_SERVICE_URL'] = 'ldap://localhost'
-			config['LDAP_SERVICE_BIND_DN'] = 'cn=uffd,ou=system,dc=example,dc=com'
+			if self.use_userconnection:
+				config['LDAP_SERVICE_USER_BIND'] = True
+				config['SELF_SIGNUP'] = False
+				config['ENABLE_INVITE'] = False
+				config['ENABLE_PASSWORDRESET'] = False
+			else:
+				config['LDAP_SERVICE_BIND_DN'] = 'cn=uffd,ou=system,dc=example,dc=com'
 			config['LDAP_SERVICE_BIND_PASSWORD'] = 'uffd-ldap-password'
 			os.system("ldapdelete -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w 'uffd-ldap-password' -H 'ldap://localhost' -f ldap_server_entries_cleanup.ldif > /dev/null 2>&1")
 			os.system("ldapadd -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w 'uffd-ldap-password' -H 'ldap://localhost' -f ldap_server_entries_add.ldif")

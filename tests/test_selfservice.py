@@ -3,18 +3,20 @@ import unittest
 
 from flask import url_for
 
-from uffd.ldap import ldap
-from uffd import user
+# These imports are required, because otherwise we get circular imports?!
+from uffd import ldap, user
 
 from uffd.session.views import get_current_user
 from uffd.selfservice.models import MailToken, PasswordToken
 from uffd.user.models import User
-from uffd import create_app, db, ldap
+from uffd import create_app, db
 
 from utils import dump, UffdTestCase
 
-def get_ldap_password():
-	return User.query.get('uid=testuser,ou=users,dc=example,dc=com').pwhash
+
+def get_user():
+	return User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+
 
 class TestSelfservice(UffdTestCase):
 	def login(self):
@@ -137,6 +139,8 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(len(tokens), 0)
 
 	def test_forgot_password(self):
+		if self.use_userconnection:
+			self.skipTest('Password Reset is not possible in user mode')
 		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		r = self.client.get(path=url_for('selfservice.forgot_password'))
 		dump('forgot_password', r)
@@ -150,6 +154,8 @@ class TestSelfservice(UffdTestCase):
 		self.assertIn(token.token, str(self.app.last_mail.get_content()))
 
 	def test_forgot_password_wrong_user(self):
+		if self.use_userconnection:
+			self.skipTest('Password Reset is not possible in user mode')
 		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		r = self.client.get(path=url_for('selfservice.forgot_password'))
 		self.assertEqual(r.status_code, 200)
@@ -161,6 +167,8 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(len(PasswordToken.query.all()), 0)
 
 	def test_forgot_password_wrong_email(self):
+		if self.use_userconnection:
+			self.skipTest('Password Reset is not possible in user mode')
 		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		r = self.client.get(path=url_for('selfservice.forgot_password'), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
@@ -173,6 +181,8 @@ class TestSelfservice(UffdTestCase):
 
 	# Regression test for #31
 	def test_forgot_password_invalid_user(self):
+		if self.use_userconnection:
+			self.skipTest('Password Reset is not possible in user mode')
 		r = self.client.post(path=url_for('selfservice.forgot_password'),
 			data={'loginname': '=', 'mail': 'test@example.com'}, follow_redirects=True)
 		dump('forgot_password_submit_invalid_user', r)
@@ -181,8 +191,9 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(len(PasswordToken.query.all()), 0)
 
 	def test_token_password(self):
-		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		oldpw = get_ldap_password()
+		if self.use_userconnection:
+			self.skipTest('Password Token is not possible in user mode')
+		user = get_user()
 		token = PasswordToken(loginname=user.loginname)
 		db.session.add(token)
 		db.session.commit()
@@ -193,13 +204,12 @@ class TestSelfservice(UffdTestCase):
 			data={'password1': 'newpassword', 'password2': 'newpassword'}, follow_redirects=True)
 		dump('token_password_submit', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertNotEqual(oldpw, get_ldap_password())
-		# TODO: Verify that the new password is actually correct
-		self.assertEqual(len(PasswordToken.query.all()), 0)
+		self.assertTrue(ldap.test_user_bind(user.dn, 'newpassword'))
 
 	def test_token_password_emptydb(self):
-		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		oldpw = get_ldap_password()
+		if self.use_userconnection:
+			self.skipTest('Password Token is not possible in user mode')
+		user = get_user()
 		r = self.client.get(path=url_for('selfservice.token_password', token='A'*128), follow_redirects=True)
 		dump('token_password_emptydb', r)
 		self.assertEqual(r.status_code, 200)
@@ -209,11 +219,12 @@ class TestSelfservice(UffdTestCase):
 		dump('token_password_emptydb_submit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIn(b'Token expired, please try again', r.data)
-		self.assertEqual(oldpw, get_ldap_password())
+		self.assertTrue(ldap.test_user_bind(user.dn, 'userpassword'))
 
 	def test_token_password_invalid(self):
-		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		oldpw = get_ldap_password()
+		if self.use_userconnection:
+			self.skipTest('Password Token is not possible in user mode')
+		user = get_user()
 		token = PasswordToken(loginname=user.loginname)
 		db.session.add(token)
 		db.session.commit()
@@ -226,11 +237,12 @@ class TestSelfservice(UffdTestCase):
 		dump('token_password_invalid_submit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIn(b'Token expired, please try again', r.data)
-		self.assertEqual(oldpw, get_ldap_password())
+		self.assertTrue(ldap.test_user_bind(user.dn, 'userpassword'))
 
 	def test_token_password_expired(self):
-		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		oldpw = get_ldap_password()
+		if self.use_userconnection:
+			self.skipTest('Password Token is not possible in user mode')
+		user = get_user()
 		token = PasswordToken(loginname=user.loginname,
 			created=(datetime.datetime.now() - datetime.timedelta(days=10)))
 		db.session.add(token)
@@ -244,11 +256,12 @@ class TestSelfservice(UffdTestCase):
 		dump('token_password_invalid_expired_submit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIn(b'Token expired, please try again', r.data)
-		self.assertEqual(oldpw, get_ldap_password())
+		self.assertTrue(ldap.test_user_bind(user.dn, 'userpassword'))
 
 	def test_token_password_different_passwords(self):
-		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		oldpw = get_ldap_password()
+		if self.use_userconnection:
+			self.skipTest('Password Token is not possible in user mode')
+		user = get_user()
 		token = PasswordToken(loginname=user.loginname)
 		db.session.add(token)
 		db.session.commit()
@@ -258,7 +271,12 @@ class TestSelfservice(UffdTestCase):
 			data={'password1': 'newpassword', 'password2': 'differentpassword'}, follow_redirects=True)
 		dump('token_password_different_passwords_submit', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertEqual(oldpw, get_ldap_password())
+		self.assertTrue(ldap.test_user_bind(user.dn, 'userpassword'))
+
 
 class TestSelfserviceOL(TestSelfservice):
 	use_openldap = True
+
+
+class TestSelfserviceOLUser(TestSelfserviceOL):
+	use_userconnection = True

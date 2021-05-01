@@ -47,11 +47,11 @@ def update(uid=None):
 			return redirect(url_for('user.show'))
 	else:
 		user = User.query.filter_by(uid=uid).first_or_404()
-	if not user.set_mail(request.form['mail']):
+	if user.mail != request.form['mail'] and not user.set_mail(request.form['mail']):
 		flash('Mail is invalid')
 		return redirect(url_for('user.show', uid=uid))
 	new_displayname = request.form['displayname'] if request.form['displayname'] else request.form['loginname']
-	if not user.set_displayname(new_displayname):
+	if user.displayname != new_displayname and not user.set_displayname(new_displayname):
 		flash('Display name does not meet requirements')
 		return redirect(url_for('user.show', uid=uid))
 	new_password = request.form.get('password')

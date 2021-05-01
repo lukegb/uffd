@@ -2,17 +2,18 @@ import os
 import secrets
 import sys
 
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, request
 from werkzeug.routing import IntegerConverter
 from werkzeug.serving import make_ssl_devcert
 from werkzeug.contrib.profiler import ProfilerMiddleware
+from werkzeug.exceptions import InternalServerError
 from flask_migrate import Migrate
 
 sys.path.append('deps/ldapalchemy')
 
 # pylint: disable=wrong-import-position
 from uffd.database import db, SQLAlchemyJSON
-from uffd.ldap import ldap
+import uffd.ldap
 from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
 # pylint: enable=wrong-import-position
@@ -51,17 +52,34 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services, signup, invite
 	# pylint: enable=C0415
 
-	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp + signup.bp + invite.bp:
+	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp:
 		app.register_blueprint(i)
+
+	if app.config['LDAP_SERVICE_USER_BIND'] and (app.config['ENABLE_INVITE'] or
+												app.config['SELF_SIGNUP'] or
+												app.config['ENABLE_PASSWORDRESET']):
+		raise InternalServerError(description="You cannot use INVITES, SIGNUP or PASSWORDRESET when using a USER_BIND!")
+
+	if app.config['ENABLE_INVITE'] or app.config['SELF_SIGNUP']:
+		for i in signup.bp:
+			app.register_blueprint(i)
+	if app.config['ENABLE_INVITE']:
+		for i in invite.bp:
+			app.register_blueprint(i)
 
 	@app.shell_context_processor
 	def push_request_context(): #pylint: disable=unused-variable
 		app.test_request_context().push() # LDAP ORM requires request context
-		return {'db': db, 'ldap': ldap}
+		return {'db': db, 'ldap': uffd.ldap.ldap}
 
 	@app.route("/")
 	def index(): #pylint: disable=unused-variable
 		return redirect(url_for('selfservice.index'))
+
+	@app.teardown_request
+	def close_connection(exception): #pylint: disable=unused-variable,unused-argument
+		if hasattr(request, "ldap_connection"):
+			request.ldap_connection.unbind()
 
 	@app.cli.command("gendevcert", help='Generates a self-signed TLS certificate for development')
 	def gendevcert(): #pylint: disable=unused-variable
