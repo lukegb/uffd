@@ -76,10 +76,13 @@ def new_submit():
 	invite = Invite(creator=user,
 	                single_use=(request.values['single-use'] == '1'),
 	                valid_until=datetime.datetime.fromisoformat(request.values['valid-until']),
-	                allow_signup=(request.values['allow-signup'] == '1'))
+	                allow_signup=(request.values.get('allow-signup', '0') == '1'))
 	for key, value in request.values.items():
 		if key.startswith('role-') and value == '1':
 			invite.roles.append(Role.query.get(key[5:]))
+	if invite.valid_until > datetime.datetime.now() + datetime.timedelta(days=current_app.config['INVITE_MAX_VALID_DAYS']):
+		flash('The "Expires After" date is too far in the future')
+		return redirect(url_for('invite.new'))
 	if not invite.permitted:
 		flash('You are not allowed to create invite links with these permissions')
 		return redirect(url_for('invite.new'))

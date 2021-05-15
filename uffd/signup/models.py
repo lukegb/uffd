@@ -28,7 +28,7 @@ class Signup(db.Model):
 	As long as they are not completed, signup requests have no effect each other
 	or different parts of the application.'''
 	__tablename__ = 'signup'
-	token = Column(String(128), primary_key=True, default=lambda: secrets.token_urlsafe(32))
+	token = Column(String(128), primary_key=True, default=lambda: secrets.token_urlsafe(48))
 	created = Column(DateTime, default=datetime.datetime.now, nullable=False)
 	loginname = Column(Text)
 	displayname = Column(Text)

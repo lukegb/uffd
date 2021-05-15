@@ -10,8 +10,9 @@
 		</select>
 	</div>
 	<div class="form-group">
-		<label for="valid-until">Expires After</label>
+		<label for="valid-until">Valid Until</label>
 		<input class="form-control" type="datetime-local" id="valid-until" name="valid-until" value="{{ (datetime.now() + timedelta(hours=36)).replace(hour=23, minute=59, second=59, microsecond=0).isoformat(timespec='minutes') }}">
+		<small class="text-muted">Must be within the next {{ config['INVITE_MAX_VALID_DAYS'] }} days</small>
 	</div>
 	{% if allow_signup %}
 	<div class="form-group">
@@ -24,6 +25,7 @@
 	{% else %}
 	<input type="hidden" name="allow-signup" value="0">
 	{% endif %}
+	{% if roles %}
 	<div class="form-group">
 		<label for="valid-until">Granted Roles</label>
 		<table class="table table-sm">
@@ -46,12 +48,10 @@
 					<td>{{ role.description }}</td>
 				</tr>
 				{% endfor %}
-				{% if not roles %}
-				<tr><td colspan="3" class="bg-light text-muted text-center">There are no (non-base) roles yet</td></tr>
-				{% endif %}
 			</tbody>
 		</table>
 	</div>
+	{% endif %}
 	<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Create Link</button>
 	<a href="{{ url_for("invite.index") }}" class="btn btn-secondary">Cancel</a>
 </form>
