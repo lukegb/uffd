@@ -19,15 +19,6 @@ from uffd.signup.views import signup_ratelimit
 
 bp = Blueprint('invite', __name__, template_folder='templates', url_prefix='/invite/')
 
-def user_may_disable(user, invite):
-	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
-		return True
-	if invite.creator == user:
-		return True
-	if [role.moderator_group in user.groups for role in invite.roles]:
-		return True
-	return False
-
 def invite_acl():
 	if not is_valid_session():
 		return False
@@ -73,12 +64,8 @@ def index():
 @invite_acl_required
 def new():
 	user = get_current_user()
-	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
-		allow_signup = True
-		roles = Role.query.all()
-	else:
-		allow_signup = user.is_in_group(current_app.config['ACL_SIGNUP_GROUP'])
-		roles = Role.query.filter(Role.moderator_group_dn.in_(user.group_dns)).all()
+	allow_signup = user.is_in_group(current_app.config['ACL_SIGNUP_GROUP']) or user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
+	roles = Role.query.filter(Role.moderator_group_dn.in_(user.group_dns)).all()
 	return render_template('invite/new.html', roles=roles, allow_signup=allow_signup)
 
 @bp.route('/new', methods=['POST'])
