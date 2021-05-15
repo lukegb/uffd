@@ -157,6 +157,21 @@ class TestRoleViews(UffdTestCase):
 			'cn=users,ou=groups,dc=example,dc=com'])
 		# TODO: verify that group memberships are updated (currently not possible with ldap mock!)
 
+	def test_create_with_moderator_group(self):
+		self.assertIsNone(Role.query.filter_by(name='base').first())
+		r = self.client.post(path=url_for('role.update'),
+			data={'name': 'base', 'description': 'Base role description', 'moderator-group': 'cn=uffd_admin,ou=groups,dc=example,dc=com', 'group-20001': '1', 'group-20002': '1'},
+			follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		role = Role.query.filter_by(name='base').first()
+		self.assertIsNotNone(role)
+		self.assertEqual(role.name, 'base')
+		self.assertEqual(role.description, 'Base role description')
+		self.assertEqual(role.moderator_group.name, 'uffd_admin')
+		self.assertEqual(sorted([group.dn for group in role.groups]), ['cn=uffd_access,ou=groups,dc=example,dc=com',
+			'cn=users,ou=groups,dc=example,dc=com'])
+		# TODO: verify that group memberships are updated (currently not possible with ldap mock!)
+
 	def test_delete(self):
 		role = Role(name='base', description='Base role description')
 		db.session.add(role)
