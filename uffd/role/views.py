@@ -51,23 +51,22 @@ def role_acl_check():
 def index():
 	return render_template('role_list.html', roles=Role.query.all())
 
-@bp.route("/<int:roleid>")
 @bp.route("/new")
-def show(roleid=False):
+def new():
+	return render_template('role.html', role=Role(), groups=Group.query.all(), roles=Role.query.all())
+
+@bp.route("/<int:roleid>")
+def show(roleid=None):
 	# prefetch all users so the ldap orm can cache them and doesn't run one ldap query per user
 	User.query.all()
-	if not roleid:
-		role = Role()
-	else:
-		role = Role.query.filter_by(id=roleid).one()
+	role = Role.query.filter_by(id=roleid).one()
 	return render_template('role.html', role=role, groups=Group.query.all(), roles=Role.query.all())
 
 @bp.route("/<int:roleid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
 @csrf_protect(blueprint=bp)
-def update(roleid=False):
-	is_newrole = bool(not roleid)
-	if is_newrole:
+def update(roleid=None):
+	if roleid is None:
 		role = Role()
 		db.session.add(role)
 	else:
@@ -91,7 +90,7 @@ def update(roleid=False):
 	role.update_member_groups()
 	db.session.commit()
 	ldap.session.commit()
-	return redirect(url_for('role.show', roleid=roleid))
+	return redirect(url_for('role.show', roleid=role.id))
 
 @bp.route("/<int:roleid>/del")
 @csrf_protect(blueprint=bp)

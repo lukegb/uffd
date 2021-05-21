@@ -117,7 +117,7 @@ class TestRoleViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 
 	def test_new(self):
-		r = self.client.get(path=url_for('role.show'), follow_redirects=True)
+		r = self.client.get(path=url_for('role.new'), follow_redirects=True)
 		dump('role_new', r)
 		self.assertEqual(r.status_code, 200)
 
