@@ -64,8 +64,12 @@ def index():
 @invite_acl_required
 def new():
 	user = get_current_user()
-	allow_signup = user.is_in_group(current_app.config['ACL_SIGNUP_GROUP']) or user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
-	roles = Role.query.filter(Role.moderator_group_dn.in_(user.group_dns)).all()
+	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
+		allow_signup = True
+		roles = Role.query.all()
+	else:
+		allow_signup = user.is_in_group(current_app.config['ACL_SIGNUP_GROUP'])
+		roles = Role.query.filter(Role.moderator_group_dn.in_(user.group_dns)).all()
 	return render_template('invite/new.html', roles=roles, allow_signup=allow_signup)
 
 @bp.route('/new', methods=['POST'])
