@@ -8,13 +8,18 @@ from ldap3.utils.hashed import hashed, HASHED_SALTED_SHA512
 from uffd.ldap import ldap
 from uffd.lazyconfig import lazyconfig_str, lazyconfig_list
 
-def get_next_uid():
-	max_uid = current_app.config['LDAP_USER_MIN_UID']
+def get_next_uid(service=False):
+	if service:
+		new_uid_min = current_app.config['LDAP_USER_SERVICE_MIN_UID']
+		new_uid_max = current_app.config['LDAP_USER_SERVICE_MAX_UID']
+	else:
+		new_uid_min = current_app.config['LDAP_USER_MIN_UID']
+		new_uid_max = current_app.config['LDAP_USER_MAX_UID']
+	next_uid = new_uid_min
 	for user in User.query.all():
-		if user.uid <= current_app.config['LDAP_USER_MAX_UID']:
-			max_uid = max(user.uid, max_uid)
-	next_uid = max_uid + 1
-	if next_uid > current_app.config['LDAP_USER_MAX_UID']:
+		if user.uid <= new_uid_max:
+			next_uid = max(next_uid, user.uid + 1)
+	if next_uid > new_uid_max:
 		raise Exception('No free uid found')
 	return next_uid
 
@@ -49,6 +54,18 @@ class BaseUser(ldap.Model):
 	@property
 	def group_dns(self):
 		return [group.dn for group in self.groups]
+
+	@property
+	def is_service_user(self):
+		if self.uid is None:
+			return None
+		return self.uid >= current_app.config['LDAP_USER_SERVICE_MIN_UID'] and self.uid <= current_app.config['LDAP_USER_SERVICE_MAX_UID']
+
+	@is_service_user.setter
+	def is_service_user(self, value):
+		assert self.uid is None
+		if value:
+			self.uid = get_next_uid(service=True)
 
 	def add_default_attributes(self):
 		for name, values in current_app.config['LDAP_USER_DEFAULT_ATTRIBUTES'].items():

@@ -42,6 +42,8 @@ def update(uid=None):
 	if uid is None:
 		user = User()
 		ignore_blacklist = request.form.get('ignore-loginname-blacklist', False)
+		if request.form.get('serviceaccount'):
+			user.is_service_user = True
 		if not user.set_loginname(request.form['loginname'], ignore_blacklist=ignore_blacklist):
 			flash('Login name does not meet requirements')
 			return redirect(url_for('user.show'))
@@ -60,14 +62,19 @@ def update(uid=None):
 	ldap.session.add(user)
 	user.roles.clear()
 	for role in Role.query.all():
-		if request.values.get('role-{}'.format(role.id), False) or role.name in current_app.config["ROLES_BASEROLES"]:
+		if request.values.get('role-{}'.format(role.id), False):
+			user.roles.add(role)
+		elif not user.is_service_user and role.name in current_app.config["ROLES_BASEROLES"]:
 			user.roles.add(role)
 	user.update_groups()
 	ldap.session.commit()
 	db.session.commit()
 	if uid is None:
-		send_passwordreset(user, new=True)
-		flash('User created. We sent the user a password reset link by mail')
+		if user.is_service_user:
+			flash('Service user created')
+		else:
+			send_passwordreset(user, new=True)
+			flash('User created. We sent the user a password reset link by mail')
 	else:
 		flash('User updated')
 	return redirect(url_for('user.show', uid=user.uid))

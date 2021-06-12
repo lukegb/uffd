@@ -30,12 +30,15 @@
 						<a href="{{ url_for("user.show", uid=user.uid) }}">
 							{{ user.loginname }}
 						</a>
+						{% if user.is_service_user %}
+						<span class="badge badge-secondary">service</span>
+						{% endif %}
 					</td>
 					<td>
 						{{ user.displayname }}
 					</td>
 					<td>
-					{% for role in user.roles|sort(attribute="name") if not role.name in config["ROLES_BASEROLES"] %}
+					{% for role in user.roles|sort(attribute="name") if not role.name in config["ROLES_BASEROLES"] or user.is_service_user %}
 						<a href="{{ url_for("role.show", roleid=role.id) }}">{{ role.name }}</a>{% if not loop.last %}, {% endif %}
 					{% endfor %}
 					</td>
