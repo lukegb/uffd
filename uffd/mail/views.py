@@ -21,7 +21,7 @@ def mail_acl_check():
 @bp.route("/")
 @register_navbar('Mail', icon='envelope', blueprint=bp, visible=mail_acl_check)
 def index():
-	return render_template('mail_list.html', mails=Mail.query.all())
+	return render_template('mail/list.html', mails=Mail.query.all())
 
 @bp.route("/<uid>")
 @bp.route("/new")
@@ -29,7 +29,7 @@ def show(uid=None):
 	mail = Mail()
 	if uid is not None:
 		mail = Mail.query.filter_by(uid=uid).first_or_404()
-	return render_template('mail.html', mail=mail)
+	return render_template('mail/show.html', mail=mail)
 
 @bp.route("/<uid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])

@@ -23,7 +23,7 @@ reset_ratelimit = Ratelimit('passwordreset', 1*60*60, 3)
 @register_navbar('Selfservice', icon='portrait', blueprint=bp, visible=is_valid_session)
 @login_required()
 def index():
-	return render_template('self.html', user=get_current_user())
+	return render_template('selfservice/self.html', user=get_current_user())
 
 @bp.route("/update", methods=(['POST']))
 @csrf_protect(blueprint=bp)
@@ -57,7 +57,7 @@ def update():
 @bp.route("/passwordreset", methods=(['GET', 'POST']))
 def forgot_password():
 	if request.method == 'GET':
-		return render_template('forgot_password.html')
+		return render_template('selfservice/forgot_password.html')
 
 	loginname = request.values['loginname']
 	mail = request.values['mail']
@@ -87,17 +87,17 @@ def token_password(token):
 			db.session.commit()
 		return redirect(url_for('session.login'))
 	if request.method == 'GET':
-		return render_template('set_password.html', token=token)
+		return render_template('selfservice/set_password.html', token=token)
 	if not request.values['password1']:
 		flash('You need to set a password, please try again.')
-		return render_template('set_password.html', token=token)
+		return render_template('selfservice/set_password.html', token=token)
 	if not request.values['password1'] == request.values['password2']:
 		flash('Passwords do not match, please try again.')
-		return render_template('set_password.html', token=token)
+		return render_template('selfservice/set_password.html', token=token)
 	user = User.query.filter_by(loginname=dbtoken.loginname).one()
 	if not user.set_password(request.values['password1']):
 		flash('Password ist not valid, please try again.')
-		return render_template('set_password.html', token=token)
+		return render_template('selfservice/set_password.html', token=token)
 	db.session.delete(dbtoken)
 	flash('New password set')
 	ldap.session.commit()
@@ -137,7 +137,7 @@ def send_mail_verification(loginname, newmail):
 	user = User.query.filter_by(loginname=loginname).one()
 
 	msg = EmailMessage()
-	msg.set_content(render_template('mailverification.mail.txt', user=user, token=token.token))
+	msg.set_content(render_template('selfservice/mailverification.mail.txt', user=user, token=token.token))
 	msg['Subject'] = 'Mail verification'
 	send_mail(newmail, msg)
 
@@ -153,10 +153,10 @@ def send_passwordreset(user, new=False):
 
 	msg = EmailMessage()
 	if new:
-		msg.set_content(render_template('newuser.mail.txt', user=user, token=token.token))
+		msg.set_content(render_template('selfservice/newuser.mail.txt', user=user, token=token.token))
 		msg['Subject'] = 'Welcome to the CCCV infrastructure'
 	else:
-		msg.set_content(render_template('passwordreset.mail.txt', user=user, token=token.token))
+		msg.set_content(render_template('selfservice/passwordreset.mail.txt', user=user, token=token.token))
 		msg['Subject'] = 'Password reset'
 	send_mail(user.mail, msg)
 

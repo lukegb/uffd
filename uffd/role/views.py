@@ -49,18 +49,18 @@ def role_acl_check():
 @bp.route("/")
 @register_navbar('Roles', icon='key', blueprint=bp, visible=role_acl_check)
 def index():
-	return render_template('role_list.html', roles=Role.query.all())
+	return render_template('role/list.html', roles=Role.query.all())
 
 @bp.route("/new")
 def new():
-	return render_template('role.html', role=Role(), groups=Group.query.all(), roles=Role.query.all())
+	return render_template('role/show.html', role=Role(), groups=Group.query.all(), roles=Role.query.all())
 
 @bp.route("/<int:roleid>")
 def show(roleid=None):
 	# prefetch all users so the ldap orm can cache them and doesn't run one ldap query per user
 	User.query.all()
 	role = Role.query.filter_by(id=roleid).one()
-	return render_template('role.html', role=role, groups=Group.query.all(), roles=Role.query.all())
+	return render_template('role/show.html', role=role, groups=Group.query.all(), roles=Role.query.all())
 
 @bp.route("/<int:roleid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])

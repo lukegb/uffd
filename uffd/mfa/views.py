@@ -21,12 +21,12 @@ def setup():
 	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=user.dn).all()
 	totp_methods = TOTPMethod.query.filter_by(dn=user.dn).all()
 	webauthn_methods = WebauthnMethod.query.filter_by(dn=user.dn).all()
-	return render_template('setup.html', totp_methods=totp_methods, webauthn_methods=webauthn_methods, recovery_methods=recovery_methods)
+	return render_template('mfa/setup.html', totp_methods=totp_methods, webauthn_methods=webauthn_methods, recovery_methods=recovery_methods)
 
 @bp.route('/setup/disable', methods=['GET'])
 @login_required()
 def disable():
-	return render_template('disable.html')
+	return render_template('mfa/disable.html')
 
 @bp.route('/setup/disable', methods=['POST'])
 @login_required()
@@ -65,7 +65,7 @@ def setup_recovery():
 		methods.append(method)
 		db.session.add(method)
 	db.session.commit()
-	return render_template('setup_recovery.html', methods=methods)
+	return render_template('mfa/setup_recovery.html', methods=methods)
 
 @bp.route('/setup/totp', methods=['GET'])
 @login_required()
@@ -73,7 +73,7 @@ def setup_totp():
 	user = get_current_user()
 	method = TOTPMethod(user)
 	session['mfa_totp_key'] = method.key
-	return render_template('setup_totp.html', method=method, name=request.values['name'])
+	return render_template('mfa/setup_totp.html', method=method, name=request.values['name'])
 
 @bp.route('/setup/totp', methods=['POST'])
 @login_required()
@@ -218,7 +218,7 @@ def auth():
 		session['user_mfa'] = True
 	if session.get('user_mfa'):
 		return redirect(request.values.get('ref', url_for('index')))
-	return render_template('auth.html', ref=request.values.get('ref'), totp_methods=totp_methods,
+	return render_template('mfa/auth.html', ref=request.values.get('ref'), totp_methods=totp_methods,
 			webauthn_methods=webauthn_methods, recovery_methods=recovery_methods)
 
 @bp.route('/auth', methods=['POST'])

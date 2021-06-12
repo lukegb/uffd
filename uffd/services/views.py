@@ -90,4 +90,4 @@ def index():
 	if not (current_app.config["SERVICES_BANNER_PUBLIC"] or user):
 		banner = None
 
-	return render_template('overview.html', user=user, services=services, banner=banner)
+	return render_template('services/overview.html', user=user, services=services, banner=banner)

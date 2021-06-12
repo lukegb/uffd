@@ -60,7 +60,7 @@ def set_session(user, password='', skip_mfa=False):
 @bp.route("/login", methods=('GET', 'POST'))
 def login():
 	if request.method == 'GET':
-		return render_template('login.html', ref=request.values.get('ref'))
+		return render_template('session/login.html', ref=request.values.get('ref'))
 
 	username = request.form['loginname']
 	password = request.form['password']
@@ -71,16 +71,16 @@ def login():
 			flash('We received too many invalid login attempts for this user! Please wait at least %s.'%format_delay(login_delay))
 		else:
 			flash('We received too many requests from your ip address/network! Please wait at least %s.'%format_delay(host_delay))
-		return render_template('login.html', ref=request.values.get('ref'))
+		return render_template('session/login.html', ref=request.values.get('ref'))
 	user = login_get_user(username, password)
 	if user is None:
 		login_ratelimit.log(username)
 		host_ratelimit.log()
 		flash('Login name or password is wrong')
-		return render_template('login.html', ref=request.values.get('ref'))
+		return render_template('session/login.html', ref=request.values.get('ref'))
 	if not user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
 		flash('You do not have access to this service')
-		return render_template('login.html', ref=request.values.get('ref'))
+		return render_template('session/login.html', ref=request.values.get('ref'))
 	set_session(user, password=password)
 	return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
 

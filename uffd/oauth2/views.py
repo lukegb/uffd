@@ -117,7 +117,7 @@ def error():
 	args = dict(request.values)
 	err = args.pop('error', 'unknown')
 	error_description = args.pop('error_description', '')
-	return render_template('error.html', error=err, error_description=error_description, args=args)
+	return render_template('oauth2/error.html', error=err, error_description=error_description, args=args)
 
 @bp.app_url_defaults
 def inject_logout_params(endpoint, values):
@@ -131,4 +131,4 @@ def logout():
 		return redirect(request.values.get('ref', '/'))
 	client_ids = request.values['client_ids'].split(',')
 	clients = [OAuth2Client.from_id(client_id) for client_id in client_ids]
-	return render_template('logout.html', clients=clients)
+	return render_template('oauth2/logout.html', clients=clients)

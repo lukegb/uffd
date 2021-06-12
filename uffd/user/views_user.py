@@ -27,13 +27,13 @@ def user_acl_check():
 @bp.route("/")
 @register_navbar('Users', icon='users', blueprint=bp, visible=user_acl_check)
 def index():
-	return render_template('user_list.html', users=User.query.all())
+	return render_template('user/list.html', users=User.query.all())
 
 @bp.route("/<int:uid>")
 @bp.route("/new")
 def show(uid=None):
 	user = User() if uid is None else User.query.filter_by(uid=uid).first_or_404()
-	return render_template('user.html', user=user, roles=Role.query.all())
+	return render_template('user/show.html', user=user, roles=Role.query.all())
 
 @bp.route("/<int:uid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])

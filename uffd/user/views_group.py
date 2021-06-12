@@ -19,8 +19,8 @@ def group_acl_check():
 @bp.route("/")
 @register_navbar('Groups', icon='layer-group', blueprint=bp, visible=group_acl_check)
 def index():
-	return render_template('group_list.html', groups=Group.query.all())
+	return render_template('group/list.html', groups=Group.query.all())
 
 @bp.route("/<int:gid>")
 def show(gid):
-	return render_template('group.html', group=Group.query.filter_by(gid=gid).first_or_404())
+	return render_template('group/show.html', group=Group.query.filter_by(gid=gid).first_or_404())
