@@ -40,6 +40,22 @@
 		<label for="user-password2">Password Repeat</label>
 		<input type="password" class="form-control" id="user-password2" name="password2" placeholder="●●●●●●●●">
 	</div>
+	<div class="form-group">
+		{% if user.roles_recursive|length %}
+			{% if user.roles_recursive|length == 1 %}
+				You have this role:
+			{% else %}
+				You currently have these roles:
+			{% endif %}
+			<ul>
+				{% for role in user.roles_recursive|sort(attribute="name") %}
+				<li>{{ role.name }}</li>
+				{% endfor %}
+			</ul>
+		{% else %}
+			You currently don't have any roles.
+		{% endif %}
+	</div>
 	<div class="form-group col-md-12">
 		<button type="submit" class="btn btn-primary float-right"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
 	</div>
