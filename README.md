@@ -19,7 +19,11 @@ You can also use virtualenv with the supplied `requirements.txt`.
 
 ## development
 
-Before running uffd, you need to create the database with `flask db upgrade`.
+Clone this repository with the `--recurse-submodules` flag to retrieve submodule dependencies.
+
+Before running uffd, you need to create the database with `flask db upgrade`. The database is placed in
+`instance/uffd.sqlit3`.
+
 Then use `flask run` to start the application:
 
 ```
