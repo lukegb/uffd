@@ -71,22 +71,23 @@ def update(roleid=None):
 		db.session.add(role)
 	else:
 		role = Role.query.filter_by(id=roleid).one()
-	role.name = request.values['name']
 	role.description = request.values['description']
-	if not request.values['moderator-group']:
-		role.moderator_group_dn = None
-	else:
-		role.moderator_group = Group.query.get(request.values['moderator-group'])
-	for included_role in Role.query.all():
-		if included_role != role and request.values.get('include-role-{}'.format(included_role.id)):
-			role.included_roles.append(included_role)
-		elif included_role in role.included_roles:
-			role.included_roles.remove(included_role)
-	for group in Group.query.all():
-		if request.values.get('group-{}'.format(group.gid), False):
-			role.groups.add(group)
+	if not role.locked:
+		role.name = request.values['name']
+		if not request.values['moderator-group']:
+			role.moderator_group_dn = None
 		else:
-			role.groups.discard(group)
+			role.moderator_group = Group.query.get(request.values['moderator-group'])
+		for included_role in Role.query.all():
+			if included_role != role and request.values.get('include-role-{}'.format(included_role.id)):
+				role.included_roles.append(included_role)
+			elif included_role in role.included_roles:
+				role.included_roles.remove(included_role)
+		for group in Group.query.all():
+			if request.values.get('group-{}'.format(group.gid), False):
+				role.groups.add(group)
+			else:
+				role.groups.discard(group)
 	role.update_member_groups()
 	db.session.commit()
 	ldap.session.commit()
@@ -96,6 +97,9 @@ def update(roleid=None):
 @csrf_protect(blueprint=bp)
 def delete(roleid):
 	role = Role.query.filter_by(id=roleid).one()
+	if role.locked:
+		flash('Locked roles cannot be deleted')
+		return redirect(url_for('role.show', roleid=role.id))
 	oldmembers = set(role.members).union(role.indirect_members)
 	role.members.clear()
 	db.session.delete(role)
@@ -104,3 +108,11 @@ def delete(roleid):
 	db.session.commit()
 	ldap.session.commit()
 	return redirect(url_for('role.index'))
+
+@bp.route("/<int:roleid>/unlock")
+@csrf_protect(blueprint=bp)
+def unlock(roleid):
+	role = Role.query.filter_by(id=roleid).one()
+	role.locked = False
+	db.session.commit()
+	return redirect(url_for('role.show', roleid=role.id))
