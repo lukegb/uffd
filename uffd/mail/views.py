@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.ldap import ldap
-from uffd.session import login_required, is_valid_session, get_current_user
+from uffd.session import login_required
 
 from uffd.mail.models import Mail
 
@@ -16,7 +16,7 @@ def mail_acl(): #pylint: disable=inconsistent-return-statements
 		return redirect(url_for('index'))
 
 def mail_acl_check():
-	return is_valid_session() and get_current_user().is_in_group(current_app.config['ACL_ADMIN_GROUP'])
+	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp.route("/")
 @register_navbar('Mail', icon='envelope', blueprint=bp, visible=mail_acl_check)

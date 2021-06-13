@@ -21,7 +21,7 @@
 			{% for invite in invites|sort(attribute='created', reverse=True)|sort(attribute='active', reverse=True) %}
 			<tr>
 				<td>
-					{% if invite.creator == get_current_user() and invite.active %}
+					{% if invite.creator == request.user and invite.active %}
 					<a href="{{ url_for('invite.use', token=invite.token) }}"><code>{{ invite.short_token }}</code></a>
 					<button type="button" class="btn btn-link btn-sm p-0 copy-clipboard" data-copy="{{ url_for('invite.use', token=invite.token, _external=True) }}" title="Copy link to clipboard"><i class="fas fa-clipboard"></i></button>
 					<button type="button" class="btn btn-link btn-sm p-0" data-toggle="modal" data-target="#modal-{{ invite.id }}-qrcode" title="Show link as QR code"><i class="fas fa-qrcode"></i></button>
@@ -121,7 +121,7 @@
 				<form action="{{ url_for('invite.disable', invite_id=invite.id) }}" method="POST">
 				<button type="submit" class="btn btn-primary">Disable Link</button>
 				</form>
-				{% elif invite.creator == get_current_user() and not invite.expired and invite.permitted %}
+				{% elif invite.creator == request.user and not invite.expired and invite.permitted %}
 				<form action="{{ url_for('invite.reset', invite_id=invite.id) }}" method="POST">
 				<button type="submit" class="btn btn-primary">Reenable Link</button>
 				</form>
@@ -132,7 +132,7 @@
 </div>
 {% endfor %}
 
-{% for invite in invites if invite.creator == get_current_user() %}
+{% for invite in invites if invite.creator == request.user %}
 <div class="modal" tabindex="-1" id="modal-{{ invite.id }}-qrcode">
 	<div class="modal-dialog">
 		<div class="modal-content">

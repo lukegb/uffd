@@ -12,6 +12,21 @@ bp = Blueprint("session", __name__, template_folder='templates', url_prefix='/')
 
 login_ratelimit = Ratelimit('login', 1*60, 3)
 
+@bp.before_app_request
+def set_request_user():
+	request.user = None
+	request.user_pre_mfa = None
+	if 'user_dn' not in session:
+		return
+	if 'logintime' not in session:
+		return
+	if datetime.datetime.now().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
+		return
+	user = User.query.get(session['user_dn'])
+	request.user_pre_mfa = user
+	if session.get('user_mfa'):
+		request.user = user
+
 def login_get_user(loginname, password):
 	dn = User(loginname=loginname).dn
 
@@ -84,34 +99,11 @@ def login():
 	set_session(user, password=password)
 	return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
 
-def get_current_user():
-	if 'user_dn' not in session:
-		return None
-	return User.query.get(session['user_dn'])
-bp.add_app_template_global(get_current_user)
-
-def login_valid():
-	user = get_current_user()
-	if user is None:
-		return False
-	if datetime.datetime.now().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
-		return False
-	return True
-
-def is_valid_session():
-	if not login_valid():
-		return False
-	if not session.get('user_mfa'):
-		return False
-	return True
-bp.add_app_template_global(is_valid_session)
-
-def pre_mfa_login_required(no_redirect=False):
+def login_required_pre_mfa(no_redirect=False):
 	def wrapper(func):
 		@functools.wraps(func)
 		def decorator(*args, **kwargs):
-			if not login_valid() or datetime.datetime.now().timestamp() > session['logintime'] + 10*60:
-				session.clear()
+			if not request.user_pre_mfa:
 				if no_redirect:
 					abort(403)
 				flash('You need to login first')
@@ -124,12 +116,12 @@ def login_required(group=None):
 	def wrapper(func):
 		@functools.wraps(func)
 		def decorator(*args, **kwargs):
-			if not login_valid():
+			if not request.user_pre_mfa:
 				flash('You need to login first')
 				return redirect(url_for('session.login', ref=request.url))
-			if not session.get('user_mfa'):
+			if not request.user:
 				return redirect(url_for('mfa.auth', ref=request.url))
-			if not get_current_user().is_in_group(group):
+			if not request.user.is_in_group(group):
 				flash('Access denied')
 				return redirect(url_for('index'))
 			return func(*args, **kwargs)

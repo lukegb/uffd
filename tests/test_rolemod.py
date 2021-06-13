@@ -1,7 +1,6 @@
 from flask import url_for
 
 from uffd.user.models import User, Group
-from uffd.session import get_current_user
 from uffd.role.models import Role
 from uffd.database import db
 from uffd.ldap import ldap

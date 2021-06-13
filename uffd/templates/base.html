@@ -67,7 +67,7 @@
 					</li>
 					{% endfor %}
 				</ul>
-				{% if is_valid_session() %}
+				{% if request.user %}
 				<ul class="navbar-nav ml-auto">
 					<li class="nav-item">
 						<a class="nav-link" href="{{ url_for("session.logout") }}">

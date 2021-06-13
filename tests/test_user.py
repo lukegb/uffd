@@ -6,7 +6,6 @@ from flask import url_for, session
 # These imports are required, because otherwise we get circular imports?!
 from uffd import ldap, user
 
-from uffd.session.views import get_current_user
 from uffd.user.models import User
 from uffd.role.models import Role
 from uffd import create_app, db

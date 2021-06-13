@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, url_for, redirect, flash, current_app
+from flask import Blueprint, render_template, url_for, redirect, flash, current_app, request
 
 from uffd.navbar import register_navbar
-from uffd.session import login_required, is_valid_session, get_current_user
+from uffd.session import login_required
 
 from .models import Group
 
@@ -14,7 +14,7 @@ def group_acl(): #pylint: disable=inconsistent-return-statements
 		return redirect(url_for('index'))
 
 def group_acl_check():
-	return is_valid_session() and get_current_user().is_in_group(current_app.config['ACL_ADMIN_GROUP'])
+	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp.route("/")
 @register_navbar('Groups', icon='layer-group', blueprint=bp, visible=group_acl_check)

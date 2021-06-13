@@ -7,7 +7,7 @@ from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.role.models import Role
 from uffd.user.models import User, Group
-from uffd.session import get_current_user, login_required, is_valid_session
+from uffd.session import login_required
 from uffd.database import db
 from uffd.ldap import ldap
 
@@ -44,7 +44,7 @@ def role_acl(): #pylint: disable=inconsistent-return-statements
 		return redirect(url_for('index'))
 
 def role_acl_check():
-	return is_valid_session() and get_current_user().is_in_group(current_app.config['ACL_ADMIN_GROUP'])
+	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp.route("/")
 @register_navbar('Roles', icon='key', blueprint=bp, visible=role_acl_check)

@@ -2,7 +2,7 @@ import unittest
 import datetime
 import time
 
-from flask import url_for, session
+from flask import url_for, session, request
 
 # These imports are required, because otherwise we get circular imports?!
 from uffd import user
@@ -11,7 +11,7 @@ from uffd.ldap import ldap
 from uffd import create_app, db
 from uffd.signup.models import Signup
 from uffd.user.models import User
-from uffd.session.views import get_current_user, is_valid_session, login_get_user
+from uffd.session.views import login_get_user
 
 from utils import dump, UffdTestCase, db_flush
 
@@ -345,8 +345,8 @@ class TestSignupViews(UffdTestCase):
 		self.assertEqual(signup.user.mail, 'test@example.com')
 		if self.use_openldap:
 			self.assertIsNotNone(login_get_user('newuser', 'notsecret'))
-		self.assertTrue(is_valid_session())
-		self.assertEqual(get_current_user().loginname, 'newuser')
+		self.assertIsNotNone(request.user)
+		self.assertEqual(request.user.loginname, 'newuser')
 
 	def test_confirm_loggedin(self):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
@@ -354,16 +354,16 @@ class TestSignupViews(UffdTestCase):
 		self.client.post(path=url_for('session.login'),
 			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
 		self.assertFalse(signup.completed)
-		self.assertTrue(is_valid_session())
-		self.assertEqual(get_current_user().loginname, 'testuser')
+		self.assertIsNotNone(request.user)
+		self.assertEqual(request.user.loginname, 'testuser')
 		r = self.client.get(path=url_for('signup.signup_confirm', token=signup.token), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		self.assertEqual(r.status_code, 200)
 		signup = refetch_signup(signup)
 		self.assertTrue(signup.completed)
-		self.assertTrue(is_valid_session())
-		self.assertEqual(get_current_user().loginname, 'newuser')
+		self.assertIsNotNone(request.user)
+		self.assertEqual(request.user.loginname, 'newuser')
 
 	def test_confirm_notfound(self):
 		r = self.client.get(path=url_for('signup.signup_confirm', token='notasignuptoken'), follow_redirects=True)

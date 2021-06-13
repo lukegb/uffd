@@ -9,7 +9,7 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.user.models import User
-from uffd.session import get_current_user, login_required, is_valid_session
+from uffd.session import login_required
 from uffd.selfservice.models import PasswordToken, MailToken
 from uffd.database import db
 from uffd.ldap import ldap
@@ -20,17 +20,17 @@ bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix=
 reset_ratelimit = Ratelimit('passwordreset', 1*60*60, 3)
 
 @bp.route("/")
-@register_navbar('Selfservice', icon='portrait', blueprint=bp, visible=is_valid_session)
+@register_navbar('Selfservice', icon='portrait', blueprint=bp, visible=lambda: bool(request.user))
 @login_required()
 def index():
-	return render_template('selfservice/self.html', user=get_current_user())
+	return render_template('selfservice/self.html', user=request.user)
 
 @bp.route("/update", methods=(['POST']))
 @csrf_protect(blueprint=bp)
 @login_required()
 def update():
 	password_changed = False
-	user = get_current_user()
+	user = request.user
 	if request.values['displayname'] != user.displayname:
 		if user.set_displayname(request.values['displayname']):
 			flash('Display name changed.')
