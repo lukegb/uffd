@@ -61,11 +61,7 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	register_template_helper(app)
 	setup_navbar(app)
 
-	# ensure the instance folder exists
-	try:
-		os.makedirs(app.instance_path)
-	except OSError:
-		pass
+	os.makedirs(app.instance_path, exist_ok=True)
 
 	db.init_app(app)
 	Migrate(app, db, render_as_batch=True)
