@@ -48,7 +48,7 @@
 				You currently have these roles:
 			{% endif %}
 			<ul>
-				{% for role in user.roles|sort(attribute="name") %}
+				{% for role in user.roles|sort(attribute="name") if role.name not in config["ROLES_BASEROLES"] %}
 				<li>{{ role.name }}</li>
 				{% endfor %}
 			</ul>
