@@ -41,14 +41,14 @@
 		<input type="password" class="form-control" id="user-password2" name="password2" placeholder="●●●●●●●●">
 	</div>
 	<div class="form-group">
-		{% if user.roles_recursive|length %}
-			{% if user.roles_recursive|length == 1 %}
+		{% if user.roles|length %}
+			{% if user.roles|length == 1 %}
 				You have this role:
 			{% else %}
 				You currently have these roles:
 			{% endif %}
 			<ul>
-				{% for role in user.roles_recursive|sort(attribute="name") %}
+				{% for role in user.roles|sort(attribute="name") %}
 				<li>{{ role.name }}</li>
 				{% endfor %}
 			</ul>
