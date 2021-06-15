@@ -65,7 +65,7 @@ hook-pre-app = exec:FLASK_APP=uffd flask db upgrade
 
 ## python style conventions
 
-tabs.
+PEP 8 without double new lines, tabs instead of spaces and a max line length of 160 characters.
 
 ## Config
 
