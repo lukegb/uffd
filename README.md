@@ -3,6 +3,8 @@
 This is the UserFerwaltungsFrontend.
 A web service to manage LDAP users, groups and permissions.
 
+Development chat: [#uffd-development](https://rocket.events.ccc.de/channel/uffd-development)
+
 ## dependencies
 - python3
 - python3-ldap3
@@ -108,3 +110,7 @@ The userinfo endpoint returns json data with the following structure:
 ```
 
 `id` is the uidNumber, `name` the display name (cn) and `nickname` the uid of the user's LDAP object.
+
+## License
+
+GNU Affero General Public License v3.0, see [LICENSE](LICENSE).
