@@ -1,12 +1,12 @@
 import time
 import unittest
 
-from flask import url_for
+from flask import url_for, request
 
 # These imports are required, because otherwise we get circular imports?!
 from uffd import ldap, user
 
-from uffd.session.views import get_current_user, login_required, is_valid_session
+from uffd.session.views import login_required
 from uffd import create_app, db
 
 from utils import dump, UffdTestCase
@@ -32,24 +32,24 @@ class TestSession(UffdTestCase):
 
 	def setUp(self):
 		super().setUp()
-		self.assertFalse(is_valid_session())
+		self.assertIsNone(request.user)
 
 	def login(self):
 		self.client.post(path=url_for('session.login'),
 			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
-		self.assertTrue(is_valid_session())
+		self.assertIsNotNone(request.user)
 
 	def assertLogin(self):
-		self.assertTrue(is_valid_session())
+		self.assertIsNotNone(request.user)
 		self.assertEqual(self.client.get(path=url_for('test_login_required'),
 			follow_redirects=True).data, b'SUCCESS')
-		self.assertEqual(get_current_user().loginname, 'testuser')
+		self.assertEqual(request.user.loginname, 'testuser')
 
 	def assertLogout(self):
-		self.assertFalse(is_valid_session())
+		self.assertIsNone(request.user)
 		self.assertNotEqual(self.client.get(path=url_for('test_login_required'),
 			follow_redirects=True).data, b'SUCCESS')
-		self.assertEqual(get_current_user(), None)
+		self.assertEqual(request.user, None)
 
 	def test_login(self):
 		self.assertLogout()
@@ -131,7 +131,7 @@ class TestSession(UffdTestCase):
 			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
 		dump('login_ratelimit', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertFalse(is_valid_session())
+		self.assertIsNone(request.user)
 
 class TestSessionOL(TestSession):
 	use_openldap = True

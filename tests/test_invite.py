@@ -12,7 +12,7 @@ from uffd import create_app, db
 from uffd.invite.models import Invite, InviteGrant, InviteSignup
 from uffd.user.models import User, Group
 from uffd.role.models import Role
-from uffd.session.views import get_current_user, is_valid_session, login_get_user
+from uffd.session.views import login_get_user
 
 from utils import dump, UffdTestCase, db_flush
 

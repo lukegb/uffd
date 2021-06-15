@@ -1,7 +1,6 @@
-from flask import Blueprint, render_template, current_app, abort
+from flask import Blueprint, render_template, current_app, abort, request
 
 from uffd.navbar import register_navbar
-from uffd.session import is_valid_session, get_current_user
 
 bp = Blueprint("services", __name__, template_folder='templates', url_prefix='/services')
 
@@ -69,25 +68,19 @@ def get_services(user=None):
 	return services
 
 def services_visible():
-	user = None
-	if is_valid_session():
-		user = get_current_user()
-	return len(get_services(user)) > 0
+	return len(get_services(request.user)) > 0
 
 @bp.route("/")
 @register_navbar('Services', icon='sitemap', blueprint=bp, visible=services_visible)
 def index():
-	user = None
-	if is_valid_session():
-		user = get_current_user()
-	services = get_services(user)
+	services = get_services(request.user)
 	if not current_app.config['SERVICES']:
 		abort(404)
 
 	banner = current_app.config.get('SERVICES_BANNER')
 
 	# Set the banner to None if it is not public and no user is logged in
-	if not (current_app.config["SERVICES_BANNER_PUBLIC"] or user):
+	if not (current_app.config["SERVICES_BANNER_PUBLIC"] or request.user):
 		banner = None
 
-	return render_template('overview.html', user=user, services=services, banner=banner)
+	return render_template('services/overview.html', user=request.user, services=services, banner=banner)

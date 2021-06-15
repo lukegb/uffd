@@ -6,7 +6,6 @@ from flask import url_for
 # These imports are required, because otherwise we get circular imports?!
 from uffd import ldap, user
 
-from uffd.session.views import get_current_user
 from uffd.user.models import User
 from uffd.oauth2.models import OAuth2Client
 from uffd import create_app, db, ldap

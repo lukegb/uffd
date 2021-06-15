@@ -7,7 +7,7 @@ from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.role.models import Role
 from uffd.user.models import User, Group
-from uffd.session import get_current_user, login_required, is_valid_session
+from uffd.session import login_required
 from uffd.database import db
 from uffd.ldap import ldap
 
@@ -44,23 +44,23 @@ def role_acl(): #pylint: disable=inconsistent-return-statements
 		return redirect(url_for('index'))
 
 def role_acl_check():
-	return is_valid_session() and get_current_user().is_in_group(current_app.config['ACL_ADMIN_GROUP'])
+	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp.route("/")
 @register_navbar('Roles', icon='key', blueprint=bp, visible=role_acl_check)
 def index():
-	return render_template('role_list.html', roles=Role.query.all())
+	return render_template('role/list.html', roles=Role.query.all())
 
 @bp.route("/new")
 def new():
-	return render_template('role.html', role=Role(), groups=Group.query.all(), roles=Role.query.all())
+	return render_template('role/show.html', role=Role(), groups=Group.query.all(), roles=Role.query.all())
 
 @bp.route("/<int:roleid>")
 def show(roleid=None):
 	# prefetch all users so the ldap orm can cache them and doesn't run one ldap query per user
 	User.query.all()
 	role = Role.query.filter_by(id=roleid).one()
-	return render_template('role.html', role=role, groups=Group.query.all(), roles=Role.query.all())
+	return render_template('role/show.html', role=role, groups=Group.query.all(), roles=Role.query.all())
 
 @bp.route("/<int:roleid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
@@ -71,22 +71,23 @@ def update(roleid=None):
 		db.session.add(role)
 	else:
 		role = Role.query.filter_by(id=roleid).one()
-	role.name = request.values['name']
 	role.description = request.values['description']
-	if not request.values['moderator-group']:
-		role.moderator_group_dn = None
-	else:
-		role.moderator_group = Group.query.get(request.values['moderator-group'])
-	for included_role in Role.query.all():
-		if included_role != role and request.values.get('include-role-{}'.format(included_role.id)):
-			role.included_roles.append(included_role)
-		elif included_role in role.included_roles:
-			role.included_roles.remove(included_role)
-	for group in Group.query.all():
-		if request.values.get('group-{}'.format(group.gid), False):
-			role.groups.add(group)
+	if not role.locked:
+		role.name = request.values['name']
+		if not request.values['moderator-group']:
+			role.moderator_group_dn = None
 		else:
-			role.groups.discard(group)
+			role.moderator_group = Group.query.get(request.values['moderator-group'])
+		for included_role in Role.query.all():
+			if included_role != role and request.values.get('include-role-{}'.format(included_role.id)):
+				role.included_roles.append(included_role)
+			elif included_role in role.included_roles:
+				role.included_roles.remove(included_role)
+		for group in Group.query.all():
+			if request.values.get('group-{}'.format(group.gid), False):
+				role.groups.add(group)
+			else:
+				role.groups.discard(group)
 	role.update_member_groups()
 	db.session.commit()
 	ldap.session.commit()
@@ -96,6 +97,9 @@ def update(roleid=None):
 @csrf_protect(blueprint=bp)
 def delete(roleid):
 	role = Role.query.filter_by(id=roleid).one()
+	if role.locked:
+		flash('Locked roles cannot be deleted')
+		return redirect(url_for('role.show', roleid=role.id))
 	oldmembers = set(role.members).union(role.indirect_members)
 	role.members.clear()
 	db.session.delete(role)
@@ -104,3 +108,11 @@ def delete(roleid):
 	db.session.commit()
 	ldap.session.commit()
 	return redirect(url_for('role.index'))
+
+@bp.route("/<int:roleid>/unlock")
+@csrf_protect(blueprint=bp)
+def unlock(roleid):
+	role = Role.query.filter_by(id=roleid).one()
+	role.locked = False
+	db.session.commit()
+	return redirect(url_for('role.show', roleid=role.id))

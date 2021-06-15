@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, request, url_for, redirect, flash,
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.selfservice import send_passwordreset
-from uffd.session import login_required, is_valid_session, get_current_user
+from uffd.session import login_required
 from uffd.role.models import Role
 from uffd.database import db
 from uffd.ldap import ldap, LDAPCommitError
@@ -22,18 +22,18 @@ def user_acl(): #pylint: disable=inconsistent-return-statements
 		return redirect(url_for('index'))
 
 def user_acl_check():
-	return is_valid_session() and get_current_user().is_in_group(current_app.config['ACL_ADMIN_GROUP'])
+	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp.route("/")
 @register_navbar('Users', icon='users', blueprint=bp, visible=user_acl_check)
 def index():
-	return render_template('user_list.html', users=User.query.all())
+	return render_template('user/list.html', users=User.query.all())
 
 @bp.route("/<int:uid>")
 @bp.route("/new")
 def show(uid=None):
 	user = User() if uid is None else User.query.filter_by(uid=uid).first_or_404()
-	return render_template('user.html', user=user, roles=Role.query.all())
+	return render_template('user/show.html', user=user, roles=Role.query.all())
 
 @bp.route("/<int:uid>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
@@ -42,6 +42,8 @@ def update(uid=None):
 	if uid is None:
 		user = User()
 		ignore_blacklist = request.form.get('ignore-loginname-blacklist', False)
+		if request.form.get('serviceaccount'):
+			user.is_service_user = True
 		if not user.set_loginname(request.form['loginname'], ignore_blacklist=ignore_blacklist):
 			flash('Login name does not meet requirements')
 			return redirect(url_for('user.show'))
@@ -60,14 +62,19 @@ def update(uid=None):
 	ldap.session.add(user)
 	user.roles.clear()
 	for role in Role.query.all():
-		if request.values.get('role-{}'.format(role.id), False) or role.name in current_app.config["ROLES_BASEROLES"]:
+		if request.values.get('role-{}'.format(role.id), False):
+			user.roles.add(role)
+		elif not user.is_service_user and role.name in current_app.config["ROLES_BASEROLES"]:
 			user.roles.add(role)
 	user.update_groups()
 	ldap.session.commit()
 	db.session.commit()
 	if uid is None:
-		send_passwordreset(user, new=True)
-		flash('User created. We sent the user a password reset link by mail')
+		if user.is_service_user:
+			flash('Service user created')
+		else:
+			send_passwordreset(user, new=True)
+			flash('User created. We sent the user a password reset link by mail')
 	else:
 		flash('User updated')
 	return redirect(url_for('user.show', uid=user.uid))

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Text, ForeignKey
+from sqlalchemy import Column, String, Integer, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr
 
@@ -90,6 +90,11 @@ class Role(db.Model):
 
 	db_groups = relationship("RoleGroup", backref="role", cascade="all, delete-orphan")
 	groups = DBRelationship('db_groups', Group, RoleGroup, backattr='role', backref='roles')
+
+	# Roles that are managed externally (e.g. by Ansible) can be locked to
+	# prevent accidental editing of name, moderator group, included roles
+	# and groups as well as deletion in the web interface.
+	locked = Column(Boolean(), default=False, nullable=False)
 
 	@property
 	def indirect_members(self):

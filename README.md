@@ -19,7 +19,11 @@ You can also use virtualenv with the supplied `requirements.txt`.
 
 ## development
 
-Before running uffd, you need to create the database with `flask db upgrade`.
+Clone this repository with the `--recurse-submodules` flag to retrieve submodule dependencies.
+
+Before running uffd, you need to create the database with `flask db upgrade`. The database is placed in
+`instance/uffd.sqlit3`.
+
 Then use `flask run` to start the application:
 
 ```
@@ -61,6 +65,13 @@ hook-pre-app = exec:FLASK_APP=uffd flask db upgrade
 
 tabs.
 
+## Config
+
+Uffd reads its default config from `uffd/default_config.cfg`.
+You can overwrite config variables by creating a config file in the `instance` folder.
+The file must be named `conifg.cfg` (Python syntax), `config.json` or `config.yml`/`config.yaml`.
+You can also set a custom file name with the environment variable `CONFIG_FILENAME`.
+
 ## Bind with service account or as user?
 
 Uffd can use a dedicated service account for LDAP operations by setting `LDAP_SERVICE_BIND_DN`.
@@ -69,7 +80,6 @@ Or set `LDAP_SERVICE_USER_BIND` to use the credentials of the currently logged i
 
 If you choose to run with user credentials, some features are not available, like password resets
 or self signup, since in both cases, no user credentials can exist. 
-
 
 ## OAuth2 Single-Sign-On Provider
 

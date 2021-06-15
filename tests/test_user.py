@@ -6,7 +6,6 @@ from flask import url_for, session
 # These imports are required, because otherwise we get circular imports?!
 from uffd import ldap, user
 
-from uffd.session.views import get_current_user
 from uffd.user.models import User
 from uffd.role.models import Role
 from uffd import create_app, db
@@ -87,13 +86,43 @@ class TestUserViews(UffdTestCase):
 		user = User.query.get('uid=newuser,ou=users,dc=example,dc=com')
 		roles = sorted([r.name for r in user.roles])
 		self.assertIsNotNone(user)
+		self.assertFalse(user.is_service_user)
 		self.assertEqual(user.loginname, 'newuser')
 		self.assertEqual(user.displayname, 'New User')
 		self.assertEqual(user.mail, 'newuser@example.com')
 		self.assertTrue(user.uid)
 		role1 = Role(name='role1')
-		print('test_new', role1.db_members, role1.members, user.roles)
 		self.assertEqual(roles, ['base', 'role1'])
+		# TODO: confirm Mail is send, login not yet possible
+		#self.assertTrue(ldap.test_user_bind(user.dn, 'newpassword'))
+
+	def test_new_service(self):
+		db.session.add(Role(name='base'))
+		role1 = Role(name='role1')
+		db.session.add(role1)
+		role2 = Role(name='role2')
+		db.session.add(role2)
+		db.session.commit()
+		role1_id = role1.id
+		r = self.client.get(path=url_for('user.show'), follow_redirects=True)
+		dump('user_new_service', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertIsNone(User.query.get('uid=newuser,ou=users,dc=example,dc=com'))
+		r = self.client.post(path=url_for('user.update'),
+			data={'loginname': 'newuser', 'mail': 'newuser@example.com', 'displayname': 'New User',
+			f'role-{role1_id}': '1', 'password': 'newpassword', 'serviceaccount': '1'}, follow_redirects=True)
+		dump('user_new_submit', r)
+		self.assertEqual(r.status_code, 200)
+		user = User.query.get('uid=newuser,ou=users,dc=example,dc=com')
+		roles = sorted([r.name for r in user.roles])
+		self.assertIsNotNone(user)
+		self.assertTrue(user.is_service_user)
+		self.assertEqual(user.loginname, 'newuser')
+		self.assertEqual(user.displayname, 'New User')
+		self.assertEqual(user.mail, 'newuser@example.com')
+		self.assertTrue(user.uid)
+		role1 = Role(name='role1')
+		self.assertEqual(roles, ['role1'])
 		# TODO: confirm Mail is send, login not yet possible
 		#self.assertTrue(ldap.test_user_bind(user.dn, 'newpassword'))
 

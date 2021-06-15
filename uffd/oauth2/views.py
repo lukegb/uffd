@@ -7,7 +7,7 @@ from flask import Blueprint, request, jsonify, render_template, session, redirec
 from flask_oauthlib.provider import OAuth2Provider
 
 from uffd.database import db
-from uffd.session.views import get_current_user, login_required
+from uffd.session.views import login_required
 from .models import OAuth2Client, OAuth2Grant, OAuth2Token
 
 oauth = OAuth2Provider()
@@ -23,7 +23,7 @@ def load_grant(client_id, code):
 @oauth.grantsetter
 def save_grant(client_id, code, oauthreq, *args, **kwargs): # pylint: disable=unused-argument
 	expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
-	grant = OAuth2Grant(user_dn=get_current_user().dn, client_id=client_id,
+	grant = OAuth2Grant(user_dn=request.user.dn, client_id=client_id,
 		code=code['code'], redirect_uri=oauthreq.redirect_uri, expires=expires, _scopes=' '.join(oauthreq.scopes))
 	db.session.add(grant)
 	db.session.commit()
@@ -89,7 +89,7 @@ def authorize(*args, **kwargs): # pylint: disable=unused-argument
 	session['oauth2-clients'] = session.get('oauth2-clients', [])
 	if client.client_id not in session['oauth2-clients']:
 		session['oauth2-clients'].append(client.client_id)
-	return client.access_allowed(get_current_user())
+	return client.access_allowed(request.user)
 
 @bp.route('/token', methods=['GET', 'POST'])
 @oauth.token_handler
@@ -117,7 +117,7 @@ def error():
 	args = dict(request.values)
 	err = args.pop('error', 'unknown')
 	error_description = args.pop('error_description', '')
-	return render_template('error.html', error=err, error_description=error_description, args=args)
+	return render_template('oauth2/error.html', error=err, error_description=error_description, args=args)
 
 @bp.app_url_defaults
 def inject_logout_params(endpoint, values):
@@ -131,4 +131,4 @@ def logout():
 		return redirect(request.values.get('ref', '/'))
 	client_ids = request.values['client_ids'].split(',')
 	clients = [OAuth2Client.from_id(client_id) for client_id in client_ids]
-	return render_template('logout.html', clients=clients)
+	return render_template('oauth2/logout.html', clients=clients)

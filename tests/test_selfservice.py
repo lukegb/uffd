@@ -1,12 +1,11 @@
 import datetime
 import unittest
 
-from flask import url_for
+from flask import url_for, request
 
 # These imports are required, because otherwise we get circular imports?!
 from uffd import ldap, user
 
-from uffd.session.views import get_current_user
 from uffd.selfservice.models import MailToken, PasswordToken
 from uffd.user.models import User
 from uffd import create_app, db
@@ -28,88 +27,88 @@ class TestSelfservice(UffdTestCase):
 		r = self.client.get(path=url_for('selfservice.index'))
 		dump('selfservice_index', r)
 		self.assertEqual(r.status_code, 200)
-		user = get_current_user()
+		user = request.user
 		self.assertIn(user.displayname.encode(), r.data)
 		self.assertIn(user.loginname.encode(), r.data)
 		self.assertIn(user.mail.encode(), r.data)
 
 	def test_update_displayname(self):
 		self.login()
-		user = get_current_user()
+		user = request.user
 		r = self.client.post(path=url_for('selfservice.update'),
 			data={'displayname': 'New Display Name', 'mail': user.mail, 'password': '', 'password1': ''},
 			follow_redirects=True)
 		dump('update_displayname', r)
 		self.assertEqual(r.status_code, 200)
-		_user = get_current_user()
+		_user = request.user
 		self.assertEqual(_user.displayname, 'New Display Name')
 
 	def test_update_displayname_invalid(self):
 		self.login()
-		user = get_current_user()
+		user = request.user
 		r = self.client.post(path=url_for('selfservice.update'),
 			data={'displayname': '', 'mail': user.mail, 'password': '', 'password1': ''},
 			follow_redirects=True)
 		dump('update_displayname_invalid', r)
 		self.assertEqual(r.status_code, 200)
-		_user = get_current_user()
+		_user = request.user
 		self.assertNotEqual(_user.displayname, '')
 
 	def test_update_mail(self):
 		self.login()
-		user = get_current_user()
+		user = request.user
 		r = self.client.post(path=url_for('selfservice.update'),
 			data={'displayname': user.displayname, 'mail': 'newemail@example.com', 'password': '', 'password1': ''},
 			follow_redirects=True)
 		dump('update_mail', r)
 		self.assertEqual(r.status_code, 200)
-		_user = get_current_user()
+		_user = request.user
 		self.assertNotEqual(_user.mail, 'newemail@example.com')
 		token = MailToken.query.filter(MailToken.loginname == user.loginname).first()
 		self.assertEqual(token.newmail, 'newemail@example.com')
 		self.assertIn(token.token, str(self.app.last_mail.get_content()))
 		r = self.client.get(path=url_for('selfservice.token_mail', token=token.token), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
-		_user = get_current_user()
+		_user = request.user
 		self.assertEqual(_user.mail, 'newemail@example.com')
 
 	def test_update_mail_sendfailure(self):
 		self.app.config['MAIL_SKIP_SEND'] = 'fail'
 		self.login()
-		user = get_current_user()
+		user = request.user
 		r = self.client.post(path=url_for('selfservice.update'),
 			data={'displayname': user.displayname, 'mail': 'newemail@example.com', 'password': '', 'password1': ''},
 			follow_redirects=True)
 		dump('update_mail_sendfailure', r)
 		self.assertEqual(r.status_code, 200)
-		_user = get_current_user()
+		_user = request.user
 		self.assertNotEqual(_user.mail, 'newemail@example.com')
 		# Maybe also check that there is no new token in the db
 
 	def test_token_mail_emptydb(self):
 		self.login()
-		user = get_current_user()
+		user = request.user
 		r = self.client.get(path=url_for('selfservice.token_mail', token='A'*128), follow_redirects=True)
 		dump('token_mail_emptydb', r)
 		self.assertEqual(r.status_code, 200)
-		_user = get_current_user()
+		_user = request.user
 		self.assertEqual(_user.mail, user.mail)
 
 	def test_token_mail_invalid(self):
 		self.login()
-		user = get_current_user()
+		user = request.user
 		db.session.add(MailToken(loginname=user.loginname, newmail='newusermail@example.com'))
 		db.session.commit()
 		r = self.client.get(path=url_for('selfservice.token_mail', token='A'*128), follow_redirects=True)
 		dump('token_mail_invalid', r)
 		self.assertEqual(r.status_code, 200)
-		_user = get_current_user()
+		_user = request.user
 		self.assertEqual(_user.mail, user.mail)
 
 	@unittest.skip('See #26')
 	def test_token_mail_wrong_user(self):
 		self.login()
-		user = get_current_user()
+		user = request.user
 		admin_user = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
 		db.session.add(MailToken(loginname=user.loginname, newmail='newusermail@example.com'))
 		admin_token = MailToken(loginname='testadmin', newmail='newadminmail@example.com')
@@ -118,14 +117,14 @@ class TestSelfservice(UffdTestCase):
 		r = self.client.get(path=url_for('selfservice.token_mail', token=admin_token.token), follow_redirects=True)
 		dump('token_mail_wrong_user', r)
 		self.assertEqual(r.status_code, 200)
-		_user = get_current_user()
+		_user = request.user
 		_admin_user = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
 		self.assertEqual(_user.mail, user.mail)
 		self.assertEqual(_admin_user.mail, admin_user.mail)
 
 	def test_token_mail_expired(self):
 		self.login()
-		user = get_current_user()
+		user = request.user
 		token = MailToken(loginname=user.loginname, newmail='newusermail@example.com',
 			created=(datetime.datetime.now() - datetime.timedelta(days=10)))
 		db.session.add(token)
@@ -133,7 +132,7 @@ class TestSelfservice(UffdTestCase):
 		r = self.client.get(path=url_for('selfservice.token_mail', token=token.token), follow_redirects=True)
 		dump('token_mail_expired', r)
 		self.assertEqual(r.status_code, 200)
-		_user = get_current_user()
+		_user = request.user
 		self.assertEqual(_user.mail, user.mail)
 		tokens = MailToken.query.filter(MailToken.loginname == user.loginname).all()
 		self.assertEqual(len(tokens), 0)

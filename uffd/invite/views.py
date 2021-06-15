@@ -7,7 +7,7 @@ import sqlalchemy
 from uffd.csrf import csrf_protect
 from uffd.database import db
 from uffd.ldap import ldap
-from uffd.session import get_current_user, login_required, is_valid_session
+from uffd.session import login_required
 from uffd.role.models import Role
 from uffd.invite.models import Invite, InviteSignup, InviteGrant
 from uffd.user.models import User
@@ -16,18 +16,16 @@ from uffd.navbar import register_navbar
 from uffd.ratelimit import host_ratelimit, format_delay
 from uffd.signup.views import signup_ratelimit
 
-
 bp = Blueprint('invite', __name__, template_folder='templates', url_prefix='/invite/')
 
 def invite_acl():
-	if not is_valid_session():
+	if not request.user:
 		return False
-	user = get_current_user()
-	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
+	if request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
 		return True
-	if user.is_in_group(current_app.config['ACL_SIGNUP_GROUP']):
+	if request.user.is_in_group(current_app.config['ACL_SIGNUP_GROUP']):
 		return True
-	if Role.query.filter(Role.moderator_group_dn.in_(user.group_dns)).count():
+	if Role.query.filter(Role.moderator_group_dn.in_(request.user.group_dns)).count():
 		return True
 	return False
 
@@ -57,27 +55,25 @@ def reset_acl_filter(user):
 @register_navbar('Invites', icon='link', blueprint=bp, visible=invite_acl)
 @invite_acl_required
 def index():
-	invites = Invite.query.filter(view_acl_filter(get_current_user())).all()
+	invites = Invite.query.filter(view_acl_filter(request.user)).all()
 	return render_template('invite/list.html', invites=invites)
 
 @bp.route('/new')
 @invite_acl_required
 def new():
-	user = get_current_user()
-	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
+	if request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
 		allow_signup = True
 		roles = Role.query.all()
 	else:
-		allow_signup = user.is_in_group(current_app.config['ACL_SIGNUP_GROUP'])
-		roles = Role.query.filter(Role.moderator_group_dn.in_(user.group_dns)).all()
+		allow_signup = request.user.is_in_group(current_app.config['ACL_SIGNUP_GROUP'])
+		roles = Role.query.filter(Role.moderator_group_dn.in_(request.user.group_dns)).all()
 	return render_template('invite/new.html', roles=roles, allow_signup=allow_signup)
 
 @bp.route('/new', methods=['POST'])
 @invite_acl_required
 @csrf_protect(blueprint=bp)
 def new_submit():
-	user = get_current_user()
-	invite = Invite(creator=user,
+	invite = Invite(creator=request.user,
 	                single_use=(request.values['single-use'] == '1'),
 	                valid_until=datetime.datetime.fromisoformat(request.values['valid-until']),
 	                allow_signup=(request.values.get('allow-signup', '0') == '1'))
@@ -101,7 +97,7 @@ def new_submit():
 @invite_acl_required
 @csrf_protect(blueprint=bp)
 def disable(invite_id):
-	invite = Invite.query.filter(view_acl_filter(get_current_user())).filter_by(id=invite_id).first_or_404()
+	invite = Invite.query.filter(view_acl_filter(request.user)).filter_by(id=invite_id).first_or_404()
 	invite.disable()
 	db.session.commit()
 	return redirect(url_for('.index'))
@@ -110,7 +106,7 @@ def disable(invite_id):
 @invite_acl_required
 @csrf_protect(blueprint=bp)
 def reset(invite_id):
-	invite = Invite.query.filter(reset_acl_filter(get_current_user())).filter_by(id=invite_id).first_or_404()
+	invite = Invite.query.filter(reset_acl_filter(request.user)).filter_by(id=invite_id).first_or_404()
 	invite.reset()
 	db.session.commit()
 	return redirect(url_for('.index'))
@@ -128,7 +124,7 @@ def use(token):
 @csrf_protect(blueprint=bp)
 def grant(token):
 	invite = Invite.query.filter_by(token=token).first_or_404()
-	invite_grant = InviteGrant(invite=invite, user=get_current_user())
+	invite_grant = InviteGrant(invite=invite, user=request.user)
 	db.session.add(invite_grant)
 	success, msg = invite_grant.apply()
 	if not success:

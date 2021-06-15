@@ -18,6 +18,24 @@ from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
 # pylint: enable=wrong-import-position
 
+def load_config_file(app, cfg_name, silent=False):
+	cfg_path = os.path.join(app.instance_path, cfg_name)
+	if not os.path.exists(cfg_path):
+		if not silent:
+			raise Exception(f"Config file {cfg_path} not found")
+		return False
+
+	if cfg_path.endswith(".json"):
+		app.config.from_json(cfg_path)
+	elif cfg_path.endswith(".yaml") or cfg_path.endswith(".yml"):
+		import yaml  # pylint: disable=import-outside-toplevel disable=import-error
+		with open(cfg_path, encoding='utf-8') as ymlfile:
+			data = yaml.safe_load(ymlfile)
+		app.config.from_mapping(data)
+	else:
+		app.config.from_pyfile(cfg_path, silent=True)
+	return True
+
 def create_app(test_config=None): # pylint: disable=too-many-locals
 	# create and configure the app
 	app = Flask(__name__, instance_relative_config=False)
@@ -30,21 +48,20 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	)
 	app.config.from_pyfile('default_config.cfg')
 
+	# load config
+	if test_config is not None:
+		app.config.from_mapping(test_config)
+	elif os.environ.get("CONFIG_FILENAME"):
+		load_config_file(app, os.environ["CONFIG_FILENAME"], silent=False)
+	else:
+		for cfg_name in ["config.cfg", "config.json", "config.yml", "config.yaml"]:
+			if load_config_file(app, cfg_name, silent=True):
+				break
+
 	register_template_helper(app)
 	setup_navbar(app)
 
-	if not test_config:
-		# load the instance config, if it exists, when not testing
-		app.config.from_pyfile(os.path.join(app.instance_path, 'config.cfg'), silent=True)
-	else:
-		# load the test config if passed in
-		app.config.from_mapping(test_config)
-
-	# ensure the instance folder exists
-	try:
-		os.makedirs(app.instance_path)
-	except OSError:
-		pass
+	os.makedirs(app.instance_path, exist_ok=True)
 
 	db.init_app(app)
 	Migrate(app, db, render_as_batch=True)

@@ -10,7 +10,7 @@
 		<div class="col-12 mb-3">
 			<h2 class="text-center">Invite Link</h2>
 		</div>
-		{% if not is_valid_session() %}
+		{% if not request.user %}
 		<p>Welcome to the CCCV Single-Sign-On!</p>
 		{% endif %}
 
@@ -28,7 +28,7 @@
 			{% endfor %}
 		</ul>
 		{% endif %}
-		{% if is_valid_session() %}
+		{% if request.user %}
 			{% if invite.roles %}
 				<form method="POST" action="{{ url_for("invite.grant", token=invite.token) }}" class="mb-2">
 					<button type="submit" class="btn btn-primary btn-block">Add the roles to your account now</button>
