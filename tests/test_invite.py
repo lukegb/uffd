@@ -131,7 +131,7 @@ class TestInviteGrantModel(UffdTestCase):
 		ldap.session.commit()
 		db_flush()
 		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		self.assertIn('baserole', [role.name for role in user.roles])
+		self.assertIn('baserole', [role.name for role in user.roles_recursive])
 		self.assertIn('testrole1', [role.name for role in user.roles])
 		self.assertIn('testrole2', [role.name for role in user.roles])
 		self.assertIn('cn=uffd_access,ou=groups,dc=example,dc=com', [group.dn for group in user.groups])
@@ -174,8 +174,7 @@ class TestInviteGrantModel(UffdTestCase):
 
 class TestInviteSignupModel(UffdTestCase):
 	def create_base_roles(self):
-		self.app.config['ROLES_BASEROLES'] = ['base']
-		baserole = Role(name='base')
+		baserole = Role(name='base', is_default=True)
 		baserole.groups.add(Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com'))
 		baserole.groups.add(Group.query.get('cn=users,ou=groups,dc=example,dc=com'))
 		db.session.add(baserole)
@@ -204,7 +203,7 @@ class TestInviteSignupModel(UffdTestCase):
 		self.assertEqual(user.displayname, 'New User')
 		self.assertEqual(user.mail, 'test@example.com')
 		self.assertEqual(signup.user.dn, user.dn)
-		self.assertIn(base_role, user.roles)
+		self.assertIn(base_role, user.roles_recursive)
 		self.assertIn(role1, user.roles)
 		self.assertIn(role2, user.roles)
 		self.assertIn(base_group1, user.groups)
@@ -233,8 +232,8 @@ class TestInviteSignupModel(UffdTestCase):
 		self.assertEqual(user.displayname, 'New User')
 		self.assertEqual(user.mail, 'test@example.com')
 		self.assertEqual(signup.user.dn, user.dn)
-		self.assertIn(base_role, user.roles)
-		self.assertEqual(len(user.roles), 1)
+		self.assertIn(base_role, user.roles_recursive)
+		self.assertEqual(len(user.roles_recursive), 1)
 		self.assertIn(base_group1, user.groups)
 		self.assertIn(base_group2, user.groups)
 		self.assertEqual(len(user.groups), 2)
@@ -637,8 +636,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertFalse(Invite.query.filter_by(token=token).first().used)
 
 	def test_signup(self):
-		self.app.config['ROLES_BASEROLES'] = ['base']
-		baserole = Role(name='base')
+		baserole = Role(name='base', is_default=True)
 		baserole.groups.add(Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com'))
 		baserole.groups.add(Group.query.get('cn=users,ou=groups,dc=example,dc=com'))
 		db.session.add(baserole)

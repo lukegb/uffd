@@ -4,7 +4,8 @@ import time
 from flask import url_for, session
 
 # These imports are required, because otherwise we get circular imports?!
-from uffd import ldap, user
+from uffd.ldap import ldap
+from uffd import user
 
 from uffd.user.models import User, Group
 from uffd.role.models import Role
@@ -16,13 +17,14 @@ class TestUserRoleAttributes(UffdTestCase):
 	def test_roles_recursive(self):
 		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		user1.update_groups()
-		baserole = Role(name='base')
-		role1 = Role(name='role1', members=[user1], included_roles=[baserole])
-		role2 = Role(name='role2', included_roles=[baserole])
-		db.session.add_all([baserole, role1, role2])
-		self.assertSetEqual(user1.roles_recursive, {baserole, role1})
-		baserole.included_roles.append(role2)
-		self.assertSetEqual(user1.roles_recursive, {baserole, role1, role2})
+		included_role = Role(name='included')
+		default_role = Role(name='default', is_default=True)
+		role1 = Role(name='role1', members=[user1], included_roles=[included_role])
+		role2 = Role(name='role2', included_roles=[included_role])
+		db.session.add_all([included_role, default_role, role1, role2])
+		self.assertSetEqual(user1.roles_recursive, {included_role, default_role, role1})
+		included_role.included_roles.append(role2)
+		self.assertSetEqual(user1.roles_recursive, {included_role, default_role, role1, role2})
 
 	def test_update_groups(self):
 		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
@@ -42,12 +44,12 @@ class TestUserRoleAttributes(UffdTestCase):
 class TestRoleModel(UffdTestCase):
 	def test_indirect_members(self):
 		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		user1.update_groups()
 		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
-		user2.update_groups()
-		baserole = Role(name='base', members=[user1])
-		role1 = Role(name='role1', included_roles=[baserole], members=[user2])
-		self.assertSetEqual(baserole.indirect_members, {user2})
+		included_role = Role(name='included', members=[user1])
+		default_role = Role(name='default', is_default=True)
+		role1 = Role(name='role1', included_roles=[included_role], members=[user2])
+		self.assertSetEqual(included_role.indirect_members, {user2})
+		self.assertSetEqual(default_role.indirect_members, {user1, user2})
 		self.assertSetEqual(role1.indirect_members, set())
 
 	def test_included_roles_recursive(self):
@@ -183,6 +185,66 @@ class TestRoleViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(Role.query.get(role_id))
 		# TODO: verify that group memberships are updated (currently not possible with ldap mock!)
+
+	def test_set_default(self):
+		for user in User.query.filter_by(loginname='service').all():
+			ldap.session.delete(user)
+		ldap.session.add(User(loginname='service', is_service_user=True, mail='service@example.com', displayname='Service'))
+		ldap.session.commit()
+		role = Role(name='test')
+		db.session.add(role)
+		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
+		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
+		self.assertSetEqual(set(user1.roles_recursive), set())
+		self.assertSetEqual(set(user2.roles_recursive), set())
+		self.assertSetEqual(set(service_user.roles_recursive), set())
+		role.members.add(user1)
+		role.members.add(service_user)
+		self.assertSetEqual(set(user1.roles_recursive), {role})
+		self.assertSetEqual(set(user2.roles_recursive), set())
+		self.assertSetEqual(set(service_user.roles_recursive), {role})
+		db.session.commit()
+		role_id = role.id
+		self.assertSetEqual(set(role.members), {user1, service_user})
+		r = self.client.get(path=url_for('role.set_default', roleid=role.id), follow_redirects=True)
+		dump('role_set_default', r)
+		self.assertEqual(r.status_code, 200)
+		role = Role.query.get(role_id)
+		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
+		self.assertSetEqual(set(role.members), {service_user})
+		self.assertSetEqual(set(user1.roles_recursive), {role})
+		self.assertSetEqual(set(user2.roles_recursive), {role})
+		ldap.session.delete(service_user)
+		ldap.session.commit()
+
+	def test_unset_default(self):
+		for user in User.query.filter_by(loginname='service').all():
+			ldap.session.delete(user)
+		ldap.session.add(User(loginname='service', is_service_user=True, mail='service@example.com', displayname='Service'))
+		ldap.session.commit()
+		role = Role(name='test', is_default=True)
+		db.session.add(role)
+		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
+		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
+		role.members.add(service_user)
+		self.assertSetEqual(set(user1.roles_recursive), {role})
+		self.assertSetEqual(set(user2.roles_recursive), {role})
+		self.assertSetEqual(set(service_user.roles_recursive), {role})
+		db.session.commit()
+		role_id = role.id
+		self.assertSetEqual(set(role.members), {service_user})
+		r = self.client.get(path=url_for('role.unset_default', roleid=role.id), follow_redirects=True)
+		dump('role_unset_default', r)
+		self.assertEqual(r.status_code, 200)
+		role = Role.query.get(role_id)
+		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
+		self.assertSetEqual(set(role.members), {service_user})
+		self.assertSetEqual(set(user1.roles_recursive), set())
+		self.assertSetEqual(set(user2.roles_recursive), set())
+		ldap.session.delete(service_user)
+		ldap.session.commit()
 
 class TestRoleViewsOL(TestRoleViews):
 	use_openldap = True

@@ -38,7 +38,7 @@
 						{{ user.displayname }}
 					</td>
 					<td>
-					{% for role in user.roles|sort(attribute="name") if not role.name in config["ROLES_BASEROLES"] or user.is_service_user %}
+					{% for role in user.roles|sort(attribute="name") %}
 						<a href="{{ url_for("role.show", roleid=role.id) }}">{{ role.name }}</a>{% if not loop.last %}, {% endif %}
 					{% endfor %}
 					</td>

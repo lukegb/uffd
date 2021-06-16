@@ -51,7 +51,10 @@ def flatten_recursive(objs, attr):
 	return objs
 
 def get_roles_recursive(user):
-	return flatten_recursive(user.roles, 'included_roles')
+	base = set(user.roles)
+	if not user.is_service_user:
+		base.update(Role.query.filter_by(is_default=True))
+	return flatten_recursive(base, 'included_roles')
 
 User.roles_recursive = property(get_roles_recursive)
 
@@ -96,11 +99,17 @@ class Role(db.Model):
 	# and groups as well as deletion in the web interface.
 	locked = Column(Boolean(), default=False, nullable=False)
 
+	is_default = Column(Boolean(), default=False, nullable=False)
+
 	@property
 	def indirect_members(self):
 		users = set()
 		for role in flatten_recursive(self.including_roles, 'including_roles'):
 			users.update(role.members)
+		if self.is_default:
+			for user in User.query.all():
+				if not user.is_service_user:
+					users.add(user)
 		return users
 
 	@property

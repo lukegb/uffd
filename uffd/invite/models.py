@@ -113,7 +113,6 @@ class InviteSignup(Signup):
 			return None, 'Invite link is invalid'
 		user, msg = super().finish(password)
 		if user is not None:
-			# super().finish() already added ROLES_BASEROLES
 			for role in self.invite.roles:
 				user.roles.add(role)
 			user.update_groups()

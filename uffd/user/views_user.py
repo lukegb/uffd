@@ -62,9 +62,9 @@ def update(uid=None):
 	ldap.session.add(user)
 	user.roles.clear()
 	for role in Role.query.all():
+		if not user.is_service_user and role.is_default:
+			continue
 		if request.values.get('role-{}'.format(role.id), False):
-			user.roles.add(role)
-		elif not user.is_service_user and role.name in current_app.config["ROLES_BASEROLES"]:
 			user.roles.add(role)
 	user.update_groups()
 	ldap.session.commit()
@@ -100,7 +100,7 @@ def csvimport():
 
 	ignore_blacklist = request.values.get('ignore-loginname-blacklist', False)
 
-	roles = Role.query.all()
+	roles = Role.query.filter_by(is_default=False).all()
 	usersadded = 0
 	with io.StringIO(initial_value=csvdata) as csvfile:
 		csvreader = csv.reader(csvfile)
@@ -117,7 +117,7 @@ def csvimport():
 				continue
 			ldap.session.add(newuser)
 			for role in roles:
-				if (str(role.id) in row[2].split(';')) or role.name in current_app.config["ROLES_BASEROLES"]:
+				if str(role.id) in row[2].split(';'):
 					role.members.add(newuser)
 			newuser.update_groups()
 			try:

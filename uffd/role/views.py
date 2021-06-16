@@ -116,3 +116,33 @@ def unlock(roleid):
 	role.locked = False
 	db.session.commit()
 	return redirect(url_for('role.show', roleid=role.id))
+
+@bp.route("/<int:roleid>/setdefault")
+@csrf_protect(blueprint=bp)
+def set_default(roleid):
+	role = Role.query.filter_by(id=roleid).one()
+	if role.is_default:
+		return redirect(url_for('role.show', roleid=role.id))
+	role.is_default = True
+	for user in set(role.members):
+		if not user.is_service_user:
+			role.members.discard(user)
+	role.update_member_groups()
+	db.session.commit()
+	ldap.session.commit()
+	return redirect(url_for('role.show', roleid=role.id))
+
+@bp.route("/<int:roleid>/unsetdefault")
+@csrf_protect(blueprint=bp)
+def unset_default(roleid):
+	role = Role.query.filter_by(id=roleid).one()
+	if not role.is_default:
+		return redirect(url_for('role.show', roleid=role.id))
+	old_members = set(role.members).union(role.indirect_members)
+	role.is_default = False
+	for user in old_members:
+		if not user.is_service_user:
+			user.update_groups()
+	db.session.commit()
+	ldap.session.commit()
+	return redirect(url_for('role.show', roleid=role.id))

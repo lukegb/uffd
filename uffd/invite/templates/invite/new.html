@@ -37,7 +37,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for role in roles|sort(attribute="name") if role.name not in config['ROLES_BASEROLES'] %}
+				{% for role in roles|sort(attribute="name") if not role.is_default %}
 				<tr>
 					<td>
 						<div class="form-check">

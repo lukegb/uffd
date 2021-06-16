@@ -2,14 +2,12 @@ import secrets
 import datetime
 from crypt import crypt
 
-from flask import current_app
 from sqlalchemy import Column, String, Text, DateTime
 from ldapalchemy.dbutils import DBRelationship
 
 from uffd.database import db
 from uffd.ldap import ldap
 from uffd.user.models import User
-from uffd.role.models import Role
 
 class Signup(db.Model):
 	'''Model that represents a self-signup request
@@ -100,9 +98,6 @@ class Signup(db.Model):
 			return None, 'A user with this login name already exists'
 		user = User(loginname=self.loginname, displayname=self.displayname, mail=self.mail, password=password)
 		ldap.session.add(user)
-		for name in current_app.config['ROLES_BASEROLES']:
-			for role in Role.query.filter_by(name=name).all():
-				user.roles.add(role)
 		user.update_groups()
 		self.user = user
 		self.loginname = None

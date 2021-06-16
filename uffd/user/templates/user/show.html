@@ -106,7 +106,7 @@
 								<div class="form-check">
 									<input class="form-check-input" type="checkbox" id="role-{{ role.id }}-checkbox" name="role-{{ role.id }}" value="1" aria-label="enabled"
 										{% if user in role.members %}checked {% endif %}
-										{% if role.name in config["ROLES_BASEROLES"] and not user.is_service_user %}disabled {% endif %}>
+										{% if role.is_default and not user.is_service_user %}disabled {% endif %}>
 								</div>
 							</td>
 							<td>
