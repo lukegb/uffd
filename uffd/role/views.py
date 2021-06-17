@@ -100,10 +100,10 @@ def delete(roleid):
 	if role.locked:
 		flash('Locked roles cannot be deleted')
 		return redirect(url_for('role.show', roleid=role.id))
-	oldmembers = set(role.members).union(role.indirect_members)
+	old_members = set(role.members_effective)
 	role.members.clear()
 	db.session.delete(role)
-	for user in oldmembers:
+	for user in old_members:
 		user.update_groups()
 	db.session.commit()
 	ldap.session.commit()
@@ -138,7 +138,7 @@ def unset_default(roleid):
 	role = Role.query.filter_by(id=roleid).one()
 	if not role.is_default:
 		return redirect(url_for('role.show', roleid=role.id))
-	old_members = set(role.members).union(role.indirect_members)
+	old_members = set(role.members_effective)
 	role.is_default = False
 	for user in old_members:
 		if not user.is_service_user:

@@ -50,18 +50,18 @@ def flatten_recursive(objs, attr):
 				new_objs.add(obj)
 	return objs
 
-def get_roles_recursive(user):
+def get_roles_effective(user):
 	base = set(user.roles)
 	if not user.is_service_user:
 		base.update(Role.query.filter_by(is_default=True))
 	return flatten_recursive(base, 'included_roles')
 
-User.roles_recursive = property(get_roles_recursive)
+User.roles_effective = property(get_roles_effective)
 
 def update_user_groups(user):
 	current_groups = set(user.groups)
 	groups = set()
-	for role in user.roles_recursive:
+	for role in user.roles_effective:
 		groups.update(role.groups)
 	if groups == current_groups:
 		return set(), set()
@@ -102,8 +102,8 @@ class Role(db.Model):
 	is_default = Column(Boolean(), default=False, nullable=False)
 
 	@property
-	def indirect_members(self):
-		users = set()
+	def members_effective(self):
+		users = set(self.members)
 		for role in flatten_recursive(self.including_roles, 'including_roles'):
 			users.update(role.members)
 		if self.is_default:
@@ -117,12 +117,12 @@ class Role(db.Model):
 		return flatten_recursive(self.included_roles, 'included_roles')
 
 	@property
-	def included_groups(self):
-		groups = set()
+	def groups_effective(self):
+		groups = set(self.groups)
 		for role in self.included_roles_recursive:
 			groups.update(role.groups)
 		return groups
 
 	def update_member_groups(self):
-		for user in set(self.members).union(self.indirect_members):
+		for user in self.members_effective:
 			user.update_groups()

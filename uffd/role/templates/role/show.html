@@ -107,7 +107,7 @@ Name, moderator group, included roles and groups of this role are managed extern
 								{{ r.description }}
 							</td>
 							<td>
-								{% for group in r.included_groups.union(r.groups)|sort(attribute='name') %}
+								{% for group in r.groups_effective|sort(attribute='name') %}
 									<a href="{{ url_for("group.show", gid=group.gid) }}">{{ group.name }}</a>{{ ', ' if not loop.last }}
 								{% endfor %}
 							</td>

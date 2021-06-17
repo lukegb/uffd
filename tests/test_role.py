@@ -14,7 +14,7 @@ from uffd import create_app, db
 from utils import dump, UffdTestCase
 
 class TestUserRoleAttributes(UffdTestCase):
-	def test_roles_recursive(self):
+	def test_roles_effective(self):
 		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		user1.update_groups()
 		included_role = Role(name='included')
@@ -22,9 +22,9 @@ class TestUserRoleAttributes(UffdTestCase):
 		role1 = Role(name='role1', members=[user1], included_roles=[included_role])
 		role2 = Role(name='role2', included_roles=[included_role])
 		db.session.add_all([included_role, default_role, role1, role2])
-		self.assertSetEqual(user1.roles_recursive, {included_role, default_role, role1})
+		self.assertSetEqual(user1.roles_effective, {included_role, default_role, role1})
 		included_role.included_roles.append(role2)
-		self.assertSetEqual(user1.roles_recursive, {included_role, default_role, role1, role2})
+		self.assertSetEqual(user1.roles_effective, {included_role, default_role, role1, role2})
 
 	def test_update_groups(self):
 		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
@@ -42,15 +42,15 @@ class TestUserRoleAttributes(UffdTestCase):
 		self.assertSetEqual(set(user1.groups), {group1, group2})
 
 class TestRoleModel(UffdTestCase):
-	def test_indirect_members(self):
+	def test_members_effective(self):
 		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
 		included_role = Role(name='included', members=[user1])
 		default_role = Role(name='default', is_default=True)
 		role1 = Role(name='role1', included_roles=[included_role], members=[user2])
-		self.assertSetEqual(included_role.indirect_members, {user2})
-		self.assertSetEqual(default_role.indirect_members, {user1, user2})
-		self.assertSetEqual(role1.indirect_members, set())
+		self.assertSetEqual(included_role.members_effective, {user1, user2})
+		self.assertSetEqual(default_role.members_effective, {user1, user2})
+		self.assertSetEqual(role1.members_effective, {user2})
 
 	def test_included_roles_recursive(self):
 		baserole = Role(name='base')
@@ -63,13 +63,13 @@ class TestRoleModel(UffdTestCase):
 		baserole.included_roles.append(role1)
 		self.assertSetEqual(role3.included_roles_recursive, {baserole, role1, role2})
 
-	def test_included_groups(self):
+	def test_groups_effective(self):
 		group1 = Group.query.get('cn=users,ou=groups,dc=example,dc=com')
 		group2 = Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')
 		baserole = Role(name='base', groups=[group1])
 		role1 = Role(name='role1', groups=[group2], included_roles=[baserole])
-		self.assertSetEqual(baserole.included_groups, set())
-		self.assertSetEqual(role1.included_groups, {group1})
+		self.assertSetEqual(baserole.groups_effective, {group1})
+		self.assertSetEqual(role1.groups_effective, {group1, group2})
 
 	def test_update_member_groups(self):
 		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
@@ -196,14 +196,14 @@ class TestRoleViews(UffdTestCase):
 		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
 		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
-		self.assertSetEqual(set(user1.roles_recursive), set())
-		self.assertSetEqual(set(user2.roles_recursive), set())
-		self.assertSetEqual(set(service_user.roles_recursive), set())
+		self.assertSetEqual(set(user1.roles_effective), set())
+		self.assertSetEqual(set(user2.roles_effective), set())
+		self.assertSetEqual(set(service_user.roles_effective), set())
 		role.members.add(user1)
 		role.members.add(service_user)
-		self.assertSetEqual(set(user1.roles_recursive), {role})
-		self.assertSetEqual(set(user2.roles_recursive), set())
-		self.assertSetEqual(set(service_user.roles_recursive), {role})
+		self.assertSetEqual(set(user1.roles_effective), {role})
+		self.assertSetEqual(set(user2.roles_effective), set())
+		self.assertSetEqual(set(service_user.roles_effective), {role})
 		db.session.commit()
 		role_id = role.id
 		self.assertSetEqual(set(role.members), {user1, service_user})
@@ -213,8 +213,8 @@ class TestRoleViews(UffdTestCase):
 		role = Role.query.get(role_id)
 		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
 		self.assertSetEqual(set(role.members), {service_user})
-		self.assertSetEqual(set(user1.roles_recursive), {role})
-		self.assertSetEqual(set(user2.roles_recursive), {role})
+		self.assertSetEqual(set(user1.roles_effective), {role})
+		self.assertSetEqual(set(user2.roles_effective), {role})
 		ldap.session.delete(service_user)
 		ldap.session.commit()
 
@@ -229,9 +229,9 @@ class TestRoleViews(UffdTestCase):
 		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
 		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
 		role.members.add(service_user)
-		self.assertSetEqual(set(user1.roles_recursive), {role})
-		self.assertSetEqual(set(user2.roles_recursive), {role})
-		self.assertSetEqual(set(service_user.roles_recursive), {role})
+		self.assertSetEqual(set(user1.roles_effective), {role})
+		self.assertSetEqual(set(user2.roles_effective), {role})
+		self.assertSetEqual(set(service_user.roles_effective), {role})
 		db.session.commit()
 		role_id = role.id
 		self.assertSetEqual(set(role.members), {service_user})
@@ -241,8 +241,8 @@ class TestRoleViews(UffdTestCase):
 		role = Role.query.get(role_id)
 		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
 		self.assertSetEqual(set(role.members), {service_user})
-		self.assertSetEqual(set(user1.roles_recursive), set())
-		self.assertSetEqual(set(user2.roles_recursive), set())
+		self.assertSetEqual(set(user1.roles_effective), set())
+		self.assertSetEqual(set(user2.roles_effective), set())
 		ldap.session.delete(service_user)
 		ldap.session.commit()
 
