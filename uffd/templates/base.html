@@ -70,6 +70,12 @@
 				{% if request.user %}
 				<ul class="navbar-nav ml-auto">
 					<li class="nav-item">
+						<a class="nav-link" href="{{ url_for("session.deviceauth") }}">
+							<span aria-hidden="true" class="fas fa-mobile-alt" title="Authorize Device Login"></span>
+							<span class="d-inline d-md-none">Device Login</span>
+						</a>
+					</li>
+					<li class="nav-item">
 						<a class="nav-link" href="{{ url_for("session.logout") }}">
 							<span aria-hidden="true" class="fa fa-sign-out-alt"></span>
 							Logout

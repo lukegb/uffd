@@ -7,6 +7,8 @@ from flask import url_for, request
 from uffd import ldap, user
 
 from uffd.session.views import login_required
+from uffd.session.models import DeviceLoginConfirmation
+from uffd.oauth2.models import OAuth2DeviceLoginInitiation
 from uffd import create_app, db
 
 from utils import dump, UffdTestCase
@@ -132,6 +134,33 @@ class TestSession(UffdTestCase):
 		dump('login_ratelimit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(request.user)
+
+	def test_deviceauth(self):
+		self.app.config['OAUTH2_CLIENTS'] = {
+			'test': {'client_secret': 'testsecret', 'redirect_uris': ['http://localhost:5009/callback', 'http://localhost:5009/callback2']},
+		}
+		initiation = OAuth2DeviceLoginInitiation(oauth2_client_id='test')
+		db.session.add(initiation)
+		db.session.commit()
+		code = initiation.code
+		self.login()
+		r = self.client.get(path=url_for('session.deviceauth'), follow_redirects=True)
+		dump('deviceauth', r)
+		self.assertEqual(r.status_code, 200)
+		r = self.client.get(path=url_for('session.deviceauth', **{'initiation-code': code}), follow_redirects=True)
+		dump('deviceauth_check', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertIn(b'test', r.data)
+		r = self.client.post(path=url_for('session.deviceauth_submit'), data={'initiation-code': code}, follow_redirects=True)
+		dump('deviceauth_submit', r)
+		self.assertEqual(r.status_code, 200)
+		initiation = OAuth2DeviceLoginInitiation.query.filter_by(code=code).one()
+		self.assertEqual(len(initiation.confirmations), 1)
+		self.assertEqual(initiation.confirmations[0].user.loginname, 'testuser')
+		self.assertIn(initiation.confirmations[0].code.encode(), r.data)
+		r = self.client.get(path=url_for('session.deviceauth_finish'), follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(DeviceLoginConfirmation.query.all(), [])
 
 class TestSessionOL(TestSession):
 	use_openldap = True

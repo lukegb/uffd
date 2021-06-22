@@ -4,6 +4,7 @@ from ldapalchemy.dbutils import DBRelationship
 
 from uffd.database import db
 from uffd.user.models import User
+from uffd.session.models import DeviceLoginInitiation, DeviceLoginType
 
 class OAuth2Client:
 	def __init__(self, client_id, client_secret, redirect_uris, required_group=None, logout_urls=None):
@@ -99,3 +100,17 @@ class OAuth2Token(db.Model):
 		db.session.delete(self)
 		db.session.commit()
 		return self
+
+class OAuth2DeviceLoginInitiation(DeviceLoginInitiation):
+	__mapper_args__ = {
+		'polymorphic_identity': DeviceLoginType.OAUTH2
+	}
+	oauth2_client_id = Column(String(40))
+
+	@property
+	def oauth2_client(self):
+		return OAuth2Client.from_id(self.oauth2_client_id)
+
+	@property
+	def description(self):
+		return self.oauth2_client.client_id

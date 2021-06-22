@@ -4,9 +4,12 @@ import functools
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session, abort
 
+from uffd.database import db
+from uffd.csrf import csrf_protect
 from uffd.user.models import User
 from uffd.ldap import ldap, test_user_bind, LDAPInvalidDnError, LDAPBindError, LDAPPasswordIsMandatoryError
 from uffd.ratelimit import Ratelimit, host_ratelimit, format_delay
+from uffd.session.models import DeviceLoginInitiation, DeviceLoginConfirmation
 
 bp = Blueprint("session", __name__, template_folder='templates', url_prefix='/')
 
@@ -127,3 +130,65 @@ def login_required(group=None):
 			return func(*args, **kwargs)
 		return decorator
 	return wrapper
+
+@bp.route("/login/device/start")
+def devicelogin_start():
+	session['devicelogin_started'] = True
+	return redirect(request.values['ref'])
+
+@bp.route("/login/device")
+def devicelogin():
+	if 'devicelogin_id' not in session or 'devicelogin_secret' not in session:
+		return redirect(url_for('session.login', ref=request.values['ref'], devicelogin=True))
+	initiation = DeviceLoginInitiation.query.filter_by(id=session['devicelogin_id'], secret=session['devicelogin_secret']).one_or_none()
+	if not initiation or initiation.expired:
+		flash('Initiation code is no longer valid')
+		return redirect(url_for('session.login', ref=request.values['ref'], devicelogin=True))
+	return render_template('session/devicelogin.html', ref=request.values.get('ref'), initiation=initiation)
+
+@bp.route("/login/device", methods=['POST'])
+def devicelogin_submit():
+	if 'devicelogin_id' not in session or 'devicelogin_secret' not in session:
+		return redirect(url_for('session.login', ref=request.values['ref'], devicelogin=True))
+	initiation = DeviceLoginInitiation.query.filter_by(id=session['devicelogin_id'], secret=session['devicelogin_secret']).one_or_none()
+	if not initiation or initiation.expired:
+		flash('Initiation code is no longer valid')
+		return redirect(url_for('session.login', ref=request.values['ref'], devicelogin=True))
+	confirmation = DeviceLoginConfirmation.query.filter_by(initiation=initiation, code=request.form['confirmation-code']).one_or_none()
+	if confirmation is None:
+		flash('Invalid confirmation code')
+		return render_template('session/devicelogin.html', ref=request.values.get('ref'), initiation=initiation)
+	session['devicelogin_confirmation'] = confirmation.id
+	return redirect(request.values['ref'])
+
+@bp.route("/device")
+@login_required()
+def deviceauth():
+	if 'initiation-code' not in request.values:
+		return render_template('session/deviceauth.html')
+	initiation = DeviceLoginInitiation.query.filter_by(code=request.values['initiation-code']).one_or_none()
+	if initiation is None or initiation.expired:
+		flash('Invalid initiation code')
+		return redirect(url_for('session.deviceauth'))
+	return render_template('session/deviceauth.html', initiation=initiation)
+
+@bp.route("/device", methods=['POST'])
+@login_required()
+@csrf_protect(blueprint=bp)
+def deviceauth_submit():
+	DeviceLoginConfirmation.query.filter_by(user_dn=request.user.dn).delete()
+	initiation = DeviceLoginInitiation.query.filter_by(code=request.form['initiation-code']).one_or_none()
+	if initiation is None or initiation.expired:
+		flash('Invalid initiation code')
+		return redirect(url_for('session.deviceauth'))
+	confirmation = DeviceLoginConfirmation(user=request.user, initiation=initiation)
+	db.session.add(confirmation)
+	db.session.commit()
+	return render_template('session/deviceauth.html', initiation=initiation, confirmation=confirmation)
+
+@bp.route("/device/finish", methods=['GET', 'POST'])
+@login_required()
+def deviceauth_finish():
+	DeviceLoginConfirmation.query.filter_by(user_dn=request.user.dn).delete()
+	db.session.commit()
+	return redirect(url_for('index'))

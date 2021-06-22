@@ -2,13 +2,14 @@ import datetime
 import functools
 import urllib.parse
 
-from flask import Blueprint, request, jsonify, render_template, session, redirect
-
+from flask import Blueprint, request, jsonify, render_template, session, redirect, url_for, flash
 from flask_oauthlib.provider import OAuth2Provider
+from sqlalchemy.exc import IntegrityError
 
+from uffd.ratelimit import host_ratelimit, format_delay
 from uffd.database import db
-from uffd.session.views import login_required
-from .models import OAuth2Client, OAuth2Grant, OAuth2Token
+from uffd.session.models import DeviceLoginConfirmation
+from .models import OAuth2Client, OAuth2Grant, OAuth2Token, OAuth2DeviceLoginInitiation
 
 oauth = OAuth2Provider()
 
@@ -23,7 +24,7 @@ def load_grant(client_id, code):
 @oauth.grantsetter
 def save_grant(client_id, code, oauthreq, *args, **kwargs): # pylint: disable=unused-argument
 	expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
-	grant = OAuth2Grant(user_dn=request.user.dn, client_id=client_id,
+	grant = OAuth2Grant(user_dn=request.oauth2_user.dn, client_id=client_id,
 		code=code['code'], redirect_uri=oauthreq.redirect_uri, expires=expires, _scopes=' '.join(oauthreq.scopes))
 	db.session.add(grant)
 	db.session.commit()
@@ -78,18 +79,52 @@ def inject_scope(func):
 	return decorator
 
 @bp.route('/authorize', methods=['GET', 'POST'])
-@login_required()
 @inject_scope
 @oauth.authorize_handler
 def authorize(*args, **kwargs): # pylint: disable=unused-argument
+	client = kwargs['request'].client
+	request.oauth2_user = None
+	if request.user:
+		request.oauth2_user = request.user
+	elif 'devicelogin_started' in session:
+		del session['devicelogin_started']
+		host_delay = host_ratelimit.get_delay()
+		if host_delay:
+			flash('We received too many requests from your ip address/network! Please wait at least %s.'%format_delay(host_delay))
+			return redirect(url_for('session.login', ref=request.url, devicelogin=True))
+		host_ratelimit.log()
+		initiation = OAuth2DeviceLoginInitiation(oauth2_client_id=client.client_id)
+		db.session.add(initiation)
+		try:
+			db.session.commit()
+		except IntegrityError:
+			flash('Device login is currently not available. Try again later!')
+			return redirect(url_for('session.login', ref=request.values['ref'], devicelogin=True))
+		session['devicelogin_id'] = initiation.id
+		session['devicelogin_secret'] = initiation.secret
+		return redirect(url_for('session.devicelogin', ref=request.url))
+	elif 'devicelogin_id' in session and 'devicelogin_secret' in session and 'devicelogin_confirmation' in session:
+		initiation = OAuth2DeviceLoginInitiation.query.filter_by(id=session['devicelogin_id'], secret=session['devicelogin_secret'],
+		                                                         oauth2_client_id=client.client_id).one_or_none()
+		confirmation = DeviceLoginConfirmation.query.get(session['devicelogin_confirmation'])
+		del session['devicelogin_id']
+		del session['devicelogin_secret']
+		del session['devicelogin_confirmation']
+		if not initiation or initiation.expired or not confirmation:
+			flash('Device login failed')
+			return redirect(url_for('session.login', ref=request.url, devicelogin=True))
+		request.oauth2_user = confirmation.user
+		db.session.delete(initiation)
+		db.session.commit()
+	else:
+		return redirect(url_for('session.login', ref=request.url, devicelogin=True))
 	# Here we would normally ask the user, if he wants to give the requesting
 	# service access to his data. Since we only have trusted services (the
 	# clients defined in the server config), we don't ask for consent.
-	client = kwargs['request'].client
 	session['oauth2-clients'] = session.get('oauth2-clients', [])
 	if client.client_id not in session['oauth2-clients']:
 		session['oauth2-clients'].append(client.client_id)
-	return client.access_allowed(request.user)
+	return client.access_allowed(request.oauth2_user)
 
 @bp.route('/token', methods=['GET', 'POST'])
 @oauth.token_handler
