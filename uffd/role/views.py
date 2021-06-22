@@ -5,7 +5,7 @@ import click
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
-from uffd.role.models import Role
+from uffd.role.models import Role, RoleGroup
 from uffd.user.models import User, Group
 from uffd.session import login_required
 from uffd.database import db
@@ -83,11 +83,10 @@ def update(roleid=None):
 				role.included_roles.append(included_role)
 			elif included_role in role.included_roles:
 				role.included_roles.remove(included_role)
+		role.groups.clear()
 		for group in Group.query.all():
-			if request.values.get('group-{}'.format(group.gid), False):
-				role.groups.add(group)
-			else:
-				role.groups.discard(group)
+			if request.values.get(f'group-{group.gid}', False):
+				role.groups[group] = RoleGroup(requires_mfa=bool(request.values.get(f'group-mfa-{group.gid}', '')))
 	role.update_member_groups()
 	db.session.commit()
 	ldap.session.commit()

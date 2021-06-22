@@ -18,6 +18,8 @@ from ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
 from uffd.user.models import User
 
+User.mfa_enabled = property(lambda user: bool(user.mfa_totp_methods or user.mfa_webauthn_methods))
+
 class MFAType(enum.Enum):
 	RECOVERY_CODE = 0
 	TOTP = 1

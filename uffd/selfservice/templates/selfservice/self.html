@@ -2,6 +2,13 @@
 
 {% block body %}
 
+{% if not user.mfa_enabled and user.compute_groups() != user.compute_groups(ignore_mfa=True) %}
+<div class="alert alert-warning" role="alert">
+	Some permissions require you to setup two-factor authentication.
+	These permissions are not in effect until you do that.
+</div>
+{% endif %}
+
 <div class="btn-toolbar">
 	<a class="ml-auto mb-3 btn btn-primary" href="{{ url_for('mfa.setup') }}">Manage two-factor authentication</a>
 </div>

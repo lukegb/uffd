@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Integer, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.collections import MappedCollection, collection
 from sqlalchemy.ext.declarative import declared_attr
 
 from ldapalchemy.dbutils import DBRelationship
@@ -9,16 +10,12 @@ from uffd.user.models import User, Group
 
 class RoleGroup(db.Model):
 	__tablename__ = 'role-group'
-	__table_args__ = (
-		db.UniqueConstraint('dn', 'role_id'),
-	)
+	role_id = Column(Integer(), ForeignKey('role.id'), primary_key=True)
+	group_dn = Column(String(128), primary_key=True)
+	requires_mfa = Column(Boolean(), default=False, nullable=False)
 
-	id = Column(Integer(), primary_key=True, autoincrement=True)
-	dn = Column(String(128))
-
-	@declared_attr
-	def role_id(self):
-		return Column(ForeignKey('role.id'))
+	role = relationship('Role')
+	group = DBRelationship('group_dn', Group)
 
 class RoleUser(db.Model):
 	__tablename__ = 'role-user'
@@ -50,19 +47,27 @@ def flatten_recursive(objs, attr):
 				new_objs.add(obj)
 	return objs
 
-def get_roles_effective(user):
+def get_user_roles_effective(user):
 	base = set(user.roles)
 	if not user.is_service_user:
 		base.update(Role.query.filter_by(is_default=True))
 	return flatten_recursive(base, 'included_roles')
 
-User.roles_effective = property(get_roles_effective)
+User.roles_effective = property(get_user_roles_effective)
+
+def compute_user_groups(user, ignore_mfa=False):
+	groups = set()
+	for role in user.roles_effective:
+		for group in role.groups:
+			if ignore_mfa or not role.groups[group].requires_mfa or user.mfa_enabled:
+				groups.add(group)
+	return groups
+
+User.compute_groups = compute_user_groups
 
 def update_user_groups(user):
 	current_groups = set(user.groups)
-	groups = set()
-	for role in user.roles_effective:
-		groups.update(role.groups)
+	groups = user.compute_groups()
 	if groups == current_groups:
 		return set(), set()
 	groups_added = groups - current_groups
@@ -73,6 +78,15 @@ def update_user_groups(user):
 	return groups_added, groups_removed
 
 User.update_groups = update_user_groups
+
+class RoleGroupMap(MappedCollection):
+	def __init__(self):
+		super().__init__(keyfunc=lambda rolegroup: rolegroup.group)
+
+	@collection.internally_instrumented
+	def __setitem__(self, key, value, _sa_initiator=None):
+		value.group = key
+		super().__setitem__(key, value, _sa_initiator)
 
 class Role(db.Model):
 	__tablename__ = 'role'
@@ -91,8 +105,7 @@ class Role(db.Model):
 	db_members = relationship("RoleUser", backref="role", cascade="all, delete-orphan")
 	members = DBRelationship('db_members', User, RoleUser, backattr='role', backref='roles')
 
-	db_groups = relationship("RoleGroup", backref="role", cascade="all, delete-orphan")
-	groups = DBRelationship('db_groups', Group, RoleGroup, backattr='role', backref='roles')
+	groups = relationship('RoleGroup', collection_class=RoleGroupMap, cascade='all, delete-orphan')
 
 	# Roles that are managed externally (e.g. by Ansible) can be locked to
 	# prevent accidental editing of name, moderator group, included roles
@@ -103,14 +116,12 @@ class Role(db.Model):
 
 	@property
 	def members_effective(self):
-		users = set(self.members)
-		for role in flatten_recursive(self.including_roles, 'including_roles'):
-			users.update(role.members)
-		if self.is_default:
-			for user in User.query.all():
-				if not user.is_service_user:
-					users.add(user)
-		return users
+		members = set()
+		for role in flatten_recursive([self], 'including_roles'):
+			members.update(role.members)
+			if role.is_default:
+				members.update([user for user in User.query.all() if not user.is_service_user])
+		return members
 
 	@property
 	def included_roles_recursive(self):

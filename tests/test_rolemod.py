@@ -1,7 +1,7 @@
 from flask import url_for
 
 from uffd.user.models import User, Group
-from uffd.role.models import Role
+from uffd.role.models import Role, RoleGroup
 from uffd.database import db
 from uffd.ldap import ldap
 
@@ -136,7 +136,8 @@ class TestRolemodViews(UffdTestCase):
 
 	def test_delete_member(self):
 		self.login()
-		role = Role(name='test', moderator_group=Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com'), groups=[Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')])
+		role = Role(name='test', moderator_group=Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com'))
+		role.groups[Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')] = RoleGroup()
 		db.session.add(role)
 		role.members.add(User.query.get('uid=testadmin,ou=users,dc=example,dc=com'))
 		db.session.commit()
@@ -158,7 +159,8 @@ class TestRolemodViews(UffdTestCase):
 
 	def test_delete_member_nomember(self):
 		self.login()
-		role = Role(name='test', moderator_group=Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com'), groups=[Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')])
+		role = Role(name='test', moderator_group=Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com'))
+		role.groups[Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')] = RoleGroup()
 		db.session.add(role)
 		db.session.commit()
 		user = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')

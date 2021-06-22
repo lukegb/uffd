@@ -126,6 +126,7 @@ Name, moderator group, included roles and groups of this role are managed extern
 							<th scope="col"></th>
 							<th scope="col">name</th>
 							<th scope="col">description</th>
+							<th scope="col">2FA required</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -143,6 +144,11 @@ Name, moderator group, included roles and groups of this role are managed extern
 							</td>
 							<td>
 								{{ group.description }}
+							</td>
+							<td>
+								<div class="form-check">
+									<input class="form-check-input" type="checkbox" id="group-mfa-{{ group.gid }}-checkbox" name="group-mfa-{{ group.gid }}" value="1" aria-label="enabled" {% if group in role.groups and role.groups[group].requires_mfa %}checked{% endif %} {{ 'disabled' if role.locked }}>
+								</div>
 							</td>
 						</tr>
 						{% endfor %}

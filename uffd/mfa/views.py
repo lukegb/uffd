@@ -4,6 +4,7 @@ import urllib.parse
 from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app, abort
 
 from uffd.database import db
+from uffd.ldap import ldap
 from uffd.mfa.models import MFAMethod, TOTPMethod, WebauthnMethod, RecoveryCodeMethod
 from uffd.session.views import login_required, login_required_pre_mfa, set_request_user
 from uffd.user.models import User
@@ -17,10 +18,7 @@ mfa_ratelimit = Ratelimit('mfa', 1*60, 3)
 @bp.route('/', methods=['GET'])
 @login_required()
 def setup():
-	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=request.user.dn).all()
-	totp_methods = TOTPMethod.query.filter_by(dn=request.user.dn).all()
-	webauthn_methods = WebauthnMethod.query.filter_by(dn=request.user.dn).all()
-	return render_template('mfa/setup.html', totp_methods=totp_methods, webauthn_methods=webauthn_methods, recovery_methods=recovery_methods)
+	return render_template('mfa/setup.html')
 
 @bp.route('/setup/disable', methods=['GET'])
 @login_required()
@@ -33,6 +31,8 @@ def disable():
 def disable_confirm():
 	MFAMethod.query.filter_by(dn=request.user.dn).delete()
 	db.session.commit()
+	request.user.update_groups()
+	ldap.session.commit()
 	return redirect(url_for('mfa.setup'))
 
 @bp.route('/admin/<int:uid>/disable')
@@ -47,6 +47,8 @@ def admin_disable(uid):
 	user = User.query.filter_by(uid=uid).one()
 	MFAMethod.query.filter_by(dn=user.dn).delete()
 	db.session.commit()
+	user.update_groups()
+	ldap.session.commit()
 	flash('Two-factor authentication was reset')
 	return redirect(url_for('user.show', uid=uid))
 
@@ -82,6 +84,8 @@ def setup_totp_finish():
 	if method.verify(request.form['code']):
 		db.session.add(method)
 		db.session.commit()
+		request.user.update_groups()
+		ldap.session.commit()
 		return redirect(url_for('mfa.setup'))
 	flash('Code is invalid')
 	return redirect(url_for('mfa.setup_totp', name=request.values['name']))
@@ -93,6 +97,8 @@ def delete_totp(id): #pylint: disable=redefined-builtin
 	method = TOTPMethod.query.filter_by(dn=request.user.dn, id=id).first_or_404()
 	db.session.delete(method)
 	db.session.commit()
+	request.user.update_groups()
+	ldap.session.commit()
 	return redirect(url_for('mfa.setup'))
 
 # WebAuthn support is optional because fido2 has a pretty unstable
@@ -147,14 +153,15 @@ if WEBAUTHN_SUPPORTED:
 		method = WebauthnMethod(request.user, auth_data.credential_data, name=data['name'])
 		db.session.add(method)
 		db.session.commit()
+		request.user.update_groups()
+		ldap.session.commit()
 		return cbor.dumps({"status": "OK"})
 
 	@bp.route("/auth/webauthn/begin", methods=["POST"])
 	@login_required_pre_mfa(no_redirect=True)
 	def auth_webauthn_begin():
 		server = get_webauthn_server()
-		methods = WebauthnMethod.query.filter_by(dn=request.user_pre_mfa.dn).all()
-		creds = [method.cred for method in methods]
+		creds = [method.cred for method in request.user_pre_mfa.mfa_webauthn_methods]
 		if not creds:
 			abort(404)
 		auth_data, state = server.authenticate_begin(creds, user_verification='discouraged')
@@ -165,8 +172,7 @@ if WEBAUTHN_SUPPORTED:
 	@login_required_pre_mfa(no_redirect=True)
 	def auth_webauthn_complete():
 		server = get_webauthn_server()
-		methods = WebauthnMethod.query.filter_by(dn=request.user_pre_mfa.dn).all()
-		creds = [method.cred for method in methods]
+		creds = [method.cred for method in request.user_pre_mfa.mfa_webauthn_methods]
 		if not creds:
 			abort(404)
 		data = cbor.loads(request.get_data())[0]
@@ -195,22 +201,19 @@ def delete_webauthn(id): #pylint: disable=redefined-builtin
 	method = WebauthnMethod.query.filter_by(dn=request.user.dn, id=id).first_or_404()
 	db.session.delete(method)
 	db.session.commit()
+	request.user.update_groups()
+	ldap.session.commit()
 	return redirect(url_for('mfa.setup'))
 
 @bp.route('/auth', methods=['GET'])
 @login_required_pre_mfa()
 def auth():
-	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=request.user_pre_mfa.dn).all()
-	totp_methods = TOTPMethod.query.filter_by(dn=request.user_pre_mfa.dn).all()
-	webauthn_methods = WebauthnMethod.query.filter_by(dn=request.user_pre_mfa.dn).all()
-	if not totp_methods and not webauthn_methods:
+	if not request.user_pre_mfa.mfa_enabled:
 		session['user_mfa'] = True
 		set_request_user()
-
 	if session.get('user_mfa'):
 		return redirect(request.values.get('ref', url_for('index')))
-	return render_template('mfa/auth.html', ref=request.values.get('ref'), totp_methods=totp_methods,
-			webauthn_methods=webauthn_methods, recovery_methods=recovery_methods)
+	return render_template('mfa/auth.html', ref=request.values.get('ref'))
 
 @bp.route('/auth', methods=['POST'])
 @login_required_pre_mfa()
@@ -219,23 +222,21 @@ def auth_finish():
 	if delay:
 		flash('We received too many invalid attempts! Please wait at least %s.'%format_delay(delay))
 		return redirect(url_for('mfa.auth', ref=request.values.get('ref')))
-	recovery_methods = RecoveryCodeMethod.query.filter_by(dn=request.user_pre_mfa.dn).all()
-	totp_methods = TOTPMethod.query.filter_by(dn=request.user_pre_mfa.dn).all()
-	for method in totp_methods:
+	for method in request.user_pre_mfa.mfa_totp_methods:
 		if method.verify(request.form['code']):
 			session['user_mfa'] = True
 			set_request_user()
 			return redirect(request.values.get('ref', url_for('index')))
-	for method in recovery_methods:
+	for method in request.user_pre_mfa.mfa_recovery_codes:
 		if method.verify(request.form['code']):
 			db.session.delete(method)
 			db.session.commit()
 			session['user_mfa'] = True
 			set_request_user()
-			if len(recovery_methods) <= 1:
+			if len(request.user_pre_mfa.mfa_recovery_codes) <= 1:
 				flash('You have exhausted your recovery codes. Please generate new ones now!')
 				return redirect(url_for('mfa.setup'))
-			if len(recovery_methods) <= 5:
+			if len(request.user_pre_mfa.mfa_recovery_codes) <= 5:
 				flash('You only have a few recovery codes remaining. Make sure to generate new ones before they run out.')
 				return redirect(url_for('mfa.setup'))
 			return redirect(request.values.get('ref', url_for('index')))

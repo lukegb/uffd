@@ -11,7 +11,7 @@ from uffd.ldap import ldap
 from uffd import create_app, db
 from uffd.invite.models import Invite, InviteGrant, InviteSignup
 from uffd.user.models import User, Group
-from uffd.role.models import Role
+from uffd.role.models import Role, RoleGroup
 from uffd.session.views import login_get_user
 
 from utils import dump, UffdTestCase, db_flush
@@ -102,12 +102,12 @@ class TestInviteGrantModel(UffdTestCase):
 	def test_success(self):
 		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		group0 = Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')
-		role0 = Role(name='baserole', groups=[group0])
+		role0 = Role(name='baserole', groups={group0: RoleGroup(group=group0)})
 		db.session.add(role0)
 		user.roles.add(role0)
 		user.update_groups()
 		group1 = Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')
-		role1 = Role(name='testrole1', groups=[group1])
+		role1 = Role(name='testrole1', groups={group1: RoleGroup(group=group1)})
 		db.session.add(role1)
 		role2 = Role(name='testrole2')
 		db.session.add(role2)
@@ -140,7 +140,7 @@ class TestInviteGrantModel(UffdTestCase):
 	def test_inactive(self):
 		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		group = Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')
-		role = Role(name='testrole1', groups=[group])
+		role = Role(name='testrole1', groups={group: RoleGroup(group=group)})
 		db.session.add(role)
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role], single_use=True, used=True)
 		self.assertFalse(invite.active)
@@ -175,8 +175,8 @@ class TestInviteGrantModel(UffdTestCase):
 class TestInviteSignupModel(UffdTestCase):
 	def create_base_roles(self):
 		baserole = Role(name='base', is_default=True)
-		baserole.groups.add(Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com'))
-		baserole.groups.add(Group.query.get('cn=users,ou=groups,dc=example,dc=com'))
+		baserole.groups[Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')] = RoleGroup()
+		baserole.groups[Group.query.get('cn=users,ou=groups,dc=example,dc=com')] = RoleGroup()
 		db.session.add(baserole)
 		db.session.commit()
 
@@ -186,7 +186,7 @@ class TestInviteSignupModel(UffdTestCase):
 		base_group1 = Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')
 		base_group2 = Group.query.get('cn=users,ou=groups,dc=example,dc=com')
 		group = Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')
-		role1 = Role(name='testrole1', groups=[group])
+		role1 = Role(name='testrole1', groups={group: RoleGroup(group=group)})
 		db.session.add(role1)
 		role2 = Role(name='testrole2')
 		db.session.add(role2)
@@ -564,12 +564,12 @@ class TestInviteUseViews(UffdTestCase):
 	def test_grant(self):
 		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
 		group0 = Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')
-		role0 = Role(name='baserole', groups=[group0])
+		role0 = Role(name='baserole', groups={group0: RoleGroup(group=group0)})
 		db.session.add(role0)
 		user.roles.add(role0)
 		user.update_groups()
 		group1 = Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')
-		role1 = Role(name='testrole1', groups=[group1])
+		role1 = Role(name='testrole1', groups={group1: RoleGroup(group=group1)})
 		db.session.add(role1)
 		role2 = Role(name='testrole2')
 		db.session.add(role2)
@@ -637,11 +637,11 @@ class TestInviteUseViews(UffdTestCase):
 
 	def test_signup(self):
 		baserole = Role(name='base', is_default=True)
-		baserole.groups.add(Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com'))
-		baserole.groups.add(Group.query.get('cn=users,ou=groups,dc=example,dc=com'))
+		baserole.groups[Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')] = RoleGroup()
+		baserole.groups[Group.query.get('cn=users,ou=groups,dc=example,dc=com')] = RoleGroup()
 		db.session.add(baserole)
 		group = Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')
-		role1 = Role(name='testrole1', groups=[group])
+		role1 = Role(name='testrole1', groups={group: RoleGroup(group=group)})
 		db.session.add(role1)
 		role2 = Role(name='testrole2')
 		db.session.add(role2)

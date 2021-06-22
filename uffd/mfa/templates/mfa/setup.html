@@ -8,9 +8,9 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 
 #}
 
-{% set mfa_enabled = totp_methods or webauthn_methods %}
-{% set mfa_init = not recovery_methods and not mfa_enabled %}
-{% set mfa_setup = recovery_methods and not mfa_enabled %}
+{% set mfa_enabled = request.user.mfa_enabled %}
+{% set mfa_init = not request.user.mfa_recovery_codes and not mfa_enabled %}
+{% set mfa_setup = request.user.mfa_recovery_codes and not mfa_enabled %}
 
 {% block body %}
 <p>Two-factor authentication is currently <strong>{{ 'enabled' if mfa_enabled else 'disabled' }}</strong>.
@@ -57,9 +57,9 @@ You need to setup at least one authentication method to enable two-factor authen
 			{% endif %}
 		</form>
 
-		{% if recovery_methods %}
-		<p>{{ recovery_methods|length }} recovery codes remain</p>
-		{% elif not recovery_methods and mfa_enabled %}
+		{% if request.user.mfa_recovery_codes %}
+		<p>{{ request.user.mfa_recovery_codes|length }} recovery codes remain</p>
+		{% elif not request.user.mfa_recovery_codes and mfa_enabled %}
 		<p><strong>You have no remaining recovery codes.</strong></p>
 		{% endif %}
 	</div>
@@ -93,14 +93,14 @@ You need to setup at least one authentication method to enable two-factor authen
 				</tr>
 			</thead>
 			<tbody>
-				{% for method in totp_methods %}
+				{% for method in request.user.mfa_totp_methods %}
 				<tr>
 					<td>{{ method.name }}</td>
 					<td>{{ method.created.strftime('%b %d, %Y') }}</td>
 					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_totp', id=method.id) }}">Delete</a></td>
 				</tr>
 				{% endfor %}
-				{% if not totp_methods %}
+				{% if not request.user.mfa_totp_methods %}
 				<tr class="table-secondary">
 					<td colspan=3 class="text-center">No authenticator apps registered yet</td>
 				</tr>
@@ -148,14 +148,14 @@ You need to setup at least one authentication method to enable two-factor authen
 				</tr>
 			</thead>
 			<tbody>
-				{% for method in webauthn_methods %}
+				{% for method in request.user.mfa_webauthn_methods %}
 				<tr>
 					<td>{{ method.name }}</td>
 					<td>{{ method.created.strftime('%b %d, %Y') }}</td>
 					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_webauthn', id=method.id) }}">Delete</a></td>
 				</tr>
 				{% endfor %}
-				{% if not webauthn_methods %}
+				{% if not request.user.mfa_webauthn_methods %}
 				<tr class="table-secondary">
 					<td colspan=3 class="text-center">No U2F/FIDO2 devices registered yet</td>
 				</tr>

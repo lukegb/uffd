@@ -11,7 +11,7 @@
 		<div class="col-12 mb-3">
 			<h2 class="text-center">Two-Factor Authentication</h2>
 		</div>
-		{% if webauthn_methods %}
+		{% if request.user_pre_mfa.mfa_webauthn_methods %}
 		<noscript>
 			<div class="form-group col-12">
 				<div id="webauthn-nojs" class="alert alert-warning" role="alert">Enable javascript for authentication with U2F/FIDO2 devices</div>
@@ -42,7 +42,7 @@
 </div>
 </form>
 
-{% if webauthn_supported and webauthn_methods %}
+{% if webauthn_supported and request.user_pre_mfa.mfa_webauthn_methods %}
 <script src="{{ url_for('static', filename="cbor.js") }}"></script>
 <script>
 function begin_webauthn() {
