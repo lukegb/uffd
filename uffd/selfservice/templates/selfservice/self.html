@@ -9,63 +9,132 @@
 </div>
 {% endif %}
 
-<div class="btn-toolbar">
-	<a class="ml-auto mb-3 btn btn-primary" href="{{ url_for('mfa.setup') }}">{{_("Manage two-factor authentication")}}</a>
+<div class="row mt-3">
+	<div class="col-12 col-md-5">
+		<h5>{{_("Profile")}}</h5>
+		<p>{{_("Your profile information is used by all services that are integrated into the Single-Sign-On. Your e-mail address is also used for password recovery.")}}</p>
+		<p>{{_(" Changes may take serveral minutes to be visible in all services.")}}</p>
+	</div>
+	<div class="col-12 col-md-7">
+		<form class="form" action="{{ url_for("selfservice.update_profile") }}" method="POST">
+			<div class="form-row">
+				<div class="form-group col-12 col-md-9">
+					<label>{{_("Login Name")}}</label>
+					<input type="text" class="form-control" value="{{ user.loginname }}" readonly>
+				</div>
+				<div class="form-group col-12 col-md-3">
+					<label>{{_("User ID")}}</label>
+					<input type="text" class="form-control" value="{{ user.uid }}" readonly>
+				</div>
+			</div>
+			<div class="form-group">
+				<label>{{_("Display Name")}}</label>
+				<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ user.displayname }}">
+			</div>
+			<div class="form-group">
+				<label>{{_("E-Mail Address")}}</label>
+				<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail }}" required>
+				<small class="form-text text-muted">
+					{{_("We will send you a confirmation mail to this address if you change it")}}
+				</small>
+			</div>
+			<button type="submit" class="btn btn-primary btn-block">{{_("Update Profile")}}</button>
+		</form>
+	</div>
 </div>
 
-<form action="{{ url_for("selfservice.update") }}" method="POST" onInput="
-	password2.setCustomValidity(password1.value != password2.value ? 'Passwords do not match.' : '');
-	password1.setCustomValidity((password1.value.length < 8 && password1.value.length > 0) ? 'Password is too short' : '') ">
-<div class="align-self-center row">
-	<div class="form-group col-md-6">
-		<label for="user-uid">{{_("Uid")}}</label>
-		<input type="number" class="form-control" id="user-uid" name="uid" value="{{ user.uid }}" readonly>
+<hr>
+
+<div class="row mt-3">
+	<div class="col-12 col-md-5">
+		<h5>{{_("Password")}}</h5>
+		<p>{{_("Your login password for the Single-Sign-On. Only enter it on the Single-Sign-On login page! No other legit websites will ask you for this password. We do not ever need your password to assist you.")}}</p>
 	</div>
-	<div class="form-group col-md-6">
-		<label for="user-loginname">{{_("Login Name")}}</label>
-		<input type="text" class="form-control" id="user-loginname" name="loginname" value="{{ user.loginname }}" readonly>
-	</div>
-	<div class="form-group col-md-6">
-		<label for="user-displayname">{{_("Display Name")}}</label>
-		<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ user.displayname }}">
-	</div>
-	<div class="form-group col-md-6">
-		<label for="user-mail">{{_("Mail")}}</label>
-		<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail }}">
-		<small class="form-text text-muted">
-			{{_("We will send you a confirmation mail to set a new mail address.")}}
-		</small>
-	</div>
-	<div class="form-group col-md-6">
-		<label for="user-password1">{{_("Password")}}</label>
-		<input type="password" class="form-control" id="user-password1" name="password1" placeholder="●●●●●●●●">
-		<small class="form-text text-muted">
-			{{_("At least 8 and at most 256 characters, no other special requirements. But please don't be stupid, do use a password manager.")}}
-		</small>
-	</div>
-	<div class="form-group col-md-6">
-		<label for="user-password2">{{_("Password Repeat")}}</label>
-		<input type="password" class="form-control" id="user-password2" name="password2" placeholder="●●●●●●●●">
-	</div>
-	<div class="form-group">
-		{% if user.roles|length %}
-			{% if user.roles|length == 1 %}
-				{{_("You have this role")}}:
-			{% else %}
-				{{_("You currently have these roles")}}:
-			{% endif %}
-			<ul>
-				{% for role in user.roles|sort(attribute="name") %}
-				<li>{{ role.name }}</li>
-				{% endfor %}
-			</ul>
-		{% else %}
-			{{_("You currently don't have any roles.")}}
-		{% endif %}
-	</div>
-	<div class="form-group col-md-12">
-		<button type="submit" class="btn btn-primary float-right"><i class="fa fa-save" aria-hidden="true"></i> {{_("Save")}}</button>
+	<div class="col-12 col-md-7">
+		<form class="form" action="{{ url_for("selfservice.change_password") }}" method="POST">
+			<div class="form-group">
+				<input type="password" class="form-control" id="user-password1" name="password1" placeholder="{{_("New Password")}}" required>
+				<small class="form-text text-muted">
+					At least 8 and at most 256 characters, no other special requirements.
+				</small>
+			</div>
+			<div class="form-group">
+				<input type="password" class="form-control" id="user-password2" name="password2" placeholder="{{_("Repeat Password")}}" required>
+			</div>
+			<button type="submit" class="btn btn-primary btn-block">{{_("Change Password")}}</button>
+		</form>
 	</div>
 </div>
-</form>
+
+<hr>
+
+<div class="row mt-3">
+	<div class="col-12 col-md-5">
+		<h5>{{_("Two-Factor Authentication")}}</h5>
+		<p>{{_("Setting up Two-Factor Authentication (2FA) adds an additional step to the Single-Sign-On login and increases the security of your account significantly.")}}</p>
+	</div>
+	<div class="col-12 col-md-7">
+		<p>
+			{% if user.mfa_enabled %}
+			{{ _("Two-factor authentication is currently <strong>enabled</strong>.")|safe }}
+			{% else %}
+			{{ _("Two-factor authentication is currently <strong>disabled</strong>.")|safe }}
+			{% endif %}
+		</p>
+		<a class="btn btn-primary btn-block" href="{{ url_for('mfa.setup') }}">{{_("Manage two-factor authentication")}}</a>
+	</div>
+</div>
+
+<hr>
+
+<div class="row mt-3">
+	<div class="col-12 col-md-5">
+		<h5>{{_("Roles")}}</h5>
+		<p>{{_("Aside from a set of base permissions, your roles determine the permissions of your account.")}}</p>
+		{% if config['SERVICES'] %}
+		<p>{{_("See <a href=\"%(services_url)s\">Services</a> for an overview of your current permissions.", services_url=url_for('services.index'))}}</p>
+		{% endif %}
+	</div>
+	<div class="col-12 col-md-7">
+		{% if config['ENABLE_INVITE'] %}
+		<p>{{_("Administrators and role moderators can invite you to new roles.")}}</p>
+		{% else %}
+		<p>{{_("Administrators can add new roles to your account.")}}</p>
+		{% endif %}
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">{{_("Name")}}</th>
+					<th scope="col">{{_("Description")}}</th>
+					<th scope="col"></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for role in user.roles|sort(attribute='name') %}
+				<tr>
+					<td>{{ role.name }}
+						{% if not user.mfa_enabled and role.groups.values()|selectattr('requires_mfa')|list %}
+						<i class="fas fa-exclamation-triangle text-warning" title="{{_("Some permissions in this role require you to setup two-factor authentication")}}"></i>
+						{% endif %}
+					</td>
+					<td>{{ role.description }}</td>
+					<td>
+						{% if config['ENABLE_ROLESELFSERVICE'] %}
+						<form action="{{ url_for("selfservice.leave_role", roleid=role.id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+							<button type="submit" class="btn btn-sm btn-danger float-right">{{_("Leave")}}</button>
+						</form>
+						{% endif %}
+					</td>
+				</tr>
+				{% endfor %}
+				{% if not user.roles %}
+				<tr class="table-secondary">
+					<td colspan=3 class="text-center">{{_("You currently don't have any roles")}}</td>
+				</tr>
+				{% endif %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
 {% endblock %}

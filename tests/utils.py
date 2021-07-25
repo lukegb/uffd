@@ -73,6 +73,7 @@ class UffdTestCase(unittest.TestCase):
 				config['SELF_SIGNUP'] = False
 				config['ENABLE_INVITE'] = False
 				config['ENABLE_PASSWORDRESET'] = False
+				config['ENABLE_ROLESELFSERVICE'] = False
 			else:
 				config['LDAP_SERVICE_BIND_DN'] = 'cn=uffd,ou=system,dc=example,dc=com'
 			config['LDAP_SERVICE_BIND_PASSWORD'] = 'uffd-ldap-password'

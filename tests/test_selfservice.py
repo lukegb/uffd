@@ -8,6 +8,7 @@ from uffd import ldap, user
 
 from uffd.selfservice.models import MailToken, PasswordToken
 from uffd.user.models import User
+from uffd.role.models import Role
 from uffd import create_app, db
 
 from utils import dump, UffdTestCase
@@ -27,8 +28,8 @@ class TestSelfservice(UffdTestCase):
 	def test_update_displayname(self):
 		self.login_as('user')
 		user = request.user
-		r = self.client.post(path=url_for('selfservice.update'),
-			data={'displayname': 'New Display Name', 'mail': user.mail, 'password': '', 'password1': ''},
+		r = self.client.post(path=url_for('selfservice.update_profile'),
+			data={'displayname': 'New Display Name', 'mail': user.mail},
 			follow_redirects=True)
 		dump('update_displayname', r)
 		self.assertEqual(r.status_code, 200)
@@ -38,8 +39,8 @@ class TestSelfservice(UffdTestCase):
 	def test_update_displayname_invalid(self):
 		self.login_as('user')
 		user = request.user
-		r = self.client.post(path=url_for('selfservice.update'),
-			data={'displayname': '', 'mail': user.mail, 'password': '', 'password1': ''},
+		r = self.client.post(path=url_for('selfservice.update_profile'),
+			data={'displayname': '', 'mail': user.mail},
 			follow_redirects=True)
 		dump('update_displayname_invalid', r)
 		self.assertEqual(r.status_code, 200)
@@ -49,8 +50,8 @@ class TestSelfservice(UffdTestCase):
 	def test_update_mail(self):
 		self.login_as('user')
 		user = request.user
-		r = self.client.post(path=url_for('selfservice.update'),
-			data={'displayname': user.displayname, 'mail': 'newemail@example.com', 'password': '', 'password1': ''},
+		r = self.client.post(path=url_for('selfservice.update_profile'),
+			data={'displayname': user.displayname, 'mail': 'newemail@example.com'},
 			follow_redirects=True)
 		dump('update_mail', r)
 		self.assertEqual(r.status_code, 200)
@@ -68,14 +69,68 @@ class TestSelfservice(UffdTestCase):
 		self.app.config['MAIL_SKIP_SEND'] = 'fail'
 		self.login_as('user')
 		user = request.user
-		r = self.client.post(path=url_for('selfservice.update'),
-			data={'displayname': user.displayname, 'mail': 'newemail@example.com', 'password': '', 'password1': ''},
+		r = self.client.post(path=url_for('selfservice.update_profile'),
+			data={'displayname': user.displayname, 'mail': 'newemail@example.com'},
 			follow_redirects=True)
 		dump('update_mail_sendfailure', r)
 		self.assertEqual(r.status_code, 200)
 		_user = request.user
 		self.assertNotEqual(_user.mail, 'newemail@example.com')
 		# Maybe also check that there is no new token in the db
+
+	def test_change_password(self):
+		self.login_as('user')
+		user = request.user
+		r = self.client.post(path=url_for('selfservice.change_password'),
+			data={'password1': 'newpassword', 'password2': 'newpassword'},
+			follow_redirects=True)
+		dump('change_password', r)
+		self.assertEqual(r.status_code, 200)
+		_user = request.user
+		self.assertTrue(ldap.test_user_bind(_user.dn, 'newpassword'))
+
+	def test_change_password_invalid(self):
+		self.login_as('user')
+		user = request.user
+		r = self.client.post(path=url_for('selfservice.change_password'),
+			data={'password1': 'shortpw', 'password2': 'shortpw'},
+			follow_redirects=True)
+		dump('change_password_invalid', r)
+		self.assertEqual(r.status_code, 200)
+		_user = request.user
+		self.assertFalse(ldap.test_user_bind(_user.dn, 'shortpw'))
+		self.assertTrue(ldap.test_user_bind(_user.dn, 'userpassword'))
+
+	def test_change_password_mismatch(self):
+		self.login_as('user')
+		user = request.user
+		r = self.client.post(path=url_for('selfservice.change_password'),
+			data={'password1': 'newpassword1', 'password2': 'newpassword2'},
+			follow_redirects=True)
+		dump('change_password_mismatch', r)
+		self.assertEqual(r.status_code, 200)
+		_user = request.user
+		self.assertFalse(ldap.test_user_bind(_user.dn, 'newpassword1'))
+		self.assertFalse(ldap.test_user_bind(_user.dn, 'newpassword2'))
+		self.assertTrue(ldap.test_user_bind(_user.dn, 'userpassword'))
+
+	def test_leave_role(self):
+		if self.use_userconnection:
+			self.skipTest('Leaving roles is not possible in user mode')
+		role1 = Role(name='testrole1')
+		role2 = Role(name='testrole2')
+		db.session.add(role1)
+		db.session.add(role2)
+		self.get_user().roles = [role1, role2]
+		db.session.commit()
+		roleid = role1.id
+		self.login_as('user')
+		r = self.client.post(path=url_for('selfservice.leave_role', roleid=roleid), follow_redirects=True)
+		dump('leave_role', r)
+		self.assertEqual(r.status_code, 200)
+		_user = self.get_user()
+		self.assertEqual(len(_user.roles), 1)
+		self.assertEqual(list(_user.roles)[0].name, 'testrole2')
 
 	def test_token_mail_emptydb(self):
 		self.login_as('user')

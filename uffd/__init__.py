@@ -74,9 +74,10 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 		app.register_blueprint(i)
 
 	if app.config['LDAP_SERVICE_USER_BIND'] and (app.config['ENABLE_INVITE'] or
-												app.config['SELF_SIGNUP'] or
-												app.config['ENABLE_PASSWORDRESET']):
-		raise InternalServerError(description="You cannot use INVITES, SIGNUP or PASSWORDRESET when using a USER_BIND!")
+	                                             app.config['SELF_SIGNUP'] or
+	                                             app.config['ENABLE_PASSWORDRESET'] or
+	                                             app.config['ENABLE_ROLESELFSERVICE']):
+		raise InternalServerError(description="You cannot use INVITES, SIGNUP, PASSWORDRESET or ROLESELFSERVICE when using a USER_BIND!")
 
 	if app.config['ENABLE_INVITE'] or app.config['SELF_SIGNUP']:
 		for i in signup.bp:

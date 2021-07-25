@@ -12,6 +12,7 @@ from uffd.csrf import csrf_protect
 from uffd.user.models import User
 from uffd.session import login_required
 from uffd.selfservice.models import PasswordToken, MailToken
+from uffd.role.models import Role
 from uffd.database import db
 from uffd.ldap import ldap
 from uffd.ratelimit import host_ratelimit, Ratelimit, format_delay
@@ -26,29 +27,36 @@ reset_ratelimit = Ratelimit('passwordreset', 1*60*60, 3)
 def index():
 	return render_template('selfservice/self.html', user=request.user)
 
-@bp.route("/update", methods=(['POST']))
+@bp.route("/updateprofile", methods=(['POST']))
 @csrf_protect(blueprint=bp)
 @login_required()
-def update():
-	password_changed = False
+def update_profile():
 	user = request.user
 	if request.values['displayname'] != user.displayname:
 		if user.set_displayname(request.values['displayname']):
 			flash(_('Display name changed.'))
 		else:
 			flash(_('Display name is not valid.'))
-	if request.values['password1']:
-		if not request.values['password1'] == request.values['password2']:
-			flash(_('Passwords do not match'))
-		else:
-			if user.set_password(request.values['password1']):
-				flash(_('Password changed.'))
-				password_changed = True
-			else:
-				flash(_('Password could not be set.'))
 	if request.values['mail'] != user.mail:
 		send_mail_verification(user.loginname, request.values['mail'])
 		flash(_('We sent you an email, please verify your mail address.'))
+	ldap.session.commit()
+	return redirect(url_for('selfservice.index'))
+
+@bp.route("/changepassword", methods=(['POST']))
+@csrf_protect(blueprint=bp)
+@login_required()
+def change_password():
+	password_changed = False
+	user = request.user
+	if not request.values['password1'] == request.values['password2']:
+		flash(_('Passwords do not match'))
+	else:
+		if user.set_password(request.values['password1']):
+			flash(_('Password changed'))
+			password_changed = True
+		else:
+			flash(_('Invalid password'))
 	ldap.session.commit()
 	# When using a user_connection, update the connection on password-change
 	if password_changed and current_app.config['LDAP_SERVICE_USER_BIND']:
@@ -122,6 +130,21 @@ def token_mail(token):
 	db.session.delete(dbtoken)
 	ldap.session.commit()
 	db.session.commit()
+	return redirect(url_for('selfservice.index'))
+
+@bp.route("/leaverole/<int:roleid>", methods=(['POST']))
+@csrf_protect(blueprint=bp)
+@login_required()
+def leave_role(roleid):
+	if not current_app.config['ENABLE_ROLESELFSERVICE']:
+		flash('Leaving roles is disabled')
+		return redirect(url_for('selfservice.index'))
+	role = Role.query.get_or_404(roleid)
+	role.members.discard(request.user)
+	request.user.update_groups()
+	ldap.session.commit()
+	db.session.commit()
+	flash('You left role "%s"'%role.name)
 	return redirect(url_for('selfservice.index'))
 
 def send_mail_verification(loginname, newmail):
