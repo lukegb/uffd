@@ -14,6 +14,7 @@ Development chat: [#uffd-development](https://rocket.events.ccc.de/channel/uffd-
 - python3-qrcode
 - python3-fido2 (version 0.5.0, optional)
 - python3-flask-oauthlib
+- python3-flask-babel
 - git (cli utility, musst be in path)
 
 Some of the dependencies (especially fido2 and flask-oauthlib) changed their API in recent versions, so make sure to install the versions from Debian Buster.
