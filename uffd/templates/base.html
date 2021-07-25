@@ -76,8 +76,8 @@
 						<form class="language-switch py-2 pr-1" method="POST" style="margin-left: -5px;" action="{{ url_for('setlang') }}">
 							<input type="hidden" name="ref" value="{{ request.url }}">
 							<select name="lang" class="bg-dark" style="border: 0px; color: rgba(255, 255, 255, 0.5);" onchange="$('.language-switch').submit()">
-								{% for language in config['LANGUAGES'] %}
-									<option value="{{ language['value'] }}" {{ 'selected' if language['value'] == get_locale() }}>{{ language['display'] }}</option>
+								{% for identifier, name in config['LANGUAGES'].items() %}
+									<option value="{{ identifier }}" {{ 'selected' if identifier == get_locale() }}>{{ name }}</option>
 								{% endfor %}
 							</select>
 							<noscript>

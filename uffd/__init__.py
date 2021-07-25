@@ -129,10 +129,9 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	@babel.localeselector
 	def get_locale(): #pylint: disable=unused-variable
 		language_cookie = request.cookies.get('language')
-		if language_cookie is not None:
+		if language_cookie is not None and language_cookie in app.config['LANGUAGES']:
 			return language_cookie
-		languages = list(map(lambda x: x.get('value'), app.config['LANGUAGES']))
-		return request.accept_languages.best_match(languages)
+		return request.accept_languages.best_match(list(app.config['LANGUAGES']))
 
 	app.add_template_global(get_locale)
 
