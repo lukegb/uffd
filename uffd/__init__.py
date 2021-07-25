@@ -3,6 +3,7 @@ import secrets
 import sys
 
 from flask import Flask, redirect, url_for, request
+from flask_babel import Babel
 from werkzeug.routing import IntegerConverter
 from werkzeug.serving import make_ssl_devcert
 from werkzeug.contrib.profiler import ProfilerMiddleware
@@ -93,6 +94,13 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	def index(): #pylint: disable=unused-variable
 		return redirect(url_for('selfservice.index'))
 
+	@app.route('/lang', methods=['POST'])
+	def setlang(): #pylint: disable=unused-variable
+		resp = redirect(request.values.get('ref', '/'))
+		if 'lang' in request.values:
+			resp.set_cookie('language', request.values['lang'])
+		return resp
+
 	@app.teardown_request
 	def close_connection(exception): #pylint: disable=unused-variable,unused-argument
 		if hasattr(request, "ldap_connection"):
@@ -115,5 +123,17 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 		os.environ['FLASK_RUN_FROM_CLI'] = 'false'
 		app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
 		app.run(debug=True)
+
+	babel = Babel(app)
+
+	@babel.localeselector
+	def get_locale(): #pylint: disable=unused-variable
+		language_cookie = request.cookies.get('language')
+		if language_cookie is not None:
+			return language_cookie
+		languages = list(map(lambda x: x.get('value'), app.config['LANGUAGES']))
+		return request.accept_languages.best_match(languages)
+
+	app.add_template_global(get_locale)
 
 	return app

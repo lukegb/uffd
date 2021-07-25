@@ -1,0 +1,761 @@
+# German translations for uffd.
+# Copyright (C) 2021 ORGANIZATION
+# This file is distributed under the same license as the uffd project.
+# Milan Höllner <milan.hoellner@posteo.de>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2021-07-15 22:28+0200\n"
+"PO-Revision-Date: 2021-05-25 21:18+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.1\n"
+
+#: mfa/views.py:53
+msgid "Two-factor authentication was reset"
+msgstr "Zwei-Faktor-Authentifizierung wurde zurückgesetzt"
+
+#: mfa/views.py:82
+msgid "Generate recovery codes first!"
+msgstr "Generiere zuerst die Wiederherstellungscodes!"
+
+#: mfa/views.py:91
+msgid "Code is invalid"
+msgstr "Wiederherstellungscode ist ungültig"
+
+#: mfa/views.py:115
+#, python-format
+msgid ""
+"2FA WebAuthn support disabled because import of the fido2 module failed "
+"(%s)"
+msgstr ""
+"2FA WebAuthn Unterstützung deaktiviert, da das fido2 Modul nicht geladen "
+"werden konnte (%s)"
+
+#: mfa/views.py:224
+#, python-format
+msgid "We received too many invalid attempts! Please wait at least %s."
+msgstr "Wir haben zu viele fehlgeschlagene Versuche! Bitte warte mindestens %s."
+
+#: mfa/views.py:238
+msgid "You have exhausted your recovery codes. Please generate new ones now!"
+msgstr "Du hast keine Wiederherstellungscode mehr. Bitte generiere diese jetzt!"
+
+#: mfa/views.py:241
+msgid ""
+"You only have a few recovery codes remaining. Make sure to generate new "
+"ones before they run out."
+msgstr ""
+"Du hast nur noch wenige Wiederherstellungscodes übrig. Bitte generiere "
+"diese erneut bevor keine mehr übrig sind."
+
+#: mfa/views.py:245
+msgid "Two-factor authentication failed"
+msgstr "Zwei-Faktor-Authentifizierung fehlgeschlagen"
+
+#: mfa/templates/mfa/auth.html:12
+msgid "Two-Factor Authentication"
+msgstr "Zwei-Faktor-Authentifizierung"
+
+#: mfa/templates/mfa/auth.html:17
+msgid "Enable javascript for authentication with U2F/FIDO2 devices"
+msgstr "Aktiviere Javascript zur Authentifizierung mit U2F/FIDO2 Geräten"
+
+#: mfa/templates/mfa/auth.html:21
+msgid "Authentication with U2F/FIDO2 devices is not supported by your browser"
+msgstr ""
+"Authentifizierung mit U2F/FIDO2 Geräten wird von deinem Browser nicht "
+"unterstützt"
+
+#: mfa/templates/mfa/auth.html:27
+msgid "Authenticate with U2F/FIDO2 device"
+msgstr "Authentifiziere dich mit einem U2F/FIDO2 Gerät"
+
+#: mfa/templates/mfa/auth.html:30
+msgid "or"
+msgstr "oder"
+
+#: mfa/templates/mfa/auth.html:33
+msgid "Code from your authenticator app or recovery code"
+msgstr "Code aus deiner Authentifikator-App oder Wiederherstellungscode"
+
+#: mfa/templates/mfa/auth.html:36
+msgid "Verify"
+msgstr "Verifizieren"
+
+#: mfa/templates/mfa/auth.html:39 role/templates/role/show.html:14
+#: user/templates/user/show.html:8
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: mfa/templates/mfa/disable.html:6
+msgid ""
+"When you proceed, all recovery codes, registered authenticator "
+"applications and devices will be invalidated.\n"
+"\tYou can later generate new recovery codes and setup your applications "
+"and devices again."
+msgstr ""
+"Wenn du fortfährst werden alle Wiederherstellungscodes, registrierte "
+"Authentifikator-Apps und Geräte ungültig gemacht. Du kannst später neue "
+"Wiederherstellungscodes generieren und das Setup der Anwendungen und "
+"Geräte erneut durchführen."
+
+#: mfa/templates/mfa/disable.html:11 mfa/templates/mfa/setup.html:32
+msgid "Disable two-factor authentication"
+msgstr "Zwei-Faktor-Authentifizierung (2FA) deaktivieren"
+
+#: mfa/templates/mfa/setup.html:18
+msgid "Two-factor authentication is currently <strong>enabled</strong>."
+msgstr "Die Zwei-Faktor-Authentifizierung ist derzeit <strong>aktiviert</strong>."
+
+#: mfa/templates/mfa/setup.html:20
+msgid "Two-factor authentication is currently <strong>disabled</strong>."
+msgstr "Die Zwei-Faktor-Authentifizierung ist derzeit <strong>deaktiviert</strong>."
+
+#: mfa/templates/mfa/setup.html:23
+msgid ""
+"You need to generate recovery codes and setup at least one authentication"
+" method to enable two-factor authentication."
+msgstr ""
+"Du musst Wiederherstellungscodes generieren und mindestens eine "
+"Authentifizierungsmethode hinzufügen um Zwei-Faktor-Authentifizierung "
+"nutzen zu können."
+
+#: mfa/templates/mfa/setup.html:25
+msgid ""
+"You need to setup at least one authentication method to enable two-factor"
+" authentication."
+msgstr ""
+"Du musst mindestens eine Authentifizierungsmethode hinzufügen um Zwei-"
+"Faktor-Authentifizierung nutzen zu können."
+
+#: mfa/templates/mfa/setup.html:36
+msgid "Reset two-factor configuration"
+msgstr "Zwei-Faktor-Authentifizierung zurücksetzen"
+
+#: mfa/templates/mfa/setup.html:46 mfa/templates/mfa/setup_recovery.html:5
+msgid "Recovery Codes"
+msgstr "Wiederherstellungscodes"
+
+#: mfa/templates/mfa/setup.html:48
+msgid ""
+"Recovery codes allow you to login and setup new two-factor methods when "
+"you lost your registered second factor."
+msgstr ""
+"Wiederherstellungscodes erlauben die Anmeldung und das erneute Hinzufügen"
+" einer Zwei-Faktor-Methode, falls der Zweite Faktor verloren geht."
+
+#: mfa/templates/mfa/setup.html:52
+msgid ""
+"You need to setup recovery codes before you can setup up authenticator "
+"apps or U2F/FIDO2 devices."
+msgstr ""
+"Du musst Wiederherstellungscodes generieren bevor du einen "
+"Authentifikator-App oder ein U2F/FIDO2 Gerät hinzufen kannst."
+
+#: mfa/templates/mfa/setup.html:54
+msgid "Each code can only be used once."
+msgstr "Jeder Code kann nur einmal verwendet werden."
+
+#: mfa/templates/mfa/setup.html:62
+msgid "Generate recovery codes to enable two-factor authentication"
+msgstr ""
+"Generiere Wiederherstellungscodes um die Zwei-Faktor-Authentifizierung zu"
+" aktivieren"
+
+#: mfa/templates/mfa/setup.html:66
+msgid "Generate new recovery codes"
+msgstr "Generiere neue Wiederherstellungscodes"
+
+#: mfa/templates/mfa/setup.html:75
+msgid "You have no remaining recovery codes."
+msgstr "Du hast keine Wiederherstellungscodes übrig."
+
+#: mfa/templates/mfa/setup.html:85
+msgid "Authenticator Apps (TOTP)"
+msgstr "Authentifikator-Apps (TOTP)"
+
+#: mfa/templates/mfa/setup.html:87
+msgid "Use an authenticator application on your mobile device as a second factor."
+msgstr "Nutze eine Authentifikator-App auf deinem Mobilgerät als zweiten Faktor."
+
+#: mfa/templates/mfa/setup.html:90
+msgid ""
+"The authenticator app generates a 6-digit one-time code each time you "
+"login.\n"
+"\t\t\tCompatible apps are freely available for most phones."
+msgstr ""
+"Die Authentifikator-App generiert ein 6-stelliges Einmalpasswort für "
+"jeden Login.Passende Apps sind kostenlos verfügbar für die meisten "
+"Mobilgeräte."
+
+#: mfa/templates/mfa/setup.html:98 mfa/templates/mfa/setup.html:99
+#: mfa/templates/mfa/setup.html:107 mfa/templates/mfa/setup.html:157
+#: mfa/templates/mfa/setup.html:158 mfa/templates/mfa/setup.html:169
+msgid "Name"
+msgstr "Name"
+
+#: mfa/templates/mfa/setup.html:100
+msgid "Setup new app"
+msgstr "Neue App hinzufügen"
+
+#: mfa/templates/mfa/setup.html:108 mfa/templates/mfa/setup.html:170
+msgid "Registered On"
+msgstr "Registriert am"
+
+#: mfa/templates/mfa/setup.html:117 mfa/templates/mfa/setup.html:179
+#: role/templates/role/show.html:21 role/templates/role/show.html:24
+#: user/templates/user/show.html:11 user/templates/user/show.html:13
+msgid "Delete"
+msgstr "Löschen"
+
+#: mfa/templates/mfa/setup.html:122
+msgid "No authenticator apps registered yet"
+msgstr "Bisher keine Authentifikator-Apps registriert"
+
+#: mfa/templates/mfa/setup.html:134
+msgid "U2F and FIDO2 Devices"
+msgstr "U2F und FIDO2 Geräte"
+
+#: mfa/templates/mfa/setup.html:136
+msgid "Use an U2F or FIDO2 compatible hardware security key as a second factor."
+msgstr "Nutze einen U2F oder FIDO2 kompatiblen Key als zweiten Faktor."
+
+#: mfa/templates/mfa/setup.html:139
+msgid ""
+"U2F and FIDO2 devices are not supported by all browsers and can be "
+"particularly difficult to use on mobile\n"
+"\t\t\tdevices. <strong>It is strongly recommended to also setup an "
+"authenticator app</strong> to be able to login on all\n"
+"\t\t\tbrowsers."
+msgstr ""
+"U2F und FIDO2 Geräte werden nicht von allen Browsern unterstützt und "
+"können besonders auf mobilen Geräten schwer zu nutzen sein. <strong>Es "
+"wird dringend empfohlen ebenfalls eine Authentifikator-App "
+"hinzuzufügen</strong> um einen Login mit allen Browsern zu ermöglichen."
+
+#: mfa/templates/mfa/setup.html:147
+msgid "U2F/FIDO2 support not enabled"
+msgstr "U2F/FIDO2 Unterstützung nicht aktiviert"
+
+#: mfa/templates/mfa/setup.html:151
+msgid "Enable javascript in your browser to use U2F and FIDO2 devices!"
+msgstr ""
+"Aktiviere Javascript in deinem Browser, um U2F und FIDO2 Geräte nutzen zu"
+" können!"
+
+#: mfa/templates/mfa/setup.html:161
+msgid "Setup new device"
+msgstr "Neues Gerät hinzufügen"
+
+#: mfa/templates/mfa/setup.html:184
+msgid "No U2F/FIDO2 devices registered yet"
+msgstr "Bisher kein U2F/FIDO2 Gerät registriert"
+
+#: mfa/templates/mfa/setup_recovery.html:8
+msgid ""
+"Recovery codes allow you to login when you lose access to your "
+"authenticator app or U2F/FIDO device. Each code can\n"
+"\tonly be used once."
+msgstr ""
+"Wiederherstellungscodes erlauben den Login, wenn der Zugriff auf die "
+"Authentifikator-App oder das U2F/FIDO2 Gerät verloren geht. Jeder Code "
+"kann nur einmal verwendet werden."
+
+#: mfa/templates/mfa/setup_recovery.html:21
+msgid ""
+"These are your new recovery codes. Make sure to store them in a safe "
+"place or you risk losing access to your\n"
+"\taccount. All previous recovery codes are now invalid."
+msgstr ""
+"Dies sind deine Wiederherstellungscodes. Speichere sie an einem sicheren "
+"Ort, sonst könntest du den Zugriff auf dein Konto verlieren. Alle "
+"vorherigen Wiederherstellungscodes sind nun ungültig."
+
+#: mfa/templates/mfa/setup_recovery.html:28
+msgid "Download codes"
+msgstr "Codes herunterladen"
+
+#: mfa/templates/mfa/setup_recovery.html:30
+msgid "Print codes"
+msgstr "Codes ausdrucken"
+
+#: mfa/templates/mfa/setup_totp.html:6
+msgid ""
+"Install an authenticator application on your mobile device like FreeOTP "
+"or Google Authenticator and scan this QR\n"
+"\tcode. On Apple devices you can use an app called \"Authenticator\"."
+msgstr ""
+"Installiere eine Authentifikator-App auf deinem Mobilgerät wie FreeOTP "
+"oder Google Authenticator and scanne diesen QR Code. Auf Geräten von "
+"Apple kann die App \"Authenticator\" verwendet werden."
+
+#: mfa/templates/mfa/setup_totp.html:18
+msgid ""
+"If you are on your mobile device and cannot scan the code, you can click "
+"on it to open it with your\n"
+"\t\t\tauthenticator app. If that does not work, enter the following "
+"details manually into your authenticator\n"
+"\t\t\tapp:"
+msgstr ""
+"Falls du ein Mobilgerät verwendest und den Code nicht scannen kannst, "
+"kannst du drauf klick und direkt in der Authentifikator-App öffnen. Wenn "
+"das nicht funktioniert, gib die folgenden Angaben manuell in die "
+"Authentifikator-App ein:"
+
+#: mfa/templates/mfa/setup_totp.html:23
+msgid "Issuer"
+msgstr "Herausgeber"
+
+#: mfa/templates/mfa/setup_totp.html:24
+msgid "Account"
+msgstr "Konto"
+
+#: mfa/templates/mfa/setup_totp.html:25
+msgid "Secret"
+msgstr "Geheimnis"
+
+#: mfa/templates/mfa/setup_totp.html:26
+msgid "Type"
+msgstr "Typ"
+
+#: mfa/templates/mfa/setup_totp.html:27
+msgid "Digits"
+msgstr "Zeichen"
+
+#: mfa/templates/mfa/setup_totp.html:28
+msgid "Hash algorithm"
+msgstr "Hash-Algorithmus"
+
+#: mfa/templates/mfa/setup_totp.html:29
+msgid "Interval/period"
+msgstr "Intervall/Dauer"
+
+#: mfa/templates/mfa/setup_totp.html:29
+msgid "seconds"
+msgstr "Sekunden"
+
+#: mfa/templates/mfa/setup_totp.html:38
+msgid "Verify and complete setup"
+msgstr "Verifiziere und beende das Setup"
+
+#: role/views.py:44 session/views.py:126 user/views_group.py:14
+#: user/views_user.py:22
+msgid "Access denied"
+msgstr "Zugriff verweigert"
+
+#: role/views.py:51 user/templates/user/show.html:21
+#: user/templates/user/show.html:93
+msgid "Roles"
+msgstr "Rollen"
+
+#: role/views.py:101
+msgid "Locked roles cannot be deleted"
+msgstr "Gesperrte Rollen können nicht gelöscht werden"
+
+#: role/templates/role/list.html:8 user/templates/user/list.html:8
+msgid "New"
+msgstr "Neu"
+
+#: role/templates/role/list.html:14
+msgid "roleid"
+msgstr "Rollen ID"
+
+#: role/templates/role/list.html:15 role/templates/role/show.html:86
+#: role/templates/role/show.html:127 user/templates/group/list.html:10
+#: user/templates/group/show.html:11 user/templates/user/show.html:98
+#: user/templates/user/show.html:130
+msgid "name"
+msgstr "Name"
+
+#: role/templates/role/list.html:16 role/templates/role/show.html:87
+#: role/templates/role/show.html:128 user/templates/group/list.html:11
+#: user/templates/user/show.html:99 user/templates/user/show.html:131
+msgid "description"
+msgstr "Beschreibung"
+
+#: role/templates/role/show.html:6
+msgid ""
+"Name, moderator group, included roles and groups of this role are managed"
+" externally."
+msgstr ""
+"Name, Moderator:innengruppe, enthaltene Rollen und Gruppen dieser Rolle "
+"werden extern verwaltet."
+
+#: role/templates/role/show.html:13
+#: selfservice/templates/selfservice/self.html:67
+#: user/templates/user/show.html:7
+msgid "Save"
+msgstr "Speichern"
+
+#: role/templates/role/show.html:17 role/templates/role/show.html:23
+msgid "Set as default"
+msgstr "Als Default setzen"
+
+#: role/templates/role/show.html:19
+msgid "Unset as default"
+msgstr "Nicht mehr als Default setzen"
+
+#: role/templates/role/show.html:29
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: role/templates/role/show.html:32
+msgid "Included roles"
+msgstr "Enthaltene Rollen"
+
+#: role/templates/role/show.html:35 role/templates/role/show.html:122
+msgid "Included groups"
+msgstr "Enthaltene Gruppen"
+
+#: role/templates/role/show.html:42
+msgid "Role Name"
+msgstr "Rollenname"
+
+#: role/templates/role/show.html:48
+msgid "Description"
+msgstr "Beschreibung"
+
+#: role/templates/role/show.html:54
+msgid "Moderator Group"
+msgstr "Moderator:innengruppe"
+
+#: role/templates/role/show.html:56
+msgid "No Moderator Group"
+msgstr "Keine Moderator:innengruppe"
+
+#: role/templates/role/show.html:63
+msgid "Moderators"
+msgstr "Moderator:innen"
+
+#: role/templates/role/show.html:71 user/templates/group/show.html:15
+msgid "Members"
+msgstr "Mitglieder"
+
+#: role/templates/role/show.html:81
+msgid "Roles to include groups from recursively"
+msgstr "Rollen, deren Gruppen rekursiv enthalten sein sollen"
+
+#: role/templates/role/show.html:88
+msgid "currently includes groups"
+msgstr "derzeit enthaltene Gruppen"
+
+#: role/templates/role/show.html:129
+msgid "2FA required"
+msgstr "2FA erforderlich"
+
+#: selfservice/views.py:24
+msgid "Selfservice"
+msgstr ""
+
+#: selfservice/views.py:37
+msgid "Display name changed."
+msgstr "Anzeigename geändert."
+
+#: selfservice/views.py:39
+msgid "Display name is not valid."
+msgstr "Anzeigename ist nicht valide."
+
+#: selfservice/views.py:42
+msgid "Passwords do not match"
+msgstr "Die Passwörter stimmen nicht überein"
+
+#: selfservice/views.py:45
+msgid "Password changed."
+msgstr "Passwort geändert."
+
+#: selfservice/views.py:48
+msgid "Password could not be set."
+msgstr "Das Passwort konnte nicht gesetzt werden."
+
+#: selfservice/views.py:51
+msgid "We sent you an email, please verify your mail address."
+msgstr "Wir haben dir eine E-Mail gesendet, bitte prüfe deine E-Mail-Adresse."
+
+#: selfservice/templates/selfservice/forgot_password.html:11
+msgid "Forgot password"
+msgstr "Passwort vergessen"
+
+#: selfservice/templates/selfservice/forgot_password.html:14
+#: selfservice/templates/selfservice/self.html:25
+#: session/templates/session/login.html:14 user/templates/user/show.html:51
+msgid "Login Name"
+msgstr "Anmeldename"
+
+#: selfservice/templates/selfservice/forgot_password.html:18
+msgid "Mail Address"
+msgstr "Mail-Adresse"
+
+#: selfservice/templates/selfservice/forgot_password.html:22
+msgid "Send password reset mail"
+msgstr "Passwort-Zurücksetzen-Mail versenden"
+
+#: selfservice/templates/selfservice/self.html:7
+msgid ""
+"Some permissions require you to setup two-factor authentication.\n"
+"\tThese permissions are not in effect until you do that."
+msgstr ""
+
+#: selfservice/templates/selfservice/self.html:13
+msgid "Manage two-factor authentication"
+msgstr "Zwei-Faktor-Authentifizierung (2FA) bearbeiten"
+
+#: selfservice/templates/selfservice/self.html:21
+msgid "Uid"
+msgstr ""
+
+#: selfservice/templates/selfservice/self.html:29
+#: user/templates/user/show.html:66
+msgid "Display Name"
+msgstr "Anzeigename"
+
+#: selfservice/templates/selfservice/self.html:33
+#: user/templates/user/show.html:73
+msgid "Mail"
+msgstr "E-Mail-Adresse"
+
+#: selfservice/templates/selfservice/self.html:36
+msgid "We will send you a confirmation mail to set a new mail address."
+msgstr ""
+"Wir werden dir eine Bestätigungsmail zum Setzen der neuen E-Mail-Adresse "
+"senden."
+
+#: selfservice/templates/selfservice/self.html:40
+#: session/templates/session/login.html:18 user/templates/user/show.html:80
+msgid "Password"
+msgstr "Passwort"
+
+#: selfservice/templates/selfservice/self.html:43
+#: selfservice/templates/selfservice/set_password.html:17
+#: user/templates/user/show.html:87
+msgid ""
+"At least 8 and at most 256 characters, no other special requirements. But"
+" please don't be stupid, do use a password manager."
+msgstr ""
+"Mindestens 8 und maximal 256 Zeichen, keine weiteren Einschränkungen. "
+"Bitte sei nicht dumm und verwende einen Passwort-Manager."
+
+#: selfservice/templates/selfservice/self.html:47
+msgid "Password Repeat"
+msgstr "Passwort wiederholen"
+
+#: selfservice/templates/selfservice/self.html:53
+msgid "You have this role"
+msgstr "Du hast diese Rolle"
+
+#: selfservice/templates/selfservice/self.html:55
+msgid "You currently have these roles"
+msgstr "Du hast aktuell folgende Rollen"
+
+#: selfservice/templates/selfservice/self.html:63
+msgid "You currently don't have any roles."
+msgstr "Du hast aktuell keine Rollen."
+
+#: selfservice/templates/selfservice/set_password.html:11
+msgid "Reset password"
+msgstr "Passwort zurücksetzen"
+
+#: selfservice/templates/selfservice/set_password.html:14
+msgid "New Password"
+msgstr "Neues Passwort"
+
+#: selfservice/templates/selfservice/set_password.html:21
+msgid "Repeat Password"
+msgstr "Passwort wiederholen"
+
+#: selfservice/templates/selfservice/set_password.html:25
+msgid "Set password"
+msgstr "Passwort setzen"
+
+#: services/views.py:83
+msgid "Services"
+msgstr ""
+
+#: services/templates/services/overview.html:8
+msgid ""
+"Some services may not be publicly listed! Log in to see all services you "
+"have access to."
+msgstr ""
+"Einige Services sind eventuell nicht öffentlich aufgelistet! Melde dich "
+"an um alle deine Service zu sehen."
+
+#: services/templates/services/overview.html:44
+msgid "No access"
+msgstr "Kein Zugriff"
+
+#: services/templates/services/overview.html:78
+#: user/templates/user/list.html:58 user/templates/user/list.html:81
+msgid "Close"
+msgstr "Schließen"
+
+#: session/views.py:87
+#, python-format
+msgid ""
+"We received too many invalid login attempts for this user! Please wait at"
+" least %s."
+msgstr ""
+"Wir haben zu viele fehlgeschlagene Anmeldeversuche für diesen Account! "
+"Bitte warte mindestens %s."
+
+#: session/views.py:89
+#, python-format
+msgid ""
+"We received too many requests from your ip address/network! Please wait "
+"at least %s."
+msgstr ""
+"Wir haben zu viele Anfragen von der IP Adresses / aus deinem Netzwerk "
+"bekommen! Bitte warte mindestens %s."
+
+#: session/views.py:95
+msgid "Login name or password is wrong"
+msgstr "Der Anmeldename oder das Passwort ist falsch"
+
+#: session/views.py:98
+msgid "You do not have access to this service"
+msgstr "Du hast keinen Zugriff auf diesen Service"
+
+#: session/views.py:110 session/views.py:121
+msgid "You need to login first"
+msgstr "Du musst dich erst anmelden"
+
+#: session/templates/session/login.html:22
+msgid "Login"
+msgstr "Anmelden"
+
+#: session/templates/session/login.html:26
+msgid "Register"
+msgstr "Registrieren"
+
+#: session/templates/session/login.html:29
+msgid "Forgot Password?"
+msgstr "Passwort vergessen?"
+
+#: templates/base.html:75
+msgid "Logout"
+msgstr "Abmelden"
+
+#: templates/base.html:108
+msgid "Sourcecode"
+msgstr "Quellcode"
+
+#: user/views_group.py:21
+msgid "Groups"
+msgstr "Gruppen"
+
+#: user/views_user.py:29
+msgid "Users"
+msgstr "Nutzer:innen"
+
+#: user/views_user.py:49
+msgid "Login name does not meet requirements"
+msgstr "Anmeldename entspricht nicht den Anforderungen"
+
+#: user/views_user.py:54
+msgid "Mail is invalid"
+msgstr "E-Mail-Adresse nicht valide"
+
+#: user/views_user.py:58
+msgid "Display name does not meet requirements"
+msgstr "Anzeigename entspricht nicht den Anforderungen"
+
+#: user/views_user.py:75
+msgid "Service user created"
+msgstr "Service-Account erstellt"
+
+#: user/views_user.py:78
+msgid "User created. We sent the user a password reset link by mail"
+msgstr ""
+"Nutzer:in erstellt. Wir haben der/dem Nutzer:in eine E-Mail mit einem "
+"Passwort Zurücksetzen Link gesendet"
+
+#: user/views_user.py:80
+msgid "User updated"
+msgstr "Nutzer:in aktualisiert"
+
+#: user/views_user.py:91
+msgid "Deleted user"
+msgstr "Nutzer:in gelöscht"
+
+#: user/templates/group/list.html:9 user/templates/group/show.html:7
+msgid "gid"
+msgstr ""
+
+#: user/templates/user/list.html:11
+msgid "CSV import"
+msgstr "CSV Import"
+
+#: user/templates/user/list.html:17
+msgid "uid"
+msgstr ""
+
+#: user/templates/user/list.html:18
+msgid "login name"
+msgstr "Anmeldename"
+
+#: user/templates/user/list.html:19
+msgid "display name"
+msgstr "Anzeigename"
+
+#: user/templates/user/list.html:20
+msgid "roles"
+msgstr "Rollen"
+
+#: user/templates/user/list.html:57
+msgid "Import a csv formated list of users"
+msgstr "Importiere eine als CSV formatierte Liste von Nutzer:innen"
+
+#: user/templates/user/list.html:77
+msgid "Ignore login name blacklist"
+msgstr ""
+
+#: user/templates/user/list.html:82
+msgid "Import"
+msgstr "Importieren"
+
+#: user/templates/user/show.html:10
+msgid "Reset 2FA"
+msgstr "2FA zurücksetzen"
+
+#: user/templates/user/show.html:18
+msgid "Profile"
+msgstr "Profile"
+
+#: user/templates/user/show.html:54
+msgid ""
+"Only letters, numbers and underscore (\"_\") are allowed. At most 32, at "
+"least 2 characters. There is a word blacklist. Must be unique."
+msgstr ""
+"Nur Buchstaben, Zahlen und Unterstriche (\"_\") sind erlaubt. Maximal 32,"
+" mindestens 2 Zeichen. Muss einmalig sein."
+
+#: user/templates/user/show.html:69
+msgid ""
+"If you leave this empty it will be set to the login name. At most 128, at"
+" least 2 characters. No character restrictions."
+msgstr ""
+"Wenn das Feld leer bleibt, wird der Anmeldename verwendet. Maximal 128, "
+"midestens 2 Zeichen. Keine Zeichenbeschränkung."
+
+#: user/templates/user/show.html:76
+msgid ""
+"Do a sanity check here. A user can take over another account if both have"
+" the same mail address set."
+msgstr ""
+"Prüfe die Einmaligkeit. Ein:e Nutzer:in kann einen anderen Account "
+"übernehmen, wenn beide die selbe E-Mail-Adresse verwenden."
+
+#: user/templates/user/show.html:84
+msgid "mail to set it will be sent"
+msgstr "Mail zum Setzen wird versendet"
+
+#: user/templates/user/show.html:126
+msgid "Resulting groups (only updated after save)"
+msgstr "Resultierende Gruppen (wird nur aktualisiert beim Speichern)"
+

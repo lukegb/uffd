@@ -5,7 +5,7 @@
 {% set iconstyle = 'style="width: 1.8em;"'|safe %}
 
 {% if not user %}
-<div class="alert alert-warning" role="alert">Some services may not be publicly listed! Log in to see all services you have access to.</div>
+<div class="alert alert-warning" role="alert">{{_("Some services may not be publicly listed! Log in to see all services you have access to.")}}</div>
 {% endif %}
 
 {% if banner %}
@@ -41,7 +41,7 @@
       </div>
 			<div class="list-group list-group-flush">
 				{% if not service.has_access %}
-					<div class="list-group-item"><i class="fas fa-shield-alt" {{ iconstyle }}></i> No access</div>
+					<div class="list-group-item"><i class="fas fa-shield-alt" {{ iconstyle }}></i> {{_("No access")}}</div>
 				{% elif service.permission %}
 					<div class="list-group-item"><i class="fas fa-shield-alt" {{ iconstyle }}></i> {{ service.permission }}</div>
 				{% endif %}
@@ -75,7 +75,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title">{{ info.title }}</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button" class="close" data-dismiss="modal" aria-label="{{_("Close")}}">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>

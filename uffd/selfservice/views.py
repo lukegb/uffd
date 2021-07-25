@@ -5,6 +5,7 @@ from email.message import EmailMessage
 import email.utils
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session
+from flask_babel import gettext as _, lazy_gettext
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
@@ -20,7 +21,7 @@ bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix=
 reset_ratelimit = Ratelimit('passwordreset', 1*60*60, 3)
 
 @bp.route("/")
-@register_navbar('Selfservice', icon='portrait', blueprint=bp, visible=lambda: bool(request.user))
+@register_navbar(lazy_gettext('Selfservice'), icon='portrait', blueprint=bp, visible=lambda: bool(request.user))
 @login_required()
 def index():
 	return render_template('selfservice/self.html', user=request.user)
@@ -33,21 +34,21 @@ def update():
 	user = request.user
 	if request.values['displayname'] != user.displayname:
 		if user.set_displayname(request.values['displayname']):
-			flash('Display name changed.')
+			flash(_('Display name changed.'))
 		else:
-			flash('Display name is not valid.')
+			flash(_('Display name is not valid.'))
 	if request.values['password1']:
 		if not request.values['password1'] == request.values['password2']:
-			flash('Passwords do not match')
+			flash(_('Passwords do not match'))
 		else:
 			if user.set_password(request.values['password1']):
-				flash('Password changed.')
+				flash(_('Password changed.'))
 				password_changed = True
 			else:
-				flash('Password could not be set.')
+				flash(_('Password could not be set.'))
 	if request.values['mail'] != user.mail:
 		send_mail_verification(user.loginname, request.values['mail'])
-		flash('We sent you an email, please verify your mail address.')
+		flash(_('We sent you an email, please verify your mail address.'))
 	ldap.session.commit()
 	# When using a user_connection, update the connection on password-change
 	if password_changed and current_app.config['LDAP_SERVICE_USER_BIND']:

@@ -2,7 +2,10 @@
 
 {% block body %}
 
-<p>Install an authenticator application on your mobile device like FreeOTP or Google Authenticator and scan this QR code. On Apple devices you can use an app called "Authenticator".</p>
+<p>
+	{{_("Install an authenticator application on your mobile device like FreeOTP or Google Authenticator and scan this QR
+	code. On Apple devices you can use an app called \"Authenticator\".")}}
+</p>
 
 <div class="row">
 	<div class="mx-auto col-9 col-md-4 mb-3">
@@ -11,15 +14,19 @@
 		</a>
 	</div>
 	<div class="col-12 col-md-8">
-		<p>If you are on your mobile device and cannot scan the code, you can click on it to open it with your authenticator app. If that does not work, enter the following details manually into your authenticator app:</p>
 		<p>
-		Issuer: {{ method.issuer }}<br>
-		Account: {{ method.accountname }}<br>
-		Secret: {{ method.key }}<br>
-		Type: TOTP (time-based)<br>
-		Digits: 6<br>
-		Hash algorithm: SHA1<br>
-		Interval/period: 30 seconds
+			{{_("If you are on your mobile device and cannot scan the code, you can click on it to open it with your
+			authenticator app. If that does not work, enter the following details manually into your authenticator
+			app:")}}
+		</p>
+		<p>
+			{{_("Issuer")}}: {{ method.issuer }}<br>
+			{{_("Account")}}: {{ method.accountname }}<br>
+			{{_("Secret")}}: {{ method.key }}<br>
+			{{_("Type")}}: TOTP (time-based)<br>
+			{{_("Digits")}}: 6<br>
+			{{_("Hash algorithm")}}: SHA1<br>
+			{{_("Interval/period")}}: 30 {{_("seconds")}}
 		</p>
 
 	</div>
@@ -28,7 +35,7 @@
 <form action="{{ url_for('mfa.setup_totp_finish', name=name) }}" method="POST" class="form">
 	<div class="row m-0">
 		<input type="text" name="code" class="form-control mb-2 mr-2 col-auto col-md" id="code" placeholder="Code" required autofocus>
-		<button type="submit" class="btn btn-primary mb-2 col col-md-auto">Verify and complete setup</button>
+		<button type="submit" class="btn btn-primary mb-2 col col-md-auto">{{_("Verify and complete setup")}}</button>
 	</div>
 </form>
 

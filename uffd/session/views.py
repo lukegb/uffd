@@ -3,6 +3,7 @@ import secrets
 import functools
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session, abort
+from flask_babel import gettext as _
 
 from uffd.database import db
 from uffd.csrf import csrf_protect
@@ -86,18 +87,18 @@ def login():
 	host_delay = host_ratelimit.get_delay()
 	if login_delay or host_delay:
 		if login_delay > host_delay:
-			flash('We received too many invalid login attempts for this user! Please wait at least %s.'%format_delay(login_delay))
+			flash(_('We received too many invalid login attempts for this user! Please wait at least %s.')%format_delay(login_delay))
 		else:
-			flash('We received too many requests from your ip address/network! Please wait at least %s.'%format_delay(host_delay))
+			flash(_('We received too many requests from your ip address/network! Please wait at least %s.')%format_delay(host_delay))
 		return render_template('session/login.html', ref=request.values.get('ref'))
 	user = login_get_user(username, password)
 	if user is None:
 		login_ratelimit.log(username)
 		host_ratelimit.log()
-		flash('Login name or password is wrong')
+		flash(_('Login name or password is wrong'))
 		return render_template('session/login.html', ref=request.values.get('ref'))
 	if not user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
-		flash('You do not have access to this service')
+		flash(_('You do not have access to this service'))
 		return render_template('session/login.html', ref=request.values.get('ref'))
 	set_session(user, password=password)
 	return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
@@ -109,7 +110,7 @@ def login_required_pre_mfa(no_redirect=False):
 			if not request.user_pre_mfa:
 				if no_redirect:
 					abort(403)
-				flash('You need to login first')
+				flash(_('You need to login first'))
 				return redirect(url_for('session.login', ref=request.url))
 			return func(*args, **kwargs)
 		return decorator
@@ -120,12 +121,12 @@ def login_required(group=None):
 		@functools.wraps(func)
 		def decorator(*args, **kwargs):
 			if not request.user_pre_mfa:
-				flash('You need to login first')
+				flash(_('You need to login first'))
 				return redirect(url_for('session.login', ref=request.url))
 			if not request.user:
 				return redirect(url_for('mfa.auth', ref=request.url))
 			if not request.user.is_in_group(group):
-				flash('Access denied')
+				flash(_('Access denied'))
 				return redirect(url_for('index'))
 			return func(*args, **kwargs)
 		return decorator

@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, current_app, abort, request
+from flask_babel import lazy_gettext, get_locale
 
 from uffd.navbar import register_navbar
 
@@ -10,12 +11,14 @@ def get_services(user=None):
 		return []
 	services = []
 	for service_data in current_app.config['SERVICES']:
-		if not service_data.get('title'):
+		service_title = get_language_specific(service_data, 'title')
+		if not service_title:
 			continue
+		service_description = get_language_specific(service_data, 'description')
 		service = {
-			'title': service_data['title'],
+			'title': service_title,
 			'subtitle': service_data.get('subtitle', ''),
-			'description': service_data.get('description', ''),
+			'description': service_description,
 			'url': service_data.get('url', ''),
 			'logo_url': service_data.get('logo_url', ''),
 			'has_access': True,
@@ -48,12 +51,15 @@ def get_services(user=None):
 			if info_data.get('required_group'):
 				if not user or not user.has_permission(info_data['required_group']):
 					continue
-			if not info_data.get('title') or not info_data.get('html'):
+			info_title = get_language_specific(info_data, 'title')
+			info_html = get_language_specific(info_data, 'html')
+			if not info_title or not info_html:
 				continue
+			info_button_text = get_language_specific(info_data, 'button_text', info_title)
 			info = {
-				'title': info_data['title'],
-				'button_text': info_data.get('button_text', info_data['title']),
-				'html': info_data['html'],
+				'title': info_title,
+				'button_text': info_button_text,
+				'html': info_html,
 				'id': '%d-%d'%(len(services), len(service['infos'])),
 			}
 			service['infos'].append(info)
@@ -67,11 +73,14 @@ def get_services(user=None):
 		services.append(service)
 	return services
 
+def get_language_specific(data, field_name, default =''):
+	return data.get(field_name + '_' + get_locale().language, data.get(field_name, default))
+
 def services_visible():
 	return len(get_services(request.user)) > 0
 
 @bp.route("/")
-@register_navbar('Services', icon='sitemap', blueprint=bp, visible=services_visible)
+@register_navbar(lazy_gettext('Services'), icon='sitemap', blueprint=bp, visible=services_visible)
 def index():
 	services = get_services(request.user)
 	if not current_app.config['SERVICES']:

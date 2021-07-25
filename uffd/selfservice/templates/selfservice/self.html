@@ -4,13 +4,13 @@
 
 {% if not user.mfa_enabled and user.compute_groups() != user.compute_groups(ignore_mfa=True) %}
 <div class="alert alert-warning" role="alert">
-	Some permissions require you to setup two-factor authentication.
-	These permissions are not in effect until you do that.
+	{{_("Some permissions require you to setup two-factor authentication.
+	These permissions are not in effect until you do that.")}}
 </div>
 {% endif %}
 
 <div class="btn-toolbar">
-	<a class="ml-auto mb-3 btn btn-primary" href="{{ url_for('mfa.setup') }}">Manage two-factor authentication</a>
+	<a class="ml-auto mb-3 btn btn-primary" href="{{ url_for('mfa.setup') }}">{{_("Manage two-factor authentication")}}</a>
 </div>
 
 <form action="{{ url_for("selfservice.update") }}" method="POST" onInput="
@@ -18,41 +18,41 @@
 	password1.setCustomValidity((password1.value.length < 8 && password1.value.length > 0) ? 'Password is too short' : '') ">
 <div class="align-self-center row">
 	<div class="form-group col-md-6">
-		<label for="user-uid">Uid</label>
+		<label for="user-uid">{{_("Uid")}}</label>
 		<input type="number" class="form-control" id="user-uid" name="uid" value="{{ user.uid }}" readonly>
 	</div>
 	<div class="form-group col-md-6">
-		<label for="user-loginname">Login Name</label>
+		<label for="user-loginname">{{_("Login Name")}}</label>
 		<input type="text" class="form-control" id="user-loginname" name="loginname" value="{{ user.loginname }}" readonly>
 	</div>
 	<div class="form-group col-md-6">
-		<label for="user-displayname">Display Name</label>
+		<label for="user-displayname">{{_("Display Name")}}</label>
 		<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ user.displayname }}">
 	</div>
 	<div class="form-group col-md-6">
-		<label for="user-mail">Mail</label>
+		<label for="user-mail">{{_("Mail")}}</label>
 		<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail }}">
 		<small class="form-text text-muted">
-			We will send you a confirmation mail to set a new mail address.
+			{{_("We will send you a confirmation mail to set a new mail address.")}}
 		</small>
 	</div>
 	<div class="form-group col-md-6">
-		<label for="user-password1">Password</label>
+		<label for="user-password1">{{_("Password")}}</label>
 		<input type="password" class="form-control" id="user-password1" name="password1" placeholder="●●●●●●●●">
 		<small class="form-text text-muted">
-			At least 8 and at most 256 characters, no other special requirements. But please don't be stupid, do use a password manager.
+			{{_("At least 8 and at most 256 characters, no other special requirements. But please don't be stupid, do use a password manager.")}}
 		</small>
 	</div>
 	<div class="form-group col-md-6">
-		<label for="user-password2">Password Repeat</label>
+		<label for="user-password2">{{_("Password Repeat")}}</label>
 		<input type="password" class="form-control" id="user-password2" name="password2" placeholder="●●●●●●●●">
 	</div>
 	<div class="form-group">
 		{% if user.roles|length %}
 			{% if user.roles|length == 1 %}
-				You have this role:
+				{{_("You have this role")}}:
 			{% else %}
-				You currently have these roles:
+				{{_("You currently have these roles")}}:
 			{% endif %}
 			<ul>
 				{% for role in user.roles|sort(attribute="name") %}
@@ -60,11 +60,11 @@
 				{% endfor %}
 			</ul>
 		{% else %}
-			You currently don't have any roles.
+			{{_("You currently don't have any roles.")}}
 		{% endif %}
 	</div>
 	<div class="form-group col-md-12">
-		<button type="submit" class="btn btn-primary float-right"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
+		<button type="submit" class="btn btn-primary float-right"><i class="fa fa-save" aria-hidden="true"></i> {{_("Save")}}</button>
 	</div>
 </div>
 </form>

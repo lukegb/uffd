@@ -2,6 +2,7 @@ import csv
 import io
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
+from flask_babel import gettext as _, lazy_gettext
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
@@ -18,14 +19,14 @@ bp = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/
 @login_required()
 def user_acl(): #pylint: disable=inconsistent-return-statements
 	if not user_acl_check():
-		flash('Access denied')
+		flash(_('Access denied'))
 		return redirect(url_for('index'))
 
 def user_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp.route("/")
-@register_navbar('Users', icon='users', blueprint=bp, visible=user_acl_check)
+@register_navbar(lazy_gettext('Users'), icon='users', blueprint=bp, visible=user_acl_check)
 def index():
 	return render_template('user/list.html', users=User.query.all())
 
@@ -45,16 +46,16 @@ def update(uid=None):
 		if request.form.get('serviceaccount'):
 			user.is_service_user = True
 		if not user.set_loginname(request.form['loginname'], ignore_blacklist=ignore_blacklist):
-			flash('Login name does not meet requirements')
+			flash(_('Login name does not meet requirements'))
 			return redirect(url_for('user.show'))
 	else:
 		user = User.query.filter_by(uid=uid).first_or_404()
 	if user.mail != request.form['mail'] and not user.set_mail(request.form['mail']):
-		flash('Mail is invalid')
+		flash(_('Mail is invalid'))
 		return redirect(url_for('user.show', uid=uid))
 	new_displayname = request.form['displayname'] if request.form['displayname'] else request.form['loginname']
 	if user.displayname != new_displayname and not user.set_displayname(new_displayname):
-		flash('Display name does not meet requirements')
+		flash(_('Display name does not meet requirements'))
 		return redirect(url_for('user.show', uid=uid))
 	new_password = request.form.get('password')
 	if uid is not None and new_password:
@@ -71,12 +72,12 @@ def update(uid=None):
 	db.session.commit()
 	if uid is None:
 		if user.is_service_user:
-			flash('Service user created')
+			flash(_('Service user created'))
 		else:
 			send_passwordreset(user, new=True)
-			flash('User created. We sent the user a password reset link by mail')
+			flash(_('User created. We sent the user a password reset link by mail'))
 	else:
-		flash('User updated')
+		flash(_('User updated'))
 	return redirect(url_for('user.show', uid=user.uid))
 
 @bp.route("/<int:uid>/del")
@@ -87,7 +88,7 @@ def delete(uid):
 	ldap.session.delete(user)
 	ldap.session.commit()
 	db.session.commit()
-	flash('Deleted user')
+	flash(_('Deleted user'))
 	return redirect(url_for('user.index'))
 
 @bp.route("/csv", methods=['POST'])

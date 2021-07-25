@@ -13,22 +13,27 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 {% set mfa_setup = request.user.mfa_recovery_codes and not mfa_enabled %}
 
 {% block body %}
-<p>Two-factor authentication is currently <strong>{{ 'enabled' if mfa_enabled else 'disabled' }}</strong>.
+<p>
+	{% if mfa_enabled %}
+	{{ _("Two-factor authentication is currently <strong>enabled</strong>.")|safe }}
+	{% else %}
+	{{ _("Two-factor authentication is currently <strong>disabled</strong>.")|safe }}
+	{% endif %}
 {% if mfa_init %}
-You need to generate recovery codes and setup at least one authentication method to enable two-factor authentication.
+	{{_("You need to generate recovery codes and setup at least one authentication method to enable two-factor authentication.")}}
 {% elif mfa_setup %}
-You need to setup at least one authentication method to enable two-factor authentication.
+	{{_("You need to setup at least one authentication method to enable two-factor authentication.")}}
 {% endif %}
 </p>
 {% if mfa_setup or mfa_enabled %}
 <div class="clearfix">
 	{% if mfa_enabled %}
 	<form class="form float-right" action="{{ url_for('mfa.disable') }}">
-		<button type="submit" class="btn btn-danger mb-2">Disable two-factor authentication</button>
+		<button type="submit" class="btn btn-danger mb-2">{{_("Disable two-factor authentication")}}</button>
 	</form>
 	{% else %}
 	<form class="form float-right" action="{{ url_for('mfa.disable_confirm') }}" method="POST">
-		<button type="submit" class="btn btn-light mb-2">Reset two-factor configuration</button>
+		<button type="submit" class="btn btn-light mb-2">{{_("Reset two-factor configuration")}}</button>
 	</form>
 	{% endif %}
 </div>
@@ -38,29 +43,37 @@ You need to setup at least one authentication method to enable two-factor authen
 
 <div class="row mt-3">
 	<div class="col-12 col-md-5">
-		<h4>Recovery Codes</h4>
-		<p>Recovery codes allow you to login and setup new two-factor methods when you lost your registered second factor.</p>
+		<h4>{{_("Recovery Codes")}}</h4>
+		<p>
+			{{_("Recovery codes allow you to login and setup new two-factor methods when you lost your registered second factor.")}}
+		</p>
 		<p>
 			{% if mfa_init %}<strong>{% endif %}
-			You need to setup recovery codes before you can setup up authenticator apps or U2F/FIDO2 devices.
+			{{_("You need to setup recovery codes before you can setup up authenticator apps or U2F/FIDO2 devices.")}}
 			{% if mfa_init %}</strong>{% endif %}
-			Each code can only be used once.
+			{{_("Each code can only be used once.")}}
 		</p>
 	</div>
 
 	<div class="col-12 col-md-7">
 		<form class="form" action="{{ url_for('mfa.setup_recovery') }}" method="POST">
 			{% if mfa_init %}
-			<button type="submit" class="btn btn-primary mb-2 col">Generate recovery codes to enable two-factor authentication</button>
+			<button type="submit" class="btn btn-primary mb-2 col">
+				{{_("Generate recovery codes to enable two-factor authentication")}}
+			</button>
 			{% else %}
-			<button type="submit" class="btn btn-primary mb-2 col">Generate new recovery codes</button>
+			<button type="submit" class="btn btn-primary mb-2 col">
+				{{_("Generate new recovery codes")}}
+			</button>
 			{% endif %}
 		</form>
 
 		{% if request.user.mfa_recovery_codes %}
 		<p>{{ request.user.mfa_recovery_codes|length }} recovery codes remain</p>
 		{% elif not request.user.mfa_recovery_codes and mfa_enabled %}
-		<p><strong>You have no remaining recovery codes.</strong></p>
+		<p>
+			<strong>{{_("You have no remaining recovery codes.")}}</strong>
+		</p>
 		{% endif %}
 	</div>
 </div>
@@ -69,26 +82,30 @@ You need to setup at least one authentication method to enable two-factor authen
 
 <div class="row mt-3">
 	<div class="col-12 col-md-5">
-		<h4>Authenticator Apps (TOTP)</h4>
-		<p>Use an authenticator application on your mobile device as a second factor.</p>
-		<p>The authenticator app generates a 6-digit one-time code each time you login.
-		Compatible apps are freely available for most phones.</p>
+		<h4>{{_("Authenticator Apps (TOTP)")}}</h4>
+		<p>
+			{{_("Use an authenticator application on your mobile device as a second factor.")}}
+		</p>
+		<p>
+			{{_("The authenticator app generates a 6-digit one-time code each time you login.
+			Compatible apps are freely available for most phones.")}}
+		</p>
 	</div>
 
 	<div class="col-12 col-md-7">
 		<form class="form mb-2" action="{{ url_for('mfa.setup_totp') }}">
 			<div class="row m-0">
-				<label class="sr-only" for="totp-name">Name</label>
-				<input type="text" name="name" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="totp-name" placeholder="Name" required {{ 'disabled' if mfa_init }}>
-				<button type="submit" id="totp-submit" class="btn btn-primary mb-2 col" {{ 'disabled' if mfa_init }}>Setup new app</button>
+				<label class="sr-only" for="totp-name">{{_("Name")}}</label>
+				<input type="text" name="name" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="totp-name" placeholder="{{_("Name")}}" required {{ 'disabled' if mfa_init }}>
+				<button type="submit" id="totp-submit" class="btn btn-primary mb-2 col" {{ 'disabled' if mfa_init }}>{{_("Setup new app")}}</button>
 			</div>
 		</form>
 
 		<table class="table">
 			<thead>
 				<tr>
-					<th scope="col">Name</th>
-					<th scope="col">Registered On</th>
+					<th scope="col">{{_("Name")}}</th>
+					<th scope="col">{{_("Registered On")}}</th>
 					<th scope="col"></th>
 				</tr>
 			</thead>
@@ -97,12 +114,12 @@ You need to setup at least one authentication method to enable two-factor authen
 				<tr>
 					<td>{{ method.name }}</td>
 					<td>{{ method.created.strftime('%b %d, %Y') }}</td>
-					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_totp', id=method.id) }}">Delete</a></td>
+					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_totp', id=method.id) }}">{{_("Delete")}}</a></td>
 				</tr>
 				{% endfor %}
 				{% if not request.user.mfa_totp_methods %}
 				<tr class="table-secondary">
-					<td colspan=3 class="text-center">No authenticator apps registered yet</td>
+					<td colspan=3 class="text-center">{{_("No authenticator apps registered yet")}}</td>
 				</tr>
 				{% endif %}
 			</tbody>
@@ -114,27 +131,34 @@ You need to setup at least one authentication method to enable two-factor authen
 
 <div class="row">
 	<div class="col-12 col-md-5">
-		<h4>U2F and FIDO2 Devices</h4>
-		<p>Use an U2F or FIDO2 compatible hardware security key as a second factor.</p>
-		<p>U2F and FIDO2 devices are not supported by all browsers and can be particularly difficult to use on mobile devices.
-		<strong>It is strongly recommended to also setup an authenticator app</strong> to be able to login on all browsers.</p>
+		<h4>{{_("U2F and FIDO2 Devices")}}</h4>
+		<p>
+			{{_("Use an U2F or FIDO2 compatible hardware security key as a second factor.")}}
+		</p>
+		<p>
+			{{_("U2F and FIDO2 devices are not supported by all browsers and can be particularly difficult to use on mobile
+			devices. <strong>It is strongly recommended to also setup an authenticator app</strong> to be able to login on all
+			browsers.")}}
+		</p>
 	</div>
 
 	<div class="col-12 col-md-7">
 		{% if not webauthn_supported %}
-		<div class="alert alert-warning" role="alert">U2F/FIDO2 support not enabled</div>
+		<div class="alert alert-warning" role="alert">{{_("U2F/FIDO2 support not enabled")}}</div>
 		{% endif %}
 		<noscript>
-			<div class="alert alert-warning" role="alert">Enable javascript in your browser to use U2F and FIDO2 devices!</div>
+			<div class="alert alert-warning" role="alert">
+				{{_("Enable javascript in your browser to use U2F and FIDO2 devices!")}}
+			</div>
 		</noscript>
 		<div id="webauthn-alert" class="alert alert-warning d-none" role="alert"></div>
 		<form id="webauthn-form" class="form mb-2">
 			<div class="row m-0">
-				<label class="sr-only" for="webauthn-name">Name</label>
-				<input type="text" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="webauthn-name" placeholder="Name" required disabled>
+				<label class="sr-only" for="webauthn-name">{{_("Name")}}</label>
+				<input type="text" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="webauthn-name" placeholder="{{_("Name")}}" required disabled>
 				<button type="submit" id="webauthn-btn" class="btn btn-primary mb-2 col" disabled>
 					<span id="webauthn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-					<span id="webauthn-btn-text">Setup new device</span>
+					<span id="webauthn-btn-text">{{_("Setup new device")}}</span>
 				</button>
 			</div>
 		</form>
@@ -142,8 +166,8 @@ You need to setup at least one authentication method to enable two-factor authen
 		<table class="table">
 			<thead>
 				<tr>
-					<th scope="col">Name</th>
-					<th scope="col">Registered On</th>
+					<th scope="col">{{_("Name")}}</th>
+					<th scope="col">{{_("Registered On")}}</th>
 					<th scope="col"></th>
 				</tr>
 			</thead>
@@ -152,12 +176,12 @@ You need to setup at least one authentication method to enable two-factor authen
 				<tr>
 					<td>{{ method.name }}</td>
 					<td>{{ method.created.strftime('%b %d, %Y') }}</td>
-					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_webauthn', id=method.id) }}">Delete</a></td>
+					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_webauthn', id=method.id) }}">{{_("Delete")}}</a></td>
 				</tr>
 				{% endfor %}
 				{% if not request.user.mfa_webauthn_methods %}
 				<tr class="table-secondary">
-					<td colspan=3 class="text-center">No U2F/FIDO2 devices registered yet</td>
+					<td colspan=3 class="text-center">{{_("No U2F/FIDO2 devices registered yet")}}</td>
 				</tr>
 				{% endif %}
 			</tbody>

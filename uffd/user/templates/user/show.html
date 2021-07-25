@@ -4,21 +4,21 @@
 <form action="{{ url_for("user.update", uid=user.uid) }}" method="POST">
 <div class="align-self-center">
 	<div class="float-sm-right pb-2">
-		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
-		<a href="{{ url_for("user.index") }}" class="btn btn-secondary">Cancel</a>
+		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> {{_("Save")}}</button>
+		<a href="{{ url_for("user.index") }}" class="btn btn-secondary">{{_("Cancel")}}</a>
 		{% if user.uid %}
-			<a href="{{ url_for("mfa.admin_disable", uid=user.uid) }}" class="btn btn-secondary">Reset 2FA</a>
-			<a href="{{ url_for("user.delete", uid=user.uid) }}" onClick="return confirm('Are you sure?');" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
+			<a href="{{ url_for("mfa.admin_disable", uid=user.uid) }}" class="btn btn-secondary">{{_("Reset 2FA")}}</a>
+			<a href="{{ url_for("user.delete", uid=user.uid) }}" onClick="return confirm('Are you sure?');" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
 		{% else %}
-			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
+			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
 		{% endif %}
 	</div>
 	<ul class="nav nav-tabs pt-2 border-0" id="tablist" role="tablist">
 		<li class="nav-item">
-			<a class="nav-link active" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="true">Profile</a>
+			<a class="nav-link active" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="true">{{_("Profile")}}</a>
 		</li>
 		<li class="nav-item">
-			<a class="nav-link" id="roles-tab" data-toggle="tab" href="#roles" role="tab" aria-controls="roles" aria-selected="false">Roles</a>
+			<a class="nav-link" id="roles-tab" data-toggle="tab" href="#roles" role="tab" aria-controls="roles" aria-selected="false">{{_("Roles")}}</a>
 		</li>
 		<li class="nav-item">
 			<a class="nav-link" id="ldif-tab" data-toggle="tab" href="#ldif" role="tab" aria-controls="ldif" aria-selected="false">LDIF</a>
@@ -48,10 +48,10 @@
 			</div>
 			{% endif %}
 			<div class="form-group col">
-				<label for="user-loginname">Login Name</label>
+				<label for="user-loginname">{{_("Login Name")}}</label>
 				<input type="text" class="form-control" id="user-loginname" name="loginname" value="{{ user.loginname or '' }}" {% if user.uid %}readonly{% endif %}>
 				<small class="form-text text-muted">
-					Only letters, numbers and underscore ("_") are allowed. At most 32, at least 2 characters. There is a word blacklist. Musst be unique.
+					{{_("Only letters, numbers and underscore (\"_\") are allowed. At most 32, at least 2 characters. There is a word blacklist. Must be unique.")}}
 				</small>
 			</div>
 			{% if not user.uid %}
@@ -63,40 +63,40 @@
 			</div>
 			{% endif %}
 			<div class="form-group col">
-				<label for="user-loginname">Display Name</label>
+				<label for="user-loginname">{{_("Display Name")}}</label>
 				<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ user.displayname or '' }}">
 				<small class="form-text text-muted">
-					If you leave this empty it will be set to the login name. At most 128, at least 2 characters. No character restrictions.
+					{{_("If you leave this empty it will be set to the login name. At most 128, at least 2 characters. No character restrictions.")}}
 				</small>
 			</div>
 			<div class="form-group col">
-				<label for="user-mail">Mail</label>
+				<label for="user-mail">{{_("Mail")}}</label>
 				<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail or '' }}">
 				<small class="form-text text-muted">
-					Do a sanity check here. A user can take over another account if both have the same mail address set.
+					{{_("Do a sanity check here. A user can take over another account if both have the same mail address set.")}}
 				</small>
 			</div>
 			<div class="form-group col">
-				<label for="user-loginname">Password</label>
+				<label for="user-loginname">{{_("Password")}}</label>
 				{% if user.uid %}
 				<input type="password" class="form-control" id="user-password" name="password" placeholder="●●●●●●●●">
 				{% else %}
-				<input type="password" class="form-control" id="user-password" name="password" placeholder="mail to set it will be sent" readonly>
+				<input type="password" class="form-control" id="user-password" name="password" placeholder="{{_("mail to set it will be sent")}}" readonly>
 				{% endif %}
 				<small class="form-text text-muted">
-					At least 8 and at most 256 characters, no other special requirements. But please don't be stupid, do use a password manager.
+					{{_("At least 8 and at most 256 characters, no other special requirements. But please don't be stupid, do use a password manager.")}}
 				</small>
 			</div>
 		</div>
 		<div class="tab-pane fade" id="roles" role="tabpanel" aria-labelledby="roles-tab">
 			<div class="form-group col">
-				<span>Roles:</span>
+				<span>{{_("Roles")}}:</span>
 				<table class="table table-striped table-sm">
 					<thead>
 						<tr>
 							<th scope="col"></th>
-							<th scope="col">name</th>
-							<th scope="col">description</th>
+							<th scope="col">{{_("name")}}</th>
+							<th scope="col">{{_("description")}}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -123,12 +123,12 @@
 				</table>
 			</div>
 			<div class="form-group col">
-				<span>Resulting groups (only updated after save):</span>
+				<span>{{_("Resulting groups (only updated after save)")}}:</span>
 				<table class="table table-striped table-sm">
 					<thead>
 						<tr>
-							<th scope="col">name</th>
-							<th scope="col">description</th>
+							<th scope="col">{{_("name")}}</th>
+							<th scope="col">{{_("description")}}</th>
 						</tr>
 					</thead>
 					<tbody>

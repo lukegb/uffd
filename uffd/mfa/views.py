@@ -2,6 +2,7 @@ from warnings import warn
 import urllib.parse
 
 from flask import Blueprint, render_template, session, request, redirect, url_for, flash, current_app, abort
+from flask_babel import gettext as _
 
 from uffd.database import db
 from uffd.ldap import ldap
@@ -49,7 +50,7 @@ def admin_disable(uid):
 	db.session.commit()
 	user.update_groups()
 	ldap.session.commit()
-	flash('Two-factor authentication was reset')
+	flash(_('Two-factor authentication was reset'))
 	return redirect(url_for('user.show', uid=uid))
 
 @bp.route('/setup/recovery', methods=['POST'])
@@ -78,7 +79,7 @@ def setup_totp():
 @csrf_protect(blueprint=bp)
 def setup_totp_finish():
 	if not RecoveryCodeMethod.query.filter_by(dn=request.user.dn).all():
-		flash('Generate recovery codes first!')
+		flash(_('Generate recovery codes first!'))
 		return redirect(url_for('mfa.setup'))
 	method = TOTPMethod(request.user, name=request.values['name'], key=session.pop('mfa_totp_key'))
 	if method.verify(request.form['code']):
@@ -87,7 +88,7 @@ def setup_totp_finish():
 		request.user.update_groups()
 		ldap.session.commit()
 		return redirect(url_for('mfa.setup'))
-	flash('Code is invalid')
+	flash(_('Code is invalid'))
 	return redirect(url_for('mfa.setup_totp', name=request.values['name']))
 
 @bp.route('/setup/totp/<int:id>/delete')
@@ -111,7 +112,7 @@ try:
 	from fido2 import cbor
 	WEBAUTHN_SUPPORTED = True
 except ImportError as err:
-	warn('2FA WebAuthn support disabled because import of the fido2 module failed (%s)'%err)
+	warn(_('2FA WebAuthn support disabled because import of the fido2 module failed (%s)')%err)
 	WEBAUTHN_SUPPORTED = False
 
 bp.add_app_template_global(WEBAUTHN_SUPPORTED, name='webauthn_supported')
@@ -220,7 +221,7 @@ def auth():
 def auth_finish():
 	delay = mfa_ratelimit.get_delay(request.user_pre_mfa.dn)
 	if delay:
-		flash('We received too many invalid attempts! Please wait at least %s.'%format_delay(delay))
+		flash(_('We received too many invalid attempts! Please wait at least %s.')%format_delay(delay))
 		return redirect(url_for('mfa.auth', ref=request.values.get('ref')))
 	for method in request.user_pre_mfa.mfa_totp_methods:
 		if method.verify(request.form['code']):
@@ -234,12 +235,12 @@ def auth_finish():
 			session['user_mfa'] = True
 			set_request_user()
 			if len(request.user_pre_mfa.mfa_recovery_codes) <= 1:
-				flash('You have exhausted your recovery codes. Please generate new ones now!')
+				flash(_('You have exhausted your recovery codes. Please generate new ones now!'))
 				return redirect(url_for('mfa.setup'))
 			if len(request.user_pre_mfa.mfa_recovery_codes) <= 5:
-				flash('You only have a few recovery codes remaining. Make sure to generate new ones before they run out.')
+				flash(_('You only have a few recovery codes remaining. Make sure to generate new ones before they run out.'))
 				return redirect(url_for('mfa.setup'))
 			return redirect(request.values.get('ref', url_for('index')))
 	mfa_ratelimit.log(request.user_pre_mfa.dn)
-	flash('Two-factor authentication failed')
+	flash(_('Two-factor authentication failed'))
 	return redirect(url_for('mfa.auth', ref=request.values.get('ref')))

@@ -1,6 +1,7 @@
 import sys
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
+from flask_babel import gettext as _, lazy_gettext
 import click
 
 from uffd.navbar import register_navbar
@@ -40,14 +41,14 @@ def add_cli_commands(state):
 @login_required()
 def role_acl(): #pylint: disable=inconsistent-return-statements
 	if not role_acl_check():
-		flash('Access denied')
+		flash(_('Access denied'))
 		return redirect(url_for('index'))
 
 def role_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp.route("/")
-@register_navbar('Roles', icon='key', blueprint=bp, visible=role_acl_check)
+@register_navbar(lazy_gettext('Roles'), icon='key', blueprint=bp, visible=role_acl_check)
 def index():
 	return render_template('role/list.html', roles=Role.query.all())
 
@@ -97,7 +98,7 @@ def update(roleid=None):
 def delete(roleid):
 	role = Role.query.filter_by(id=roleid).one()
 	if role.locked:
-		flash('Locked roles cannot be deleted')
+		flash(_('Locked roles cannot be deleted'))
 		return redirect(url_for('role.show', roleid=role.id))
 	old_members = set(role.members_effective)
 	role.members.clear()

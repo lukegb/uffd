@@ -2,9 +2,12 @@
 
 {% block body %}
 
-<h1 class="d-none d-print-block">Recovery Codes</h1>
+<h1 class="d-none d-print-block">{{_("Recovery Codes")}}</h1>
 
-<p>Recovery codes allow you to login when you lose access to your authenticator app or U2F/FIDO device. Each code can only be used once.</p>
+<p>
+	{{_("Recovery codes allow you to login when you lose access to your authenticator app or U2F/FIDO device. Each code can
+	only be used once.")}}
+</p>
 
 <div class="text-monospace">
 	<ul>
@@ -14,12 +17,17 @@
 	</ul>
 </div>
 
-<p>These are your new recovery codes. Make sure to store them in a safe place or you risk losing access to your account. All previous recovery codes are now invalid.</p>
+<p>
+	{{_("These are your new recovery codes. Make sure to store them in a safe place or you risk losing access to your
+	account. All previous recovery codes are now invalid.")}}
+</p>
 
 <div class="btn-toolbar">
 	<a class="ml-auto mb-2 btn btn-primary d-print-none" href="{{ url_for('mfa.setup') }}">Continue</a>
-	<a class="ml-2 mb-2 btn btn-light d-print-none" href="{{ methods|map(attribute='code')|join('\n')|datauri }}" download="uffd-recovery-codes">Download codes</a>
-	<button class="ml-2 mb-2 btn btn-light d-print-none" type="button" onClick="window.print()">Print codes</button>
+	<a class="ml-2 mb-2 btn btn-light d-print-none" href="{{ methods|map(attribute='code')|join('\n')|datauri }}" download="uffd-recovery-codes">
+		{{_("Download codes")}}
+	</a>
+	<button class="ml-2 mb-2 btn btn-light d-print-none" type="button" onClick="window.print()">{{_("Print codes")}}</button>
 </div>
 
 {% endblock %}
