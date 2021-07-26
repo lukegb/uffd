@@ -13,11 +13,6 @@ from uffd import create_app, db, ldap
 
 from utils import dump, UffdTestCase
 
-def get_user():
-	return User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-
-def get_admin():
-	return User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
 
 class TestOAuth2Client(UffdTestCase):
 	def setUpApp(self):
@@ -39,8 +34,8 @@ class TestOAuth2Client(UffdTestCase):
 		self.assertEqual(client.required_group, 'users')
 
 	def test_access_allowed(self):
-		user = get_user() # has 'users' and 'uffd_access' group
-		admin = get_admin() # has 'users', 'uffd_access' and 'uffd_admin' group
+		user = self.get_user() # has 'users' and 'uffd_access' group
+		admin = self.get_admin() # has 'users', 'uffd_access' and 'uffd_admin' group
 		client = OAuth2Client('test', '', [''], ['uffd_admin', ['users', 'notagroup']])
 		self.assertFalse(client.access_allowed(user))
 		self.assertTrue(client.access_allowed(admin))
@@ -73,7 +68,7 @@ class TestViews(UffdTestCase):
 		r = self.client.get(path=url_for('oauth2.userinfo'), headers=[('Authorization', 'Bearer %s'%token)], follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.content_type, 'application/json')
-		user = get_user()
+		user = self.get_user()
 		self.assertEqual(r.json['id'], user.uid)
 		self.assertEqual(r.json['name'], user.displayname)
 		self.assertEqual(r.json['nickname'], user.loginname)
@@ -81,8 +76,7 @@ class TestViews(UffdTestCase):
 		self.assertTrue(r.json.get('groups'))
 
 	def test_authorization(self):
-		self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
+		self.login_as('user')
 		r = self.client.get(path=url_for('oauth2.authorize', response_type='code', client_id='test', state='teststate', redirect_uri='http://localhost:5009/callback'), follow_redirects=False)
 		self.assert_authorization(r)
 
@@ -100,7 +94,7 @@ class TestViews(UffdTestCase):
 		with self.client.session_transaction() as _session:
 			initiation = OAuth2DeviceLoginInitiation(oauth2_client_id='test')
 			db.session.add(initiation)
-			confirmation = DeviceLoginConfirmation(initiation=initiation, user=get_user())
+			confirmation = DeviceLoginConfirmation(initiation=initiation, user=self.get_user())
 			db.session.add(confirmation)
 			db.session.commit()
 			_session['devicelogin_id'] = initiation.id

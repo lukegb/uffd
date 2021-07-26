@@ -19,8 +19,7 @@ def get_mail():
 class TestMailViews(UffdTestCase):
 	def setUp(self):
 		super().setUp()
-		self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testadmin', 'password': 'adminpassword'}, follow_redirects=True)
+		self.login_as('admin')
 
 	def test_index(self):
 		r = self.client.get(path=url_for('mail.index'), follow_redirects=True)

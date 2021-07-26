@@ -3,9 +3,10 @@ import tempfile
 import shutil
 import unittest
 
-from flask import request
+from flask import request, url_for
 
 from uffd import create_app, db
+from uffd.user.models import User, Group
 
 def dump(basename, resp):
 	basename = basename.replace('.', '_').replace('/', '_')
@@ -26,6 +27,26 @@ def db_flush():
 class UffdTestCase(unittest.TestCase):
 	use_openldap = False
 	use_userconnection = False
+
+	def get_user(self):
+		return User.query.get(self.test_data.get('user').get('dn'))
+
+	def get_admin(self):
+		return User.query.get(self.test_data.get('admin').get('dn'))
+
+	def get_admin_group(self):
+		return Group.query.get(self.test_data.get('group_uffd_admin').get('dn'))
+
+	def get_access_group(self):
+		return Group.query.get(self.test_data.get('group_uffd_access').get('dn'))
+
+	def get_users_group(self):
+		return Group.query.get(self.test_data.get('group_users').get('dn'))
+
+	def login_as(self, user, ref=None):
+		return self.client.post(path=url_for('session.login', ref=ref),
+								data={'loginname': self.test_data.get(user).get('loginname'),
+									'password': self.test_data.get(user).get('password')}, follow_redirects=True)
 
 	def setUp(self):
 		self.dir = tempfile.mkdtemp()
@@ -55,10 +76,33 @@ class UffdTestCase(unittest.TestCase):
 			else:
 				config['LDAP_SERVICE_BIND_DN'] = 'cn=uffd,ou=system,dc=example,dc=com'
 			config['LDAP_SERVICE_BIND_PASSWORD'] = 'uffd-ldap-password'
-			os.system("ldapdelete -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w 'uffd-ldap-password' -H 'ldap://localhost' -f ldap_server_entries_cleanup.ldif > /dev/null 2>&1")
-			os.system("ldapadd -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w 'uffd-ldap-password' -H 'ldap://localhost' -f ldap_server_entries_add.ldif")
-			os.system("ldapmodify -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w 'uffd-ldap-password' -H 'ldap://localhost' -f ldap_server_entries_modify.ldif")
+			os.system("ldapdelete -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w '{}' -H '{}' -f tests/openldap_ldifs/ldap_server_entries_cleanup.ldif > /dev/null 2>&1".format(config['LDAP_SERVICE_BIND_PASSWORD'], config['LDAP_SERVICE_URL']))
+			os.system("ldapadd -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w '{}' -H '{}' -f tests/openldap_ldifs/ldap_server_entries_add.ldif".format(config['LDAP_SERVICE_BIND_PASSWORD'], config['LDAP_SERVICE_URL']))
+			os.system("ldapmodify -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w '{}' -H '{}' -f tests/openldap_ldifs/ldap_server_entries_modify.ldif".format(config['LDAP_SERVICE_BIND_PASSWORD'], config['LDAP_SERVICE_URL']))
 			#os.system("/usr/sbin/slapcat -n 1 -l /dev/stdout")
+
+		self.test_data = {
+			'admin': {
+				'loginname': 'testadmin',
+				'dn': 'uid=testadmin,ou=users,dc=example,dc=com',
+				'password': 'adminpassword'
+			},
+			'user': {
+				'loginname': 'testuser',
+				'dn': 'uid=testuser,ou=users,dc=example,dc=com',
+				'password': 'userpassword'
+			},
+			'group_uffd_access': {
+				'dn': 'cn=uffd_access,ou=groups,dc=example,dc=com'
+			},
+			'group_uffd_admin': {
+				'dn': 'cn=uffd_admin,ou=groups,dc=example,dc=com'
+			},
+			'group_users': {
+				'dn': 'cn=users,ou=groups,dc=example,dc=com'
+			}
+		}
+
 		self.app = create_app(config)
 		self.setUpApp()
 		self.client = self.app.test_client()

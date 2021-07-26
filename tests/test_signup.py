@@ -125,7 +125,7 @@ class TestSignupModel(UffdTestCase):
 		if self.use_openldap:
 			self.assertIsNone(login_get_user('newuser', 'notsecret'))
 		self.assert_finish_success(signup, 'notsecret')
-		user = User.query.get('uid=newuser,ou=users,dc=example,dc=com')
+		user = User.query.get('uid=newuser,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
 		self.assertEqual(user.loginname, 'newuser')
 		self.assertEqual(user.displayname, 'New User')
 		self.assertEqual(user.mail, 'test@example.com')
@@ -178,7 +178,7 @@ class TestSignupModel(UffdTestCase):
 		db_flush()
 		signup = Signup.query.get(signup1_token)
 		self.assert_finish_failure(signup, 'notsecret')
-		user = User.query.get('uid=newuser,ou=users,dc=example,dc=com')
+		user = User.query.get('uid=newuser,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
 		self.assertEqual(user.mail, 'test2@example.com')
 
 class TestSignupModelOL(TestSignupModel):
@@ -351,11 +351,10 @@ class TestSignupViews(UffdTestCase):
 	def test_confirm_loggedin(self):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		signup = refetch_signup(signup)
-		self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
+		self.login_as('user')
 		self.assertFalse(signup.completed)
 		self.assertIsNotNone(request.user)
-		self.assertEqual(request.user.loginname, 'testuser')
+		self.assertEqual(request.user.loginname, self.get_user().loginname)
 		r = self.client.get(path=url_for('signup.signup_confirm', token=signup.token), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
@@ -385,8 +384,8 @@ class TestSignupViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 
 	def test_confirm_completed(self):
-		signup = Signup(loginname='testuser', displayname='New User', mail='test@example.com', password='notsecret')
-		signup.user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+		signup = Signup(loginname=self.get_user().loginname, displayname='New User', mail='test@example.com', password='notsecret')
+		signup.user = self.get_user()
 		signup = refetch_signup(signup)
 		self.assertTrue(signup.completed)
 		r = self.client.get(path=url_for('signup.signup_confirm', token=signup.token), follow_redirects=True)
@@ -406,7 +405,7 @@ class TestSignupViews(UffdTestCase):
 
 	def test_confirm_error(self):
 		# finish returns None and error message (here: because the user already exists)
-		signup = Signup(loginname='testuser', displayname='New User', mail='test@example.com', password='notsecret')
+		signup = Signup(loginname=self.get_user().loginname, displayname='New User', mail='test@example.com', password='notsecret')
 		signup = refetch_signup(signup)
 		r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		dump('test_signup_confirm_error', r)

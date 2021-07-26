@@ -41,8 +41,8 @@ class TestUserRoleAttributes(UffdTestCase):
 			ldap.session.delete(user)
 		ldap.session.add(User(loginname='service', is_service_user=True, mail='service@example.com', displayname='Service'))
 		ldap.session.commit()
-		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
+		user = self.get_user()
+		service_user = User.query.get('uid=service,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
 		included_by_default_role = Role(name='included_by_default')
 		default_role = Role(name='default', is_default=True, included_roles=[included_by_default_role])
 		included_role = Role(name='included')
@@ -57,9 +57,9 @@ class TestUserRoleAttributes(UffdTestCase):
 		ldap.session.commit()
 
 	def test_compute_groups(self):
-		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		group1 = Group.query.get('cn=users,ou=groups,dc=example,dc=com')
-		group2 = Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')
+		user = self.get_user()
+		group1 = self.get_users_group()
+		group2 = self.get_access_group()
 		role1 = Role(name='role1', groups={group1: RoleGroup(group=group1)})
 		role2 = Role(name='role2', groups={group1: RoleGroup(group=group1), group2: RoleGroup(group=group2)})
 		db.session.add_all([role1, role2])
@@ -73,9 +73,9 @@ class TestUserRoleAttributes(UffdTestCase):
 		self.assertSetEqual(user.compute_groups(), {group1, group2})
 
 	def test_update_groups(self):
-		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		group1 = Group.query.get('cn=users,ou=groups,dc=example,dc=com')
-		group2 = Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')
+		user = self.get_user()
+		group1 = self.get_users_group()
+		group2 = self.get_access_group()
 		role1 = Role(name='role1', members=[user], groups={group1: RoleGroup(group=group1)})
 		role2 = Role(name='role2', groups={group2: RoleGroup(group=group2)})
 		db.session.add_all([role1, role2])
@@ -95,9 +95,9 @@ class TestRoleModel(UffdTestCase):
 			ldap.session.delete(user)
 		ldap.session.add(User(loginname='service', is_service_user=True, mail='service@example.com', displayname='Service'))
 		ldap.session.commit()
-		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
-		service = User.query.get('uid=service,ou=users,dc=example,dc=com')
+		user1 = self.get_user()
+		user2 = self.get_admin()
+		service = User.query.get('uid=service,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
 		included_by_default_role = Role(name='included_by_default')
 		default_role = Role(name='default', is_default=True, included_roles=[included_by_default_role])
 		included_role = Role(name='included')
@@ -123,21 +123,21 @@ class TestRoleModel(UffdTestCase):
 		self.assertSetEqual(role3.included_roles_recursive, {baserole, role1, role2})
 
 	def test_groups_effective(self):
-		group1 = Group.query.get('cn=users,ou=groups,dc=example,dc=com')
-		group2 = Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')
+		group1 = self.get_users_group()
+		group2 = self.get_access_group()
 		baserole = Role(name='base', groups={group1: RoleGroup(group=group1)})
 		role1 = Role(name='role1', groups={group2: RoleGroup(group=group2)}, included_roles=[baserole])
 		self.assertSetEqual(baserole.groups_effective, {group1})
 		self.assertSetEqual(role1.groups_effective, {group1, group2})
 
 	def test_update_member_groups(self):
-		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+		user1 = self.get_user()
 		user1.update_groups()
-		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
+		user2 = self.get_admin()
 		user2.update_groups()
-		group1 = Group.query.get('cn=users,ou=groups,dc=example,dc=com')
-		group2 = Group.query.get('cn=uffd_access,ou=groups,dc=example,dc=com')
-		group3 = Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')
+		group1 = self.get_users_group()
+		group2 = self.get_access_group()
+		group3 = self.get_admin_group()
 		baserole = Role(name='base', members=[user1], groups={group1: RoleGroup(group=group1)})
 		role1 = Role(name='role1', members=[user2], groups={group2: RoleGroup(group=group2)}, included_roles=[baserole])
 		db.session.add_all([baserole, role1])
@@ -153,8 +153,7 @@ class TestRoleModel(UffdTestCase):
 class TestRoleViews(UffdTestCase):
 	def setUp(self):
 		super().setUp()
-		self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testadmin', 'password': 'adminpassword'}, follow_redirects=True)
+		self.login_as('admin')
 
 	def test_index(self):
 		db.session.add(Role(name='base', description='Base role description'))
@@ -186,11 +185,11 @@ class TestRoleViews(UffdTestCase):
 		role = Role(name='base', description='Base role description')
 		db.session.add(role)
 		db.session.commit()
-		role.groups[Group.query.get('cn=uffd_admin,ou=groups,dc=example,dc=com')] = RoleGroup()
+		role.groups[self.get_admin_group()] = RoleGroup()
 		db.session.commit()
 		self.assertEqual(role.name, 'base')
 		self.assertEqual(role.description, 'Base role description')
-		self.assertEqual([group.dn for group in role.groups], ['cn=uffd_admin,ou=groups,dc=example,dc=com'])
+		self.assertEqual([group.dn for group in role.groups], [self.test_data.get('group_uffd_admin').get('dn')])
 		r = self.client.post(path=url_for('role.update', roleid=role.id),
 			data={'name': 'base1', 'description': 'Base role description1', 'moderator-group': '', 'group-20001': '1', 'group-20002': '1'},
 			follow_redirects=True)
@@ -199,8 +198,8 @@ class TestRoleViews(UffdTestCase):
 		role = Role.query.get(role.id)
 		self.assertEqual(role.name, 'base1')
 		self.assertEqual(role.description, 'Base role description1')
-		self.assertEqual(sorted([group.dn for group in role.groups]), ['cn=uffd_access,ou=groups,dc=example,dc=com',
-			'cn=users,ou=groups,dc=example,dc=com'])
+		self.assertEqual(sorted([group.dn for group in role.groups]), [self.test_data.get('group_uffd_access').get('dn'),
+		                                                               self.test_data.get('group_users').get('dn')])
 		# TODO: verify that group memberships are updated (currently not possible with ldap mock!)
 
 	def test_create(self):
@@ -214,14 +213,14 @@ class TestRoleViews(UffdTestCase):
 		self.assertIsNotNone(role)
 		self.assertEqual(role.name, 'base')
 		self.assertEqual(role.description, 'Base role description')
-		self.assertEqual(sorted([group.dn for group in role.groups]), ['cn=uffd_access,ou=groups,dc=example,dc=com',
-			'cn=users,ou=groups,dc=example,dc=com'])
+		self.assertEqual(sorted([group.dn for group in role.groups]), [self.test_data.get('group_uffd_access').get('dn'),
+		                                                               self.test_data.get('group_users').get('dn')])
 		# TODO: verify that group memberships are updated (currently not possible with ldap mock!)
 
 	def test_create_with_moderator_group(self):
 		self.assertIsNone(Role.query.filter_by(name='base').first())
 		r = self.client.post(path=url_for('role.update'),
-			data={'name': 'base', 'description': 'Base role description', 'moderator-group': 'cn=uffd_admin,ou=groups,dc=example,dc=com', 'group-20001': '1', 'group-20002': '1'},
+			data={'name': 'base', 'description': 'Base role description', 'moderator-group': self.test_data.get('group_uffd_admin').get('dn'), 'group-20001': '1', 'group-20002': '1'},
 			follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		role = Role.query.filter_by(name='base').first()
@@ -229,8 +228,8 @@ class TestRoleViews(UffdTestCase):
 		self.assertEqual(role.name, 'base')
 		self.assertEqual(role.description, 'Base role description')
 		self.assertEqual(role.moderator_group.name, 'uffd_admin')
-		self.assertEqual(sorted([group.dn for group in role.groups]), ['cn=uffd_access,ou=groups,dc=example,dc=com',
-			'cn=users,ou=groups,dc=example,dc=com'])
+		self.assertEqual(sorted([group.dn for group in role.groups]), [self.test_data.get('group_uffd_access').get('dn'),
+		                                                               self.test_data.get('group_users').get('dn')])
 		# TODO: verify that group memberships are updated (currently not possible with ldap mock!)
 
 	def test_delete(self):
@@ -252,9 +251,9 @@ class TestRoleViews(UffdTestCase):
 		ldap.session.commit()
 		role = Role(name='test')
 		db.session.add(role)
-		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
-		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
+		user1 = self.get_user()
+		user2 = self.get_admin()
+		service_user = User.query.get('uid=service,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
 		self.assertSetEqual(set(user1.roles_effective), set())
 		self.assertSetEqual(set(user2.roles_effective), set())
 		self.assertSetEqual(set(service_user.roles_effective), set())
@@ -270,7 +269,7 @@ class TestRoleViews(UffdTestCase):
 		dump('role_set_default', r)
 		self.assertEqual(r.status_code, 200)
 		role = Role.query.get(role_id)
-		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
+		service_user = User.query.get('uid=service,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
 		self.assertSetEqual(set(role.members), {service_user})
 		self.assertSetEqual(set(user1.roles_effective), {role})
 		self.assertSetEqual(set(user2.roles_effective), {role})
@@ -284,9 +283,9 @@ class TestRoleViews(UffdTestCase):
 		ldap.session.commit()
 		role = Role(name='test', is_default=True)
 		db.session.add(role)
-		user1 = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-		user2 = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
-		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
+		user1 = self.get_user()
+		user2 = self.get_admin()
+		service_user = User.query.get('uid=service,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
 		role.members.add(service_user)
 		self.assertSetEqual(set(user1.roles_effective), {role})
 		self.assertSetEqual(set(user2.roles_effective), {role})
@@ -298,7 +297,7 @@ class TestRoleViews(UffdTestCase):
 		dump('role_unset_default', r)
 		self.assertEqual(r.status_code, 200)
 		role = Role.query.get(role_id)
-		service_user = User.query.get('uid=service,ou=users,dc=example,dc=com')
+		service_user = User.query.get('uid=service,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
 		self.assertSetEqual(set(role.members), {service_user})
 		self.assertSetEqual(set(user1.roles_effective), set())
 		self.assertSetEqual(set(user2.roles_effective), set())

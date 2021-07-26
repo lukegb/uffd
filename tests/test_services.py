@@ -40,16 +40,12 @@ class TestServices(UffdTestCase):
 		]
 		self.app.config['SERVICES_PUBLIC'] = True
 
-	def login(self):
-		self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
-
 	def test_index(self):
 		r = self.client.get(path=url_for('services.index'))
 		dump('services_index_public', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertNotIn(b'https://example.com/', r.data)
-		self.login()
+		self.login_as('user')
 		r = self.client.get(path=url_for('services.index'))
 		dump('services_index', r)
 		self.assertEqual(r.status_code, 200)

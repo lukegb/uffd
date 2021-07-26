@@ -13,17 +13,9 @@ from uffd import create_app, db
 from utils import dump, UffdTestCase
 
 
-def get_user():
-	return User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-
-
 class TestSelfservice(UffdTestCase):
-	def login(self):
-		self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
-
 	def test_index(self):
-		self.login()
+		self.login_as('user')
 		r = self.client.get(path=url_for('selfservice.index'))
 		dump('selfservice_index', r)
 		self.assertEqual(r.status_code, 200)
@@ -33,7 +25,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertIn(user.mail.encode(), r.data)
 
 	def test_update_displayname(self):
-		self.login()
+		self.login_as('user')
 		user = request.user
 		r = self.client.post(path=url_for('selfservice.update'),
 			data={'displayname': 'New Display Name', 'mail': user.mail, 'password': '', 'password1': ''},
@@ -44,7 +36,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(_user.displayname, 'New Display Name')
 
 	def test_update_displayname_invalid(self):
-		self.login()
+		self.login_as('user')
 		user = request.user
 		r = self.client.post(path=url_for('selfservice.update'),
 			data={'displayname': '', 'mail': user.mail, 'password': '', 'password1': ''},
@@ -55,7 +47,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertNotEqual(_user.displayname, '')
 
 	def test_update_mail(self):
-		self.login()
+		self.login_as('user')
 		user = request.user
 		r = self.client.post(path=url_for('selfservice.update'),
 			data={'displayname': user.displayname, 'mail': 'newemail@example.com', 'password': '', 'password1': ''},
@@ -74,7 +66,7 @@ class TestSelfservice(UffdTestCase):
 
 	def test_update_mail_sendfailure(self):
 		self.app.config['MAIL_SKIP_SEND'] = 'fail'
-		self.login()
+		self.login_as('user')
 		user = request.user
 		r = self.client.post(path=url_for('selfservice.update'),
 			data={'displayname': user.displayname, 'mail': 'newemail@example.com', 'password': '', 'password1': ''},
@@ -86,7 +78,7 @@ class TestSelfservice(UffdTestCase):
 		# Maybe also check that there is no new token in the db
 
 	def test_token_mail_emptydb(self):
-		self.login()
+		self.login_as('user')
 		user = request.user
 		r = self.client.get(path=url_for('selfservice.token_mail', token='A'*128), follow_redirects=True)
 		dump('token_mail_emptydb', r)
@@ -95,7 +87,7 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(_user.mail, user.mail)
 
 	def test_token_mail_invalid(self):
-		self.login()
+		self.login_as('user')
 		user = request.user
 		db.session.add(MailToken(loginname=user.loginname, newmail='newusermail@example.com'))
 		db.session.commit()
@@ -107,9 +99,9 @@ class TestSelfservice(UffdTestCase):
 
 	@unittest.skip('See #26')
 	def test_token_mail_wrong_user(self):
-		self.login()
+		self.login_as('user')
 		user = request.user
-		admin_user = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
+		admin_user = self.get_admin()
 		db.session.add(MailToken(loginname=user.loginname, newmail='newusermail@example.com'))
 		admin_token = MailToken(loginname='testadmin', newmail='newadminmail@example.com')
 		db.session.add(admin_token)
@@ -118,12 +110,12 @@ class TestSelfservice(UffdTestCase):
 		dump('token_mail_wrong_user', r)
 		self.assertEqual(r.status_code, 200)
 		_user = request.user
-		_admin_user = User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
+		_admin_user = self.get_admin()
 		self.assertEqual(_user.mail, user.mail)
 		self.assertEqual(_admin_user.mail, admin_user.mail)
 
 	def test_token_mail_expired(self):
-		self.login()
+		self.login_as('user')
 		user = request.user
 		token = MailToken(loginname=user.loginname, newmail='newusermail@example.com',
 			created=(datetime.datetime.now() - datetime.timedelta(days=10)))
@@ -140,7 +132,7 @@ class TestSelfservice(UffdTestCase):
 	def test_forgot_password(self):
 		if self.use_userconnection:
 			self.skipTest('Password Reset is not possible in user mode')
-		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+		user = self.get_user()
 		r = self.client.get(path=url_for('selfservice.forgot_password'))
 		dump('forgot_password', r)
 		self.assertEqual(r.status_code, 200)
@@ -155,7 +147,7 @@ class TestSelfservice(UffdTestCase):
 	def test_forgot_password_wrong_user(self):
 		if self.use_userconnection:
 			self.skipTest('Password Reset is not possible in user mode')
-		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+		user = self.get_user()
 		r = self.client.get(path=url_for('selfservice.forgot_password'))
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('selfservice.forgot_password'),
@@ -168,7 +160,7 @@ class TestSelfservice(UffdTestCase):
 	def test_forgot_password_wrong_email(self):
 		if self.use_userconnection:
 			self.skipTest('Password Reset is not possible in user mode')
-		user = User.query.get('uid=testuser,ou=users,dc=example,dc=com')
+		user = self.get_user()
 		r = self.client.get(path=url_for('selfservice.forgot_password'), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('selfservice.forgot_password'),
@@ -192,7 +184,7 @@ class TestSelfservice(UffdTestCase):
 	def test_token_password(self):
 		if self.use_userconnection:
 			self.skipTest('Password Token is not possible in user mode')
-		user = get_user()
+		user = self.get_user()
 		token = PasswordToken(loginname=user.loginname)
 		db.session.add(token)
 		db.session.commit()
@@ -208,7 +200,7 @@ class TestSelfservice(UffdTestCase):
 	def test_token_password_emptydb(self):
 		if self.use_userconnection:
 			self.skipTest('Password Token is not possible in user mode')
-		user = get_user()
+		user = self.get_user()
 		r = self.client.get(path=url_for('selfservice.token_password', token='A'*128), follow_redirects=True)
 		dump('token_password_emptydb', r)
 		self.assertEqual(r.status_code, 200)
@@ -223,7 +215,7 @@ class TestSelfservice(UffdTestCase):
 	def test_token_password_invalid(self):
 		if self.use_userconnection:
 			self.skipTest('Password Token is not possible in user mode')
-		user = get_user()
+		user = self.get_user()
 		token = PasswordToken(loginname=user.loginname)
 		db.session.add(token)
 		db.session.commit()
@@ -241,7 +233,7 @@ class TestSelfservice(UffdTestCase):
 	def test_token_password_expired(self):
 		if self.use_userconnection:
 			self.skipTest('Password Token is not possible in user mode')
-		user = get_user()
+		user = self.get_user()
 		token = PasswordToken(loginname=user.loginname,
 			created=(datetime.datetime.now() - datetime.timedelta(days=10)))
 		db.session.add(token)
@@ -260,7 +252,7 @@ class TestSelfservice(UffdTestCase):
 	def test_token_password_different_passwords(self):
 		if self.use_userconnection:
 			self.skipTest('Password Token is not possible in user mode')
-		user = get_user()
+		user = self.get_user()
 		token = PasswordToken(loginname=user.loginname)
 		db.session.add(token)
 		db.session.commit()

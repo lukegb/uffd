@@ -37,100 +37,98 @@ class TestSession(UffdTestCase):
 		self.assertIsNone(request.user)
 
 	def login(self):
-		self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
+		self.login_as('user')
 		self.assertIsNotNone(request.user)
 
-	def assertLogin(self):
+	def assertLoggedIn(self):
 		self.assertIsNotNone(request.user)
-		self.assertEqual(self.client.get(path=url_for('test_login_required'),
-			follow_redirects=True).data, b'SUCCESS')
-		self.assertEqual(request.user.loginname, 'testuser')
+		self.assertEqual(self.client.get(path=url_for('test_login_required'), follow_redirects=True).data, b'SUCCESS')
+		self.assertEqual(request.user.loginname, self.get_user().loginname)
 
-	def assertLogout(self):
+	def assertLoggedOut(self):
 		self.assertIsNone(request.user)
 		self.assertNotEqual(self.client.get(path=url_for('test_login_required'),
-			follow_redirects=True).data, b'SUCCESS')
+							follow_redirects=True).data, b'SUCCESS')
 		self.assertEqual(request.user, None)
 
 	def test_login(self):
-		self.assertLogout()
+		self.assertLoggedOut()
 		r = self.client.get(path=url_for('session.login'), follow_redirects=True)
 		dump('login', r)
 		self.assertEqual(r.status_code, 200)
-		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
+		r = self.login_as('user')
 		dump('login_post', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertLogin()
+		self.assertLoggedIn()
 
 	def test_redirect(self):
-		r = self.client.post(path=url_for('session.login', ref=url_for('test_login_required')),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
+		r = self.login_as('user', ref=url_for('test_login_required'))
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.data, b'SUCCESS')
 
 	def test_wrong_password(self):
 		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'wrongpassword'}, follow_redirects=True)
+							data={'loginname': self.test_data.get('user').get('loginname'), 'password': 'wrongpassword'},
+							follow_redirects=True)
 		dump('login_wrong_password', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertLogout()
+		self.assertLoggedOut()
 
 	def test_empty_password(self):
 		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': ''}, follow_redirects=True)
+			data={'loginname': self.test_data.get('user').get('loginname'), 'password': ''}, follow_redirects=True)
 		dump('login_empty_password', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertLogout()
+		self.assertLoggedOut()
 
 	def test_wrong_user(self):
 		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': 'nouser', 'password': 'userpassword'}, follow_redirects=True)
+							data={'loginname': 'nouser', 'password': self.test_data.get('user').get('password')},
+							follow_redirects=True)
 		dump('login_wrong_user', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertLogout()
+		self.assertLoggedOut()
 
 	def test_empty_user(self):
 		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': '', 'password': 'userpassword'}, follow_redirects=True)
+			data={'loginname': '', 'password': self.test_data.get('user').get('password')}, follow_redirects=True)
 		dump('login_empty_user', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertLogout()
+		self.assertLoggedOut()
 
 	def test_no_access(self):
 		r = self.client.post(path=url_for('session.login'),
 			data={'loginname': 'testservice', 'password': 'servicepassword'}, follow_redirects=True)
 		dump('login_no_access', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertLogout()
+		self.assertLoggedOut()
 
 	def test_group_required(self):
 		self.login()
 		self.assertEqual(self.client.get(path=url_for('test_group_required1'),
-			follow_redirects=True).data, b'SUCCESS')
+										follow_redirects=True).data, b'SUCCESS')
 		self.assertNotEqual(self.client.get(path=url_for('test_group_required2'),
-			follow_redirects=True).data, b'SUCCESS')
+											follow_redirects=True).data, b'SUCCESS')
 
 	def test_logout(self):
 		self.login()
 		r = self.client.get(path=url_for('session.logout'), follow_redirects=True)
 		dump('logout', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertLogout()
+		self.assertLoggedOut()
 
 	@unittest.skip('See #29')
 	def test_timeout(self):
 		self.login()
 		time.sleep(3)
-		self.assertLogout()
+		self.assertLoggedOut()
 
 	def test_ratelimit(self):
 		for i in range(20):
 			self.client.post(path=url_for('session.login'),
-				data={'loginname': 'testuser', 'password': 'wrongpassword_%i'%i}, follow_redirects=True)
-		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
+							data={'loginname': self.test_data.get('user').get('loginname'),
+								'password': 'wrongpassword_%i'%i}, follow_redirects=True)
+		r = self.login_as('user')
 		dump('login_ratelimit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(request.user)

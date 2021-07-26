@@ -122,9 +122,10 @@ class FlaskLDAPMapper(LDAPMapper):
 			# changes persistent across requests we reuse the same `Connection` object
 			# for all calls to `service_conn()` and `user_conn()`.
 			if not hasattr(current_app, 'ldap_mock'):
-				server = ldap3.Server.from_definition('ldap_mock', 'ldap_server_info.json', 'ldap_server_schema.json')
+				server = ldap3.Server.from_definition('ldap_mock', 'tests/openldap_mock/ldap_server_info.json',
+				                                      'tests/openldap_mock/ldap_server_schema.json')
 				current_app.ldap_mock = ldap3.Connection(server, client_strategy=ldap3.MOCK_SYNC)
-				current_app.ldap_mock.strategy.entries_from_json('ldap_server_entries.json')
+				current_app.ldap_mock.strategy.entries_from_json('tests/openldap_mock/ldap_server_entries.json')
 				current_app.ldap_mock.bind()
 			return current_app.ldap_mock
 		server = ldap3.Server(current_app.config["LDAP_SERVICE_URL"], get_info=ldap3.ALL)

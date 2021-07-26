@@ -23,13 +23,7 @@ class TestMfaPrimitives(unittest.TestCase):
 		self.assertEqual(_hotp(0, b'\x04\x8fM\xcc\x7f\x82\x9c$a\x1b\xb3'), '279354')
 		self.assertEqual(_hotp(2**64-1, b'abcde'), '899292')
 
-def get_user():
-	return User.query.get('uid=testuser,ou=users,dc=example,dc=com')
-
-def get_admin():
-	return User.query.get('uid=testadmin,ou=users,dc=example,dc=com')
-
-def get_fido2_test_cred():
+def get_fido2_test_cred(self):
 	try:
 		from fido2.ctap2 import AttestedCredentialData
 	except ImportError:
@@ -39,15 +33,15 @@ def get_fido2_test_cred():
 
 class TestMfaMethodModels(UffdTestCase):
 	def test_common_attributes(self):
-		method = MFAMethod(user=get_user(), name='testname')
+		method = MFAMethod(user=self.get_user(), name='testname')
 		self.assertTrue(method.created <= datetime.datetime.now())
 		self.assertEqual(method.name, 'testname')
 		self.assertEqual(method.user.loginname, 'testuser')
-		method.user = get_admin()
+		method.user = self.get_admin()
 		self.assertEqual(method.user.loginname, 'testadmin')
 
 	def test_recovery_code_method(self):
-		method = RecoveryCodeMethod(user=get_user())
+		method = RecoveryCodeMethod(user=self.get_user())
 		db.session.add(method)
 		db.session.commit()
 		db.session = db.create_scoped_session() # Ensure the next query does not return the cached method object
@@ -58,10 +52,10 @@ class TestMfaMethodModels(UffdTestCase):
 		self.assertTrue(_method.verify(method.code))
 
 	def test_totp_method_attributes(self):
-		method = TOTPMethod(user=get_user(), name='testname')
+		method = TOTPMethod(user=self.get_user(), name='testname')
 		self.assertEqual(method.name, 'testname')
 		# Restore method with key parameter
-		_method = TOTPMethod(user=get_user(), key=method.key, name='testname')
+		_method = TOTPMethod(user=self.get_user(), key=method.key, name='testname')
 		self.assertEqual(_method.name, 'testname')
 		self.assertEqual(method.raw_key, _method.raw_key)
 		self.assertEqual(method.issuer, _method.issuer)
@@ -79,7 +73,7 @@ class TestMfaMethodModels(UffdTestCase):
 		self.assertEqual(method.key_uri, _method.key_uri)
 
 	def test_totp_method_verify(self):
-		method = TOTPMethod(user=get_user())
+		method = TOTPMethod(user=self.get_user())
 		counter = int(time.time()/30)
 		self.assertFalse(method.verify(''))
 		self.assertFalse(method.verify(_hotp(counter-2, method.raw_key)))
@@ -87,8 +81,8 @@ class TestMfaMethodModels(UffdTestCase):
 		self.assertFalse(method.verify(_hotp(counter+2, method.raw_key)))
 
 	def test_webauthn_method(self):
-		data = get_fido2_test_cred()
-		method = WebauthnMethod(user=get_user(), cred=data, name='testname')
+		data = get_fido2_test_cred(self)
+		method = WebauthnMethod(user=self.get_user(), cred=data, name='testname')
 		self.assertEqual(method.name, 'testname')
 		db.session.add(method)
 		db.session.commit()
@@ -103,45 +97,41 @@ class TestMfaMethodModels(UffdTestCase):
 class TestMfaViews(UffdTestCase):
 	def setUp(self):
 		super().setUp()
-		db.session.add(RecoveryCodeMethod(user=get_admin()))
-		db.session.add(TOTPMethod(user=get_admin(), name='Admin Phone'))
+		db.session.add(RecoveryCodeMethod(user=self.get_admin()))
+		db.session.add(TOTPMethod(user=self.get_admin(), name='Admin Phone'))
 		# We don't want to skip all tests only because fido2 is not installed!
-		#db.session.add(WebauthnMethod(user=get_admin(), cred=get_fido2_test_cred(), name='Admin FIDO2 dongle'))
+		#db.session.add(WebauthnMethod(user=get_testadmin(), cred=get_fido2_test_cred(self), name='Admin FIDO2 dongle'))
 		db.session.commit()
 
-	def login(self):
-		self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
-
 	def add_recovery_codes(self, count=10):
-		user = get_user()
+		user = self.get_user()
 		for _ in range(count):
 			db.session.add(RecoveryCodeMethod(user=user))
 		db.session.commit()
 
 	def add_totp(self):
-		db.session.add(TOTPMethod(user=get_user(), name='My phone'))
+		db.session.add(TOTPMethod(user=self.get_user(), name='My phone'))
 		db.session.commit()
 
 	def add_webauthn(self):
-		db.session.add(WebauthnMethod(user=get_user(), cred=get_fido2_test_cred(), name='My FIDO2 dongle'))
+		db.session.add(WebauthnMethod(user=self.get_user(), cred=get_fido2_test_cred(self), name='My FIDO2 dongle'))
 		db.session.commit()
 
 	def test_setup_disabled(self):
-		self.login()
+		self.login_as('user')
 		r = self.client.get(path=url_for('mfa.setup'), follow_redirects=True)
 		dump('mfa_setup_disabled', r)
 		self.assertEqual(r.status_code, 200)
 
 	def test_setup_recovery_codes(self):
-		self.login()
+		self.login_as('user')
 		self.add_recovery_codes()
 		r = self.client.get(path=url_for('mfa.setup'), follow_redirects=True)
 		dump('mfa_setup_only_recovery_codes', r)
 		self.assertEqual(r.status_code, 200)
 
 	def test_setup_enabled(self):
-		self.login()
+		self.login_as('user')
 		self.add_recovery_codes()
 		self.add_totp()
 		self.add_webauthn()
@@ -150,7 +140,7 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 
 	def test_setup_few_recovery_codes(self):
-		self.login()
+		self.login_as('user')
 		self.add_totp()
 		self.add_recovery_codes(1)
 		r = self.client.get(path=url_for('mfa.setup'), follow_redirects=True)
@@ -158,17 +148,17 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 
 	def test_setup_no_recovery_codes(self):
-		self.login()
+		self.login_as('user')
 		self.add_totp()
 		r = self.client.get(path=url_for('mfa.setup'), follow_redirects=True)
 		dump('mfa_setup_no_recovery_codes', r)
 		self.assertEqual(r.status_code, 200)
 
 	def test_disable(self):
-		self.login()
+		self.login_as('user')
 		self.add_recovery_codes()
 		self.add_totp()
-		admin_methods = len(MFAMethod.query.filter_by(dn=get_admin().dn).all())
+		admin_methods = len(MFAMethod.query.filter_by(dn=self.get_admin().dn).all())
 		r = self.client.get(path=url_for('mfa.disable'), follow_redirects=True)
 		dump('mfa_disable', r)
 		self.assertEqual(r.status_code, 200)
@@ -176,12 +166,12 @@ class TestMfaViews(UffdTestCase):
 		dump('mfa_disable_submit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(len(MFAMethod.query.filter_by(dn=request.user.dn).all()), 0)
-		self.assertEqual(len(MFAMethod.query.filter_by(dn=get_admin().dn).all()), admin_methods)
+		self.assertEqual(len(MFAMethod.query.filter_by(dn=self.get_admin().dn).all()), admin_methods)
 
 	def test_disable_recovery_only(self):
-		self.login()
+		self.login_as('user')
 		self.add_recovery_codes()
-		admin_methods = len(MFAMethod.query.filter_by(dn=get_admin().dn).all())
+		admin_methods = len(MFAMethod.query.filter_by(dn=self.get_admin().dn).all())
 		self.assertNotEqual(len(MFAMethod.query.filter_by(dn=request.user.dn).all()), 0)
 		r = self.client.get(path=url_for('mfa.disable'), follow_redirects=True)
 		dump('mfa_disable_recovery_only', r)
@@ -190,27 +180,26 @@ class TestMfaViews(UffdTestCase):
 		dump('mfa_disable_recovery_only_submit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(len(MFAMethod.query.filter_by(dn=request.user.dn).all()), 0)
-		self.assertEqual(len(MFAMethod.query.filter_by(dn=get_admin().dn).all()), admin_methods)
+		self.assertEqual(len(MFAMethod.query.filter_by(dn=self.get_admin().dn).all()), admin_methods)
 
 	def test_admin_disable(self):
-		for method in MFAMethod.query.filter_by(dn=get_admin().dn).all():
+		for method in MFAMethod.query.filter_by(dn=self.get_admin().dn).all():
 			if not isinstance(method, RecoveryCodeMethod):
 				db.session.delete(method)
 		db.session.commit()
 		self.add_recovery_codes()
 		self.add_totp()
-		self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testadmin', 'password': 'adminpassword'}, follow_redirects=True)
+		self.login_as('admin')
 		self.assertIsNotNone(request.user)
-		admin_methods = len(MFAMethod.query.filter_by(dn=get_admin().dn).all())
-		r = self.client.get(path=url_for('mfa.admin_disable', uid=get_user().uid), follow_redirects=True)
+		admin_methods = len(MFAMethod.query.filter_by(dn=self.get_admin().dn).all())
+		r = self.client.get(path=url_for('mfa.admin_disable', uid=self.get_user().uid), follow_redirects=True)
 		dump('mfa_admin_disable', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertEqual(len(MFAMethod.query.filter_by(dn=get_user().dn).all()), 0)
-		self.assertEqual(len(MFAMethod.query.filter_by(dn=get_admin().dn).all()), admin_methods)
+		self.assertEqual(len(MFAMethod.query.filter_by(dn=self.get_user().dn).all()), 0)
+		self.assertEqual(len(MFAMethod.query.filter_by(dn=self.get_admin().dn).all()), admin_methods)
 
 	def test_setup_recovery(self):
-		self.login()
+		self.login_as('user')
 		self.assertEqual(len(RecoveryCodeMethod.query.filter_by(dn=request.user.dn).all()), 0)
 		r = self.client.post(path=url_for('mfa.setup_recovery'), follow_redirects=True)
 		dump('mfa_setup_recovery', r)
@@ -224,7 +213,7 @@ class TestMfaViews(UffdTestCase):
 		self.assertNotEqual(len(methods), 0)
 
 	def test_setup_totp(self):
-		self.login()
+		self.login_as('user')
 		self.add_recovery_codes()
 		r = self.client.get(path=url_for('mfa.setup_totp', name='My TOTP Authenticator'), follow_redirects=True)
 		dump('mfa_setup_totp', r)
@@ -232,13 +221,13 @@ class TestMfaViews(UffdTestCase):
 		self.assertNotEqual(len(session.get('mfa_totp_key', '')), 0)
 
 	def test_setup_totp_without_recovery(self):
-		self.login()
+		self.login_as('user')
 		r = self.client.get(path=url_for('mfa.setup_totp', name='My TOTP Authenticator'), follow_redirects=True)
 		dump('mfa_setup_totp_without_recovery', r)
 		self.assertEqual(r.status_code, 200)
 
 	def test_setup_totp_finish(self):
-		self.login()
+		self.login_as('user')
 		self.add_recovery_codes()
 		self.assertEqual(len(TOTPMethod.query.filter_by(dn=request.user.dn).all()), 0)
 		r = self.client.get(path=url_for('mfa.setup_totp', name='My TOTP Authenticator'), follow_redirects=True)
@@ -250,7 +239,7 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(len(TOTPMethod.query.filter_by(dn=request.user.dn).all()), 1)
 
 	def test_setup_totp_finish_without_recovery(self):
-		self.login()
+		self.login_as('user')
 		self.assertEqual(len(TOTPMethod.query.filter_by(dn=request.user.dn).all()), 0)
 		r = self.client.get(path=url_for('mfa.setup_totp', name='My TOTP Authenticator'), follow_redirects=True)
 		method = TOTPMethod(request.user, key=session.get('mfa_totp_key', ''))
@@ -261,7 +250,7 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(len(TOTPMethod.query.filter_by(dn=request.user.dn).all()), 0)
 
 	def test_setup_totp_finish_wrong_code(self):
-		self.login()
+		self.login_as('user')
 		self.add_recovery_codes()
 		self.assertEqual(len(TOTPMethod.query.filter_by(dn=request.user.dn).all()), 0)
 		r = self.client.get(path=url_for('mfa.setup_totp', name='My TOTP Authenticator'), follow_redirects=True)
@@ -274,7 +263,7 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(len(TOTPMethod.query.filter_by(dn=request.user.dn).all()), 0)
 
 	def test_setup_totp_finish_empty_code(self):
-		self.login()
+		self.login_as('user')
 		self.add_recovery_codes()
 		self.assertEqual(len(TOTPMethod.query.filter_by(dn=request.user.dn).all()), 0)
 		r = self.client.get(path=url_for('mfa.setup_totp', name='My TOTP Authenticator'), follow_redirects=True)
@@ -284,7 +273,7 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(len(TOTPMethod.query.filter_by(dn=request.user.dn).all()), 0)
 
 	def test_delete_totp(self):
-		self.login()
+		self.login_as('user')
 		self.add_recovery_codes()
 		self.add_totp()
 		method = TOTPMethod(request.user, name='test')
@@ -304,8 +293,7 @@ class TestMfaViews(UffdTestCase):
 		self.add_totp()
 		db.session.commit()
 		self.assertIsNone(request.user)
-		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=True)
+		r = self.login_as('user')
 		dump('mfa_auth_redirected', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIn(b'/mfa/auth', r.data)
@@ -317,8 +305,7 @@ class TestMfaViews(UffdTestCase):
 
 	def test_auth_disabled(self):
 		self.assertIsNone(request.user)
-		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=False)
+		self.login_as('user')
 		r = self.client.get(path=url_for('mfa.auth', ref='/redirecttarget'), follow_redirects=False)
 		self.assertEqual(r.status_code, 302)
 		self.assertTrue(r.location.endswith('/redirecttarget'))
@@ -327,8 +314,7 @@ class TestMfaViews(UffdTestCase):
 	def test_auth_recovery_only(self):
 		self.add_recovery_codes()
 		self.assertIsNone(request.user)
-		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': 'testuser', 'password': 'userpassword'}, follow_redirects=False)
+		self.login_as('user')
 		r = self.client.get(path=url_for('mfa.auth', ref='/redirecttarget'), follow_redirects=False)
 		self.assertEqual(r.status_code, 302)
 		self.assertTrue(r.location.endswith('/redirecttarget'))
@@ -337,11 +323,11 @@ class TestMfaViews(UffdTestCase):
 	def test_auth_recovery_code(self):
 		self.add_recovery_codes()
 		self.add_totp()
-		method = RecoveryCodeMethod(user=get_user())
+		method = RecoveryCodeMethod(user=self.get_user())
 		db.session.add(method)
 		db.session.commit()
 		method_id = method.id
-		self.login()
+		self.login_as('user')
 		r = self.client.get(path=url_for('mfa.auth'), follow_redirects=False)
 		dump('mfa_auth_recovery_code', r)
 		self.assertEqual(r.status_code, 200)
@@ -355,11 +341,11 @@ class TestMfaViews(UffdTestCase):
 	def test_auth_totp_code(self):
 		self.add_recovery_codes()
 		self.add_totp()
-		method = TOTPMethod(user=get_user(), name='testname')
+		method = TOTPMethod(user=self.get_user(), name='testname')
 		raw_key = method.raw_key
 		db.session.add(method)
 		db.session.commit()
-		self.login()
+		self.login_as('user')
 		r = self.client.get(path=url_for('mfa.auth'), follow_redirects=False)
 		dump('mfa_auth_totp_code', r)
 		self.assertEqual(r.status_code, 200)
@@ -373,7 +359,7 @@ class TestMfaViews(UffdTestCase):
 	def test_auth_empty_code(self):
 		self.add_recovery_codes()
 		self.add_totp()
-		self.login()
+		self.login_as('user')
 		r = self.client.get(path=url_for('mfa.auth'), follow_redirects=False)
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(request.user)
@@ -385,11 +371,11 @@ class TestMfaViews(UffdTestCase):
 	def test_auth_invalid_code(self):
 		self.add_recovery_codes()
 		self.add_totp()
-		method = TOTPMethod(user=get_user(), name='testname')
+		method = TOTPMethod(user=self.get_user(), name='testname')
 		raw_key = method.raw_key
 		db.session.add(method)
 		db.session.commit()
-		self.login()
+		self.login_as('user')
 		r = self.client.get(path=url_for('mfa.auth'), follow_redirects=False)
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(request.user)
@@ -403,11 +389,11 @@ class TestMfaViews(UffdTestCase):
 	def test_auth_ratelimit(self):
 		self.add_recovery_codes()
 		self.add_totp()
-		method = TOTPMethod(user=get_user(), name='testname')
+		method = TOTPMethod(user=self.get_user(), name='testname')
 		raw_key = method.raw_key
 		db.session.add(method)
 		db.session.commit()
-		self.login()
+		self.login_as('user')
 		self.assertIsNone(request.user)
 		code = _hotp(int(time.time()/30), raw_key)
 		inv_code = str(int(code[0])+1)[-1] + code[1:]
