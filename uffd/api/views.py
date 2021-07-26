@@ -79,7 +79,7 @@ def getusers():
 def checkpassword():
 	if set(request.values.keys()) != {'loginname', 'password'}:
 		abort(400)
-	username = request.form['loginname']
+	username = request.form['loginname'].lower()
 	password = request.form['password']
 	login_delay = login_ratelimit.get_delay(username)
 	if login_delay:

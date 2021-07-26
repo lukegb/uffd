@@ -81,7 +81,7 @@ def login():
 	if request.method == 'GET':
 		return render_template('session/login.html', ref=request.values.get('ref'))
 
-	username = request.form['loginname']
+	username = request.form['loginname'].lower()
 	password = request.form['password']
 	login_delay = login_ratelimit.get_delay(username)
 	host_delay = host_ratelimit.get_delay()

@@ -60,7 +60,7 @@ def forgot_password():
 	if request.method == 'GET':
 		return render_template('selfservice/forgot_password.html')
 
-	loginname = request.values['loginname']
+	loginname = request.values['loginname'].lower()
 	mail = request.values['mail']
 	reset_delay = reset_ratelimit.get_delay(loginname+'/'+mail)
 	host_delay = host_ratelimit.get_delay()

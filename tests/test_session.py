@@ -61,6 +61,12 @@ class TestSession(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertLoggedIn()
 
+	def test_titlecase_password(self):
+		r = self.client.post(path=url_for('session.login'),
+			data={'loginname': self.test_data.get('user').get('loginname').title(), 'password': self.test_data.get('user').get('password')}, follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertLoggedIn()
+
 	def test_redirect(self):
 		r = self.login_as('user', ref=url_for('test_login_required'))
 		self.assertEqual(r.status_code, 200)
