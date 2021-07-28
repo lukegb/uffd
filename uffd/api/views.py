@@ -47,9 +47,11 @@ def getgroups():
 		abort(400)
 	return jsonify([generate_group_dict(group) for group in groups])
 
-def generate_user_dict(user):
+def generate_user_dict(user, all_groups=None):
+	if all_groups is None:
+		all_groups = user.groups
 	return {'id': user.uid, 'loginname': user.loginname, 'email': user.mail, 'displayname': user.displayname,
-	        'groups': [group.name for group in user.groups]}
+	        'groups': [group.name for group in all_groups if user in group.members]}
 
 @bp.route('/getusers', methods=['GET', 'POST'])
 @apikey_required()
@@ -58,7 +60,6 @@ def getusers():
 		abort(400)
 	key = (list(request.values.keys()) or [None])[0]
 	values = request.values.getlist(key)
-	Group.query.all() # Fill object cache for better preformance
 	if key is None:
 		users = User.query.all()
 	elif key == 'id' and len(values) == 1:
@@ -72,7 +73,10 @@ def getusers():
 		users = [] if group is None else group.members
 	else:
 		abort(400)
-	return jsonify([generate_user_dict(user) for user in users])
+	all_groups = None
+	if len(users) > 1:
+		all_groups = Group.query.all()
+	return jsonify([generate_user_dict(user, all_groups) for user in users])
 
 @bp.route('/checkpassword', methods=['POST'])
 @apikey_required('checkpassword')
