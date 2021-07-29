@@ -33,7 +33,7 @@
 				<form method="POST" action="{{ url_for("invite.grant", token=invite.token) }}" class="mb-2">
 					<button type="submit" class="btn btn-primary btn-block">Add the roles to your account now</button>
 				</form>
-				<a href="{{ url_for("session.logout", ref=url_for("session.login", ref=request.url)) }}" class="btn btn-secondary btn-block">Logout and switch to a different account</a>
+				<a href="{{ url_for("session.logout", ref=url_for("session.login", ref=request.full_path)) }}" class="btn btn-secondary btn-block">Logout and switch to a different account</a>
 			{% endif %}
 			{% if invite.allow_signup %}
 				<a href="{{ url_for("session.logout", ref=url_for("invite.signup_start", token=invite.token)) }}" class="btn btn-secondary btn-block">Logout to register a new account</a>
@@ -43,7 +43,7 @@
 				<a href="{{ url_for("invite.signup_start", token=invite.token) }}" class="btn btn-primary btn-block">Register a new account</a>
 			{% endif %}
 			{% if invite.roles %}
-				<a href="{{ url_for("session.login", ref=request.url) }}" class="btn btn-primary btn-block">Login and add the roles to your account</a>
+				<a href="{{ url_for("session.login", ref=request.full_path) }}" class="btn btn-primary btn-block">Login and add the roles to your account</a>
 			{% endif %}
 		{% endif %}
 	</div>

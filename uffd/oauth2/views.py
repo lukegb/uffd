@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from uffd.ratelimit import host_ratelimit, format_delay
 from uffd.database import db
+from uffd.secure_redirect import secure_local_redirect
 from uffd.session.models import DeviceLoginConfirmation
 from .models import OAuth2Client, OAuth2Grant, OAuth2Token, OAuth2DeviceLoginInitiation
 
@@ -91,7 +92,7 @@ def authorize(*args, **kwargs): # pylint: disable=unused-argument
 		host_delay = host_ratelimit.get_delay()
 		if host_delay:
 			flash('We received too many requests from your ip address/network! Please wait at least %s.'%format_delay(host_delay))
-			return redirect(url_for('session.login', ref=request.url, devicelogin=True))
+			return redirect(url_for('session.login', ref=request.full_path, devicelogin=True))
 		host_ratelimit.log()
 		initiation = OAuth2DeviceLoginInitiation(oauth2_client_id=client.client_id)
 		db.session.add(initiation)
@@ -102,7 +103,7 @@ def authorize(*args, **kwargs): # pylint: disable=unused-argument
 			return redirect(url_for('session.login', ref=request.values['ref'], devicelogin=True))
 		session['devicelogin_id'] = initiation.id
 		session['devicelogin_secret'] = initiation.secret
-		return redirect(url_for('session.devicelogin', ref=request.url))
+		return redirect(url_for('session.devicelogin', ref=request.full_path))
 	elif 'devicelogin_id' in session and 'devicelogin_secret' in session and 'devicelogin_confirmation' in session:
 		initiation = OAuth2DeviceLoginInitiation.query.filter_by(id=session['devicelogin_id'], secret=session['devicelogin_secret'],
 		                                                         oauth2_client_id=client.client_id).one_or_none()
@@ -112,12 +113,12 @@ def authorize(*args, **kwargs): # pylint: disable=unused-argument
 		del session['devicelogin_confirmation']
 		if not initiation or initiation.expired or not confirmation:
 			flash('Device login failed')
-			return redirect(url_for('session.login', ref=request.url, devicelogin=True))
+			return redirect(url_for('session.login', ref=request.full_path, devicelogin=True))
 		request.oauth2_user = confirmation.user
 		db.session.delete(initiation)
 		db.session.commit()
 	else:
-		return redirect(url_for('session.login', ref=request.url, devicelogin=True))
+		return redirect(url_for('session.login', ref=request.full_path, devicelogin=True))
 	# Here we would normally ask the user, if he wants to give the requesting
 	# service access to his data. Since we only have trusted services (the
 	# clients defined in the server config), we don't ask for consent.
@@ -163,7 +164,7 @@ def inject_logout_params(endpoint, values):
 @bp.route('/logout')
 def logout():
 	if not request.values.get('client_ids'):
-		return redirect(request.values.get('ref', '/'))
+		return secure_local_redirect(request.values.get('ref', '/'))
 	client_ids = request.values['client_ids'].split(',')
 	clients = [OAuth2Client.from_id(client_id) for client_id in client_ids]
 	return render_template('oauth2/logout.html', clients=clients)

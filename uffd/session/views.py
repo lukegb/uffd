@@ -7,6 +7,7 @@ from flask_babel import gettext as _
 
 from uffd.database import db
 from uffd.csrf import csrf_protect
+from uffd.secure_redirect import secure_local_redirect
 from uffd.user.models import User
 from uffd.ldap import ldap, test_user_bind, LDAPInvalidDnError, LDAPBindError, LDAPPasswordIsMandatoryError
 from uffd.ratelimit import Ratelimit, host_ratelimit, format_delay
@@ -111,7 +112,7 @@ def login_required_pre_mfa(no_redirect=False):
 				if no_redirect:
 					abort(403)
 				flash(_('You need to login first'))
-				return redirect(url_for('session.login', ref=request.url))
+				return redirect(url_for('session.login', ref=request.full_path))
 			return func(*args, **kwargs)
 		return decorator
 	return wrapper
@@ -122,9 +123,9 @@ def login_required(group=None):
 		def decorator(*args, **kwargs):
 			if not request.user_pre_mfa:
 				flash(_('You need to login first'))
-				return redirect(url_for('session.login', ref=request.url))
+				return redirect(url_for('session.login', ref=request.full_path))
 			if not request.user:
-				return redirect(url_for('mfa.auth', ref=request.url))
+				return redirect(url_for('mfa.auth', ref=request.full_path))
 			if not request.user.is_in_group(group):
 				flash(_('Access denied'))
 				return redirect(url_for('index'))
@@ -135,7 +136,7 @@ def login_required(group=None):
 @bp.route("/login/device/start")
 def devicelogin_start():
 	session['devicelogin_started'] = True
-	return redirect(request.values['ref'])
+	return secure_local_redirect(request.values['ref'])
 
 @bp.route("/login/device")
 def devicelogin():
@@ -160,7 +161,7 @@ def devicelogin_submit():
 		flash('Invalid confirmation code')
 		return render_template('session/devicelogin.html', ref=request.values.get('ref'), initiation=initiation)
 	session['devicelogin_confirmation'] = confirmation.id
-	return redirect(request.values['ref'])
+	return secure_local_redirect(request.values['ref'])
 
 @bp.route("/device")
 @login_required()

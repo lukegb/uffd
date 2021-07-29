@@ -10,6 +10,7 @@ from uffd.mfa.models import MFAMethod, TOTPMethod, WebauthnMethod, RecoveryCodeM
 from uffd.session.views import login_required, login_required_pre_mfa, set_request_user
 from uffd.user.models import User
 from uffd.csrf import csrf_protect
+from uffd.secure_redirect import secure_local_redirect
 from uffd.ratelimit import Ratelimit, format_delay
 
 bp = Blueprint('mfa', __name__, template_folder='templates', url_prefix='/mfa/')
@@ -213,7 +214,7 @@ def auth():
 		session['user_mfa'] = True
 		set_request_user()
 	if session.get('user_mfa'):
-		return redirect(request.values.get('ref', url_for('index')))
+		return secure_local_redirect(request.values.get('ref', url_for('index')))
 	return render_template('mfa/auth.html', ref=request.values.get('ref'))
 
 @bp.route('/auth', methods=['POST'])
@@ -227,7 +228,7 @@ def auth_finish():
 		if method.verify(request.form['code']):
 			session['user_mfa'] = True
 			set_request_user()
-			return redirect(request.values.get('ref', url_for('index')))
+			return secure_local_redirect(request.values.get('ref', url_for('index')))
 	for method in request.user_pre_mfa.mfa_recovery_codes:
 		if method.verify(request.form['code']):
 			db.session.delete(method)
@@ -240,7 +241,7 @@ def auth_finish():
 			if len(request.user_pre_mfa.mfa_recovery_codes) <= 5:
 				flash(_('You only have a few recovery codes remaining. Make sure to generate new ones before they run out.'))
 				return redirect(url_for('mfa.setup'))
-			return redirect(request.values.get('ref', url_for('index')))
+			return secure_local_redirect(request.values.get('ref', url_for('index')))
 	mfa_ratelimit.log(request.user_pre_mfa.dn)
 	flash(_('Two-factor authentication failed'))
 	return redirect(url_for('mfa.auth', ref=request.values.get('ref')))

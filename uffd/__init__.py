@@ -17,6 +17,7 @@ from uffd.database import db, SQLAlchemyJSON
 import uffd.ldap
 from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
+from uffd.secure_redirect import secure_local_redirect
 # pylint: enable=wrong-import-position
 
 def load_config_file(app, cfg_name, silent=False):
@@ -97,7 +98,7 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 
 	@app.route('/lang', methods=['POST'])
 	def setlang(): #pylint: disable=unused-variable
-		resp = redirect(request.values.get('ref', '/'))
+		resp = secure_local_redirect(request.values.get('ref', '/'))
 		if 'lang' in request.values:
 			resp.set_cookie('language', request.values['lang'])
 		return resp
