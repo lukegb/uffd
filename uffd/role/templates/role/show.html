@@ -94,8 +94,8 @@
 							<td>
 								<div class="form-check">
 									<input class="form-check-input" type="checkbox" id="include-role-{{ r.id }}-checkbox" name="include-role-{{ r.id }}" value="1" aria-label="enabled"
-										{% if r == role or role.locked %}disabled{% endif %}
-										{% if r in role.included_roles %}checked{% endif %}>
+										{% if r == role or role.locked %} disabled{% endif %}
+										{% if r in role.included_roles %} checked{% endif %}>
 								</div>
 							</td>
 							<td>
