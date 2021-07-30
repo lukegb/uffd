@@ -65,3 +65,8 @@ html5validator:
     paths:
     - pages
     - html5validator.log
+
+trans_de:
+  stage: test
+  script:
+  - ./update_translations.sh de
