@@ -8,7 +8,7 @@
 		<a href="{{ url_for("user.index") }}" class="btn btn-secondary">{{_("Cancel")}}</a>
 		{% if user.uid %}
 			<a href="{{ url_for("mfa.admin_disable", uid=user.uid) }}" class="btn btn-secondary">{{_("Reset 2FA")}}</a>
-			<a href="{{ url_for("user.delete", uid=user.uid) }}" onClick="return confirm({{_('Are you sure?')|tojson}});" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
+			<a href="{{ url_for("user.delete", uid=user.uid) }}" onClick='return confirm({{_("Are you sure?")|tojson}});' class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
 		{% else %}
 			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
 		{% endif %}

@@ -120,7 +120,7 @@
 					<td>{{ role.description }}</td>
 					<td>
 						{% if config['ENABLE_ROLESELFSERVICE'] %}
-						<form action="{{ url_for("selfservice.leave_role", roleid=role.id) }}" method="POST" onsubmit="return confirm({{_('Are you sure?')|tojson}});">
+						<form action="{{ url_for("selfservice.leave_role", roleid=role.id) }}" method="POST" onsubmit='return confirm({{_("Are you sure?")|tojson|e}});'>
 							<button type="submit" class="btn btn-sm btn-danger float-right">{{_("Leave")}}</button>
 						</form>
 						{% endif %}

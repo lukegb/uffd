@@ -144,7 +144,7 @@ def leave_role(roleid):
 	request.user.update_groups()
 	ldap.session.commit()
 	db.session.commit()
-	flash(_('You left role "%(role_name)s"', role_name=role.name))
+	flash(_('You left role %(role_name)s', role_name=role.name))
 	return redirect(url_for('selfservice.index'))
 
 def send_mail_verification(loginname, newmail):
