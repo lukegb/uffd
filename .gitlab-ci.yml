@@ -70,3 +70,4 @@ trans_de:
   stage: test
   script:
   - ./update_translations.sh de
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
