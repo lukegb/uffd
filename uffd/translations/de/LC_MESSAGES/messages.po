@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-07-30 21:03+0200\n"
+"POT-Creation-Date: 2021-07-30 21:15+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -1431,21 +1431,25 @@ msgstr "E-Mail-Adresse nicht valide"
 msgid "Display name does not meet requirements"
 msgstr "Anzeigename entspricht nicht den Anforderungen"
 
-#: uffd/user/views_user.py:75
+#: uffd/user/views_user.py:63
+msgid "Password is invalid"
+msgstr "Passwort ist ungültig"
+
+#: uffd/user/views_user.py:77
 msgid "Service user created"
 msgstr "Service-Account erstellt"
 
-#: uffd/user/views_user.py:78
+#: uffd/user/views_user.py:80
 msgid "User created. We sent the user a password reset link by mail"
 msgstr ""
 "Benutzer erstellt. E-Mail mit einem Link zum Setzen des Passworts wurde "
 "versendet."
 
-#: uffd/user/views_user.py:80
+#: uffd/user/views_user.py:82
 msgid "User updated"
 msgstr "Benutzer aktualisiert"
 
-#: uffd/user/views_user.py:91
+#: uffd/user/views_user.py:93
 msgid "Deleted user"
 msgstr "Benutzer gelöscht"
 

@@ -59,7 +59,9 @@ def update(uid=None):
 		return redirect(url_for('user.show', uid=uid))
 	new_password = request.form.get('password')
 	if uid is not None and new_password:
-		user.set_password(new_password)
+		if not user.set_password(new_password):
+			flash(_('Password is invalid'))
+			return redirect(url_for('user.show', uid=uid))
 	ldap.session.add(user)
 	user.roles.clear()
 	for role in Role.query.all():

@@ -194,7 +194,6 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
 		self.assertTrue(ldap.test_user_bind(user_updated.dn, 'newpassword'))
 
-	@unittest.skip('See #28')
 	def test_update_invalid_password(self):
 		user_unupdated = self.get_user()
 		r = self.client.get(path=url_for('user.show', uid=user_unupdated.uid), follow_redirects=True)
