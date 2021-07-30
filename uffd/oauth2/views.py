@@ -4,6 +4,7 @@ import urllib.parse
 
 from flask import Blueprint, request, jsonify, render_template, session, redirect, url_for, flash
 from flask_oauthlib.provider import OAuth2Provider
+from flask_babel import gettext as _
 from sqlalchemy.exc import IntegrityError
 
 from uffd.ratelimit import host_ratelimit, format_delay
@@ -91,7 +92,7 @@ def authorize(*args, **kwargs): # pylint: disable=unused-argument
 		del session['devicelogin_started']
 		host_delay = host_ratelimit.get_delay()
 		if host_delay:
-			flash('We received too many requests from your ip address/network! Please wait at least %s.'%format_delay(host_delay))
+			flash(_('We received too many requests from your ip address/network! Please wait at least %(delay)s.', delay=format_delay(host_delay)))
 			return redirect(url_for('session.login', ref=request.full_path, devicelogin=True))
 		host_ratelimit.log()
 		initiation = OAuth2DeviceLoginInitiation(oauth2_client_id=client.client_id)
@@ -99,7 +100,7 @@ def authorize(*args, **kwargs): # pylint: disable=unused-argument
 		try:
 			db.session.commit()
 		except IntegrityError:
-			flash('Device login is currently not available. Try again later!')
+			flash(_('Device login is currently not available. Try again later!'))
 			return redirect(url_for('session.login', ref=request.values['ref'], devicelogin=True))
 		session['devicelogin_id'] = initiation.id
 		session['devicelogin_secret'] = initiation.secret

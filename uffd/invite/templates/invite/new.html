@@ -3,23 +3,23 @@
 {% block body %}
 <form action="{{ url_for("invite.new_submit") }}" method="POST" class="form">
 	<div class="form-group">
-		<label for="single-use">Link Type</label>
+		<label for="single-use">{{_('Link Type')}}</label>
 		<select class="form-control" id="single-use" name="single-use">
-			<option value="1">Valid for a single successful use</option>
-			<option value="0">Multi-use</option>
+			<option value="1">{{_('Valid for a single successful use')}}</option>
+			<option value="0">{{_('Multi-use')}}</option>
 		</select>
 	</div>
 	<div class="form-group">
-		<label for="valid-until">Valid Until</label>
+		<label for="valid-until">{{_('Valid Until')}}</label>
 		<input class="form-control" type="datetime-local" id="valid-until" name="valid-until" value="{{ (datetime.now() + timedelta(hours=36)).replace(hour=23, minute=59, second=59, microsecond=0).isoformat(timespec='minutes') }}">
-		<small class="text-muted">Must be within the next {{ config['INVITE_MAX_VALID_DAYS'] }} days</small>
+		<small class="text-muted">{{_('Must be within the next %(max_valid_days)d days', max_valid_days=config['INVITE_MAX_VALID_DAYS'])}}</small>
 	</div>
 	{% if allow_signup %}
 	<div class="form-group">
-		<label for="allow-signup">Account Registration</label>
+		<label for="allow-signup">{{_('Account Registration')}}</label>
 		<select class="form-control" id="allow-signup" name="allow-signup">
-			<option value="1">Link allows account registration</option>
-			<option value="0">No account registration allowed</option>
+			<option value="1">{{_('Link allows account registration')}}</option>
+			<option value="0">{{_('No account registration allowed')}}</option>
 		</select>
 	</div>
 	{% else %}
@@ -27,13 +27,13 @@
 	{% endif %}
 	{% if roles %}
 	<div class="form-group">
-		<label for="valid-until">Granted Roles</label>
+		<label for="valid-until">{{_('Granted Roles')}}</label>
 		<table class="table table-sm">
 			<thead>
 				<tr>
 					<th scope="col"></th>
-					<th scope="col">Name</th>
-					<th scope="col">Description</th>
+					<th scope="col">{{_('Name')}}</th>
+					<th scope="col">{{_('Description')}}</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -52,7 +52,7 @@
 		</table>
 	</div>
 	{% endif %}
-	<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Create Link</button>
-	<a href="{{ url_for("invite.index") }}" class="btn btn-secondary">Cancel</a>
+	<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> {{_('Create Link')}}</button>
+	<a href="{{ url_for("invite.index") }}" class="btn btn-secondary">{{_('Cancel')}}</a>
 </form>
 {% endblock %}

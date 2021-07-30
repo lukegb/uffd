@@ -3,6 +3,7 @@ import ipaddress
 import math
 
 from flask import request
+from flask_babel import gettext as _
 from sqlalchemy import Column, Integer, String, DateTime
 
 from uffd.database import db
@@ -66,16 +67,16 @@ class HostRatelimit(Ratelimit):
 
 def format_delay(seconds):
 	if seconds <= 15:
-		return 'a few seconds'
+		return _('a few seconds')
 	if seconds <= 30:
-		return '30 seconds'
+		return _('30 seconds')
 	if seconds <= 60:
-		return 'one minute'
+		return _('one minute')
 	if seconds < 3000:
-		return '%d minutes'%(math.ceil(seconds/60)+1)
+		return _('%(minutes)d minutes', minutes=(math.ceil(seconds/60)+1))
 	if seconds <= 3600:
-		return 'one hour'
-	return '%d hours'%math.ceil(seconds/3600)
+		return _('one hour')
+	return _('%(hours)d hours', hours=math.ceil(seconds/3600))
 
 # Global host-based ratelimit
 host_ratelimit = HostRatelimit('host', 1*60*60, 25)

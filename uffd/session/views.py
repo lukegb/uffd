@@ -88,9 +88,9 @@ def login():
 	host_delay = host_ratelimit.get_delay()
 	if login_delay or host_delay:
 		if login_delay > host_delay:
-			flash(_('We received too many invalid login attempts for this user! Please wait at least %s.')%format_delay(login_delay))
+			flash(_('We received too many invalid login attempts for this user! Please wait at least %(delay)s.', delay=format_delay(login_delay)))
 		else:
-			flash(_('We received too many requests from your ip address/network! Please wait at least %s.')%format_delay(host_delay))
+			flash(_('We received too many requests from your ip address/network! Please wait at least %(delay)s.', delay=format_delay(host_delay)))
 		return render_template('session/login.html', ref=request.values.get('ref'))
 	user = login_get_user(username, password)
 	if user is None:
@@ -144,7 +144,7 @@ def devicelogin():
 		return redirect(url_for('session.login', ref=request.values['ref'], devicelogin=True))
 	initiation = DeviceLoginInitiation.query.filter_by(id=session['devicelogin_id'], secret=session['devicelogin_secret']).one_or_none()
 	if not initiation or initiation.expired:
-		flash('Initiation code is no longer valid')
+		flash(_('Initiation code is no longer valid'))
 		return redirect(url_for('session.login', ref=request.values['ref'], devicelogin=True))
 	return render_template('session/devicelogin.html', ref=request.values.get('ref'), initiation=initiation)
 
@@ -154,11 +154,11 @@ def devicelogin_submit():
 		return redirect(url_for('session.login', ref=request.values['ref'], devicelogin=True))
 	initiation = DeviceLoginInitiation.query.filter_by(id=session['devicelogin_id'], secret=session['devicelogin_secret']).one_or_none()
 	if not initiation or initiation.expired:
-		flash('Initiation code is no longer valid')
+		flash(_('Initiation code is no longer valid'))
 		return redirect(url_for('session.login', ref=request.values['ref'], devicelogin=True))
 	confirmation = DeviceLoginConfirmation.query.filter_by(initiation=initiation, code=request.form['confirmation-code']).one_or_none()
 	if confirmation is None:
-		flash('Invalid confirmation code')
+		flash(_('Invalid confirmation code'))
 		return render_template('session/devicelogin.html', ref=request.values.get('ref'), initiation=initiation)
 	session['devicelogin_confirmation'] = confirmation.id
 	return secure_local_redirect(request.values['ref'])
@@ -170,7 +170,7 @@ def deviceauth():
 		return render_template('session/deviceauth.html')
 	initiation = DeviceLoginInitiation.query.filter_by(code=request.values['initiation-code']).one_or_none()
 	if initiation is None or initiation.expired:
-		flash('Invalid initiation code')
+		flash(_('Invalid initiation code'))
 		return redirect(url_for('session.deviceauth'))
 	return render_template('session/deviceauth.html', initiation=initiation)
 
@@ -181,7 +181,7 @@ def deviceauth_submit():
 	DeviceLoginConfirmation.query.filter_by(user_dn=request.user.dn).delete()
 	initiation = DeviceLoginInitiation.query.filter_by(code=request.form['initiation-code']).one_or_none()
 	if initiation is None or initiation.expired:
-		flash('Invalid initiation code')
+		flash(_('Invalid initiation code'))
 		return redirect(url_for('session.deviceauth'))
 	confirmation = DeviceLoginConfirmation(user=request.user, initiation=initiation)
 	db.session.add(confirmation)

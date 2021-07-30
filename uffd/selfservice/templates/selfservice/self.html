@@ -13,7 +13,7 @@
 	<div class="col-12 col-md-5">
 		<h5>{{_("Profile")}}</h5>
 		<p>{{_("Your profile information is used by all services that are integrated into the Single-Sign-On. Your e-mail address is also used for password recovery.")}}</p>
-		<p>{{_(" Changes may take serveral minutes to be visible in all services.")}}</p>
+		<p>{{_("Changes may take serveral minutes to be visible in all services.")}}</p>
 	</div>
 	<div class="col-12 col-md-7">
 		<form class="form" action="{{ url_for("selfservice.update_profile") }}" method="POST">
@@ -55,7 +55,7 @@
 			<div class="form-group">
 				<input type="password" class="form-control" id="user-password1" name="password1" placeholder="{{_("New Password")}}" required>
 				<small class="form-text text-muted">
-					At least 8 and at most 256 characters, no other special requirements.
+					{{_('At least 8 and at most 256 characters, no other special requirements.')}}
 				</small>
 			</div>
 			<div class="form-group">
@@ -120,7 +120,7 @@
 					<td>{{ role.description }}</td>
 					<td>
 						{% if config['ENABLE_ROLESELFSERVICE'] %}
-						<form action="{{ url_for("selfservice.leave_role", roleid=role.id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+						<form action="{{ url_for("selfservice.leave_role", roleid=role.id) }}" method="POST" onsubmit="return confirm({{_('Are you sure?')|tojson}});">
 							<button type="submit" class="btn btn-sm btn-danger float-right">{{_("Leave")}}</button>
 						</form>
 						{% endif %}

@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, url_for, redirect, flash
+from flask_babel import gettext as _, lazy_gettext
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
@@ -21,7 +22,7 @@ def acl_check(): #pylint: disable=inconsistent-return-statements
 		return redirect(url_for('index'))
 
 @bp.route("/")
-@register_navbar('Moderation', icon='user-lock', blueprint=bp, visible=user_is_rolemod)
+@register_navbar(lazy_gettext('Moderation'), icon='user-lock', blueprint=bp, visible=user_is_rolemod)
 def index():
 	roles = Role.query.filter(Role.moderator_group_dn.in_(request.user.group_dns)).all()
 	return render_template('rolemod/list.html', roles=roles)
@@ -32,7 +33,7 @@ def show(role_id):
 	User.query.all()
 	role = Role.query.get_or_404(role_id)
 	if role.moderator_group not in request.user.groups:
-		flash('Access denied')
+		flash(_('Access denied'))
 		return redirect(url_for('index'))
 	return render_template('rolemod/show.html', role=role)
 
@@ -41,11 +42,11 @@ def show(role_id):
 def update(role_id):
 	role = Role.query.get_or_404(role_id)
 	if role.moderator_group not in request.user.groups:
-		flash('Access denied')
+		flash(_('Access denied'))
 		return redirect(url_for('index'))
 	if request.form['description'] != role.description:
 		if len(request.form['description']) > 256:
-			flash('Description too long')
+			flash(_('Description too long'))
 			return redirect(url_for('.show', role_id=role.id))
 		role.description = request.form['description']
 	db.session.commit()
@@ -56,12 +57,12 @@ def update(role_id):
 def delete_member(role_id, member_dn):
 	role = Role.query.get_or_404(role_id)
 	if role.moderator_group not in request.user.groups:
-		flash('Access denied')
+		flash(_('Access denied'))
 		return redirect(url_for('index'))
 	member = User.query.get_or_404(member_dn)
 	role.members.discard(member)
 	member.update_groups()
 	ldap.session.commit()
 	db.session.commit()
-	flash('Member removed')
+	flash(_('Member removed'))
 	return redirect(url_for('.show', role_id=role.id))

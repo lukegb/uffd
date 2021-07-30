@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
+from flask_babel import gettext as _, lazy_gettext
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
@@ -19,7 +20,7 @@ def mail_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp.route("/")
-@register_navbar('Mail', icon='envelope', blueprint=bp, visible=mail_acl_check)
+@register_navbar(lazy_gettext('Forwardings'), icon='envelope', blueprint=bp, visible=mail_acl_check)
 def index():
 	return render_template('mail/list.html', mails=Mail.query.all())
 
@@ -43,7 +44,7 @@ def update(uid=None):
 	mail.destinations = request.form.get('mail-destinations', '').splitlines()
 	ldap.session.add(mail)
 	ldap.session.commit()
-	flash('Mail mapping updated.')
+	flash(_('Mail mapping updated.'))
 	return redirect(url_for('mail.show', uid=mail.uid))
 
 @bp.route("/<uid>/del")
@@ -52,5 +53,5 @@ def delete(uid):
 	mail = Mail.query.filter_by(uid=uid).first_or_404()
 	ldap.session.delete(mail)
 	ldap.session.commit()
-	flash('Deleted mail mapping.')
+	flash(_('Deleted mail mapping.'))
 	return redirect(url_for('mail.index'))

@@ -8,30 +8,30 @@
 			<img alt="branding logo" src="{{ config.get("BRANDING_LOGO_URL") }}" class="col-lg-8 col-md-12" >
 		</div>
 		<div class="col-12">
-			<h2 class="text-center">Device Login</h2>
+			<h2 class="text-center">{{_('Device Login')}}</h2>
 		</div>
 		<div class="form-group col-12">
-			<p>Use a login session on another device (e.g. your laptop) to log into a service without entering your password.</p>
+			<p>{{_('Use a login session on another device (e.g. your laptop) to log into a service without entering your password.')}}</p>
 		</div>
 		{% if initiation %}
 		<div class="form-group col-12">
-			<label for="initiation-code">Initiation Code</label>
+			<label for="initiation-code">{{_('Initiation Code')}}</label>
 			<input type="text" class="form-control" id="initiation-code" name="initiation-code" value="{{ initiation.code }}" readonly>
 		</div>
 		<input type="hidden" class="form-control" id="initiation-secret" name="initiation-secret" value="{{ initiation.secret }}">
 		<div class="form-group col-12">
-			<label for="confirmation-code">Confirmation Code</label>
+			<label for="confirmation-code">{{_('Confirmation Code')}}</label>
 			<input type="text" class="form-control" id="confirmation-code" name="confirmation-code" required="required" tabindex = "1" autofocus>
 		</div>
 		<div class="form-group col-12">
-			<p>Open <code><a href="{{ url_for('session.deviceauth') }}">{{ url_for('session.deviceauth', _external=True) }}</a></code> on the other device and enter the initiation code there. Then enter the confirmation code in the box above.</p>
+			<p>{{_('Open <code><a href="%(deviceauth_url)s">%(deviceauth_url)s</a></code> on the other device and enter the initiation code there. Then enter the confirmation code in the box above.', deviceauth_url=url_for('session.deviceauth', _external=True)|e)|safe}}</p>
 		</div>
 		<div class="form-group col-12">
-			<button type="submit" class="btn btn-primary btn-block" tabindex = "3">Continue</button>
+			<button type="submit" class="btn btn-primary btn-block" tabindex = "3">{{_('Continue')}}</button>
 		</div>
 		{% endif %}
 		<div class="form-group col-12">
-			<a href="{{ url_for('session.login', ref=ref, devicelogin=True) }}" class="btn btn-secondary btn-block" tabindex="0">Cancel</a>
+			<a href="{{ url_for('session.login', ref=ref, devicelogin=True) }}" class="btn btn-secondary btn-block" tabindex="0">{{_('Cancel')}}</a>
 		</div>
 	</div>
 </div>

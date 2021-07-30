@@ -8,17 +8,17 @@
 			<img alt="branding logo" src="{{ config.get("BRANDING_LOGO_URL") }}" class="col-lg-8 col-md-12" >
 		</div>
 		<div class="col-12">
-			<h2 class="text-center">Complete Registration</h2>
+			<h2 class="text-center">{{_('Complete Registration')}}</h2>
 		</div>
 		{% if error %}
 		<div class="alert alert-danger" role="alert">{{ error }}</div>
 		{% endif %}
 		<div class="form-group col-12">
-			<label for="user-password1">Please enter your password to complete the account registration</label>
+			<label for="user-password1">{{_('Please enter your password to complete the account registration')}}</label>
 			<input type="password" class="form-control" id="user-password1" name="password" required="required">
 		</div>
 		<div class="form-group col-12">
-			<button type="submit" class="btn btn-primary btn-block">Complete Account Registration</button>
+			<button type="submit" class="btn btn-primary btn-block">{{_('Complete Account Registration')}}</button>
 		</div>
 	</div>
 </div>

@@ -74,13 +74,13 @@ def forgot_password():
 	host_delay = host_ratelimit.get_delay()
 	if reset_delay or host_delay:
 		if reset_delay > host_delay:
-			flash('We received too many password reset requests for this user! Please wait at least %s.'%format_delay(reset_delay))
+			flash(_('We received too many password reset requests for this user! Please wait at least %(delay)s.', delay=format_delay(reset_delay)))
 		else:
-			flash('We received too many requests from your ip address/network! Please wait at least %s.'%format_delay(host_delay))
+			flash(_('We received too many requests from your ip address/network! Please wait at least %(delay)s.', delay=format_delay(host_delay)))
 		return redirect(url_for('.forgot_password'))
 	reset_ratelimit.log(loginname+'/'+mail)
 	host_ratelimit.log()
-	flash("We sent a mail to this users mail address if you entered the correct mail and login name combination")
+	flash(_("We sent a mail to this user's mail address if you entered the correct mail and login name combination"))
 	user = User.query.filter_by(loginname=loginname).one_or_none()
 	if user and user.mail == mail:
 		send_passwordreset(user)
@@ -90,7 +90,7 @@ def forgot_password():
 def token_password(token):
 	dbtoken = PasswordToken.query.get(token)
 	if not dbtoken or dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
-		flash('Token expired, please try again.')
+		flash(_('Token expired, please try again.'))
 		if dbtoken:
 			db.session.delete(dbtoken)
 			db.session.commit()
@@ -98,17 +98,17 @@ def token_password(token):
 	if request.method == 'GET':
 		return render_template('selfservice/set_password.html', token=token)
 	if not request.values['password1']:
-		flash('You need to set a password, please try again.')
+		flash(_('You need to set a password, please try again.'))
 		return render_template('selfservice/set_password.html', token=token)
 	if not request.values['password1'] == request.values['password2']:
-		flash('Passwords do not match, please try again.')
+		flash(_('Passwords do not match, please try again.'))
 		return render_template('selfservice/set_password.html', token=token)
 	user = User.query.filter_by(loginname=dbtoken.loginname).one()
 	if not user.set_password(request.values['password1']):
-		flash('Password ist not valid, please try again.')
+		flash(_('Password ist not valid, please try again.'))
 		return render_template('selfservice/set_password.html', token=token)
 	db.session.delete(dbtoken)
-	flash('New password set')
+	flash(_('New password set'))
 	ldap.session.commit()
 	db.session.commit()
 	return redirect(url_for('session.login'))
@@ -118,7 +118,7 @@ def token_password(token):
 def token_mail(token):
 	dbtoken = MailToken.query.get(token)
 	if not dbtoken or dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
-		flash('Token expired, please try again.')
+		flash(_('Token expired, please try again.'))
 		if dbtoken:
 			db.session.delete(dbtoken)
 			db.session.commit()
@@ -126,7 +126,7 @@ def token_mail(token):
 
 	user = User.query.filter_by(loginname=dbtoken.loginname).one()
 	user.set_mail(dbtoken.newmail)
-	flash('New mail set')
+	flash(_('New mail set'))
 	db.session.delete(dbtoken)
 	ldap.session.commit()
 	db.session.commit()
@@ -137,14 +137,14 @@ def token_mail(token):
 @login_required()
 def leave_role(roleid):
 	if not current_app.config['ENABLE_ROLESELFSERVICE']:
-		flash('Leaving roles is disabled')
+		flash(_('Leaving roles is disabled'))
 		return redirect(url_for('selfservice.index'))
 	role = Role.query.get_or_404(roleid)
 	role.members.discard(request.user)
 	request.user.update_groups()
 	ldap.session.commit()
 	db.session.commit()
-	flash('You left role "%s"'%role.name)
+	flash(_('You left role "%(role_name)s"', role_name=role.name))
 	return redirect(url_for('selfservice.index'))
 
 def send_mail_verification(loginname, newmail):
@@ -208,5 +208,5 @@ def send_mail(to_address, msg):
 			current_app.last_mail = msg
 		return True
 	except smtplib.SMTPException:
-		flash('Mail to "{}" could not be sent!'.format(to_address))
+		flash(_('Mail to "%(mail_address)s" could not be sent!', mail_address=to_address))
 		return False

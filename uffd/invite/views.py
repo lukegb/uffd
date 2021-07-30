@@ -2,6 +2,7 @@ import datetime
 import functools
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
+from flask_babel import gettext as _, lazy_gettext
 import sqlalchemy
 
 from uffd.csrf import csrf_protect
@@ -52,7 +53,7 @@ def reset_acl_filter(user):
 	return Invite.creator_dn == user.dn
 
 @bp.route('/')
-@register_navbar('Invites', icon='link', blueprint=bp, visible=invite_acl)
+@register_navbar(lazy_gettext('Invites'), icon='link', blueprint=bp, visible=invite_acl)
 @invite_acl_required
 def index():
 	invites = Invite.query.filter(view_acl_filter(request.user)).all()
@@ -81,13 +82,13 @@ def new_submit():
 		if key.startswith('role-') and value == '1':
 			invite.roles.append(Role.query.get(key[5:]))
 	if invite.valid_until > datetime.datetime.now() + datetime.timedelta(days=current_app.config['INVITE_MAX_VALID_DAYS']):
-		flash('The "Expires After" date is too far in the future')
+		flash(_('The "Expires After" date is too far in the future'))
 		return redirect(url_for('invite.new'))
 	if not invite.permitted:
-		flash('You are not allowed to create invite links with these permissions')
+		flash(_('You are not allowed to create invite links with these permissions'))
 		return redirect(url_for('invite.new'))
 	if not invite.allow_signup and not invite.roles:
-		flash('Invite link must either allow signup or grant at least one role')
+		flash(_('Invite link must either allow signup or grant at least one role'))
 		return redirect(url_for('invite.new'))
 	db.session.add(invite)
 	db.session.commit()
@@ -115,7 +116,7 @@ def reset(invite_id):
 def use(token):
 	invite = Invite.query.filter_by(token=token).first_or_404()
 	if not invite.active:
-		flash('Invalid invite link')
+		flash(_('Invalid invite link'))
 		return redirect('/')
 	return render_template('invite/use.html', invite=invite)
 
@@ -132,7 +133,7 @@ def grant(token):
 		return redirect(url_for('selfservice.index'))
 	ldap.session.commit()
 	db.session.commit()
-	flash('Roles successfully updated')
+	flash(_('Roles successfully updated'))
 	return redirect(url_for('selfservice.index'))
 
 @bp.url_defaults
@@ -144,10 +145,10 @@ def inject_invite_token(endpoint, values):
 def signup_start(token):
 	invite = Invite.query.filter_by(token=token).first_or_404()
 	if not invite.active:
-		flash('Invalid invite link')
+		flash(_('Invalid invite link'))
 		return redirect('/')
 	if not invite.allow_signup:
-		flash('Invite link does not allow signup')
+		flash(_('Invite link does not allow signup'))
 		return redirect('/')
 	return render_template('signup/start.html')
 
@@ -169,13 +170,14 @@ def signup_check(token):
 def signup_submit(token):
 	invite = Invite.query.filter_by(token=token).first_or_404()
 	if request.form['password1'] != request.form['password2']:
-		return render_template('signup/start.html', error='Passwords do not match')
+		return render_template('signup/start.html', error=_('Passwords do not match'))
 	signup_delay = signup_ratelimit.get_delay(request.form['mail'])
 	host_delay = host_ratelimit.get_delay()
 	if signup_delay and signup_delay > host_delay:
-		return render_template('signup/start.html', error='Too many signup requests with this mail address! Please wait %s.'%format_delay(signup_delay))
+		return render_template('signup/start.html', error=_('Too many signup requests with this mail address! Please wait %(delay)s.',
+		                                                    delay=format_delay(signup_delay)))
 	if host_delay:
-		return render_template('signup/start.html', error='Too many requests! Please wait %s.'%format_delay(host_delay))
+		return render_template('signup/start.html', error=_('Too many requests! Please wait %(delay)s.', delay=format_delay(host_delay)))
 	host_ratelimit.log()
 	signup = InviteSignup(invite=invite, loginname=request.form['loginname'],
 	                      displayname=request.form['displayname'],
@@ -188,6 +190,6 @@ def signup_submit(token):
 	db.session.commit()
 	sent = sendmail(signup.mail, 'Confirm your mail address', 'signup/mail.txt', signup=signup)
 	if not sent:
-		return render_template('signup/start.html', error='Cound not send mail')
+		return render_template('signup/start.html', error=_('Cound not send mail'))
 	signup_ratelimit.log(request.form['mail'])
 	return render_template('signup/submitted.html', signup=signup)

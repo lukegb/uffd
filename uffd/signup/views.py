@@ -1,6 +1,7 @@
 import functools
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
+from flask_babel import gettext as _
 
 from uffd.database import db
 from uffd.ldap import ldap
@@ -19,7 +20,7 @@ def signup_enabled(func):
 	@functools.wraps(func)
 	def decorator(*args, **kwargs):
 		if not current_app.config['SELF_SIGNUP']:
-			flash('Singup not enabled')
+			flash(_('Singup not enabled'))
 			return redirect(url_for('index'))
 		return func(*args, **kwargs)
 	return decorator
@@ -45,13 +46,14 @@ def signup_check():
 @signup_enabled
 def signup_submit():
 	if request.form['password1'] != request.form['password2']:
-		return render_template('signup/start.html', error='Passwords do not match')
+		return render_template('signup/start.html', error=_('Passwords do not match'))
 	signup_delay = signup_ratelimit.get_delay(request.form['mail'])
 	host_delay = host_ratelimit.get_delay()
 	if signup_delay and signup_delay > host_delay:
-		return render_template('signup/start.html', error='Too many signup requests with this mail address! Please wait %s.'%format_delay(signup_delay))
+		return render_template('signup/start.html', error=_('Too many signup requests with this mail address! Please wait %(delay)s.',
+		                                                    delay=format_delay(signup_delay)))
 	if host_delay:
-		return render_template('signup/start.html', error='Too many requests! Please wait %s.'%format_delay(host_delay))
+		return render_template('signup/start.html', error=_('Too many requests! Please wait %(delay)s.', delay=format_delay(host_delay)))
 	host_ratelimit.log()
 	signup = Signup(loginname=request.form['loginname'],
 	                displayname=request.form['displayname'],
@@ -63,7 +65,7 @@ def signup_submit():
 	db.session.commit()
 	sent = sendmail(signup.mail, 'Confirm your mail address', 'signup/mail.txt', signup=signup)
 	if not sent:
-		return render_template('signup/start.html', error='Cound not send mail')
+		return render_template('signup/start.html', error=_('Cound not send mail'))
 	signup_ratelimit.log(request.form['mail'])
 	return render_template('signup/submitted.html', signup=signup)
 
@@ -72,7 +74,7 @@ def signup_submit():
 def signup_confirm(token):
 	signup = Signup.query.get(token)
 	if not signup or signup.expired or signup.completed:
-		flash('Invalid signup link')
+		flash(_('Invalid signup link'))
 		return redirect(url_for('index'))
 	return render_template('signup/confirm.html', signup=signup)
 
@@ -80,23 +82,23 @@ def signup_confirm(token):
 def signup_confirm_submit(token):
 	signup = Signup.query.get(token)
 	if not signup or signup.expired or signup.completed:
-		flash('Invalid signup link')
+		flash(_('Invalid signup link'))
 		return redirect(url_for('index'))
 	confirm_delay = confirm_ratelimit.get_delay(token)
 	host_delay = host_ratelimit.get_delay()
 	if confirm_delay and confirm_delay > host_delay:
-		return render_template('signup/confirm.html', signup=signup, error='Too many failed attempts! Please wait %s.'%format_delay(confirm_delay))
+		return render_template('signup/confirm.html', signup=signup, error=_('Too many failed attempts! Please wait %(delay)s.', delay=format_delay(confirm_delay)))
 	if host_delay:
-		return render_template('signup/confirm.html', signup=signup, error='Too many requests! Please wait %s.'%format_delay(host_delay))
+		return render_template('signup/confirm.html', signup=signup, error=_('Too many requests! Please wait %(delay)s.', delay=format_delay(host_delay)))
 	if not signup.check_password(request.form['password']):
 		host_ratelimit.log()
 		confirm_ratelimit.log(token)
-		return render_template('signup/confirm.html', signup=signup, error='Wrong password')
+		return render_template('signup/confirm.html', signup=signup, error=_('Wrong password'))
 	user, msg = signup.finish(request.form['password'])
 	if user is None:
 		return render_template('signup/confirm.html', signup=signup, error=msg)
 	db.session.commit()
 	ldap.session.commit()
 	set_session(user, password=request.form['password'], skip_mfa=True)
-	flash('Your account was successfully created')
+	flash(_('Your account was successfully created'))
 	return redirect(url_for('selfservice.index'))

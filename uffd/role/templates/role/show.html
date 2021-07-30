@@ -14,11 +14,11 @@
 		<a href="{{ url_for("role.index") }}" class="btn btn-secondary">{{_("Cancel")}}</a>
 		{% if role.id %}
 			{% if not role.is_default %}
-			<a href="{{ url_for("role.set_default", roleid=role.id) }}" onClick="return confirm('All non-service users will be removed as members from this role and get its permissions implicitly. Are you sure?');" class="btn btn-secondary">{{_("Set as default")}}</a>
+			<a href="{{ url_for("role.set_default", roleid=role.id) }}" onClick="return confirm({{_('All non-service users will be removed as members from this role and get its permissions implicitly. Are you sure?')|tojson}});" class="btn btn-secondary">{{_("Set as default")}}</a>
 			{% else %}
-			<a href="{{ url_for("role.unset_default", roleid=role.id) }}" onClick="return confirm('Are you sure?');" class="btn btn-secondary">{{_("Unset as default")}}</a>
+			<a href="{{ url_for("role.unset_default", roleid=role.id) }}" onClick="return confirm({{_('Are you sure?')|tojson}});" class="btn btn-secondary">{{_("Unset as default")}}</a>
 			{% endif %}
-			<a href="{{ url_for("role.delete", roleid=role.id) }}"  onClick="return confirm('Are you sure?');" class="btn btn-danger {{ 'disabled' if role.locked }}"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
+			<a href="{{ url_for("role.delete", roleid=role.id) }}"  onClick="return confirm({{_('Are you sure?')|tojson}});" class="btn btn-danger {{ 'disabled' if role.locked }}"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
 		{% else %}
 			<a href="#" class="btn btn-secondary disabled">{{_("Set as default")}}</a>
 			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>

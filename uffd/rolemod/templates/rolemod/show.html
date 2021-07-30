@@ -5,31 +5,31 @@
 <form method="POST" action="{{ url_for("rolemod.update", role_id=role.id) }}">
 	<div class="float-sm-right pb-2">
 		{% if config['ENABLE_INVITE'] %}
-		<a href="{{ url_for("invite.new", **{"role-%d"%role.id: 1}) }}" class="btn btn-primary mr-2"><i class="fa fa-link" aria-hidden="true"></i> Invite Members</a>
+		<a href="{{ url_for("invite.new", **{"role-%d"%role.id: 1}) }}" class="btn btn-primary mr-2"><i class="fa fa-link" aria-hidden="true"></i> {{_('Invite Members')}}</a>
 		{% endif %}
-		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
-		<a href="{{ url_for("rolemod.index") }}" class="btn btn-secondary">Cancel</a>
+		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> {{_('Save')}}</button>
+		<a href="{{ url_for("rolemod.index") }}" class="btn btn-secondary">{{_('Cancel')}}</a>
 	</div>
 	<ul class="nav nav-tabs pt-2 border-0" id="tablist" role="tablist">
 		<li class="nav-item">
-			<a class="nav-link active" id="overview-tab" data-toggle="tab" href="#overview" role="tab" aria-controls="overview" aria-selected="true">Overview</a>
+			<a class="nav-link active" id="overview-tab" data-toggle="tab" href="#overview" role="tab" aria-controls="overview" aria-selected="true">{{_('Overview')}}</a>
 		</li>
 		<li class="nav-item">
-			<a class="nav-link" id="members-tab" data-toggle="tab" href="#members" role="tab" aria-controls="members" aria-selected="false">Members <span class="badge badge-pill badge-secondary">{{ role.members|length }}</span></a>
+			<a class="nav-link" id="members-tab" data-toggle="tab" href="#members" role="tab" aria-controls="members" aria-selected="false">{{_('Members')}} <span class="badge badge-pill badge-secondary">{{ role.members|length }}</span></a>
 		</li>
 	</ul>
 	<div class="tab-content border mb-2 pt-2" id="tabcontent">
 		<div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
 			<div class="form-group col">
-				<label for="role-name">Role Name</label>
+				<label for="role-name">{{_('Role name')}}</label>
 				<input type="text" class="form-control" id="role-name" value="{{ role.name }}" readonly>
 			</div>
 			<div class="form-group col">
-				<label for="role-description">Description</label>
+				<label for="role-description">{{_('Description')}}</label>
 				<textarea class="form-control" id="role-description" rows="5" name="description">{{ role.description }}</textarea>
 			</div>
 			<div class="form-group col">
-				<label>Moderators:</label>
+				<label>{{_('Moderators:')}}</label>
 				<ul>
 					{% for moderator in role.moderator_group.members %}
 					<li>{{ moderator.displayname }} ({{ moderator.loginname }})</li>
@@ -39,11 +39,11 @@
 		</div>
 		<div class="tab-pane fade" id="members" role="tabpanel" aria-labelledby="members-tab">
 			<div class="col">
-				<span>Role members:</span>
+				<span>{{_('Role members:')}}</span>
 				<table class="table table-striped table-sm">
 					<thead>
 						<tr>
-							<th scope="col">Name</th>
+							<th scope="col">{{_('Name')}}</th>
 							<th scope="col"></th>
 						</tr>
 					</thead>
@@ -52,7 +52,7 @@
 						<tr>
 							<td>{{ member.displayname }} ({{ member.loginname }})</td>
 							<td class="text-right">
-								<a class="btn btn-danger py-0" href="{{ url_for('rolemod.delete_member', role_id=role.id, member_dn=member.dn) }}">Remove</a>
+								<a class="btn btn-danger py-0" href="{{ url_for('rolemod.delete_member', role_id=role.id, member_dn=member.dn) }}">{{_('Remove')}}</a>
 							</td>
 						</tr>
 						{% endfor %}

@@ -4,11 +4,11 @@
 <form action="{{ url_for("group.show", gid=group.gid) }}" method="POST">
 <div class="align-self-center">
 	<div class="form-group col">
-		<label for="group-gid">{{_("gid")}}</label>
+		<label for="group-gid">{{_("GID")}}</label>
 		<input type="number" class="form-control" id="group-gid" name="gid" value="{{ group.gid }}" readonly>
 	</div>
 	<div class="form-group col">
-		<label for="group-loginname">{{_("name")}}</label>
+		<label for="group-loginname">{{_("Name")}}</label>
 		<input type="text" class="form-control" id="group-loginname" name="loginname" value="{{ group.name }}" readonly>
 	</div>
 	<div class="col"> 

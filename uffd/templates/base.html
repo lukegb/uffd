@@ -81,7 +81,7 @@
 								{% endfor %}
 							</select>
 							<noscript>
-								<button type="submit" class="bg-dark py-0 pl-0" style="border: 0px; color: rgba(255, 255, 255, 0.5);">Change</button>
+								<button type="submit" class="bg-dark py-0 pl-0" style="border: 0px; color: rgba(255, 255, 255, 0.5);">{{_('Change')}}</button>
 							</noscript>
 						</form>
 					</li>
@@ -89,8 +89,8 @@
 					{% if request.user %}
 					<li class="nav-item">
 						<a class="nav-link" href="{{ url_for("session.deviceauth") }}">
-							<span aria-hidden="true" class="fas fa-mobile-alt" title="Authorize Device Login"></span>
-							<span class="d-inline d-md-none">Device Login</span>
+							<span aria-hidden="true" class="fas fa-mobile-alt" title="{{_('Authorize Device Login')}}"></span>
+							<span class="d-inline d-md-none">{{_('Device Login')}}</span>
 						</a>
 					</li>
 					<li class="nav-item">

@@ -8,18 +8,18 @@
 			<img alt="branding logo" src="{{ config.get("BRANDING_LOGO_URL") }}" class="col-lg-8 col-md-12" >
 		</div>
 		<div class="col-12 mb-3">
-			<h2 class="text-center">Invite Link</h2>
+			<h2 class="text-center">{{_('Invite Link')}}</h2>
 		</div>
 		{% if not request.user %}
 		<p>Welcome to the CCCV Single-Sign-On!</p>
 		{% endif %}
 
 		{% if invite.roles and invite.allow_signup %}
-		<p>With this link you can register a new user account with the following roles or add the roles to an existing account:</p>
+		<p>{{_('With this link you can register a new user account with the following roles or add the roles to an existing account:')}}</p>
 		{% elif invite.roles %}
-		<p>With this link you can add the following roles to an existing account:</p>
+		<p>{{_('With this link you can add the following roles to an existing account:')}}</p>
 		{% elif invite.allow_signup %}
-		<p>With this link you can register a new user account.</p>
+		<p>{{_('With this link you can register a new user account.')}}</p>
 		{% endif %}
 		{% if invite.roles %}
 		<ul>
@@ -31,19 +31,19 @@
 		{% if request.user %}
 			{% if invite.roles %}
 				<form method="POST" action="{{ url_for("invite.grant", token=invite.token) }}" class="mb-2">
-					<button type="submit" class="btn btn-primary btn-block">Add the roles to your account now</button>
+					<button type="submit" class="btn btn-primary btn-block">{{_('Add the roles to your account now')}}</button>
 				</form>
-				<a href="{{ url_for("session.logout", ref=url_for("session.login", ref=request.full_path)) }}" class="btn btn-secondary btn-block">Logout and switch to a different account</a>
+				<a href="{{ url_for("session.logout", ref=url_for("session.login", ref=request.full_path)) }}" class="btn btn-secondary btn-block">{{_('Logout and switch to a different account')}}</a>
 			{% endif %}
 			{% if invite.allow_signup %}
-				<a href="{{ url_for("session.logout", ref=url_for("invite.signup_start", token=invite.token)) }}" class="btn btn-secondary btn-block">Logout to register a new account</a>
+				<a href="{{ url_for("session.logout", ref=url_for("invite.signup_start", token=invite.token)) }}" class="btn btn-secondary btn-block">{{_('Logout to register a new account')}}</a>
 			{% endif %}
 		{% else %}
 			{% if invite.allow_signup %}
-				<a href="{{ url_for("invite.signup_start", token=invite.token) }}" class="btn btn-primary btn-block">Register a new account</a>
+				<a href="{{ url_for("invite.signup_start", token=invite.token) }}" class="btn btn-primary btn-block">{{_('Register a new account')}}</a>
 			{% endif %}
 			{% if invite.roles %}
-				<a href="{{ url_for("session.login", ref=request.full_path) }}" class="btn btn-primary btn-block">Login and add the roles to your account</a>
+				<a href="{{ url_for("session.login", ref=request.full_path) }}" class="btn btn-primary btn-block">{{_('Login and add the roles to your account')}}</a>
 			{% endif %}
 		{% endif %}
 	</div>

@@ -7,14 +7,14 @@
 			<img alt="branding logo" src="{{ config.get("BRANDING_LOGO_URL") }}" class="col-lg-8 col-md-12" >
 		</div>
 		<div class="col-12">
-			<h2 class="text-center">Logout</h2>
+			<h2 class="text-center">{{_('Logout')}}</h2>
 		</div>
 
 		<div class="col-12">
 			<noscript>
-				<div class="alert alert-warning" role="alert">Javascript is required for automatic logout</div>
+				<div class="alert alert-warning" role="alert">{{_('Javascript is required for automatic logout')}}</div>
 			</noscript>
-			<p>While you successfully logged out of the Single-Sign-On service, you may still be logged in on these services:</p>
+			<p>{{_('While you successfully logged out of the Single-Sign-On service, you may still be logged in on these services:')}}</p>
 			<ul>
 			{% for client in clients if client.logout_urls %}
 				<li class="client" data-urls='{{ client.logout_urls|tojson }}'>
@@ -27,15 +27,15 @@
 			</ul>
 
 			<p>
-				Please wait until you have been automatically logged out of all services or make sure of this yourself.
+				{{_('Please wait until you have been automatically logged out of all services or make sure of this yourself.')}}
 			</p>
 
 			<button id="retry-button" class="btn btn-block btn-primary d-none" disabled>
-				<span id="cont-text">Logging you out on all services ...</span>
+				<span id="cont-text">{{_('Logging you out on all services ...')}}</span>
 			</button>
 
 			<a href="{{ request.values.get('ref') or '/' }}" class="btn btn-block btn-secondary">
-				<span>Skip this and continue</span>
+				<span>{{_('Skip this and continue')}}</span>
 			</a>
 
 		</div>
@@ -79,11 +79,11 @@ function logout_services() {
 			if (result.status == 'rejected')
 				throw result.reason;
 		}
-		$('#cont-text').text('Done, redirecting ...');
+		$('#cont-text').text({{_('Done, redirecting ...')|tojson}});
 		window.location = {{ (request.values.get('ref') or '/')|tojson }};
 	}).catch(function (err) {
 		$("#retry-button").prop('disabled', false);
-		$('#cont-text').text('Log out failed on some services. Retry?');
+		$('#cont-text').text({{_('Log out failed on some services. Retry?')|tojson}});
 	});
 }
 

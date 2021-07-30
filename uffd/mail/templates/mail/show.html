@@ -4,32 +4,32 @@
 <form action="{{ url_for("mail.update", uid=mail.uid) }}" method="POST">
 <div class="align-self-center">
 	<div class="form-group col">
-		<label for="mail-name">Name</label>
+		<label for="mail-name">{{_('Name')}}</label>
 		<input type="text" class="form-control" id="mail-name" name="mail-uid" {% if mail.uid %} value="{{ mail.uid }}" readonly {% else %} value=""{% endif %}>
 		<small class="form-text text-muted">
 		</small>
 	</div>
 	<div class="form-group col">
-		<label for="mail-receivers">Receiving addresses</label>
+		<label for="mail-receivers">{{_('Receiving addresses')}}</label>
 		<textarea rows="10" class="form-control" id="mail-receivers" name="mail-receivers">{{ mail.receivers|join('\n') }}</textarea>
 		<small class="form-text text-muted">
-			One address per line
+			{{_('One address per line')}}
 		</small>
 	</div>
 	<div class="form-group col">
-		<label for="mail-destinations">Destinations</label>
+		<label for="mail-destinations">{{_('Destinations')}}</label>
 		<textarea rows="10" class="form-control" id="mail-destinations" name="mail-destinations">{{ mail.destinations|join('\n') }}</textarea>
 		<small class="form-text text-muted">
-			One address per line
+			{{_('One address per line')}}
 		</small>
 	</div>
 	<div class="form-group col">
-		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Save</button>
-		<a href="{{ url_for("mail.index") }}" class="btn btn-secondary">Cancel</a>
+		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> {{_('Save')}}</button>
+		<a href="{{ url_for("mail.index") }}" class="btn btn-secondary">{{_('Cancel')}}</a>
 		{% if mail.uid %}
-			<a href="{{ url_for("mail.delete", uid=mail.uid) }}" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
+			<a href="{{ url_for("mail.delete", uid=mail.uid) }}" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> {{_('Delete')}}</a>
 		{% else %}
-			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
+			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> {{_('Delete')}}</a>
 		{% endif %}
 	</div>
 </div>
