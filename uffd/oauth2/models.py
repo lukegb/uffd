@@ -1,7 +1,7 @@
 from flask import current_app
 from sqlalchemy import Column, Integer, String, DateTime, Text
-from ldapalchemy.dbutils import DBRelationship
 
+from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
 from uffd.user.models import User
 from uffd.session.models import DeviceLoginInitiation, DeviceLoginType

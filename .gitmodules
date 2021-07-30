@@ -1,3 +1,0 @@
-[submodule "deps/ldapalchemy"]
-	path = deps/ldapalchemy
-	url = https://git.cccv.de/infra/uffd/ldapalchemy.git

@@ -3,8 +3,8 @@ import datetime
 from crypt import crypt
 
 from sqlalchemy import Column, String, Text, DateTime
-from ldapalchemy.dbutils import DBRelationship
 
+from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
 from uffd.ldap import ldap
 from uffd.user.models import User

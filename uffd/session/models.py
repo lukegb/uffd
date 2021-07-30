@@ -6,8 +6,8 @@ import enum
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
-from ldapalchemy.dbutils import DBRelationship
 
+from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
 from uffd.user.models import User
 

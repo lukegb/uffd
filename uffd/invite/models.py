@@ -4,8 +4,8 @@ import datetime
 from flask import current_app
 from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
-from ldapalchemy.dbutils import DBRelationship
 
+from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
 from uffd.user.models import User
 from uffd.signup.models import Signup

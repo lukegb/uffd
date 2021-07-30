@@ -10,15 +10,11 @@ from werkzeug.contrib.profiler import ProfilerMiddleware
 from werkzeug.exceptions import InternalServerError
 from flask_migrate import Migrate
 
-sys.path.append('deps/ldapalchemy')
-
-# pylint: disable=wrong-import-position
-from uffd.database import db, SQLAlchemyJSON
 import uffd.ldap
+from uffd.database import db, SQLAlchemyJSON
 from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
 from uffd.secure_redirect import secure_local_redirect
-# pylint: enable=wrong-import-position
 
 def load_config_file(app, cfg_name, silent=False):
 	cfg_path = os.path.join(app.instance_path, cfg_name)

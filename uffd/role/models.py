@@ -3,8 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm.collections import MappedCollection, collection
 from sqlalchemy.ext.declarative import declared_attr
 
-from ldapalchemy.dbutils import DBRelationship
-
+from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
 from uffd.user.models import User, Group
 
