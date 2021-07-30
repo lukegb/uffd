@@ -1,5 +1,4 @@
 import random
-import subprocess
 import base64
 from datetime import timedelta, datetime
 import io
@@ -28,11 +27,6 @@ def register_template_helper(app):
 	def datauri(data, mimetype='text/plain'): #pylint: disable=unused-variable
 		return Markup('data:%s;base64,%s'%(mimetype, base64.b64encode(data.encode()).decode()))
 
-	@app.url_defaults
-	def static_version_inject(endpoint, values): #pylint: disable=unused-variable
-		if endpoint == 'static':
-			values['v'] = app.jinja_env.globals['gitversion']['longhash'] #pylint: disable=no-member
-
 	app.jinja_env.trim_blocks = True
 	app.jinja_env.lstrip_blocks = True
 
@@ -42,7 +36,3 @@ def register_template_helper(app):
 	app.add_template_global(min, name='min')
 	app.add_template_global(max, name='max')
 	app.add_template_global(equalto, name='equalto')
-
-	# get git commit
-	git_output = subprocess.check_output(['git', "log", "-g", "-1", "--pretty=%H#%h#%d#%s"]).decode('UTF-8').split('#', 3)
-	app.jinja_env.globals['gitversion'] = {'hash': git_output[1], 'longhash': git_output[0], 'branch': git_output[2], 'msg': git_output[3]} #pylint: disable=no-member

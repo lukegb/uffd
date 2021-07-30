@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-07-30 19:49+0200\n"
+"POT-Creation-Date: 2021-07-30 21:03+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -962,8 +962,8 @@ msgstr "Verlassen von Rollen ist deaktiviert"
 
 #: uffd/selfservice/views.py:147
 #, python-format
-msgid "You left role \"%(role_name)s\""
-msgstr "Rolle \"%(role_name)s\" verlassen"
+msgid "You left role %(role_name)s"
+msgstr "Rolle %(role_name)s verlassen"
 
 #: uffd/selfservice/views.py:211
 #, python-format
@@ -1408,8 +1408,8 @@ msgid "Change"
 msgstr "Ändern"
 
 #: uffd/templates/base.html:133
-msgid "Sourcecode"
-msgstr "Quellcode"
+msgid "About uffd"
+msgstr "Über uffd"
 
 #: uffd/user/views_group.py:21
 msgid "Groups"
