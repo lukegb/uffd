@@ -1,0 +1,6 @@
+include setup.py
+graft migrations/*
+graft uffd/templates
+graft uffd/*/templates
+graft uffd/static/
+graft uffd/translations/
