@@ -112,6 +112,16 @@ The userinfo endpoint returns json data with the following structure:
 
 `id` is the uidNumber, `name` the display name (cn) and `nickname` the uid of the user's LDAP object.
 
+
+## Translation
+
+The web frontend is translated in the following Languages:
+
+![status](https://git.cccv.de/uffd/uffd/badges/master/coverage.svg?job=trans_de&key_text=DE)
+
+The selection uses the language browser header by default but can be overwritten via a UI element.
+You can specify the availble languages in the config.
+
 ## License
 
 GNU Affero General Public License v3.0, see [LICENSE](LICENSE).
