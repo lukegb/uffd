@@ -62,7 +62,7 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	os.makedirs(app.instance_path, exist_ok=True)
 
 	db.init_app(app)
-	Migrate(app, db, render_as_batch=True)
+	Migrate(app, db, render_as_batch=True, directory='uffd/migrations')
 	# pylint: disable=C0415
 	from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services, signup, rolemod, invite, api
 	# pylint: enable=C0415
