@@ -59,7 +59,12 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	register_template_helper(app)
 	setup_navbar(app)
 
-	os.makedirs(app.instance_path, exist_ok=True)
+	# We never want to fail here, but at a file access that doesn't work.
+	# We might only have read access to app.instance_path
+	try:
+		os.makedirs(app.instance_path, exist_ok=True)
+	except:
+		pass
 
 	db.init_app(app)
 	Migrate(app, db, render_as_batch=True, directory='uffd/migrations')
