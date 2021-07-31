@@ -19,7 +19,6 @@ before_script:
 build:pip:
   extends: .build
   script:
-  - pip3 install build
   - PACKAGE_VERSION="${UFFD_PACKAGE_VERSION}" python3 -m build
   artifacts:
     paths:
@@ -28,8 +27,6 @@ build:pip:
 build:apt:
   extends: .build
   script:
-    - apt update
-    - apt-get install -y python3-all debhelper python3-pip git-buildpackage
     - cp CHANGELOG debian/changelog
     - export PYBUILD_INSTALL_ARGS="--install-lib=/usr/share/uffd/ --install-scripts=/usr/share/uffd/"
     - gbp dch --ignore-branch --debian-tag=v%\(version\)s
@@ -117,7 +114,6 @@ test:package:apt:
   stage: test
   script:
   - apt -y install ./build/*.deb
-  - apt -y install curl
   - ln -s /etc/uffd/uwsgi.ini /etc/uwsgi/apps-available/uffd.ini
   - ln -s /etc/uwsgi/apps-available/uffd.ini /etc/uwsgi/apps-enabled/uffd.ini
   - service uwsgi start uffd || ( service uwsgi status uffd ; sleep 15; cat /var/log/uwsgi/app/uffd.log; )
@@ -137,7 +133,6 @@ test:package:apt:
 publish:pip:
   extends: .publish
   script:
-  - pip3 install twine
   - TWINE_USERNAME="${GITLABPKGS_USERNAME}" TWINE_PASSWORD="${GITLABPKGS_PASSWORD}" python3 -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
   - TWINE_USERNAME="${PYPI_USERNAME}" TWINE_PASSWORD="${PYPI_PASSWORD}" python3 -m twine upload dist/*
   dependencies:
