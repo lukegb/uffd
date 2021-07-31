@@ -1,4 +1,5 @@
 include setup.py
+recursive-include uffd *.py *.html *.js *.css *.txt *.po *.cfg
 graft uffd/migrations
 graft uffd/templates
 graft uffd/*/templates

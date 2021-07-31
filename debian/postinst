@@ -1,0 +1,28 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+	configure)
+		getent group uffd >/dev/null 2>&1 || addgroup --system uffd
+		adduser --system --home /var/lib/uffd --quiet uffd --ingroup uffd || true
+
+		chown -R uffd:uffd /var/lib/uffd
+		chmod 0770 /var/lib/uffd
+
+		chown root:uffd /etc/uffd/uffd.cfg
+		chmod 0640 /etc/uffd/uffd.cfg
+	;;
+
+	abort-upgrade|abort-remove|abort-deconfigure)
+	;;
+
+	*)
+		echo "postinst called with unknown argument \`$1'" >&2
+		exit 1
+	;;
+esac
+
+#DEBHELPER#
+
+exit 0

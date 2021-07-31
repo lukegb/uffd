@@ -1,2 +1,0 @@
-uwsgi.ini		/etc/uwsgi/apps-available/uffd.ini
-nginx.include.conf	/etc/nginx/snippets/uffd-locations.conf

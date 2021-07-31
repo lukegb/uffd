@@ -1,0 +1,3 @@
+uwsgi.ini		/etc/uffd/
+nginx.include.conf	/etc/uffd/
+debian/uffd.cfg		/etc/uffd/

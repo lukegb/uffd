@@ -13,8 +13,11 @@ before_script:
   - python3 -m coverage --version
   - echo "${CI_COMMIT_TAG}" | grep -qE "v[0-9]+[.][0-9]+[.][0-9]+.*" && export UFFD_PACKAGE_VERSION="${CI_COMMIT_TAG#v}" || export UFFD_PACKAGE_VERSION="${CI_COMMIT_SHA}"
 
-build:pip:
+.build:
   stage: build
+
+build:pip:
+  extends: .build
   script:
   - pip3 install build
   - PACKAGE_VERSION="${UFFD_PACKAGE_VERSION}" python3 -m build
@@ -23,7 +26,7 @@ build:pip:
       - dist/*
 
 build:apt:
-  stage: build
+  extends: .build
   script:
     - apt update
     - apt-get install -y python3-all debhelper python3-pip git-buildpackage
@@ -91,11 +94,16 @@ html5validator:
     - pages
     - html5validator.log
 
-trans_de:
+.trans:
   stage: test
   script:
-  - ./update_translations.sh de
+  - ./update_translations.sh $TRANSLATION_LANGUAGE
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
+
+trans_de:
+  extends: .trans
+  variables:
+    TRANSLATION_LANGUAGE: de
 
 test:package:pip:
   stage: test
@@ -111,22 +119,23 @@ test:package:apt:
   dependencies:
   - build:apt
 
-publish:pip:
+.publish:
   stage: deploy
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /v[0-9]+[.][0-9]+[.][0-9]+.*/'
+
+publish:pip:
+  extends: .publish
   script:
   - pip3 install twine
   - TWINE_USERNAME="${GITLABPKGS_USERNAME}" TWINE_PASSWORD="${GITLABPKGS_PASSWORD}" python3 -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
   - TWINE_USERNAME="${PYPI_USERNAME}" TWINE_PASSWORD="${PYPI_PASSWORD}" python3 -m twine upload dist/*
   dependencies:
   - build:pip
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /v[0-9]+[.][0-9]+[.][0-9]+.*/'
 
 publish:apt:
-  stage: deploy
+  extends: .publish
   script:
   - exit 0
   dependencies:
   - build:apt
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /v[0-9]+[.][0-9]+[.][0-9]+.*/'
