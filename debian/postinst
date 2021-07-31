@@ -12,6 +12,8 @@ case "$1" in
 
 		chown root:uffd /etc/uffd/uffd.cfg
 		chmod 0640 /etc/uffd/uffd.cfg
+
+		invoke-rc.d uwsgi restart uffd
 	;;
 
 	abort-upgrade|abort-remove|abort-deconfigure)

@@ -24,8 +24,8 @@ Depends:
  python3-fido2,
  python3-flask-oauthlib,
  python3-flask-babel,
-Recommends:
- nginx,
  uwsgi,
  uwsgi-plugin-python3,
+Recommends:
+ nginx,
 Description: UserFerwaltungsFrontend: Ldap based single sign on and user management web software
