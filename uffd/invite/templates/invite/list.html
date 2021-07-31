@@ -108,7 +108,7 @@
 							<li>{{_('Registration of user <a href="%(user_url)s">%(user_name)s</a>', user_url=url_for('user.show', uid=signup.user.uid)|e, user_name=signup.user.loginname|e)|safe}}</li>
 							{% endfor %}
 							{% for grant in invite.grants if grant.user %}
-							<li>{{_('Roles granted to <a href="%(user_url)s">%(user_name)s</a>', user_url=url_for('user.show', uid=grant.user.uid)|e, user_name=grant.user.loginname|e)}}|safe</li>
+							<li>{{_('Roles granted to <a href="%(user_url)s">%(user_name)s</a>', user_url=url_for('user.show', uid=grant.user.uid)|e, user_name=grant.user.loginname|e)|safe}}</li>
 							{% endfor %}
 						</ul>
 						{% endif %}

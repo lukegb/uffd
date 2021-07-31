@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-07-31 02:43+0200\n"
+"POT-Creation-Date: 2021-07-31 03:28+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -219,7 +219,7 @@ msgstr "Account-Registrierung von <a href=\"%(user_url)s\">%(user_name)s</a>"
 #: uffd/invite/templates/invite/list.html:111
 #, python-format
 msgid "Roles granted to <a href=\"%(user_url)s\">%(user_name)s</a>"
-msgstr "Rollen an href=\"%(user_url)s\">%(user_name)s</a> vergeben"
+msgstr "Rollen an <a href=\"%(user_url)s\">%(user_name)s</a> vergeben"
 
 #: uffd/invite/templates/invite/list.html:122
 msgid "Disable Link"
@@ -1412,7 +1412,7 @@ msgstr ""
 msgid "Change"
 msgstr "Ändern"
 
-#: uffd/templates/base.html:133
+#: uffd/templates/base.html:135
 msgid "About uffd"
 msgstr "Über uffd"
 
