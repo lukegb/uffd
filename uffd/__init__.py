@@ -63,7 +63,7 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	# We might only have read access to app.instance_path
 	try:
 		os.makedirs(app.instance_path, exist_ok=True)
-	except:
+	except: # pylint: disable=bare-except
 		pass
 
 	db.init_app(app)

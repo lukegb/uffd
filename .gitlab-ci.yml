@@ -30,6 +30,7 @@ build:apt:
   script:
     - apt update
     - apt-get install -y python3-all debhelper python3-pip git-buildpackage
+    - cp CHANGELOG debian/changelog
     - export PYBUILD_INSTALL_ARGS="--install-lib=/usr/share/uffd/ --install-scripts=/usr/share/uffd/"
     - gbp dch --ignore-branch --debian-tag=v%\(version\)s
     - dpkg-buildpackage -us -uc

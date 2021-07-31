@@ -1,0 +1,11 @@
+uffd (0.2.0) unstable; urgency=medium
+
+  * Working debian packages
+
+ -- CCCV <it@cccv.de>  Sat, 31 Jul 2021 20:26:25 +0200
+
+uffd (0.1.2) unstable; urgency=medium
+
+  * Initial release.
+
+ -- Andreas Valder <nd@cccv.de>  Fri, 30 Jul 2021 23:02:31 +0200
