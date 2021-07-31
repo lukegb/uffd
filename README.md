@@ -41,7 +41,7 @@ Please note that the mocked LDAP functionality is very limited and many uffd fea
 ## deployment
 
 Use uwsgi. Make sure to run `flask db upgrade` after every update!
-For an example uwsgi config, see our [uswgi.ini](uwsgi.ini). You might find our [nginx include file](nginx.include.conf) helpfull to setup a web server infront of uwsgi.
+For an example uwsgi config, see our [uswgi.ini](uwsgi.ini). You might find our [nginx include file](nginx.include.conf) helpful to setup a web server in front of uwsgi.
 
 ## python style conventions
 
