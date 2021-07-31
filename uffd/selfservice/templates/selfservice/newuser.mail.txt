@@ -1,12 +1,16 @@
 Hi {{ user.displayname }},
 
-welcome to the CCCV infrastructure.  An account was created for you, please visit the following url to set your
-password: {{ url_for('selfservice.token_password', token=token, _external=True) }}
+welcome to the {{ config.ORGANISATION_NAME }} infrastructure! An account was created for you.
+
+Please visit the following url to set your password:
+
+{{ url_for('selfservice.token_password', token=token, _external=True) }}
 
 **The link is valid for 48h**
 
-If you were granted access to crews or orbits, you have been automatically subscribed to the corresponding mailinglists.
-Please find and read the documentation for all services you are granted access to at https://sso.cccv.de/services/.
+{% if config.WELCOME_TEXT %}
+{{ config.WELCOME_TEXT }}
 
-If you have no idea why someone would create an account for you to be used for the next CCC event organization or have
-other questions, please contact the infra team at it@cccv.de.
+{% endif -%}
+
+If you think the account was created by mistake, please contact the administrators at {{ config.ORGANISATION_CONTACT }}.

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-07-30 21:15+0200\n"
+"POT-Creation-Date: 2021-07-31 02:43+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -302,6 +302,11 @@ msgstr "Abbrechen"
 #: uffd/invite/templates/invite/use.html:11
 msgid "Invite Link"
 msgstr "Einladungslink"
+
+#: uffd/invite/templates/invite/use.html:14
+#, python-format
+msgid "Welcome to the %(org_name)s Single-Sign-On!"
+msgstr "Willkommen im %(org_name)s Single-Sign-On!"
 
 #: uffd/invite/templates/invite/use.html:18
 msgid ""

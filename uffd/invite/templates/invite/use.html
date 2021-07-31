@@ -11,7 +11,7 @@
 			<h2 class="text-center">{{_('Invite Link')}}</h2>
 		</div>
 		{% if not request.user %}
-		<p>Welcome to the CCCV Single-Sign-On!</p>
+		<p>{{_('Welcome to the %(org_name)s Single-Sign-On!', org_name=config.ORGANISATION_NAME)}}</p>
 		{% endif %}
 
 		{% if invite.roles and invite.allow_signup %}

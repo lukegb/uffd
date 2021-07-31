@@ -178,7 +178,7 @@ def send_passwordreset(user, new=False):
 	msg = EmailMessage()
 	if new:
 		msg.set_content(render_template('selfservice/newuser.mail.txt', user=user, token=token.token))
-		msg['Subject'] = 'Welcome to the CCCV infrastructure'
+		msg['Subject'] = 'Welcome to the %s infrastructure'%current_app.config.get('ORGANISATION_NAME', '')
 	else:
 		msg.set_content(render_template('selfservice/passwordreset.mail.txt', user=user, token=token.token))
 		msg['Subject'] = 'Password reset'
