@@ -97,6 +97,20 @@ trans_de:
   - ./update_translations.sh de
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
 
+test:package:pip:
+  stage: test
+  script:
+  - pip3 install dist/*.tar.gz
+  dependencies:
+  - build:pip
+
+test:package:apt:
+  stage: test
+  script:
+  - apt -y install ./build/*.deb
+  dependencies:
+  - build:apt
+
 publish:pip:
   stage: deploy
   script:
