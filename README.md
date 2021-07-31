@@ -3,7 +3,7 @@
 This is the UserFerwaltungsFrontend.
 A web service to manage LDAP users, groups and permissions.
 
-Development chat: [#uffd-development](https://rocket.events.ccc.de/channel/uffd-development)
+Development chat: [#uffd-development](https://rocket.cccv.de/channel/uffd-development)
 
 ## dependencies
 - python3
