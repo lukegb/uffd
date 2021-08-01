@@ -1,9 +1,5 @@
 import datetime
 
-import smtplib
-from email.message import EmailMessage
-import email.utils
-
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session
 from flask_babel import gettext as _, lazy_gettext
 
@@ -12,6 +8,7 @@ from uffd.csrf import csrf_protect
 from uffd.user.models import User
 from uffd.session import login_required
 from uffd.selfservice.models import PasswordToken, MailToken
+from uffd.sendmail import sendmail
 from uffd.role.models import Role
 from uffd.database import db
 from uffd.ldap import ldap
@@ -160,10 +157,8 @@ def send_mail_verification(loginname, newmail):
 
 	user = User.query.filter_by(loginname=loginname).one()
 
-	msg = EmailMessage()
-	msg.set_content(render_template('selfservice/mailverification.mail.txt', user=user, token=token.token))
-	msg['Subject'] = 'Mail verification'
-	send_mail(newmail, msg)
+	if not sendmail(newmail, 'Mail verification', 'selfservice/mailverification.mail.txt', user=user, token=token.token):
+		flash(_('Mail to "%(mail_address)s" could not be sent!', mail_address=newmail))
 
 def send_passwordreset(user, new=False):
 	expired_tokens = PasswordToken.query.filter(PasswordToken.created < (datetime.datetime.now() - datetime.timedelta(days=2))).all()
@@ -175,38 +170,12 @@ def send_passwordreset(user, new=False):
 	db.session.add(token)
 	db.session.commit()
 
-	msg = EmailMessage()
 	if new:
-		msg.set_content(render_template('selfservice/newuser.mail.txt', user=user, token=token.token))
-		msg['Subject'] = 'Welcome to the %s infrastructure'%current_app.config.get('ORGANISATION_NAME', '')
+		template = 'selfservice/newuser.mail.txt'
+		subject = 'Welcome to the %s infrastructure'%current_app.config.get('ORGANISATION_NAME', '')
 	else:
-		msg.set_content(render_template('selfservice/passwordreset.mail.txt', user=user, token=token.token))
-		msg['Subject'] = 'Password reset'
-	send_mail(user.mail, msg)
+		template = 'selfservice/passwordreset.mail.txt'
+		subject = 'Password reset'
 
-def send_mail(to_address, msg):
-	msg['From'] = current_app.config['MAIL_FROM_ADDRESS']
-	msg['To'] = to_address
-	msg['Date'] = email.utils.formatdate(localtime=1)
-	msg['Message-ID'] = email.utils.make_msgid()
-	try:
-		if current_app.debug:
-			current_app.last_mail = None
-			current_app.logger.debug('Trying to send email to %s:\n'%(to_address)+str(msg))
-		if current_app.debug and current_app.config.get('MAIL_SKIP_SEND', False):
-			if current_app.config['MAIL_SKIP_SEND'] == 'fail':
-				raise smtplib.SMTPException()
-			current_app.last_mail = msg
-			return True
-		server = smtplib.SMTP(host=current_app.config['MAIL_SERVER'], port=current_app.config['MAIL_PORT'])
-		if current_app.config['MAIL_USE_STARTTLS']:
-			server.starttls()
-		server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
-		server.send_message(msg)
-		server.quit()
-		if current_app.debug:
-			current_app.last_mail = msg
-		return True
-	except smtplib.SMTPException:
-		flash(_('Mail to "%(mail_address)s" could not be sent!', mail_address=to_address))
-		return False
+	if not sendmail(user.mail, subject, template, user=user, token=token.token):
+		flash(_('Mail to "%(mail_address)s" could not be sent!', mail_address=user.mail))
