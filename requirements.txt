@@ -1,39 +1,4 @@
-# Versions from Debian Buster
-ldap3==2.4.1
-flask==1.0.2
-Flask-SQLAlchemy==2.1
-qrcode==6.1
-fido2==0.5.0
-Flask-OAuthlib==0.9.5
-Flask-Migrate==2.1.1
-Flask-Babel==0.11.2
-alembic==1.0.0
-
-# The main dependencies on their own lead to version collisions and pip is
-# not very good at resolving them, so we pin the versions from Debian Buster
-# for all dependencies.
-certifi==2018.8.24
-#cffi==1.12.2
-cffi # v1.12.2 no longer works with python3.9. Newer versions seem to work fine.
-chardet==3.0.4
-click==7.0
-cryptography==2.6.1
-idna==2.6
-itsdangerous==0.24
-Jinja2==2.10
-MarkupSafe==1.1.0
-oauthlib==2.1.0
-pyasn1==0.4.2
-pycparser==2.19
-requests==2.21.0
-requests-oauthlib==1.0.0
-six==1.12.0
-SQLAlchemy==1.2.18
-urllib3==1.24.1
-Werkzeug==0.14.1
-python-dateutil==2.7.3
-#editor==1.0.3
-Mako==1.0.7
+.
 
 # Testing
 pytest==3.10.1
