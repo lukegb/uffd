@@ -117,7 +117,6 @@ test:package:apt:
   - service uwsgi start uffd || ( service uwsgi status uffd ; sleep 15; cat /var/log/uwsgi/app/uffd.log; )
   - echo "server { listen 127.0.0.1:5000 default_server;  include /etc/uffd/nginx.include.conf; }" > /etc/nginx/sites-enabled/uffd.ini
   - service nginx start || ( service nginx status; nginx -t; exit 1; )
-  - sleep 5
   - uffd-admin routes
   - curl -Lv 127.0.0.1:5000
   dependencies:
