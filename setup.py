@@ -3,6 +3,7 @@ import os
 
 with open('README.md', 'r', encoding='utf-8') as f:
 	long_description = f.read()
+	long_description = '**DO NOT INSTALL FROM PIP FOR PRODUCTION DEPLOYMENTS**, see [Deployment](#Deployment) for more information.\n\n\n\n' + long_description
 
 setup(
 	name='uffd',
@@ -29,7 +30,8 @@ setup(
 	zip_safe=False,
 	python_requires='>=3.7',
 	install_requires=[
-		# Versions from Debian Buster
+		# Versions Debian Buster packages are based on.
+		# DO NOT USE FOR PRODUCTION, those in the setup.py are not updated regularly
 		'ldap3==2.4.1',
 		'flask==1.0.2',
 		'Flask-SQLAlchemy==2.1',
