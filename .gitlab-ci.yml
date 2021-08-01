@@ -47,7 +47,7 @@ db_migrations_updated:
 linter:
   stage: test
   script:
-  - pip3 install pylint-gitlab # this force-updates jinja2 and some other packages!
+  - pip3 install pylint-gitlab pylint-flask-sqlalchemy # this force-updates jinja2 and some other packages!
   - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabCodeClimateReporter uffd > codeclimate.json
   - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabPagesHtmlReporter uffd > pylint.html
   - python3 -m pylint --rcfile .pylintrc --output-format=text uffd

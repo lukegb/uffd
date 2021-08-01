@@ -6,6 +6,7 @@ from flask import current_app, request, abort, session
 import ldap3
 from ldap3.core.exceptions import LDAPBindError, LDAPPasswordIsMandatoryError, LDAPInvalidDnError
 
+# We import LDAPCommitError only because it is imported from us by other files. It is not needed here
 from uffd.ldapalchemy import LDAPMapper, LDAPCommitError # pylint: disable=unused-import
 from uffd.ldapalchemy.model import Query
 from uffd.ldapalchemy.core import encode_filter

@@ -10,6 +10,7 @@ def setup_navbar(app):
 def register_navbar(name, iconlib='fa', icon=None, group=None, endpoint=None, blueprint=None, visible=None):
 	def wrapper(func):
 		def deferred_call(state):
+			assert blueprint
 			urlendpoint = endpoint
 			if not endpoint:
 				# pylint: disable=protected-access
@@ -17,7 +18,7 @@ def register_navbar(name, iconlib='fa', icon=None, group=None, endpoint=None, bl
 					urlendpoint = "{}.{}".format(blueprint.name, func.__name__)
 				else:
 					urlendpoint = func.__name_
-			# pylint: enable=protected-access
+				# pylint: enable=protected-access
 			item = {}
 			item['iconlib'] = iconlib
 			item['icon'] = icon
@@ -26,20 +27,8 @@ def register_navbar(name, iconlib='fa', icon=None, group=None, endpoint=None, bl
 			item['name'] = name
 			item['blueprint'] = blueprint
 			item['visible'] = visible or (lambda: True)
-
 			state.app.navbarList.append(item)
-
-		if blueprint:
-			blueprint.record_once(deferred_call)
-		else:
-			class StateMock:
-				def __init__(self, app):
-					self.app = app
-			# pylint: disable=C0415
-			from flask import current_app
-			# pylint: enable=C0415
-			deferred_call(StateMock(current_app))
-
+		blueprint.record_once(deferred_call)
 		return func
 
 	return wrapper

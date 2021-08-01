@@ -80,7 +80,7 @@ class DeleteOperation:
 		self.obj = obj
 		self.attributes = {name: values.copy() for name, values in obj.state.attributes.items()}
 
-	def apply_object(self, obj_state):
+	def apply_object(self, obj_state): #pylint: disable=no-self-use
 		obj_state.dn = None
 
 	def apply_session(self, session_state):

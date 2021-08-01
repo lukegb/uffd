@@ -13,9 +13,7 @@ convention = {
 }
 metadata = MetaData(naming_convention=convention)
 
-# pylint: disable=C0103
 db = SQLAlchemy(metadata=metadata)
-# pylint: enable=C0103
 
 class SQLAlchemyJSON(JSONEncoder):
 	def default(self, o):

@@ -10,7 +10,6 @@ from uffd.database import db
 from uffd.user.models import User
 from uffd.signup.models import Signup
 
-# pylint: disable=E1101
 invite_roles = db.Table('invite_roles',
 	Column('invite_id', Integer(), ForeignKey('invite.id'), primary_key=True),
 	Column('role_id', Integer, ForeignKey('role.id'), primary_key=True)

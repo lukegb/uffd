@@ -4,9 +4,7 @@ from flask import Blueprint, request, session
 
 bp = Blueprint("csrf", __name__)
 
-# pylint: disable=invalid-name
-csrfEndpoints = []
-# pylint: enable=invalid-name
+csrf_endpoints = []
 
 def csrf_protect(blueprint=None, endpoint=None):
 	def wraper(func):
@@ -15,7 +13,7 @@ def csrf_protect(blueprint=None, endpoint=None):
 				urlendpoint = "{}.{}".format(blueprint.name, func.__name__)
 			else:
 				urlendpoint = func.__name__
-		csrfEndpoints.append(urlendpoint)
+		csrf_endpoints.append(urlendpoint)
 		@wraps(func)
 		def decorator(*args, **kwargs):
 			if '_csrf_token' in request.values:
@@ -32,6 +30,6 @@ def csrf_protect(blueprint=None, endpoint=None):
 
 @bp.app_url_defaults
 def csrf_inject(endpoint, values):
-	if endpoint not in csrfEndpoints or not session.get('_csrf_token'):
+	if endpoint not in csrf_endpoints or not session.get('_csrf_token'):
 		return
 	values['_csrf_token'] = session['_csrf_token']

@@ -14,7 +14,7 @@ uffd (0.3.0) unstable; urgency=medium
   [ Julian ]
   * ensure uffd-admin works with arguments containing whitespace
 
- -- CCCV <it@cccv.de>  Sat, 31 Jul 2021 23:36:01 +0000
+ -- root <root@runner-f9u6bnzu-project-27-concurrent-0>  Sun, 01 Aug 2021 13:27:31 +0000
 
 uffd (0.2.0) unstable; urgency=medium
 
