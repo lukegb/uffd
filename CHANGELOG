@@ -1,10 +1,18 @@
-uffd (0.3.0) unstagle; urgency=medium
+uffd (0.3.0) unstable; urgency=medium
 
+  [ nd ]
   * update link to rocketchat in README
   * add uffd-admin command, cleanup cronjob and needed /run folder
   * move package build dependencies to docker image
   * enable uwsgi app by default and add maintainer script to restart uwsgi
   * move python dependencies from requirements.txt to setup.py
+  * update changelog for 0.3.0 release
+  * add more warnings against using pip install for production setups
+  * add comment why we ignore the package dependencies extracted by pybild
+  * removed not needed sleep from tests
+
+  [ Julian ]
+  * ensure uffd-admin works with arguments containing whitespace
 
  -- CCCV <it@cccv.de>  Sat, 31 Jul 2021 23:36:01 +0000
 

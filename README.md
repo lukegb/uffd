@@ -7,7 +7,7 @@ Development chat: [#uffd-development](https://rocket.cccv.de/channel/uffd-develo
 
 ## Dependencies
 
-Please note that we refere to debian packages here and **not** pip packages.
+Please note that we refer to Debian packages here and **not** pip packages.
 
 - python3
 - python3-ldap3
@@ -41,12 +41,13 @@ Please note that the mocked LDAP functionality is very limited and many uffd fea
 
 ## Deployment
 
-You should absolutly never use `pip install uffd` to deploy to production. Using a pip deployment for production will result in not updated dependencies is insecure.
-Our pip dependencies are not regularly updated and neither tested. They just represent the version Debian based their packages on.
-Instead we relay on the packaged Debian python packages and security updates done by Debian.
-The pip package mainly exists for testing and as a required step to build the .deb package.
+You should absolutely never use `pip install uffd` for production deployments.
+The dependencies of the pip package roughly represent the versions shipped by Debian stable.
+We do not keep them updated and we do not test the pip package!
+The pip package only exists for local testing/development and to help build the Debian package.
 
-To deploy to production, use our .deb package. It uses uwsgi to run uffd and ships an `uffd-admin` to execute flask commands in the correct context.
+To deploy to production, use our Debian package. You will get security updates for all dependencies from Debian.
+The Debian package uses uwsgi to run uffd and ships an `uffd-admin` to execute flask commands in the correct context.
 If you upgrade, make sure to run `flask db upgrade` after every update! The Debian package takes care of this by itself using uwsgi pre start hooks.
 For an example uwsgi config, see our [uswgi.ini](uwsgi.ini). You might find our [nginx include file](nginx.include.conf) helpful to setup a web server in front of uwsgi.
 
