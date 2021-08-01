@@ -6,11 +6,11 @@ export FLASK_APP=/usr/share/uffd/uffd
 export CONFIG_FILENAME=/etc/uffd/uffd.cfg
 
 if [ "$(whoami)" = "uffd" ]; then
-	flask $@
+	flask "$@"
 elif command -v sudo &> /dev/null; then
-	exec sudo --preserve-env=FLASK_APP,CONFIG_FILENAME -u uffd flask $@
+	exec sudo --preserve-env=FLASK_APP,CONFIG_FILENAME -u uffd flask "$@"
 elif command -v su &> /dev/null; then
-	exec su -s /bin/sh --preserve-environment uffd -c flask $@
+	exec su -s /bin/sh --preserve-environment uffd -c flask "$@"
 else
 	echo "Could not not become 'uffd' user, exiting"
 	exit 255
