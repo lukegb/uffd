@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-07-31 03:28+0200\n"
+"POT-Creation-Date: 2021-08-02 12:33+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -1273,7 +1273,7 @@ msgstr "Beenden"
 #: uffd/session/templates/session/devicelogin.html:11
 #: uffd/session/templates/session/login.html:27 uffd/templates/base.html:93
 msgid "Device Login"
-msgstr "Geratelogin"
+msgstr "Gerätelogin"
 
 #: uffd/session/templates/session/devicelogin.html:14
 msgid ""
