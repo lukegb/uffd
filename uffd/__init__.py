@@ -15,6 +15,10 @@ from uffd.database import db, SQLAlchemyJSON
 from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
 from uffd.secure_redirect import secure_local_redirect
+from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services, signup, rolemod, invite, api
+from uffd.user.models import User, Group
+from uffd.role.models import Role
+from uffd.mail.models import Mail
 
 def load_config_file(app, cfg_name, silent=False):
 	cfg_path = os.path.join(app.instance_path, cfg_name)
@@ -68,9 +72,6 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 
 	db.init_app(app)
 	Migrate(app, db, render_as_batch=True, directory='uffd/migrations')
-	# pylint: disable=C0415
-	from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services, signup, rolemod, invite, api
-	# pylint: enable=C0415
 
 	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp + rolemod.bp + api.bp:
 		app.register_blueprint(i)
@@ -91,7 +92,7 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	@app.shell_context_processor
 	def push_request_context(): #pylint: disable=unused-variable
 		app.test_request_context().push() # LDAP ORM requires request context
-		return {'db': db, 'ldap': uffd.ldap.ldap}
+		return {'db': db, 'ldap': uffd.ldap.ldap, 'User': User, 'Group': Group, 'Role': Role, 'Mail': Mail}
 
 	@app.route("/")
 	def index(): #pylint: disable=unused-variable
