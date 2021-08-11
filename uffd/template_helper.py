@@ -21,7 +21,7 @@ def register_template_helper(app):
 			svg.set(key, value)
 		buf = io.BytesIO()
 		img.save(buf)
-		return Markup(buf.getvalue().decode().replace('<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n', ''))
+		return Markup(buf.getvalue().decode().replace('<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n', '').replace(' id="qr-path" ', ' '))
 
 	@app.template_filter()
 	def datauri(data, mimetype='text/plain'): #pylint: disable=unused-variable
