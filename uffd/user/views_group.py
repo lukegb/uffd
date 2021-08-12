@@ -18,7 +18,7 @@ def group_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp.route("/")
-@register_navbar(lazy_gettext('Groups'), icon='layer-group', blueprint=bp, visible=group_acl_check)
+@register_navbar(23, lazy_gettext('Groups'), icon='layer-group', blueprint=bp, visible=group_acl_check)
 def index():
 	return render_template('group/list.html', groups=Group.query.all())
 

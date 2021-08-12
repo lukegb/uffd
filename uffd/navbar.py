@@ -7,7 +7,8 @@ def setup_navbar(app):
 # or 'fa'
 # ( see: http://fontawesome.io/icons/ )
 # visible is a function that returns "True" if this icon should be visible in the calling context
-def register_navbar(name, iconlib='fa', icon=None, group=None, endpoint=None, blueprint=None, visible=None):
+# pylint: disable=too-many-arguments
+def register_navbar(position, name, iconlib='fa', icon=None, group=None, endpoint=None, blueprint=None, visible=None):
 	def wrapper(func):
 		def deferred_call(state):
 			assert blueprint
@@ -27,7 +28,9 @@ def register_navbar(name, iconlib='fa', icon=None, group=None, endpoint=None, bl
 			item['name'] = name
 			item['blueprint'] = blueprint
 			item['visible'] = visible or (lambda: True)
+			item['position'] = position
 			state.app.navbarList.append(item)
+			state.app.navbarList.sort(key=lambda item: item['position'])
 		blueprint.record_once(deferred_call)
 		return func
 

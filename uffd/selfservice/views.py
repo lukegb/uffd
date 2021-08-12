@@ -19,7 +19,7 @@ bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix=
 reset_ratelimit = Ratelimit('passwordreset', 1*60*60, 3)
 
 @bp.route("/")
-@register_navbar(lazy_gettext('Selfservice'), icon='portrait', blueprint=bp, visible=lambda: bool(request.user))
+@register_navbar(0, lazy_gettext('Selfservice'), icon='portrait', blueprint=bp, visible=lambda: bool(request.user))
 @login_required()
 def index():
 	return render_template('selfservice/self.html', user=request.user)

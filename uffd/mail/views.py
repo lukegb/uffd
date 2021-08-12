@@ -20,7 +20,7 @@ def mail_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp.route("/")
-@register_navbar(lazy_gettext('Forwardings'), icon='envelope', blueprint=bp, visible=mail_acl_check)
+@register_navbar(29, lazy_gettext('Forwardings'), icon='envelope', blueprint=bp, visible=mail_acl_check)
 def index():
 	return render_template('mail/list.html', mails=Mail.query.all())
 

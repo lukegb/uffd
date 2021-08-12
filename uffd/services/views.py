@@ -80,7 +80,7 @@ def services_visible():
 	return len(get_services(request.user)) > 0
 
 @bp.route("/")
-@register_navbar(lazy_gettext('Services'), icon='sitemap', blueprint=bp, visible=services_visible)
+@register_navbar(9, lazy_gettext('Services'), icon='sitemap', blueprint=bp, visible=services_visible)
 def index():
 	services = get_services(request.user)
 	if not current_app.config['SERVICES']:

@@ -22,7 +22,7 @@ def acl_check(): #pylint: disable=inconsistent-return-statements
 		return redirect(url_for('index'))
 
 @bp.route("/")
-@register_navbar(lazy_gettext('Moderation'), icon='user-lock', blueprint=bp, visible=user_is_rolemod)
+@register_navbar(12, lazy_gettext('Moderation'), icon='user-lock', blueprint=bp, visible=user_is_rolemod)
 def index():
 	roles = Role.query.filter(Role.moderator_group_dn.in_(request.user.group_dns)).all()
 	return render_template('rolemod/list.html', roles=roles)

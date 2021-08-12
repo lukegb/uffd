@@ -48,7 +48,7 @@ def role_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
 @bp.route("/")
-@register_navbar(lazy_gettext('Roles'), icon='key', blueprint=bp, visible=role_acl_check)
+@register_navbar(25, lazy_gettext('Roles'), icon='key', blueprint=bp, visible=role_acl_check)
 def index():
 	return render_template('role/list.html', roles=Role.query.all())
 
