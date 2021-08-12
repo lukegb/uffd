@@ -3,6 +3,7 @@ import functools
 from flask import Blueprint, jsonify, current_app, request, abort
 
 from uffd.user.models import User, Group
+from uffd.mail.models import Mail
 from uffd.session.views import login_get_user, login_ratelimit
 
 bp = Blueprint('api', __name__, template_folder='templates', url_prefix='/api/v1/')
@@ -93,3 +94,26 @@ def checkpassword():
 		login_ratelimit.log(username)
 		return jsonify(None)
 	return jsonify(generate_user_dict(user))
+
+def generate_mail_dict(mail):
+	return {'name': mail.uid, 'receive_addresses': list(mail.receivers),
+	        'destination_addresses': list(mail.destinations)}
+
+@bp.route('/getmails', methods=['GET', 'POST'])
+@apikey_required('getmails')
+def getmails():
+	if len(request.values) > 1:
+		abort(400)
+	key = (list(request.values.keys()) or [None])[0]
+	values = request.values.getlist(key)
+	if key is None:
+		mails = Mail.query.all()
+	elif key == 'name' and len(values) == 1:
+		mails = Mail.query.filter_by(uid=values[0]).all()
+	elif key == 'receive_address' and len(values) == 1:
+		mails = Mail.query.filter_by(receivers=values[0]).all()
+	elif key == 'destination_address' and len(values) == 1:
+		mails = Mail.query.filter_by(destinations=values[0]).all()
+	else:
+		abort(400)
+	return jsonify([generate_mail_dict(mail) for mail in mails])
