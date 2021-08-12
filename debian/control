@@ -16,7 +16,7 @@ Architecture: any
 Depends:
  ${misc:Depends},
 # Unlike most debian python packages, we depend directly on the deb packages and do not want to populate our dependencies from the setup.py .
-# Bacause of this we do not use the variable from pybild.
+# Because of this we do not use the variable from pybuild.
 # ${python3:Depends},
  python3-ldap3,
  python3-flask,

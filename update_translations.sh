@@ -2,6 +2,11 @@
 set -e
 
 pybabel extract -F uffd/babel.cfg -k lazy_gettext -o messages.pot uffd
+
+# If you want to initialize a new message, use:
+#   pybabel init -i messages.pot -d uffd/translations -l fr
+# Complete Documentation of Flask-Babel: https://flask-babel.tkte.ch
+
 pybabel update -i messages.pot -d uffd/translations
 pybabel compile -d uffd/translations
 

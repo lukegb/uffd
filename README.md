@@ -60,13 +60,13 @@ We ship a [pylint](https://pylint.org/) config to verify changes with.
 
 Uffd reads its default config from `uffd/default_config.cfg`.
 You can overwrite config variables by creating a config file in the `instance` folder.
-The file must be named `conifg.cfg` (Python syntax), `config.json` or `config.yml`/`config.yaml`.
+The file must be named `config.cfg` (Python syntax), `config.json` or `config.yml`/`config.yaml`.
 You can also set a custom file name with the environment variable `CONFIG_FILENAME`.
 
 ## Bind with LDAP service account or as user?
 
 Uffd can use a dedicated service account for LDAP operations by setting `LDAP_SERVICE_BIND_DN`.
-Leave that variable blank to use anonymouse bind.
+Leave that variable blank to use anonymous bind.
 Or set `LDAP_SERVICE_USER_BIND` to use the credentials of the currently logged in user.
 
 If you choose to run with user credentials, some features are not available, like password resets
@@ -108,7 +108,9 @@ The web frontend is initially written in English and translated in the following
 ![status](https://git.cccv.de/uffd/uffd/badges/master/coverage.svg?job=trans_de&key_text=DE)
 
 The selection uses the language browser header by default but can be overwritten via a UI element.
-You can specify the availble languages in the config.
+You can specify the available languages in the config.
+
+Use the `update_translations.sh` to update the translation files.
 
 ## License
 
