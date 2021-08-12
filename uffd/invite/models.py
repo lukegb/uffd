@@ -1,4 +1,3 @@
-import secrets
 import datetime
 
 from flask import current_app
@@ -9,6 +8,7 @@ from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
 from uffd.user.models import User
 from uffd.signup.models import Signup
+from uffd.utils import token_urlfriendly
 
 invite_roles = db.Table('invite_roles',
 	Column('invite_id', Integer(), ForeignKey('invite.id'), primary_key=True),
@@ -18,7 +18,7 @@ invite_roles = db.Table('invite_roles',
 class Invite(db.Model):
 	__tablename__ = 'invite'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	token = Column(String(128), unique=True, nullable=False, default=lambda: secrets.token_urlsafe(48))
+	token = Column(String(128), unique=True, nullable=False, default=token_urlfriendly)
 	created = Column(DateTime, default=datetime.datetime.now, nullable=False)
 	creator_dn = Column(String(128), nullable=True)
 	creator = DBRelationship('creator_dn', User)

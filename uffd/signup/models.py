@@ -1,4 +1,3 @@
-import secrets
 import datetime
 from crypt import crypt
 
@@ -8,6 +7,7 @@ from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
 from uffd.ldap import ldap
 from uffd.user.models import User
+from uffd.utils import token_urlfriendly
 
 class Signup(db.Model):
 	'''Model that represents a self-signup request
@@ -26,7 +26,7 @@ class Signup(db.Model):
 	As long as they are not completed, signup requests have no effect each other
 	or different parts of the application.'''
 	__tablename__ = 'signup'
-	token = Column(String(128), primary_key=True, default=lambda: secrets.token_urlsafe(48))
+	token = Column(String(128), primary_key=True, default=token_urlfriendly)
 	created = Column(DateTime, default=datetime.datetime.now, nullable=False)
 	loginname = Column(Text)
 	displayname = Column(Text)

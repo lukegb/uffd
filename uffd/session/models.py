@@ -1,6 +1,5 @@
 import datetime
 import secrets
-import math
 import enum
 
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum
@@ -10,15 +9,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
 from uffd.user.models import User
-
-def token_typeable(nbytes=None):
-	'''Return random text token that is easy to type (on mobile)'''
-	alphabet = '123456789abcdefghkmnopqrstuvwx' # No '0ijlyz'
-	if nbytes is None:
-		nbytes = secrets.DEFAULT_ENTROPY
-	nbytes_per_char = math.log(len(alphabet), 256)
-	nchars = math.ceil(nbytes / nbytes_per_char)
-	return ''.join([secrets.choice(alphabet) for _ in range(nchars)])
+from uffd.utils import token_typeable
 
 # Device login provides a convenient and secure way to log into SSO-enabled
 # services on a secondary device without entering the user password or
