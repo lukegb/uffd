@@ -24,7 +24,7 @@
 		{% if request.values.get('devicelogin') %}
 		<div class="text-center text-muted mb-3">{{_("- or -")}}</div>
 		<div class="form-group col-12">
-			<a href="{{ url_for('session.devicelogin_start', ref=ref) }}" class="btn btn-primary btn-block" tabindex="0">{{_("Device Login")}}</a>
+			<a href="{{ url_for('session.devicelogin_start', ref=ref) }}" class="btn btn-primary btn-block" tabindex="0">{{_("Login with another device")}}</a>
 		</div>
 		{% endif %}
 		<div class="clearfix col-12">
