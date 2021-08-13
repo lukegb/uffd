@@ -1,3 +1,34 @@
+uffd (1.0.0) unstable; urgency=medium
+
+  [ nd ]
+  * enable more pylint checks
+  * disable all checks for ldapalchemy and enable duplicate code check
+  * disable cuplicate-code check in pylint again
+
+  [ Julian Rother ]
+  * Fixed typo in German translation (#91)
+  * Made shell context more usable and cleaned up imports in __init__.py
+
+  [ nd ]
+  * refactor selfservice mail sending
+
+  [ Julian Rother ]
+  * Disabled unhelpful deprecation warnings for pytest
+  * Fixed minor html validity error in qr code generation
+  * Moved token generation to common module and introduced token_urlfriendly
+  * Implemented ordering for navbar items
+  * Added api endpoint for mail aliases
+
+  [ Sistason ]
+  * Updated translations readme, made some editorial translation changes and fixed some typos
+
+  [ Julian Rother ]
+  * Made devicelogin button text easier to understand, closes #91
+  * Fixed layout bug in selfservice introduced by 7b94843b
+  * Changed developing status to "production/stable"
+
+ -- root <root@runner-f9u6bnzu-project-27-concurrent-0>  Fri, 13 Aug 2021 14:35:19 +0000
+
 uffd (0.3.0) unstable; urgency=medium
 
   [ nd ]
