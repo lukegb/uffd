@@ -49,13 +49,12 @@ class UffdTestCase(unittest.TestCase):
 									'password': self.test_data.get(user).get('password')}, follow_redirects=True)
 
 	def setUp(self):
-		self.dir = tempfile.mkdtemp()
 		# It would be far better to create a minimal app here, but since the
 		# session module depends on almost everything else, that is not really feasable
 		config = {
 			'TESTING': True,
 			'DEBUG': True,
-			'SQLALCHEMY_DATABASE_URI': 'sqlite:///%s/db.sqlite'%self.dir,
+			'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
 			'SECRET_KEY': 'DEBUGKEY',
 			'LDAP_SERVICE_MOCK': True,
 			'MAIL_SKIP_SEND': True,
@@ -117,4 +116,3 @@ class UffdTestCase(unittest.TestCase):
 
 	def tearDown(self):
 		self.client.__exit__(None, None, None)
-		shutil.rmtree(self.dir)
