@@ -193,6 +193,7 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(user_updated.uid, user_unupdated.uid)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
 		self.assertTrue(ldap.test_user_bind(user_updated.dn, 'newpassword'))
+		self.assertFalse(ldap.test_user_bind(user_updated.dn, self.test_data.get('user').get('password')))
 
 	def test_update_invalid_password(self):
 		user_unupdated = self.get_user()
@@ -201,10 +202,28 @@ class TestUserViews(UffdTestCase):
 		r = self.client.post(path=url_for('user.update', uid=user_unupdated.uid),
 			data={'loginname': 'testuser', 'mail': 'newuser@example.com', 'displayname': 'New User',
 			'password': 'A'}, follow_redirects=True)
-		dump('user_update_password', r)
+		dump('user_update_invalid_password', r)
 		self.assertEqual(r.status_code, 200)
 		user_updated = self.get_user()
 		self.assertFalse(ldap.test_user_bind(user_updated.dn, 'A'))
+		self.assertTrue(ldap.test_user_bind(user_updated.dn, self.test_data.get('user').get('password')))
+		self.assertEqual(user_updated.displayname, user_unupdated.displayname)
+		self.assertEqual(user_updated.mail, user_unupdated.mail)
+		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
+
+	# Regression test for #100 (login not possible if password contains character disallowed by SASLprep)
+	def test_update_saslprep_invalid_password(self):
+		user_unupdated = self.get_user()
+		r = self.client.get(path=url_for('user.show', uid=user_unupdated.uid), follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		r = self.client.post(path=url_for('user.update', uid=user_unupdated.uid),
+			data={'loginname': 'testuser', 'mail': 'newuser@example.com', 'displayname': 'New User',
+			'password': 'newpassword\n'}, follow_redirects=True)
+		dump('user_update_saslprep_invalid_password', r)
+		self.assertEqual(r.status_code, 200)
+		user_updated = self.get_user()
+		self.assertFalse(ldap.test_user_bind(user_updated.dn, 'newpassword\n'))
+		self.assertTrue(ldap.test_user_bind(user_updated.dn, self.test_data.get('user').get('password')))
 		self.assertEqual(user_updated.displayname, user_unupdated.displayname)
 		self.assertEqual(user_updated.mail, user_unupdated.mail)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
@@ -223,6 +242,7 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(user_updated.mail, user_unupdated.mail)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
 		self.assertFalse(ldap.test_user_bind(user_updated.dn, 'newpassword'))
+		self.assertTrue(ldap.test_user_bind(user_updated.dn, self.test_data.get('user').get('password')))
 
 	def test_update_invalid_display_name(self):
 		user_unupdated = self.get_user()
@@ -238,6 +258,7 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(user_updated.mail, user_unupdated.mail)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
 		self.assertFalse(ldap.test_user_bind(user_updated.dn, 'newpassword'))
+		self.assertTrue(ldap.test_user_bind(user_updated.dn, self.test_data.get('user').get('password')))
 
 	def test_show(self):
 		r = self.client.get(path=url_for('user.show', uid=self.get_user().uid), follow_redirects=True)

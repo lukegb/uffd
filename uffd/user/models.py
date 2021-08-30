@@ -2,7 +2,8 @@ import secrets
 import string
 import re
 
-from flask import current_app
+from flask import current_app, escape
+from flask_babel import lazy_gettext
 from ldap3.utils.hashed import hashed, HASHED_SALTED_SHA512
 
 from uffd.ldap import ldap
@@ -36,6 +37,20 @@ def format_with_attributes(fmtstr, obj):
 	return fmtstr.format_map(ObjectAttributeDict(obj))
 
 class BaseUser(ldap.Model):
+	# Allows 8 to 256 ASCII letters (lower and upper case), digits, spaces and
+	# symbols/punctuation characters. It disallows control characters and
+	# non-ASCII characters to prevent setting passwords considered invalid by
+	# SASLprep.
+	#
+	# This REGEX ist used both in Python and JS.
+	PASSWORD_REGEX = '[ -~]*'
+	PASSWORD_MINLEN = 8
+	PASSWORD_MAXLEN = 256
+	PASSWORD_DESCRIPTION = lazy_gettext('At least %(minlen)d and at most %(maxlen)d characters. ' + \
+	                                    'Only letters, digits, spaces and some symbols (<code>%(symbols)s</code>) allowed. ' + \
+	                                    'Please use a password manager.',
+	                                    minlen=PASSWORD_MINLEN, maxlen=PASSWORD_MAXLEN, symbols=escape('!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'))
+
 	ldap_search_base = lazyconfig_str('LDAP_USER_SEARCH_BASE')
 	ldap_filter_params = lazyconfig_list('LDAP_USER_SEARCH_FILTER')
 	ldap_object_classes = lazyconfig_list('LDAP_USER_OBJECTCLASSES')
@@ -129,7 +144,7 @@ class BaseUser(ldap.Model):
 		return True
 
 	def set_password(self, value):
-		if len(value) < 8 or len(value) > 256:
+		if len(value) < self.PASSWORD_MINLEN or len(value) > self.PASSWORD_MAXLEN or not re.fullmatch(self.PASSWORD_REGEX, value):
 			return False
 		self.password = value
 		return True

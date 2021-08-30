@@ -15,6 +15,9 @@ from uffd.ldap import ldap, LDAPCommitError
 from .models import User
 
 bp = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/')
+
+bp.add_app_template_global(User, 'User')
+
 @bp.before_request
 @login_required()
 def user_acl(): #pylint: disable=inconsistent-return-statements

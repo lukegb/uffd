@@ -44,9 +44,9 @@
 		</div>
 		<div class="form-group col-12">
 			<label for="user-password1">{{_('Password')}}</label>
-			<input type="password" class="form-control" id="user-password1" name="password1" minlength=8 maxlength=256 required>
+			<input type="password" class="form-control" id="user-password1" name="password1" minlength={{ User.PASSWORD_MINLEN }} maxlength={{ User.PASSWORD_MAXLEN }} pattern="{{ User.PASSWORD_REGEX }}" required>
 			<small class="form-text text-muted">
-				{{_("At least 8 and at most 256 characters, no other special requirements. But please use a password manager.")}}
+				{{ User.PASSWORD_DESCRIPTION|safe }}
 			</small>
 		</div>
 		<div class="form-group col-12">

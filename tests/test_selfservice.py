@@ -101,6 +101,19 @@ class TestSelfservice(UffdTestCase):
 		self.assertFalse(ldap.test_user_bind(_user.dn, 'shortpw'))
 		self.assertTrue(ldap.test_user_bind(_user.dn, 'userpassword'))
 
+	# Regression test for #100 (login not possible if password contains character disallowed by SASLprep)
+	def test_change_password_samlprep_invalid(self):
+		self.login_as('user')
+		user = request.user
+		r = self.client.post(path=url_for('selfservice.change_password'),
+			data={'password1': 'shortpw\n', 'password2': 'shortpw\n'},
+			follow_redirects=True)
+		dump('change_password_samlprep_invalid', r)
+		self.assertEqual(r.status_code, 200)
+		_user = request.user
+		self.assertFalse(ldap.test_user_bind(_user.dn, 'shortpw\n'))
+		self.assertTrue(ldap.test_user_bind(_user.dn, 'userpassword'))
+
 	def test_change_password_mismatch(self):
 		self.login_as('user')
 		user = request.user

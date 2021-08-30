@@ -76,12 +76,12 @@
 			<div class="form-group col">
 				<label for="user-loginname">{{_("Password")}}</label>
 				{% if user.uid %}
-				<input type="password" class="form-control" id="user-password" name="password" placeholder="●●●●●●●●">
+				<input type="password" class="form-control" id="user-password" name="password" placeholder="●●●●●●●●" minlength={{ User.PASSWORD_MINLEN }} maxlength={{ User.PASSWORD_MAXLEN }} pattern="{{ User.PASSWORD_REGEX }}">
 				{% else %}
 				<input type="password" class="form-control" id="user-password" name="password" placeholder="{{_("mail to set it will be sent")}}" readonly>
 				{% endif %}
 				<small class="form-text text-muted">
-					{{_("At least 8 and at most 256 characters, no other special requirements.")}}
+					{{ User.PASSWORD_DESCRIPTION|safe }}
 				</small>
 			</div>
 		</div>
