@@ -87,6 +87,14 @@ class TestSession(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertLoggedOut()
 
+	# Regression test for #100 (uncatched LDAPSASLPrepError)
+	def test_saslprep_invalid_password(self):
+		r = self.client.post(path=url_for('session.login'),
+			data={'loginname': self.test_data.get('user').get('loginname'), 'password': 'wrongpassword\n'}, follow_redirects=True)
+		dump('login_saslprep_invalid_password', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertLoggedOut()
+
 	def test_wrong_user(self):
 		r = self.client.post(path=url_for('session.login'),
 							data={'loginname': 'nouser', 'password': self.test_data.get('user').get('password')},

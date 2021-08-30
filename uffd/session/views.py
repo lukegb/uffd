@@ -9,7 +9,7 @@ from uffd.database import db
 from uffd.csrf import csrf_protect
 from uffd.secure_redirect import secure_local_redirect
 from uffd.user.models import User
-from uffd.ldap import ldap, test_user_bind, LDAPInvalidDnError, LDAPBindError, LDAPPasswordIsMandatoryError
+from uffd.ldap import ldap, test_user_bind, LDAPInvalidDnError, LDAPBindError, LDAPPasswordIsMandatoryError, LDAPSASLPrepError
 from uffd.ratelimit import Ratelimit, host_ratelimit, format_delay
 from uffd.session.models import DeviceLoginInitiation, DeviceLoginConfirmation
 
@@ -46,7 +46,7 @@ def login_get_user(loginname, password):
 		session['user_pw'] = password
 		try:
 			ldap.get_connection()
-		except (LDAPBindError, LDAPPasswordIsMandatoryError):
+		except (LDAPBindError, LDAPPasswordIsMandatoryError, LDAPSASLPrepError):
 			session.clear()
 			return None
 

@@ -4,7 +4,7 @@ import hashlib
 from flask import current_app, request, abort, session
 
 import ldap3
-from ldap3.core.exceptions import LDAPBindError, LDAPPasswordIsMandatoryError, LDAPInvalidDnError
+from ldap3.core.exceptions import LDAPBindError, LDAPPasswordIsMandatoryError, LDAPInvalidDnError, LDAPSASLPrepError
 
 # We import LDAPCommitError only because it is imported from us by other files. It is not needed here
 from uffd.ldapalchemy import LDAPMapper, LDAPCommitError # pylint: disable=unused-import
@@ -74,7 +74,7 @@ def test_user_bind(bind_dn, bind_pw):
 		conn = connect_and_bind_to_ldap(server, bind_dn, bind_pw)
 		if not conn:
 			return False
-	except (LDAPBindError, LDAPPasswordIsMandatoryError, LDAPInvalidDnError):
+	except (LDAPBindError, LDAPPasswordIsMandatoryError, LDAPInvalidDnError, LDAPSASLPrepError):
 		return False
 
 	conn.search(conn.user, encode_filter(current_app.config["LDAP_USER_SEARCH_FILTER"]))
