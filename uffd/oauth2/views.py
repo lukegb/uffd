@@ -175,6 +175,8 @@ def authorize():
 	# Here we would normally ask the user, if he wants to give the requesting
 	# service access to his data. Since we only have trusted services (the
 	# clients defined in the server config), we don't ask for consent.
+	if not client.access_allowed(credentials['user']):
+		raise oauthlib.oauth2.rfc6749.errors.AccessDeniedError('User is not permitted to authenticate with this service.')
 	session['oauth2-clients'] = session.get('oauth2-clients', [])
 	if client.client_id not in session['oauth2-clients']:
 		session['oauth2-clients'].append(client.client_id)
