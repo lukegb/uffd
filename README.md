@@ -16,7 +16,7 @@ Please note that we refer to Debian packages here and **not** pip packages.
 - python3-flask-migrate
 - python3-qrcode
 - python3-fido2 (version 0.5.0, optional)
-- python3-flask-oauthlib
+- python3-oauthlib
 - python3-flask-babel
 
 Some of the dependencies (especially fido2 and flask-oauthlib) changed their API in recent versions, so make sure to install the versions from Debian Buster.

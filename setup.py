@@ -37,7 +37,7 @@ setup(
 		'Flask-SQLAlchemy==2.1',
 		'qrcode==6.1',
 		'fido2==0.5.0',
-		'Flask-OAuthlib==0.9.5',
+		'oauthlib==2.1.0',
 		'Flask-Migrate==2.1.1',
 		'Flask-Babel==0.11.2',
 		'alembic==1.0.0',
