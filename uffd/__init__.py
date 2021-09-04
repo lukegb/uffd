@@ -2,12 +2,12 @@ import os
 import secrets
 import sys
 
-from flask import Flask, redirect, url_for, request
+from flask import Flask, redirect, url_for, request, render_template
 from flask_babel import Babel
 from werkzeug.routing import IntegerConverter
 from werkzeug.serving import make_ssl_devcert
 from werkzeug.contrib.profiler import ProfilerMiddleware
-from werkzeug.exceptions import InternalServerError
+from werkzeug.exceptions import InternalServerError, Forbidden
 from flask_migrate import Migrate
 
 import uffd.ldap
@@ -93,6 +93,10 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	def push_request_context(): #pylint: disable=unused-variable
 		app.test_request_context().push() # LDAP ORM requires request context
 		return {'db': db, 'ldap': uffd.ldap.ldap, 'User': User, 'Group': Group, 'Role': Role, 'Mail': Mail}
+
+	@app.errorhandler(403)
+	def handle_403(error):
+		return render_template('403.html', description=error.description if error.description != Forbidden.description else None), 403
 
 	@app.route("/")
 	def index(): #pylint: disable=unused-variable

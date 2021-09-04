@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-09-04 21:18+0200\n"
+"POT-Creation-Date: 2021-09-04 21:53+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -44,54 +44,54 @@ msgstr "eine Stunde"
 msgid "%(hours)d hours"
 msgstr "%(hours)d Stunden\""
 
-#: uffd/invite/views.py:56
+#: uffd/invite/views.py:55
 msgid "Invites"
 msgstr "Einladungslinks"
 
-#: uffd/invite/views.py:85
+#: uffd/invite/views.py:84
 msgid "The \"Expires After\" date is too far in the future"
 msgstr "Das Ablaufdatum liegt zu weit in der Zukunft"
 
-#: uffd/invite/views.py:88
+#: uffd/invite/views.py:87
 msgid "You are not allowed to create invite links with these permissions"
 msgstr "Dir fehlen Berechtigungen um diesen Einladungslink zu erstellen"
 
-#: uffd/invite/views.py:91
+#: uffd/invite/views.py:90
 msgid "Invite link must either allow signup or grant at least one role"
 msgstr ""
 "Einladungslink muss entweder Account-Registrierung erlauben oder Rollen "
 "vergeben"
 
-#: uffd/invite/views.py:119 uffd/invite/views.py:148
+#: uffd/invite/views.py:118 uffd/invite/views.py:147
 msgid "Invalid invite link"
 msgstr "Ungültiger Einladungslink"
 
-#: uffd/invite/views.py:136
+#: uffd/invite/views.py:135
 msgid "Roles successfully updated"
 msgstr "Rollen erfolgreich geändert"
 
-#: uffd/invite/views.py:151
+#: uffd/invite/views.py:150
 msgid "Invite link does not allow signup"
 msgstr "Einladungslink erlaubt keine Account-Registrierung"
 
-#: uffd/invite/views.py:173 uffd/selfservice/views.py:50
+#: uffd/invite/views.py:172 uffd/selfservice/views.py:50
 #: uffd/signup/views.py:49
 msgid "Passwords do not match"
 msgstr "Die Passwörter stimmen nicht überein"
 
-#: uffd/invite/views.py:178 uffd/signup/views.py:54
+#: uffd/invite/views.py:177 uffd/signup/views.py:54
 #, python-format
 msgid "Too many signup requests with this mail address! Please wait %(delay)s."
 msgstr ""
 "Zu viele Account-Registrierungen mit dieser E-Mail-Adresse! Bitte warte "
 "%(delay)s."
 
-#: uffd/invite/views.py:180 uffd/signup/views.py:56 uffd/signup/views.py:92
+#: uffd/invite/views.py:179 uffd/signup/views.py:56 uffd/signup/views.py:92
 #, python-format
 msgid "Too many requests! Please wait %(delay)s."
 msgstr "Zu viele Anfragen! Bitte warte %(delay)s."
 
-#: uffd/invite/views.py:193 uffd/signup/views.py:68
+#: uffd/invite/views.py:192 uffd/signup/views.py:68
 msgid "Cound not send mail"
 msgstr "Mailversand fehlgeschlagen"
 
@@ -346,15 +346,15 @@ msgstr "Neuen Account registrieren"
 msgid "Login and add the roles to your account"
 msgstr "Anmelden und die Rollen zu deinem Account hinzufügen"
 
-#: uffd/mail/views.py:23
+#: uffd/mail/views.py:22
 msgid "Forwardings"
 msgstr "Weiterleitungen"
 
-#: uffd/mail/views.py:47
+#: uffd/mail/views.py:46
 msgid "Mail mapping updated."
 msgstr "Mailweiterleitung geändert."
 
-#: uffd/mail/views.py:56
+#: uffd/mail/views.py:55
 msgid "Deleted mail mapping."
 msgstr "Mailweiterleitung gelöscht."
 
@@ -383,19 +383,19 @@ msgstr "Speichern"
 msgid "Delete"
 msgstr "Löschen"
 
-#: uffd/mfa/views.py:54
+#: uffd/mfa/views.py:53
 msgid "Two-factor authentication was reset"
 msgstr "Zwei-Faktor-Authentifizierung wurde zurückgesetzt"
 
-#: uffd/mfa/views.py:83
+#: uffd/mfa/views.py:82
 msgid "Generate recovery codes first!"
 msgstr "Generiere zuerst die Wiederherstellungscodes!"
 
-#: uffd/mfa/views.py:92
+#: uffd/mfa/views.py:91
 msgid "Code is invalid"
 msgstr "Wiederherstellungscode ist ungültig"
 
-#: uffd/mfa/views.py:116
+#: uffd/mfa/views.py:115
 #, python-format
 msgid ""
 "2FA WebAuthn support disabled because import of the fido2 module failed "
@@ -404,16 +404,16 @@ msgstr ""
 "2FA WebAuthn Unterstützung deaktiviert, da das fido2 Modul nicht geladen "
 "werden konnte (%s)"
 
-#: uffd/mfa/views.py:225
+#: uffd/mfa/views.py:224
 #, python-format
 msgid "We received too many invalid attempts! Please wait at least %s."
 msgstr "Wir haben zu viele fehlgeschlagene Versuche! Bitte warte mindestens %s."
 
-#: uffd/mfa/views.py:239
+#: uffd/mfa/views.py:238
 msgid "You have exhausted your recovery codes. Please generate new ones now!"
 msgstr "Du hast keine Wiederherstellungscode mehr. Bitte generiere diese jetzt!"
 
-#: uffd/mfa/views.py:242
+#: uffd/mfa/views.py:241
 msgid ""
 "You only have a few recovery codes remaining. Make sure to generate new "
 "ones before they run out."
@@ -421,7 +421,7 @@ msgstr ""
 "Du hast nur noch wenige Wiederherstellungscodes übrig. Bitte generiere "
 "diese erneut bevor keine mehr übrig sind."
 
-#: uffd/mfa/views.py:246
+#: uffd/mfa/views.py:245
 msgid "Two-factor authentication failed"
 msgstr "Zwei-Faktor-Authentifizierung fehlgeschlagen"
 
@@ -704,7 +704,7 @@ msgstr "Verifiziere und beende das Setup"
 msgid "You need to login to access this service"
 msgstr "Du musst dich anmelden, um auf diesen Dienst zugreifen zu können"
 
-#: uffd/oauth2/views.py:146 uffd/selfservice/views.py:76
+#: uffd/oauth2/views.py:140 uffd/selfservice/views.py:76
 #: uffd/session/views.py:95
 #, python-format
 msgid ""
@@ -714,13 +714,22 @@ msgstr ""
 "Wir haben zu viele Anfragen von deiner IP-Adresses bzw. aus deinem "
 "Netzwerk empfangen! Bitte warte mindestens %(delay)s."
 
-#: uffd/oauth2/views.py:154
+#: uffd/oauth2/views.py:148
 msgid "Device login is currently not available. Try again later!"
 msgstr "Geräte-Login ist gerade nicht verfügbar. Versuche es später nochmal!"
 
-#: uffd/oauth2/views.py:167
+#: uffd/oauth2/views.py:161
 msgid "Device login failed"
 msgstr "Gerätelogin fehlgeschlagen"
+
+#: uffd/oauth2/views.py:174
+#, python-format
+msgid ""
+"You don't have the permission to access the service "
+"<b>%(service_name)s</b>."
+msgstr ""
+"Du bist nicht berechtigt, auf den Dienst <b>%(service_name)s</b> "
+"zuzugreifen."
 
 #: uffd/oauth2/templates/oauth2/logout.html:10 uffd/templates/base.html:99
 msgid "Logout"
@@ -764,19 +773,13 @@ msgstr ""
 "Automatisches Abmelden bei einigen Diensten fehlgeschlagen. Nochmal "
 "versuchen?"
 
-#: uffd/role/views.py:44 uffd/rolemod/views.py:36 uffd/rolemod/views.py:45
-#: uffd/rolemod/views.py:60 uffd/session/views.py:132
-#: uffd/user/views_group.py:14 uffd/user/views_user.py:25
-msgid "Access denied"
-msgstr "Zugriff verweigert"
-
-#: uffd/role/views.py:51 uffd/selfservice/templates/selfservice/self.html:86
+#: uffd/role/views.py:50 uffd/selfservice/templates/selfservice/self.html:86
 #: uffd/user/templates/user/list.html:20 uffd/user/templates/user/show.html:21
 #: uffd/user/templates/user/show.html:90
 msgid "Roles"
 msgstr "Rollen"
 
-#: uffd/role/views.py:101
+#: uffd/role/views.py:100
 msgid "Locked roles cannot be deleted"
 msgstr "Gesperrte Rollen können nicht gelöscht werden"
 
@@ -868,15 +871,15 @@ msgstr "derzeit enthaltene Gruppen"
 msgid "2FA required"
 msgstr "2FA erforderlich"
 
-#: uffd/rolemod/views.py:25
+#: uffd/rolemod/views.py:24
 msgid "Moderation"
 msgstr "Moderation"
 
-#: uffd/rolemod/views.py:49
+#: uffd/rolemod/views.py:46
 msgid "Description too long"
 msgstr "Beschreibung zu lang"
 
-#: uffd/rolemod/views.py:67
+#: uffd/rolemod/views.py:63
 msgid "Member removed"
 msgstr "Mitglied entfernt"
 
@@ -1192,15 +1195,15 @@ msgstr "Du hast keinen Zugriff auf diesen Service"
 msgid "You need to login first"
 msgstr "Du musst dich erst anmelden"
 
-#: uffd/session/views.py:149 uffd/session/views.py:159
+#: uffd/session/views.py:148 uffd/session/views.py:158
 msgid "Initiation code is no longer valid"
 msgstr "Startcode ist nicht mehr gültig"
 
-#: uffd/session/views.py:163
+#: uffd/session/views.py:162
 msgid "Invalid confirmation code"
 msgstr "Ungültiger Bestätigungscode"
 
-#: uffd/session/views.py:175 uffd/session/views.py:186
+#: uffd/session/views.py:174 uffd/session/views.py:185
 msgid "Invalid initiation code"
 msgstr "Ungültiger Startcode"
 
@@ -1403,6 +1406,14 @@ msgstr ""
 " Gründen keine Bestätigungsmail erhalten hast, kannst du den Prozess "
 "einfach von Vorne beginnen."
 
+#: uffd/templates/403.html:10
+msgid "Access Denied"
+msgstr "Zugriff verweigert"
+
+#: uffd/templates/403.html:17
+msgid "You don't have the permission to access this page."
+msgstr "Du bist nicht berechtigt, auf diese Seite zuzugreifen."
+
 #: uffd/templates/base.html:84
 msgid "Change"
 msgstr "Ändern"
@@ -1422,45 +1433,45 @@ msgstr ""
 "und manche Symbole (<code>%(symbols)s</code>), keine Umlaute. Bitte "
 "verwende einen Passwort-Manager."
 
-#: uffd/user/views_group.py:21
+#: uffd/user/views_group.py:20
 msgid "Groups"
 msgstr "Gruppen"
 
-#: uffd/user/views_user.py:32
+#: uffd/user/views_user.py:31
 msgid "Users"
 msgstr "Accounts"
 
-#: uffd/user/views_user.py:52
+#: uffd/user/views_user.py:51
 msgid "Login name does not meet requirements"
 msgstr "Anmeldename entspricht nicht den Anforderungen"
 
-#: uffd/user/views_user.py:57
+#: uffd/user/views_user.py:56
 msgid "Mail is invalid"
 msgstr "E-Mail-Adresse nicht valide"
 
-#: uffd/user/views_user.py:61
+#: uffd/user/views_user.py:60
 msgid "Display name does not meet requirements"
 msgstr "Anzeigename entspricht nicht den Anforderungen"
 
-#: uffd/user/views_user.py:66
+#: uffd/user/views_user.py:65
 msgid "Password is invalid"
 msgstr "Passwort ist ungültig"
 
-#: uffd/user/views_user.py:80
+#: uffd/user/views_user.py:79
 msgid "Service user created"
 msgstr "Service-Account erstellt"
 
-#: uffd/user/views_user.py:83
+#: uffd/user/views_user.py:82
 msgid "User created. We sent the user a password reset link by mail"
 msgstr ""
 "Account erstellt. E-Mail mit einem Link zum Setzen des Passworts wurde "
 "versendet."
 
-#: uffd/user/views_user.py:85
+#: uffd/user/views_user.py:84
 msgid "User updated"
 msgstr "Account aktualisiert"
 
-#: uffd/user/views_user.py:96
+#: uffd/user/views_user.py:95
 msgid "Deleted user"
 msgstr "Account gelöscht"
 

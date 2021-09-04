@@ -1,7 +1,7 @@
 import datetime
 import functools
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify, abort
 from flask_babel import gettext as _, lazy_gettext
 import sqlalchemy
 
@@ -35,8 +35,7 @@ def invite_acl_required(func):
 	@login_required()
 	def decorator(*args, **kwargs):
 		if not invite_acl():
-			flash('Access denied')
-			return redirect(url_for('index'))
+			abort(403)
 		return func(*args, **kwargs)
 	return decorator
 

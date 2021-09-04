@@ -1,6 +1,6 @@
 import sys
 
-from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
+from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, abort
 from flask_babel import gettext as _, lazy_gettext
 import click
 
@@ -39,10 +39,9 @@ def add_cli_commands(state):
 
 @bp.before_request
 @login_required()
-def role_acl(): #pylint: disable=inconsistent-return-statements
+def role_acl():
 	if not role_acl_check():
-		flash(_('Access denied'))
-		return redirect(url_for('index'))
+		abort(403)
 
 def role_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])

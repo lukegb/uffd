@@ -122,17 +122,11 @@ validator = UffdRequestValidator()
 server = oauthlib.oauth2.WebApplicationServer(validator)
 bp = Blueprint('oauth2', __name__, url_prefix='/oauth2/', template_folder='templates')
 
-def display_oauth_errors(func):
-	@functools.wraps(func)
-	def decorator(*args, **kwargs):
-		try:
-			return func(*args, **kwargs)
-		except oauthlib.oauth2.rfc6749.errors.OAuth2Error as ex:
-			return render_template('oauth2/error.html', error=type(ex).__name__, error_description=ex.description), 400
-	return decorator
+@bp.errorhandler(oauthlib.oauth2.rfc6749.errors.OAuth2Error)
+def handle_oauth2error(error):
+	return render_template('oauth2/error.html', error=type(error).__name__, error_description=error.description), 400
 
 @bp.route('/authorize', methods=['GET', 'POST'])
-@display_oauth_errors
 def authorize():
 	scopes, credentials = server.validate_authorization_request(request.url, request.method, request.form, request.headers)
 	client = OAuth2Client.from_id(credentials['client_id'])
@@ -177,7 +171,7 @@ def authorize():
 	# service access to his data. Since we only have trusted services (the
 	# clients defined in the server config), we don't ask for consent.
 	if not client.access_allowed(credentials['user']):
-		raise oauthlib.oauth2.rfc6749.errors.AccessDeniedError('User is not permitted to authenticate with this service.')
+		abort(403, description=_("You don't have the permission to access the service <b>%(service_name)s</b>.", service_name=client.client_id))
 	session['oauth2-clients'] = session.get('oauth2-clients', [])
 	if client.client_id not in session['oauth2-clients']:
 		session['oauth2-clients'].append(client.client_id)

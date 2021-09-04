@@ -129,8 +129,7 @@ def login_required(group=None):
 			if not request.user:
 				return redirect(url_for('mfa.auth', ref=request.full_path))
 			if not request.user.is_in_group(group):
-				flash(_('Access denied'))
-				return redirect(url_for('index'))
+				abort(403)
 			return func(*args, **kwargs)
 		return decorator
 	return wrapper

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
+from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, abort
 from flask_babel import gettext as _, lazy_gettext
 
 from uffd.navbar import register_navbar
@@ -11,10 +11,9 @@ from uffd.mail.models import Mail
 bp = Blueprint("mail", __name__, template_folder='templates', url_prefix='/mail/')
 @bp.before_request
 @login_required()
-def mail_acl(): #pylint: disable=inconsistent-return-statements
+def mail_acl():
 	if not mail_acl_check():
-		flash('Access denied')
-		return redirect(url_for('index'))
+		abort(403)
 
 def mail_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])

@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, url_for, redirect, flash, current_app, request
-from flask_babel import gettext as _, lazy_gettext
+from flask import Blueprint, render_template, current_app, request, abort
+from flask_babel import lazy_gettext
 
 from uffd.navbar import register_navbar
 from uffd.session import login_required
@@ -9,10 +9,9 @@ from .models import Group
 bp = Blueprint("group", __name__, template_folder='templates', url_prefix='/group/')
 @bp.before_request
 @login_required()
-def group_acl(): #pylint: disable=inconsistent-return-statements
+def group_acl():
 	if not group_acl_check():
-		flash(_('Access denied'))
-		return redirect(url_for('index'))
+		abort(403)
 
 def group_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])

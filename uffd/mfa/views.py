@@ -44,8 +44,7 @@ def admin_disable(uid):
 	# Group cannot be checked with login_required kwarg, because the config
 	# variable is not available when the decorator is processed
 	if not request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
-		flash('Access denied')
-		return redirect(url_for('index'))
+		abort(403)
 	user = User.query.filter_by(uid=uid).one()
 	MFAMethod.query.filter_by(dn=user.dn).delete()
 	db.session.commit()

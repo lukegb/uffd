@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, url_for, redirect, flash
+from flask import Blueprint, render_template, request, url_for, redirect, flash, abort
 from flask_babel import gettext as _, lazy_gettext
 
 from uffd.navbar import register_navbar
@@ -16,10 +16,9 @@ def user_is_rolemod():
 
 @bp.before_request
 @login_required()
-def acl_check(): #pylint: disable=inconsistent-return-statements
+def acl_check():
 	if not user_is_rolemod():
-		flash('Access denied')
-		return redirect(url_for('index'))
+		abort(403)
 
 @bp.route("/")
 @register_navbar(12, lazy_gettext('Moderation'), icon='user-lock', blueprint=bp, visible=user_is_rolemod)
@@ -33,8 +32,7 @@ def show(role_id):
 	User.query.all()
 	role = Role.query.get_or_404(role_id)
 	if role.moderator_group not in request.user.groups:
-		flash(_('Access denied'))
-		return redirect(url_for('index'))
+		abort(403)
 	return render_template('rolemod/show.html', role=role)
 
 @bp.route("/<int:role_id>", methods=['POST'])
@@ -42,8 +40,7 @@ def show(role_id):
 def update(role_id):
 	role = Role.query.get_or_404(role_id)
 	if role.moderator_group not in request.user.groups:
-		flash(_('Access denied'))
-		return redirect(url_for('index'))
+		abort(403)
 	if request.form['description'] != role.description:
 		if len(request.form['description']) > 256:
 			flash(_('Description too long'))
@@ -57,8 +54,7 @@ def update(role_id):
 def delete_member(role_id, member_dn):
 	role = Role.query.get_or_404(role_id)
 	if role.moderator_group not in request.user.groups:
-		flash(_('Access denied'))
-		return redirect(url_for('index'))
+		abort(403)
 	member = User.query.get_or_404(member_dn)
 	role.members.discard(member)
 	member.update_groups()

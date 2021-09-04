@@ -1,7 +1,7 @@
 import csv
 import io
 
-from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
+from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, abort
 from flask_babel import gettext as _, lazy_gettext
 
 from uffd.navbar import register_navbar
@@ -20,10 +20,9 @@ bp.add_app_template_global(User, 'User')
 
 @bp.before_request
 @login_required()
-def user_acl(): #pylint: disable=inconsistent-return-statements
+def user_acl():
 	if not user_acl_check():
-		flash(_('Access denied'))
-		return redirect(url_for('index'))
+		abort(403)
 
 def user_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])

@@ -36,8 +36,7 @@ class TestRolemodViews(UffdTestCase):
 		db.session.commit()
 		r = self.client.get(path=url_for('rolemod.index'), follow_redirects=True)
 		dump('rolemod_acl_notmod', r)
-		self.assertEqual(r.status_code, 200)
-		self.assertIn('Access denied'.encode(), r.data)
+		self.assertEqual(r.status_code, 403)
 
 	def test_show(self):
 		role = Role(name='test', moderator_group=self.get_access_group())
@@ -64,7 +63,7 @@ class TestRolemodViews(UffdTestCase):
 		db.session.commit()
 		r = self.client.get(path=url_for('rolemod.show', role_id=role.id), follow_redirects=True)
 		dump('rolemod_show_noperm', r)
-		self.assertIn('Access denied'.encode(), r.data)
+		self.assertEqual(r.status_code, 403)
 
 	def test_show_nomod(self):
 		# Make sure we pass the blueprint-wide acl check
@@ -74,7 +73,7 @@ class TestRolemodViews(UffdTestCase):
 		db.session.commit()
 		r = self.client.get(path=url_for('rolemod.show', role_id=role.id), follow_redirects=True)
 		dump('rolemod_show_nomod', r)
-		self.assertIn('Access denied'.encode(), r.data)
+		self.assertEqual(r.status_code, 403)
 
 	def test_update(self):
 		role = Role(name='test', description='old_description', moderator_group=self.get_access_group())
@@ -102,7 +101,7 @@ class TestRolemodViews(UffdTestCase):
 		db.session.commit()
 		r = self.client.post(path=url_for('rolemod.update', role_id=role.id), data={'description': 'new_description'}, follow_redirects=True)
 		dump('rolemod_update_noperm', r)
-		self.assertIn('Access denied'.encode(), r.data)
+		self.assertEqual(r.status_code, 403)
 		self.assertEqual(Role.query.get(role.id).description, 'old_description')
 
 	def test_update_nomod(self):
@@ -113,7 +112,7 @@ class TestRolemodViews(UffdTestCase):
 		db.session.commit()
 		r = self.client.post(path=url_for('rolemod.update', role_id=role.id), data={'description': 'new_description'}, follow_redirects=True)
 		dump('rolemod_update_nomod', r)
-		self.assertIn('Access denied'.encode(), r.data)
+		self.assertEqual(r.status_code, 403)
 		self.assertEqual(Role.query.get(role.id).description, 'old_description')
 
 	def test_delete_member(self):
@@ -160,7 +159,7 @@ class TestRolemodViews(UffdTestCase):
 		self.assertTrue(user in role.members)
 		r = self.client.get(path=url_for('rolemod.delete_member', role_id=role.id, member_dn=user.dn), follow_redirects=True)
 		dump('rolemod_delete_member_noperm', r)
-		self.assertIn('Access denied'.encode(), r.data)
+		self.assertEqual(r.status_code, 403)
 		user_updated = self.get_admin()
 		role = Role.query.get(role.id)
 		self.assertTrue(user_updated in role.members)
@@ -177,7 +176,7 @@ class TestRolemodViews(UffdTestCase):
 		self.assertTrue(user in role.members)
 		r = self.client.get(path=url_for('rolemod.delete_member', role_id=role.id, member_dn=user.dn), follow_redirects=True)
 		dump('rolemod_delete_member_nomod', r)
-		self.assertIn('Access denied'.encode(), r.data)
+		self.assertEqual(r.status_code, 403)
 		user_updated = self.get_admin()
 		role = Role.query.get(role.id)
 		self.assertTrue(user_updated in role.members)

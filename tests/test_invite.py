@@ -326,8 +326,7 @@ class TestInviteAdminViews(UffdTestCase):
 		self.login_as('user')
 		r = self.client.get(path=url_for('invite.index'), follow_redirects=True)
 		dump('invite_index_noaccess', r)
-		self.assertEqual(r.status_code, 200)
-		self.assertIn('Access denied'.encode(), r.data)
+		self.assertEqual(r.status_code, 403)
 
 	def test_index_signupperm(self):
 		current_app.config['ACL_SIGNUP_GROUP'] = 'uffd_access'
@@ -345,7 +344,6 @@ class TestInviteAdminViews(UffdTestCase):
 		self.login_as('user')
 		r = self.client.get(path=url_for('invite.index'), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
-		self.assertNotIn('Access denied'.encode(), r.data)
 		self.assertNotIn(token1.encode(), r.data)
 		self.assertIn(token2.encode(), r.data)
 		self.assertNotIn(token3.encode(), r.data)
@@ -362,7 +360,6 @@ class TestInviteAdminViews(UffdTestCase):
 		self.login_as('user')
 		r = self.client.get(path=url_for('invite.index'), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
-		self.assertNotIn('Access denied'.encode(), r.data)
 		self.assertNotIn('testrole1'.encode(), r.data)
 		self.assertIn('testrole2'.encode(), r.data)
 
