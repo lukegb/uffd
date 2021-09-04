@@ -79,6 +79,8 @@ def set_session(user, password='', skip_mfa=False):
 
 @bp.route("/login", methods=('GET', 'POST'))
 def login():
+	if request.user_pre_mfa:
+		return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
 	if request.method == 'GET':
 		return render_template('session/login.html', ref=request.values.get('ref'))
 
