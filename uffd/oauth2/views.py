@@ -164,12 +164,13 @@ def authorize():
 		del session['devicelogin_secret']
 		del session['devicelogin_confirmation']
 		if not initiation or initiation.expired or not confirmation:
-			flash('Device login failed')
+			flash(_('Device login failed'))
 			return redirect(url_for('session.login', ref=request.full_path, devicelogin=True))
 		credentials['user'] = confirmation.user
 		db.session.delete(initiation)
 		db.session.commit()
 	else:
+		flash(client.login_message)
 		return redirect(url_for('session.login', ref=request.full_path, devicelogin=True))
 
 	# Here we would normally ask the user, if he wants to give the requesting

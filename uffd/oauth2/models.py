@@ -1,4 +1,5 @@
 from flask import current_app
+from flask_babel import get_locale, gettext as _
 from sqlalchemy import Column, Integer, String, DateTime, Text
 
 from uffd.ldapalchemy.dbutils import DBRelationship
@@ -7,7 +8,7 @@ from uffd.user.models import User
 from uffd.session.models import DeviceLoginInitiation, DeviceLoginType
 
 class OAuth2Client:
-	def __init__(self, client_id, client_secret, redirect_uris, required_group=None, logout_urls=None):
+	def __init__(self, client_id, client_secret, redirect_uris, required_group=None, logout_urls=None, **kwargs):
 		self.client_id = client_id
 		self.client_secret = client_secret
 		# We only support the Authorization Code Flow for confidential (server-side) clients
@@ -21,6 +22,12 @@ class OAuth2Client:
 				self.logout_urls.append(['GET', url])
 			else:
 				self.logout_urls.append(url)
+		self.kwargs = kwargs
+
+	@property
+	def login_message(self):
+		return self.kwargs.get('login_message_' + get_locale().language,
+		                       self.kwargs.pop('login_message', _('You need to login to access this service')))
 
 	@classmethod
 	def from_id(cls, client_id):

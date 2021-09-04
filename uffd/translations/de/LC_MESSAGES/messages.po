@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-08-30 23:22+0200\n"
+"POT-Creation-Date: 2021-09-04 21:18+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -700,8 +700,12 @@ msgstr "Sekunden"
 msgid "Verify and complete setup"
 msgstr "Verifiziere und beende das Setup"
 
-#: uffd/oauth2/views.py:95 uffd/selfservice/views.py:76
-#: uffd/session/views.py:93
+#: uffd/oauth2/models.py:30
+msgid "You need to login to access this service"
+msgstr "Du musst dich anmelden, um auf diesen Dienst zugreifen zu können"
+
+#: uffd/oauth2/views.py:146 uffd/selfservice/views.py:76
+#: uffd/session/views.py:95
 #, python-format
 msgid ""
 "We received too many requests from your ip address/network! Please wait "
@@ -710,9 +714,13 @@ msgstr ""
 "Wir haben zu viele Anfragen von deiner IP-Adresses bzw. aus deinem "
 "Netzwerk empfangen! Bitte warte mindestens %(delay)s."
 
-#: uffd/oauth2/views.py:103
+#: uffd/oauth2/views.py:154
 msgid "Device login is currently not available. Try again later!"
 msgstr "Geräte-Login ist gerade nicht verfügbar. Versuche es später nochmal!"
+
+#: uffd/oauth2/views.py:167
+msgid "Device login failed"
+msgstr "Gerätelogin fehlgeschlagen"
 
 #: uffd/oauth2/templates/oauth2/logout.html:10 uffd/templates/base.html:99
 msgid "Logout"
@@ -757,7 +765,7 @@ msgstr ""
 "versuchen?"
 
 #: uffd/role/views.py:44 uffd/rolemod/views.py:36 uffd/rolemod/views.py:45
-#: uffd/rolemod/views.py:60 uffd/session/views.py:130
+#: uffd/rolemod/views.py:60 uffd/session/views.py:132
 #: uffd/user/views_group.py:14 uffd/user/views_user.py:25
 msgid "Access denied"
 msgstr "Zugriff verweigert"
@@ -1163,7 +1171,7 @@ msgstr "Kein Zugriff"
 msgid "Close"
 msgstr "Schließen"
 
-#: uffd/session/views.py:91
+#: uffd/session/views.py:93
 #, python-format
 msgid ""
 "We received too many invalid login attempts for this user! Please wait at"
@@ -1172,27 +1180,27 @@ msgstr ""
 "Wir haben zu viele fehlgeschlagene Anmeldeversuche für diesen Account "
 "erhalten! Bitte warte mindestens %(delay)s."
 
-#: uffd/session/views.py:99
+#: uffd/session/views.py:101
 msgid "Login name or password is wrong"
 msgstr "Der Anmeldename oder das Passwort ist falsch"
 
-#: uffd/session/views.py:102
+#: uffd/session/views.py:104
 msgid "You do not have access to this service"
 msgstr "Du hast keinen Zugriff auf diesen Service"
 
-#: uffd/session/views.py:114 uffd/session/views.py:125
+#: uffd/session/views.py:116 uffd/session/views.py:127
 msgid "You need to login first"
 msgstr "Du musst dich erst anmelden"
 
-#: uffd/session/views.py:147 uffd/session/views.py:157
+#: uffd/session/views.py:149 uffd/session/views.py:159
 msgid "Initiation code is no longer valid"
 msgstr "Startcode ist nicht mehr gültig"
 
-#: uffd/session/views.py:161
+#: uffd/session/views.py:163
 msgid "Invalid confirmation code"
 msgstr "Ungültiger Bestätigungscode"
 
-#: uffd/session/views.py:173 uffd/session/views.py:184
+#: uffd/session/views.py:175 uffd/session/views.py:186
 msgid "Invalid initiation code"
 msgstr "Ungültiger Startcode"
 
