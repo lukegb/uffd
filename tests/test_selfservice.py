@@ -165,7 +165,6 @@ class TestSelfservice(UffdTestCase):
 		_user = request.user
 		self.assertEqual(_user.mail, user.mail)
 
-	@unittest.skip('See #26')
 	def test_token_mail_wrong_user(self):
 		self.login_as('user')
 		user = request.user
@@ -176,7 +175,7 @@ class TestSelfservice(UffdTestCase):
 		db.session.commit()
 		r = self.client.get(path=url_for('selfservice.token_mail', token=admin_token.token), follow_redirects=True)
 		dump('token_mail_wrong_user', r)
-		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.status_code, 403)
 		_user = request.user
 		_admin_user = self.get_admin()
 		self.assertEqual(_user.mail, user.mail)

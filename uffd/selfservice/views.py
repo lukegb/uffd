@@ -1,6 +1,6 @@
 import datetime
 
-from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session
+from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session, abort
 from flask_babel import gettext as _, lazy_gettext
 
 from uffd.navbar import register_navbar
@@ -122,6 +122,8 @@ def token_mail(token):
 		return redirect(url_for('selfservice.index'))
 
 	user = User.query.filter_by(loginname=dbtoken.loginname).one()
+	if user != request.user:
+		abort(403, description=_('This link was generated for another user. Login as the correct user to continue.'))
 	user.set_mail(dbtoken.newmail)
 	flash(_('New mail set'))
 	db.session.delete(dbtoken)

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-09-04 21:53+0200\n"
+"POT-Creation-Date: 2021-09-05 00:47+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -969,19 +969,27 @@ msgid "New password set"
 msgstr "Passwort geändert"
 
 #: uffd/selfservice/views.py:126
+msgid ""
+"This link was generated for another user. Login as the correct user to "
+"continue."
+msgstr ""
+"Dieser Link wurde für einen anderen Account erstellt. Melde dich mit dem "
+"richtigen Account an um Fortzufahren."
+
+#: uffd/selfservice/views.py:128
 msgid "New mail set"
 msgstr "E-Mail-Adresse geändert"
 
-#: uffd/selfservice/views.py:137
+#: uffd/selfservice/views.py:139
 msgid "Leaving roles is disabled"
 msgstr "Verlassen von Rollen ist deaktiviert"
 
-#: uffd/selfservice/views.py:144
+#: uffd/selfservice/views.py:146
 #, python-format
 msgid "You left role %(role_name)s"
 msgstr "Rolle %(role_name)s verlassen"
 
-#: uffd/selfservice/views.py:161 uffd/selfservice/views.py:181
+#: uffd/selfservice/views.py:163 uffd/selfservice/views.py:183
 #, python-format
 msgid "Mail to \"%(mail_address)s\" could not be sent!"
 msgstr "E-Mail an \"%(mail_address)s\" konnte nicht gesendet werden!"
