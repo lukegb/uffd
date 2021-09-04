@@ -23,12 +23,12 @@ class TestSession(UffdTestCase):
 			return 'SUCCESS', 200
 
 		@self.app.route('/test_group_required1')
-		@login_required(group='users')
+		@login_required(lambda: request.user.is_in_group('users'))
 		def test_group_required1():
 			return 'SUCCESS', 200
 
 		@self.app.route('/test_group_required2')
-		@login_required(group='notagroup')
+		@login_required(lambda: request.user.is_in_group('notagroup'))
 		def test_group_required2():
 			return 'SUCCESS', 200
 

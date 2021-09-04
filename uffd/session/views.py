@@ -28,6 +28,8 @@ def set_request_user():
 	if datetime.datetime.now().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
 		return
 	user = User.query.get(session['user_dn'])
+	if not user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
+		return
 	request.user_pre_mfa = user
 	if session.get('user_mfa'):
 		request.user = user
@@ -100,7 +102,7 @@ def login():
 		host_ratelimit.log()
 		flash(_('Login name or password is wrong'))
 		return render_template('session/login.html', ref=request.values.get('ref'))
-	if not user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
+	if not user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
 		flash(_('You do not have access to this service'))
 		return render_template('session/login.html', ref=request.values.get('ref'))
 	set_session(user, password=password)
@@ -119,7 +121,7 @@ def login_required_pre_mfa(no_redirect=False):
 		return decorator
 	return wrapper
 
-def login_required(group=None):
+def login_required(permission_check=lambda: True):
 	def wrapper(func):
 		@functools.wraps(func)
 		def decorator(*args, **kwargs):
@@ -128,7 +130,7 @@ def login_required(group=None):
 				return redirect(url_for('session.login', ref=request.full_path))
 			if not request.user:
 				return redirect(url_for('mfa.auth', ref=request.full_path))
-			if not request.user.is_in_group(group):
+			if not permission_check():
 				abort(403)
 			return func(*args, **kwargs)
 		return decorator

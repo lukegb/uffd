@@ -8,6 +8,7 @@ from flask import url_for, session, request
 from uffd import ldap, user
 
 from uffd.user.models import User
+from uffd.role.models import Role, RoleGroup
 from uffd.mfa.models import MFAMethod, MFAType, RecoveryCodeMethod, TOTPMethod, WebauthnMethod, _hotp
 from uffd import create_app, db
 
@@ -155,6 +156,10 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 
 	def test_disable(self):
+		baserole = Role(name='baserole', is_default=True)
+		db.session.add(baserole)
+		baserole.groups[self.get_access_group()] = RoleGroup()
+		db.session.commit()
 		self.login_as('user')
 		self.add_recovery_codes()
 		self.add_totp()
@@ -169,6 +174,10 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(len(MFAMethod.query.filter_by(dn=self.get_admin().dn).all()), admin_methods)
 
 	def test_disable_recovery_only(self):
+		baserole = Role(name='baserole', is_default=True)
+		db.session.add(baserole)
+		baserole.groups[self.get_access_group()] = RoleGroup()
+		db.session.commit()
 		self.login_as('user')
 		self.add_recovery_codes()
 		admin_methods = len(MFAMethod.query.filter_by(dn=self.get_admin().dn).all())
@@ -227,6 +236,10 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 
 	def test_setup_totp_finish(self):
+		baserole = Role(name='baserole', is_default=True)
+		db.session.add(baserole)
+		baserole.groups[self.get_access_group()] = RoleGroup()
+		db.session.commit()
 		self.login_as('user')
 		self.add_recovery_codes()
 		self.assertEqual(len(TOTPMethod.query.filter_by(dn=request.user.dn).all()), 0)
@@ -273,6 +286,10 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(len(TOTPMethod.query.filter_by(dn=request.user.dn).all()), 0)
 
 	def test_delete_totp(self):
+		baserole = Role(name='baserole', is_default=True)
+		db.session.add(baserole)
+		baserole.groups[self.get_access_group()] = RoleGroup()
+		db.session.commit()
 		self.login_as('user')
 		self.add_recovery_codes()
 		self.add_totp()

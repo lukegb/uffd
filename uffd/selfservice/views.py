@@ -18,15 +18,18 @@ bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix=
 
 reset_ratelimit = Ratelimit('passwordreset', 1*60*60, 3)
 
+def selfservice_acl_check():
+	return request.user and request.user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP'])
+
 @bp.route("/")
-@register_navbar(0, lazy_gettext('Selfservice'), icon='portrait', blueprint=bp, visible=lambda: bool(request.user))
-@login_required()
+@register_navbar(0, lazy_gettext('Selfservice'), icon='portrait', blueprint=bp, visible=selfservice_acl_check)
+@login_required(selfservice_acl_check)
 def index():
 	return render_template('selfservice/self.html', user=request.user)
 
 @bp.route("/updateprofile", methods=(['POST']))
 @csrf_protect(blueprint=bp)
-@login_required()
+@login_required(selfservice_acl_check)
 def update_profile():
 	user = request.user
 	if request.values['displayname'] != user.displayname:
@@ -42,7 +45,7 @@ def update_profile():
 
 @bp.route("/changepassword", methods=(['POST']))
 @csrf_protect(blueprint=bp)
-@login_required()
+@login_required(selfservice_acl_check)
 def change_password():
 	password_changed = False
 	user = request.user
@@ -79,7 +82,7 @@ def forgot_password():
 	host_ratelimit.log()
 	flash(_("We sent a mail to this user's mail address if you entered the correct mail and login name combination"))
 	user = User.query.filter_by(loginname=loginname).one_or_none()
-	if user and user.mail == mail:
+	if user and user.mail == mail and user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
 		send_passwordreset(user)
 	return redirect(url_for('session.login'))
 
@@ -101,6 +104,8 @@ def token_password(token):
 		flash(_('Passwords do not match, please try again.'))
 		return render_template('selfservice/set_password.html', token=token)
 	user = User.query.filter_by(loginname=dbtoken.loginname).one()
+	if not user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
+		abort(403)
 	if not user.set_password(request.values['password1']):
 		flash(_('Password ist not valid, please try again.'))
 		return render_template('selfservice/set_password.html', token=token)
@@ -111,7 +116,7 @@ def token_password(token):
 	return redirect(url_for('session.login'))
 
 @bp.route("/token/mail_verification/<token>")
-@login_required()
+@login_required(selfservice_acl_check)
 def token_mail(token):
 	dbtoken = MailToken.query.get(token)
 	if not dbtoken or dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
@@ -133,7 +138,7 @@ def token_mail(token):
 
 @bp.route("/leaverole/<int:roleid>", methods=(['POST']))
 @csrf_protect(blueprint=bp)
-@login_required()
+@login_required(selfservice_acl_check)
 def leave_role(roleid):
 	if not current_app.config['ENABLE_ROLESELFSERVICE']:
 		flash(_('Leaving roles is disabled'))

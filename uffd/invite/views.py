@@ -1,7 +1,6 @@
 import datetime
-import functools
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify, abort
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
 from flask_babel import gettext as _, lazy_gettext
 import sqlalchemy
 
@@ -16,10 +15,11 @@ from uffd.sendmail import sendmail
 from uffd.navbar import register_navbar
 from uffd.ratelimit import host_ratelimit, format_delay
 from uffd.signup.views import signup_ratelimit
+from uffd.selfservice.views import selfservice_acl_check
 
 bp = Blueprint('invite', __name__, template_folder='templates', url_prefix='/invite/')
 
-def invite_acl():
+def invite_acl_check():
 	if not request.user:
 		return False
 	if request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
@@ -29,15 +29,6 @@ def invite_acl():
 	if Role.query.filter(Role.moderator_group_dn.in_(request.user.group_dns)).count():
 		return True
 	return False
-
-def invite_acl_required(func):
-	@functools.wraps(func)
-	@login_required()
-	def decorator(*args, **kwargs):
-		if not invite_acl():
-			abort(403)
-		return func(*args, **kwargs)
-	return decorator
 
 def view_acl_filter(user):
 	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
@@ -52,14 +43,14 @@ def reset_acl_filter(user):
 	return Invite.creator_dn == user.dn
 
 @bp.route('/')
-@register_navbar(14, lazy_gettext('Invites'), icon='link', blueprint=bp, visible=invite_acl)
-@invite_acl_required
+@register_navbar(14, lazy_gettext('Invites'), icon='link', blueprint=bp, visible=invite_acl_check)
+@login_required(invite_acl_check)
 def index():
 	invites = Invite.query.filter(view_acl_filter(request.user)).all()
 	return render_template('invite/list.html', invites=invites)
 
 @bp.route('/new')
-@invite_acl_required
+@login_required(invite_acl_check)
 def new():
 	if request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
 		allow_signup = True
@@ -70,7 +61,7 @@ def new():
 	return render_template('invite/new.html', roles=roles, allow_signup=allow_signup)
 
 @bp.route('/new', methods=['POST'])
-@invite_acl_required
+@login_required(invite_acl_check)
 @csrf_protect(blueprint=bp)
 def new_submit():
 	invite = Invite(creator=request.user,
@@ -94,7 +85,7 @@ def new_submit():
 	return redirect(url_for('invite.index'))
 
 @bp.route('/<int:invite_id>/disable', methods=['POST'])
-@invite_acl_required
+@login_required(invite_acl_check)
 @csrf_protect(blueprint=bp)
 def disable(invite_id):
 	invite = Invite.query.filter(view_acl_filter(request.user)).filter_by(id=invite_id).first_or_404()
@@ -103,7 +94,7 @@ def disable(invite_id):
 	return redirect(url_for('.index'))
 
 @bp.route('/<int:invite_id>/reset', methods=['POST'])
-@invite_acl_required
+@login_required(invite_acl_check)
 @csrf_protect(blueprint=bp)
 def reset(invite_id):
 	invite = Invite.query.filter(reset_acl_filter(request.user)).filter_by(id=invite_id).first_or_404()
@@ -120,7 +111,7 @@ def use(token):
 	return render_template('invite/use.html', invite=invite)
 
 @bp.route('/<token>/grant', methods=['POST'])
-@login_required()
+@login_required(selfservice_acl_check)
 @csrf_protect(blueprint=bp)
 def grant(token):
 	invite = Invite.query.filter_by(token=token).first_or_404()

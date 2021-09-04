@@ -11,6 +11,7 @@ from uffd.ldap import ldap
 from uffd import create_app, db
 from uffd.signup.models import Signup
 from uffd.user.models import User
+from uffd.role.models import Role, RoleGroup
 from uffd.session.views import login_get_user
 
 from utils import dump, UffdTestCase, db_flush
@@ -323,6 +324,10 @@ class TestSignupViews(UffdTestCase):
 		self.assertEqual(r.json['status'], 'ratelimited')
 
 	def test_confirm(self):
+		baserole = Role(name='baserole', is_default=True)
+		db.session.add(baserole)
+		baserole.groups[self.get_access_group()] = RoleGroup()
+		db.session.commit()
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		signup = refetch_signup(signup)
 		self.assertFalse(signup.completed)
@@ -349,6 +354,10 @@ class TestSignupViews(UffdTestCase):
 		self.assertEqual(request.user.loginname, 'newuser')
 
 	def test_confirm_loggedin(self):
+		baserole = Role(name='baserole', is_default=True)
+		db.session.add(baserole)
+		baserole.groups[self.get_access_group()] = RoleGroup()
+		db.session.commit()
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		signup = refetch_signup(signup)
 		self.login_as('user')

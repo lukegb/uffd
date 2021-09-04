@@ -1,6 +1,6 @@
 import sys
 
-from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, abort
+from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
 from flask_babel import gettext as _, lazy_gettext
 import click
 
@@ -37,14 +37,13 @@ def add_cli_commands(state):
 				print('Error: LDAP groups are not consistent with roles in database')
 				sys.exit(1)
 
-@bp.before_request
-@login_required()
-def role_acl():
-	if not role_acl_check():
-		abort(403)
-
 def role_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
+
+@bp.before_request
+@login_required(role_acl_check)
+def role_acl():
+	pass
 
 @bp.route("/")
 @register_navbar(25, lazy_gettext('Roles'), icon='key', blueprint=bp, visible=role_acl_check)

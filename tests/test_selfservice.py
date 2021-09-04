@@ -8,7 +8,7 @@ from uffd import ldap, user
 
 from uffd.selfservice.models import MailToken, PasswordToken
 from uffd.user.models import User
-from uffd.role.models import Role
+from uffd.role.models import Role, RoleGroup
 from uffd import create_app, db
 
 from utils import dump, UffdTestCase
@@ -130,6 +130,9 @@ class TestSelfservice(UffdTestCase):
 	def test_leave_role(self):
 		if self.use_userconnection:
 			self.skipTest('Leaving roles is not possible in user mode')
+		baserole = Role(name='baserole', is_default=True)
+		db.session.add(baserole)
+		baserole.groups[self.get_access_group()] = RoleGroup()
 		role1 = Role(name='testrole1')
 		role2 = Role(name='testrole2')
 		db.session.add(role1)

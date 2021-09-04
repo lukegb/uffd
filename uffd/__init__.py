@@ -59,6 +59,8 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 		for cfg_name in ["config.cfg", "config.json", "config.yml", "config.yaml"]:
 			if load_config_file(app, cfg_name, silent=True):
 				break
+	# Prior to v1.1 login required ACL_SELFSERVICE_GROUP and ACL_ACCESS_GROUP did not exist
+	app.config.setdefault('ACL_ACCESS_GROUP', app.config['ACL_SELFSERVICE_GROUP'])
 
 	register_template_helper(app)
 	setup_navbar(app)
