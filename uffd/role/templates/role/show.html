@@ -90,7 +90,7 @@
 					</thead>
 					<tbody>
 						{% for r in roles|sort(attribute="name")|sort(attribute='name') %}
-						<tr id="include-role-{{ role.id }}">
+						<tr id="include-role-{{ r.id }}">
 							<td>
 								<div class="form-check">
 									<input class="form-check-input" type="checkbox" id="include-role-{{ r.id }}-checkbox" name="include-role-{{ r.id }}" value="1" aria-label="enabled"
