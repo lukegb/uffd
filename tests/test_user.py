@@ -368,82 +368,8 @@ newuser12,newuser12@example.com,{role1.id};{role1.id}
 class TestUserViewsOL(TestUserViews):
 	use_openldap = True
 
-class TestUserViewsOLUserAsAdmin(TestUserViewsOL):
+class TestUserViewsOLUser(TestUserViewsOL):
 	use_userconnection = True
-
-class TestUserViewsOLUserAsUser(UffdTestCase):
-	use_userconnection = True
-	use_openldap = True
-
-	def setUp(self):
-		super().setUp()
-		self.login_as('user')
-
-	def test_view_own(self):
-		r = self.client.get(path=url_for('user.show', uid=self.get_user().uid), follow_redirects=True)
-		dump('user_view_own', r)
-		self.assertEqual(r.status_code, 200)
-
-	def test_view_others(self):
-		r = self.client.get(path=url_for('user.show', uid=self.get_admin().uid), follow_redirects=True)
-		dump('user_view_others', r)
-		self.assertEqual(r.status_code, 200)
-
-	def test_view_index(self):
-		r = self.client.get(path=url_for('user.index'), follow_redirects=True)
-		dump('user_index', r)
-		self.assertEqual(r.status_code, 200)
-
-	def test_update_other_user(self):
-		user_ = self.get_admin()
-		db.session.add(Role(name='base', is_default=True))
-		role1 = Role(name='role1')
-		db.session.add(role1)
-		role2 = Role(name='role2')
-		db.session.add(role2)
-		role2.members.add(user_)
-		db.session.commit()
-		role1_id = role1.id
-		r = self.client.get(path=url_for('user.show', uid=user_.uid), follow_redirects=True)
-		dump('user_update', r)
-		self.assertEqual(r.status_code, 200)
-		r = self.client.post(path=url_for('user.update', uid=user_.uid),
-			data={'loginname': user_.loginname, 'mail': user_.mail, 'displayname': user_.displayname + "12345",
-			f'role-{role1_id}': '1', 'password': ''}, follow_redirects=True)
-		dump('user_update_submit', r)
-		self.assertEqual(r.status_code, 200)
-		_user = self.get_admin()
-		self.assertEqual(_user.displayname, user_.displayname)
-		self.assertEqual(_user.mail, user_.mail)
-		self.assertEqual(_user.uid, user_.uid)
-		self.assertEqual(_user.loginname, user_.loginname)
-
-	def test_new(self):
-		db.session.add(Role(name='base', is_default=True))
-		role1 = Role(name='role1')
-		db.session.add(role1)
-		role2 = Role(name='role2')
-		db.session.add(role2)
-		db.session.commit()
-		role1_id = role1.id
-		r = self.client.get(path=url_for('user.show'), follow_redirects=True)
-		dump('user_new', r)
-		self.assertEqual(r.status_code, 200)
-		self.assertIsNone(User.query.get('uid=newuser,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE'])))
-		r = self.client.post(path=url_for('user.update'),
-			data={'loginname': 'newuser', 'mail': 'newuser@example.com', 'displayname': 'New User',
-			f'role-{role1_id}': '1', 'password': 'newpassword'}, follow_redirects=True)
-		dump('user_new_submit', r)
-		self.assertEqual(r.status_code, 200)
-		user = User.query.get('uid=newuser,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
-		self.assertIsNone(user)
-
-	def test_delete(self):
-		r = self.client.get(path=url_for('user.delete', uid=self.get_admin().uid), follow_redirects=True)
-		dump('user_delete', r)
-		self.assertEqual(r.status_code, 200)
-		self.assertIsNotNone(self.get_admin())
-
 
 class TestGroupViews(UffdTestCase):
 	def setUp(self):
