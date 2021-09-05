@@ -1,51 +1,43 @@
-{% extends 'base.html' %}
+{% extends 'base_narrow.html' %}
 
 {% block body %}
+	<div class="col-12 mb-3">
+		<h2 class="text-center">{{_('Invite Link')}}</h2>
+	</div>
+	{% if not request.user %}
+	<p>{{_('Welcome to the %(org_name)s Single-Sign-On!', org_name=config.ORGANISATION_NAME)}}</p>
+	{% endif %}
 
-<div class="row mt-2 justify-content-center">
-	<div class="col-lg-6 col-md-10" style="background: #f7f7f7; box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3); padding: 30px;">
-		<div class="text-center">
-			<img alt="branding logo" src="{{ config.get("BRANDING_LOGO_URL") }}" class="col-lg-8 col-md-12" >
-		</div>
-		<div class="col-12 mb-3">
-			<h2 class="text-center">{{_('Invite Link')}}</h2>
-		</div>
-		{% if not request.user %}
-		<p>{{_('Welcome to the %(org_name)s Single-Sign-On!', org_name=config.ORGANISATION_NAME)}}</p>
+	{% if invite.roles and invite.allow_signup %}
+	<p>{{_('With this link you can register a new user account with the following roles or add the roles to an existing account:')}}</p>
+	{% elif invite.roles %}
+	<p>{{_('With this link you can add the following roles to an existing account:')}}</p>
+	{% elif invite.allow_signup %}
+	<p>{{_('With this link you can register a new user account.')}}</p>
+	{% endif %}
+	{% if invite.roles %}
+	<ul>
+		{% for role in invite.roles %}
+		<li>{{ role.name }}{% if role.description %}: {{ role.description }}{% endif %}</li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+	{% if request.user %}
+		{% if invite.roles %}
+			<form method="POST" action="{{ url_for("invite.grant", token=invite.token) }}" class="mb-2">
+				<button type="submit" class="btn btn-primary btn-block">{{_('Add the roles to your account now')}}</button>
+			</form>
+			<a href="{{ url_for("session.logout", ref=url_for("session.login", ref=request.full_path)) }}" class="btn btn-secondary btn-block">{{_('Logout and switch to a different account')}}</a>
 		{% endif %}
-
-		{% if invite.roles and invite.allow_signup %}
-		<p>{{_('With this link you can register a new user account with the following roles or add the roles to an existing account:')}}</p>
-		{% elif invite.roles %}
-		<p>{{_('With this link you can add the following roles to an existing account:')}}</p>
-		{% elif invite.allow_signup %}
-		<p>{{_('With this link you can register a new user account.')}}</p>
+		{% if invite.allow_signup %}
+			<a href="{{ url_for("session.logout", ref=url_for("invite.signup_start", token=invite.token)) }}" class="btn btn-secondary btn-block">{{_('Logout to register a new account')}}</a>
+		{% endif %}
+	{% else %}
+		{% if invite.allow_signup %}
+			<a href="{{ url_for("invite.signup_start", token=invite.token) }}" class="btn btn-primary btn-block">{{_('Register a new account')}}</a>
 		{% endif %}
 		{% if invite.roles %}
-		<ul>
-			{% for role in invite.roles %}
-			<li>{{ role.name }}{% if role.description %}: {{ role.description }}{% endif %}</li>
-			{% endfor %}
-		</ul>
+			<a href="{{ url_for("session.login", ref=request.full_path) }}" class="btn btn-primary btn-block">{{_('Login and add the roles to your account')}}</a>
 		{% endif %}
-		{% if request.user %}
-			{% if invite.roles %}
-				<form method="POST" action="{{ url_for("invite.grant", token=invite.token) }}" class="mb-2">
-					<button type="submit" class="btn btn-primary btn-block">{{_('Add the roles to your account now')}}</button>
-				</form>
-				<a href="{{ url_for("session.logout", ref=url_for("session.login", ref=request.full_path)) }}" class="btn btn-secondary btn-block">{{_('Logout and switch to a different account')}}</a>
-			{% endif %}
-			{% if invite.allow_signup %}
-				<a href="{{ url_for("session.logout", ref=url_for("invite.signup_start", token=invite.token)) }}" class="btn btn-secondary btn-block">{{_('Logout to register a new account')}}</a>
-			{% endif %}
-		{% else %}
-			{% if invite.allow_signup %}
-				<a href="{{ url_for("invite.signup_start", token=invite.token) }}" class="btn btn-primary btn-block">{{_('Register a new account')}}</a>
-			{% endif %}
-			{% if invite.roles %}
-				<a href="{{ url_for("session.login", ref=request.full_path) }}" class="btn btn-primary btn-block">{{_('Login and add the roles to your account')}}</a>
-			{% endif %}
-		{% endif %}
-	</div>
-</div>
+	{% endif %}
 {% endblock %}

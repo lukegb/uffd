@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_narrow.html' %}
 
 {% block body %}
 {% if not initiation %}
@@ -8,60 +8,53 @@
 {% else %}
 <form action="{{ url_for("session.deviceauth_finish") }}" method="POST">
 {% endif %}
-<div class="row mt-2 justify-content-center">
-	<div class="col-lg-6 col-md-10" style="background: #f7f7f7; box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3); padding: 30px;">
-		<div class="text-center">
-			<img alt="branding logo" src="{{ config.get("BRANDING_LOGO_URL") }}" class="col-lg-8 col-md-12" >
-		</div>
-		<div class="col-12">
-			<h2 class="text-center">{{_('Authorize Device Login')}}</h2>
-		</div>
-		<div class="form-group col-12">
-			<p>{{_('Log into a service on another device without entering your password.')}}</p>
-		</div>
-		<div class="form-group col-12">
-			<label for="initiation-code">{{_('Initiation Code')}}</label>
-			{% if not initiation %}
-				<input type="text" class="form-control" id="initiation-code" name="initiation-code" value="{{ initiation_code or '' }}" required="required" tabindex = "1" autofocus>
-			{% else %}
-				<input type="text" class="form-control" id="initiation-code" name="initiation-code" value="{{ initiation.code }}" readonly>
-			{% endif %}
-		</div>
-		{% if confirmation %}
-			<div class="form-group col-12">
-				<label for="confirmation-code">{{_('Confirmation Code')}}</label>
-				<input type="text" class="form-control" id="confirmation-code" name="confirmation-code" value="{{ confirmation.code }}" readonly>
-			</div>
-		{% endif %}
+	<div class="col-12">
+		<h2 class="text-center">{{_('Authorize Device Login')}}</h2>
+	</div>
+	<div class="form-group col-12">
+		<p>{{_('Log into a service on another device without entering your password.')}}</p>
+	</div>
+	<div class="form-group col-12">
+		<label for="initiation-code">{{_('Initiation Code')}}</label>
 		{% if not initiation %}
-			<div class="form-group col-12">
-				<p>{{_('Start logging into a service on the other device and chose "Device Login" on the login page. Enter the displayed initiation code in the box above.')}}</p>
-			</div>
-			<div class="form-group col-12">
-				<button type="submit" class="btn btn-primary btn-block" tabindex = "2">{{_('Continue')}}</button>
-			</div>
-			<div class="form-group col-12">
-				<a href="{{ url_for('index') }}" class="btn btn-secondary btn-block" tabindex="0">{{_('Cancel')}}</a>
-			</div>
-		{% elif not confirmation %}
-			<div class="form-group col-12">
-				<p>{{_('Authorize the login for service <b>%(service_name)s</b>?', service_name=initiation.description|e)|safe}}</p>
-			</div>
-			<div class="form-group col-12">
-				<button type="submit" class="btn btn-primary btn-block" tabindex = "2">{{_('Authorize Login')}}</button>
-			</div>
-			<div class="form-group col-12">
-				<a href="{{ url_for('index') }}" class="btn btn-secondary btn-block" tabindex="0">{{_('Cancel')}}</a>
-			</div>
+			<input type="text" class="form-control" id="initiation-code" name="initiation-code" value="{{ initiation_code or '' }}" required="required" tabindex = "1" autofocus>
 		{% else %}
-			<div class="form-group col-12">
-				<p>{{_('Enter the confirmation code on the other device and complete the login. Click <em>Finish</em> afterwards.')|safe}}</p>
-			</div>
-			<div class="form-group col-12">
-				<button type="submit" class="btn btn-primary btn-block" tabindex = "2">{{_('Finish')}}</button>
-			</div>
+			<input type="text" class="form-control" id="initiation-code" name="initiation-code" value="{{ initiation.code }}" readonly>
 		{% endif %}
 	</div>
-</div>
+	{% if confirmation %}
+		<div class="form-group col-12">
+			<label for="confirmation-code">{{_('Confirmation Code')}}</label>
+			<input type="text" class="form-control" id="confirmation-code" name="confirmation-code" value="{{ confirmation.code }}" readonly>
+		</div>
+	{% endif %}
+	{% if not initiation %}
+		<div class="form-group col-12">
+			<p>{{_('Start logging into a service on the other device and chose "Device Login" on the login page. Enter the displayed initiation code in the box above.')}}</p>
+		</div>
+		<div class="form-group col-12">
+			<button type="submit" class="btn btn-primary btn-block" tabindex = "2">{{_('Continue')}}</button>
+		</div>
+		<div class="form-group col-12">
+			<a href="{{ url_for('index') }}" class="btn btn-secondary btn-block" tabindex="0">{{_('Cancel')}}</a>
+		</div>
+	{% elif not confirmation %}
+		<div class="form-group col-12">
+			<p>{{_('Authorize the login for service <b>%(service_name)s</b>?', service_name=initiation.description|e)|safe}}</p>
+		</div>
+		<div class="form-group col-12">
+			<button type="submit" class="btn btn-primary btn-block" tabindex = "2">{{_('Authorize Login')}}</button>
+		</div>
+		<div class="form-group col-12">
+			<a href="{{ url_for('index') }}" class="btn btn-secondary btn-block" tabindex="0">{{_('Cancel')}}</a>
+		</div>
+	{% else %}
+		<div class="form-group col-12">
+			<p>{{_('Enter the confirmation code on the other device and complete the login. Click <em>Finish</em> afterwards.')|safe}}</p>
+		</div>
+		<div class="form-group col-12">
+			<button type="submit" class="btn btn-primary btn-block" tabindex = "2">{{_('Finish')}}</button>
+		</div>
+	{% endif %}
 </form>
 {% endblock %}

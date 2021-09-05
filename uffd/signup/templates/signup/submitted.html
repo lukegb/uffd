@@ -1,17 +1,9 @@
-{% extends 'base.html' %}
+{% extends 'base_narrow.html' %}
 
 {% block body %}
-
-<div class="row mt-2 justify-content-center">
-	<div class="col-lg-6 col-md-10" style="background: #f7f7f7; box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3); padding: 30px;">
-		<div class="text-center">
-			<img alt="branding logo" src="{{ config.get("BRANDING_LOGO_URL") }}" class="col-lg-8 col-md-12" >
-		</div>
-		<div class="col-12 mb-3">
-			<h2 class="text-center">{{_('Confirm your E-Mail Address')}}</h2>
-		</div>
-		<p>{{_('We sent a confirmation mail to <b>%(signup_mail)s</b>. You need to confirm your mail address within 48 hours to complete the account registration.', signup_mail=signup.mail|e)|safe}}</p>
-		<p>{{_("If you mistyped your mail address or don't receive the confirmation mail for another reason, retry the registration procedure from the beginning.")}}</p>
-	</div>
+<div class="col-12 mb-3">
+	<h2 class="text-center">{{_('Confirm your E-Mail Address')}}</h2>
 </div>
+<p>{{_('We sent a confirmation mail to <b>%(signup_mail)s</b>. You need to confirm your mail address within 48 hours to complete the account registration.', signup_mail=signup.mail|e)|safe}}</p>
+<p>{{_("If you mistyped your mail address or don't receive the confirmation mail for another reason, retry the registration procedure from the beginning.")}}</p>
 {% endblock %}

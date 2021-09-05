@@ -1,45 +1,37 @@
-{% extends 'base.html' %}
+{% extends 'base_narrow.html' %}
 
 {% block body %}
-
 <form action="{{ url_for("mfa.auth_finish", ref=ref) }}" method="POST">
-<div class="row mt-2 justify-content-center">
-	<div class="col-lg-6 col-md-10" style="background: #f7f7f7; box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3); padding: 30px;">
-		<div class="text-center">
-			<img alt="branding logo" src="{{ config.get("BRANDING_LOGO_URL") }}" class="col-lg-8 col-md-12" >
-		</div>
-		<div class="col-12 mb-3">
-			<h2 class="text-center">{{_("Two-Factor Authentication")}}</h2>
-		</div>
-		{% if request.user_pre_mfa.mfa_webauthn_methods %}
-		<noscript>
-			<div class="form-group col-12">
-				<div id="webauthn-nojs" class="alert alert-warning" role="alert">{{_("Enable javascript for authentication with U2F/FIDO2 devices")}}</div>
-			</div>
-		</noscript>
-		<div id="webauthn-unsupported" class="form-group col-12 d-none">
-			<div class="alert alert-warning" role="alert">{{_("Authentication with U2F/FIDO2 devices is not supported by your browser")}}</div>
-		</div>
-		<div class="form-group col-12 d-none webauthn-group">
-			<div id="webauthn-alert" class="alert alert-warning d-none" role="alert"></div>
-			<button type="button" id="webauthn-btn" class="btn btn-primary btn-block">
-				<span id="webauthn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-				<span id="webauthn-btn-text">{{_("Authenticate with U2F/FIDO2 device")}}</span>
-			</button>
-		</div>
-		<div class="text-center text-muted d-none webauthn-group mb-3">- {{_("or")}} -</div>
-		{% endif %}
-		<div class="form-group col-12 mb-2">
-			<input type="text" class="form-control" id="mfa-code" name="code" required="required" placeholder="{{_("Code from your authenticator app or recovery code")}}" autocomplete="off" autofocus>
-		</div>
-		<div class="form-group col-12">
-			<button type="submit" class="btn btn-primary btn-block">{{_("Verify")}}</button>
-		</div>
-		<div class="form-group col-12">
-			<a href="{{ url_for("session.logout") }}" class="btn btn-secondary btn-block">{{_("Cancel")}}</a>
-		</div>
+	<div class="col-12 mb-3">
+		<h2 class="text-center">{{_("Two-Factor Authentication")}}</h2>
 	</div>
-</div>
+	{% if request.user_pre_mfa.mfa_webauthn_methods %}
+	<noscript>
+		<div class="form-group col-12">
+			<div id="webauthn-nojs" class="alert alert-warning" role="alert">{{_("Enable javascript for authentication with U2F/FIDO2 devices")}}</div>
+		</div>
+	</noscript>
+	<div id="webauthn-unsupported" class="form-group col-12 d-none">
+		<div class="alert alert-warning" role="alert">{{_("Authentication with U2F/FIDO2 devices is not supported by your browser")}}</div>
+	</div>
+	<div class="form-group col-12 d-none webauthn-group">
+		<div id="webauthn-alert" class="alert alert-warning d-none" role="alert"></div>
+		<button type="button" id="webauthn-btn" class="btn btn-primary btn-block">
+			<span id="webauthn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+			<span id="webauthn-btn-text">{{_("Authenticate with U2F/FIDO2 device")}}</span>
+		</button>
+	</div>
+	<div class="text-center text-muted d-none webauthn-group mb-3">- {{_("or")}} -</div>
+	{% endif %}
+	<div class="form-group col-12 mb-2">
+		<input type="text" class="form-control" id="mfa-code" name="code" required="required" placeholder="{{_("Code from your authenticator app or recovery code")}}" autocomplete="off" autofocus>
+	</div>
+	<div class="form-group col-12">
+		<button type="submit" class="btn btn-primary btn-block">{{_("Verify")}}</button>
+	</div>
+	<div class="form-group col-12">
+		<a href="{{ url_for("session.logout") }}" class="btn btn-secondary btn-block">{{_("Cancel")}}</a>
+	</div>
 </form>
 
 {% if webauthn_supported and request.user_pre_mfa.mfa_webauthn_methods %}

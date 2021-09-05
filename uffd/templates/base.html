@@ -107,7 +107,8 @@
 		</nav>
 		{% endblock navbar %}
 
-		<div class="container mt-2">
+		{% block main %}
+		<main role="main" class="container mt-3">
 			<div class="row">
 				{% for message in get_flashed_messages() %}
 				<div class="col-12">
@@ -115,18 +116,17 @@
 				</div>
 				{% endfor %}
 			</div>
-		</div>
 
-		<main role="main" class="container">
 			{% block body %}
 			{% endblock body %}
-			<!-- spacer for floating footer -->
-			<div class="mb-5"></div>
 		</main>
+		{% endblock main %}
 
+		<!-- spacer for floating footer -->
+		<div class="mb-5"></div>
 		<footer class="footer">
 			{% block footer %}
-			<div class="container">
+			<div class="container-fluid">
 				<ul class="list-inline">
 					{% for link in config["FOOTER_LINKS"]%}
 					<li class="list-inline-item"><a href="{{ link.url }}">{{ link.title }}</a></li>
