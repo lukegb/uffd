@@ -1,7 +1,8 @@
 import datetime
 import functools
+import secrets
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify, abort
 from flask_babel import gettext as _, lazy_gettext
 import sqlalchemy
 
@@ -112,19 +113,34 @@ def reset(invite_id):
 	db.session.commit()
 	return redirect(url_for('.index'))
 
+# Deprecated
 @bp.route('/<token>')
-def use(token):
-	invite = Invite.query.filter_by(token=token).first_or_404()
+def use_legacy(token):
+	matching_invite = None
+	for invite in Invite.query.filter(Invite.valid_until > datetime.datetime.now().replace(second=0, microsecond=0)):
+		if secrets.compare_digest(invite.token, token):
+			matching_invite = invite
+	if not matching_invite:
+		abort(404)
+	return redirect(url_for('invite.use', invite_id=matching_invite.id, token=token))
+
+@bp.route('/<int:invite_id>/<token>')
+def use(invite_id, token):
+	invite = Invite.query.get(invite_id)
+	if not invite or not secrets.compare_digest(invite.token, token):
+		abort(404)
 	if not invite.active:
 		flash(_('Invalid invite link'))
 		return redirect('/')
 	return render_template('invite/use.html', invite=invite)
 
-@bp.route('/<token>/grant', methods=['POST'])
+@bp.route('/<int:invite_id>/<token>/grant', methods=['POST'])
 @login_required()
 @csrf_protect(blueprint=bp)
-def grant(token):
-	invite = Invite.query.filter_by(token=token).first_or_404()
+def grant(invite_id, token):
+	invite = Invite.query.get(invite_id)
+	if not invite or not secrets.compare_digest(invite.token, token):
+		abort(404)
 	invite_grant = InviteGrant(invite=invite, user=request.user)
 	db.session.add(invite_grant)
 	success, msg = invite_grant.apply()
@@ -138,12 +154,17 @@ def grant(token):
 
 @bp.url_defaults
 def inject_invite_token(endpoint, values):
-	if endpoint in ['invite.signup_submit', 'invite.signup_check'] and 'token' in request.view_args:
-		values['token'] = request.view_args['token']
+	if endpoint in ['invite.signup_submit', 'invite.signup_check']:
+		if 'invite_id' in request.view_args:
+			values['invite_id'] = request.view_args['invite_id']
+		if 'token' in request.view_args:
+			values['token'] = request.view_args['token']
 
-@bp.route('/<token>/signup')
-def signup_start(token):
-	invite = Invite.query.filter_by(token=token).first_or_404()
+@bp.route('/<int:invite_id>/<token>/signup')
+def signup_start(invite_id, token):
+	invite = Invite.query.get(invite_id)
+	if not invite or not secrets.compare_digest(invite.token, token):
+		abort(404)
 	if not invite.active:
 		flash(_('Invalid invite link'))
 		return redirect('/')
@@ -152,12 +173,14 @@ def signup_start(token):
 		return redirect('/')
 	return render_template('signup/start.html')
 
-@bp.route('/<token>/signupcheck', methods=['POST'])
-def signup_check(token):
+@bp.route('/<int:invite_id>/<token>/signupcheck', methods=['POST'])
+def signup_check(invite_id, token):
 	if host_ratelimit.get_delay():
 		return jsonify({'status': 'ratelimited'})
 	host_ratelimit.log()
-	invite = Invite.query.filter_by(token=token).first_or_404()
+	invite = Invite.query.get(invite_id)
+	if not invite or not secrets.compare_digest(invite.token, token):
+		abort(404)
 	if not invite.active or not invite.allow_signup:
 		return jsonify({'status': 'error'}), 403
 	if not User().set_loginname(request.form['loginname']):
@@ -166,9 +189,11 @@ def signup_check(token):
 		return jsonify({'status': 'exists'})
 	return jsonify({'status': 'ok'})
 
-@bp.route('/<token>/signup', methods=['POST'])
-def signup_submit(token):
-	invite = Invite.query.filter_by(token=token).first_or_404()
+@bp.route('/<int:invite_id>/<token>/signup', methods=['POST'])
+def signup_submit(invite_id, token):
+	invite = Invite.query.get(invite_id)
+	if not invite or not secrets.compare_digest(invite.token, token):
+		abort(404)
 	if request.form['password1'] != request.form['password2']:
 		return render_template('signup/start.html', error=_('Passwords do not match'))
 	signup_delay = signup_ratelimit.get_delay(request.form['mail'])

@@ -524,7 +524,7 @@ class TestInviteUseViews(UffdTestCase):
 		db.session.add(invite)
 		db.session.commit()
 		token = invite.token
-		r = self.client.get(path=url_for('invite.use', token=token), follow_redirects=True)
+		r = self.client.get(path=url_for('invite.use', invite_id=invite.id, token=token), follow_redirects=True)
 		dump('invite_use', r)
 		self.assertEqual(r.status_code, 200)
 
@@ -534,7 +534,7 @@ class TestInviteUseViews(UffdTestCase):
 		db.session.add(invite)
 		db.session.commit()
 		token = invite.token
-		r = self.client.get(path=url_for('invite.use', token=token), follow_redirects=True)
+		r = self.client.get(path=url_for('invite.use', invite_id=invite.id, token=token), follow_redirects=True)
 		dump('invite_use_loggedin', r)
 		self.assertEqual(r.status_code, 200)
 
@@ -543,7 +543,7 @@ class TestInviteUseViews(UffdTestCase):
 		db.session.add(invite)
 		db.session.commit()
 		token = invite.token
-		r = self.client.get(path=url_for('invite.use', token=token), follow_redirects=True)
+		r = self.client.get(path=url_for('invite.use', invite_id=invite.id, token=token), follow_redirects=True)
 		dump('invite_use_inactive', r)
 		self.assertEqual(r.status_code, 200)
 
@@ -565,6 +565,7 @@ class TestInviteUseViews(UffdTestCase):
 		db.session.add(invite)
 		db.session.commit()
 		ldap.session.commit()
+		invite_id = invite.id
 		token = invite.token
 		self.assertIn(role0, user.roles)
 		self.assertNotIn(role1, user.roles)
@@ -573,7 +574,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertNotIn(group1, user.groups)
 		self.assertFalse(invite.used)
 		self.login_as('user')
-		r = self.client.post(path=url_for('invite.grant', token=token), follow_redirects=True)
+		r = self.client.post(path=url_for('invite.grant', invite_id=invite_id, token=token), follow_redirects=True)
 		dump('invite_grant', r)
 		self.assertEqual(r.status_code, 200)
 		db_flush()
@@ -590,9 +591,10 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), disabled=True)
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
 		self.login_as('user')
-		r = self.client.post(path=url_for('invite.grant', token=token), follow_redirects=True)
+		r = self.client.post(path=url_for('invite.grant', invite_id=invite_id, token=token), follow_redirects=True)
 		dump('invite_grant_invalid_invite', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(Invite.query.filter_by(token=token).first().used)
@@ -601,9 +603,10 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60))
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
 		self.login_as('user')
-		r = self.client.post(path=url_for('invite.grant', token=token), follow_redirects=True)
+		r = self.client.post(path=url_for('invite.grant', invite_id=invite_id, token=token), follow_redirects=True)
 		dump('invite_grant_no_roles', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(Invite.query.filter_by(token=token).first().used)
@@ -616,9 +619,10 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role])
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
 		self.login_as('user')
-		r = self.client.post(path=url_for('invite.grant', token=token), follow_redirects=True)
+		r = self.client.post(path=url_for('invite.grant', invite_id=invite_id, token=token), follow_redirects=True)
 		dump('invite_grant_no_new_roles', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(Invite.query.filter_by(token=token).first().used)
@@ -636,8 +640,9 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role1, role2], allow_signup=True)
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
-		r = self.client.get(path=url_for('invite.signup_start', token=token), follow_redirects=True)
+		r = self.client.get(path=url_for('invite.signup_start', invite_id=invite_id, token=token), follow_redirects=True)
 		dump('invite_signup_start', r)
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('invite.signup_submit', token=token),
@@ -657,7 +662,7 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, disabled=True)
 		db.session.add(invite)
 		db.session.commit()
-		r = self.client.get(path=url_for('invite.signup_start', token=invite.token), follow_redirects=True)
+		r = self.client.get(path=url_for('invite.signup_start', invite_id=invite.id, token=invite.token), follow_redirects=True)
 		dump('invite_signup_invalid_invite', r)
 		self.assertEqual(r.status_code, 200)
 
@@ -665,7 +670,7 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=False)
 		db.session.add(invite)
 		db.session.commit()
-		r = self.client.get(path=url_for('invite.signup_start', token=invite.token), follow_redirects=True)
+		r = self.client.get(path=url_for('invite.signup_start', invite_id=invite.id, token=invite.token), follow_redirects=True)
 		dump('invite_signup_nosignup', r)
 		self.assertEqual(r.status_code, 200)
 
@@ -673,7 +678,7 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
 		db.session.add(invite)
 		db.session.commit()
-		r = self.client.post(path=url_for('invite.signup_submit', token=invite.token),
+		r = self.client.post(path=url_for('invite.signup_submit', invite_id=invite.id, token=invite.token),
 			data={'loginname': 'newuser', 'displayname': 'New User', 'mail': 'test@example.com',
 			      'password1': 'notsecret', 'password2': 'notthesame'}, follow_redirects=True)
 		dump('invite_signup_wrongpassword', r)
@@ -683,7 +688,7 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
 		db.session.add(invite)
 		db.session.commit()
-		r = self.client.post(path=url_for('invite.signup_submit', token=invite.token),
+		r = self.client.post(path=url_for('invite.signup_submit', invite_id=invite.id, token=invite.token),
 			data={'loginname': '', 'displayname': 'New User', 'mail': 'test@example.com',
 			      'password1': 'notsecret', 'password2': 'notsecret'}, follow_redirects=True)
 		dump('invite_signup_invalid', r)
@@ -694,7 +699,7 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
 		db.session.add(invite)
 		db.session.commit()
-		r = self.client.post(path=url_for('invite.signup_submit', token=invite.token),
+		r = self.client.post(path=url_for('invite.signup_submit', invite_id=invite.id, token=invite.token),
 			data={'loginname': 'newuser', 'displayname': 'New User', 'mail': 'test@example.com',
 			      'password1': 'notsecret', 'password2': 'notsecret'}, follow_redirects=True)
 		dump('invite_signup_mailerror', r)
@@ -704,14 +709,15 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
 		for i in range(20):
-			r = self.client.post(path=url_for('invite.signup_submit', token=token),
+			r = self.client.post(path=url_for('invite.signup_submit', invite_id=invite_id, token=token),
 				data={'loginname': 'newuser%d'%i, 'displayname': 'New User', 'mail': 'test%d@example.com'%i,
 							'password1': 'notsecret', 'password2': 'notsecret'}, follow_redirects=True)
 			self.assertEqual(r.status_code, 200)
 		self.app.last_mail = None
-		r = self.client.post(path=url_for('invite.signup_submit', token=token),
+		r = self.client.post(path=url_for('invite.signup_submit', invite_id=invite_id, token=token),
 			data={'loginname': 'newuser', 'displayname': 'New User', 'mail': 'test@example.com',
 			      'password1': 'notsecret', 'password2': 'notsecret'}, follow_redirects=True)
 		dump('invite_signup_hostlimit', r)
@@ -723,14 +729,15 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
 		for i in range(3):
-			r = self.client.post(path=url_for('invite.signup_submit', token=token),
+			r = self.client.post(path=url_for('invite.signup_submit', invite_id=invite_id, token=token),
 				data={'loginname': 'newuser%d'%i, 'displayname': 'New User', 'mail': 'test@example.com',
 							'password1': 'notsecret', 'password2': 'notsecret'}, follow_redirects=True)
 			self.assertEqual(r.status_code, 200)
 		self.app.last_mail = None
-		r = self.client.post(path=url_for('invite.signup_submit', token=token),
+		r = self.client.post(path=url_for('invite.signup_submit', invite_id=invite_id, token=token),
 			data={'loginname': 'newuser', 'displayname': 'New User', 'mail': 'test@example.com',
 			      'password1': 'notsecret', 'password2': 'notsecret'}, follow_redirects=True)
 		dump('invite_signup_maillimit', r)
@@ -742,8 +749,9 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
-		r = self.client.post(path=url_for('invite.signup_check', token=token), follow_redirects=True,
+		r = self.client.post(path=url_for('invite.signup_check', invite_id=invite_id, token=token), follow_redirects=True,
 		                     data={'loginname': 'newuser'})
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.content_type, 'application/json')
@@ -753,8 +761,9 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
-		r = self.client.post(path=url_for('invite.signup_check', token=token), follow_redirects=True,
+		r = self.client.post(path=url_for('invite.signup_check', invite_id=invite_id, token=token), follow_redirects=True,
 		                     data={'loginname': ''})
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.content_type, 'application/json')
@@ -764,8 +773,9 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
-		r = self.client.post(path=url_for('invite.signup_check', token=token), follow_redirects=True,
+		r = self.client.post(path=url_for('invite.signup_check', invite_id=invite_id, token=token), follow_redirects=True,
 		                     data={'loginname': 'testuser'})
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.content_type, 'application/json')
@@ -775,8 +785,9 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=False)
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
-		r = self.client.post(path=url_for('invite.signup_check', token=token), follow_redirects=True,
+		r = self.client.post(path=url_for('invite.signup_check', invite_id=invite_id, token=token), follow_redirects=True,
 		                     data={'loginname': 'testuser'})
 		self.assertEqual(r.status_code, 403)
 		self.assertEqual(r.content_type, 'application/json')
@@ -786,8 +797,9 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, disabled=True)
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
-		r = self.client.post(path=url_for('invite.signup_check', token=token), follow_redirects=True,
+		r = self.client.post(path=url_for('invite.signup_check', invite_id=invite_id, token=token), follow_redirects=True,
 		                     data={'loginname': 'testuser'})
 		self.assertEqual(r.status_code, 403)
 		self.assertEqual(r.content_type, 'application/json')
@@ -797,13 +809,14 @@ class TestInviteUseViews(UffdTestCase):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
 		db.session.add(invite)
 		db.session.commit()
+		invite_id = invite.id
 		token = invite.token
 		for i in range(20):
-			r = self.client.post(path=url_for('invite.signup_check', token=token), follow_redirects=True,
+			r = self.client.post(path=url_for('invite.signup_check', invite_id=invite_id, token=token), follow_redirects=True,
 													 data={'loginname': 'testuser'})
 			self.assertEqual(r.status_code, 200)
 			self.assertEqual(r.content_type, 'application/json')
-		r = self.client.post(path=url_for('invite.signup_check', token=token), follow_redirects=True,
+		r = self.client.post(path=url_for('invite.signup_check', invite_id=invite_id, token=token), follow_redirects=True,
 		                     data={'loginname': 'testuser'})
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.content_type, 'application/json')
