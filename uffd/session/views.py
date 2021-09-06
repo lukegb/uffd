@@ -28,7 +28,7 @@ def set_request_user():
 	if datetime.datetime.now().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
 		return
 	user = User.query.get(session['user_dn'])
-	if not user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
+	if not user or not user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
 		return
 	request.user_pre_mfa = user
 	if session.get('user_mfa'):
