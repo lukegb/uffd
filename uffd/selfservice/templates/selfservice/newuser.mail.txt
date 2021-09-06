@@ -4,7 +4,7 @@ welcome to the {{ config.ORGANISATION_NAME }} infrastructure! An account was cre
 
 Please visit the following url to set your password:
 
-{{ url_for('selfservice.token_password', token=token, _external=True) }}
+{{ url_for('selfservice.token_password', token_id=token.id, token=token.token, _external=True) }}
 
 **The link is valid for 48h**
 

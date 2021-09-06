@@ -1,4 +1,5 @@
 import datetime
+import secrets
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session
 from flask_babel import gettext as _, lazy_gettext
@@ -83,44 +84,70 @@ def forgot_password():
 		send_passwordreset(user)
 	return redirect(url_for('session.login'))
 
-@bp.route("/token/password/<token>", methods=(['POST', 'GET']))
-def token_password(token):
-	dbtoken = PasswordToken.query.get(token)
-	if not dbtoken or dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
+# Deprecated
+@bp.route('/token/password/<token>')
+def token_password_legacy(token):
+	matching_token = None
+	filter_expr = PasswordToken.created >= (datetime.datetime.now() - datetime.timedelta(days=2))
+	for dbtoken in PasswordToken.query.filter(filter_expr):
+		if secrets.compare_digest(dbtoken.token, token):
+			matching_token = dbtoken
+	if not matching_token:
+		flash(_('Token expired, please try again.'))
+		return redirect(url_for('session.login'))
+	return redirect(url_for('token_password', token_id=matching_token.id, token=token))
+
+@bp.route("/token/password/<int:token_id>/<token>", methods=(['POST', 'GET']))
+def token_password(token_id, token):
+	dbtoken = PasswordToken.query.get(token_id)
+	if not dbtoken or not secrets.compare_digest(dbtoken.token, token) or \
+			dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
 		flash(_('Token expired, please try again.'))
 		if dbtoken:
 			db.session.delete(dbtoken)
 			db.session.commit()
 		return redirect(url_for('session.login'))
 	if request.method == 'GET':
-		return render_template('selfservice/set_password.html', token=token)
+		return render_template('selfservice/set_password.html', token=dbtoken)
 	if not request.values['password1']:
 		flash(_('You need to set a password, please try again.'))
-		return render_template('selfservice/set_password.html', token=token)
+		return render_template('selfservice/set_password.html', token=dbtoken)
 	if not request.values['password1'] == request.values['password2']:
 		flash(_('Passwords do not match, please try again.'))
-		return render_template('selfservice/set_password.html', token=token)
+		return render_template('selfservice/set_password.html', token=dbtoken)
 	user = User.query.filter_by(loginname=dbtoken.loginname).one()
 	if not user.set_password(request.values['password1']):
 		flash(_('Password ist not valid, please try again.'))
-		return render_template('selfservice/set_password.html', token=token)
+		return render_template('selfservice/set_password.html', token=dbtoken)
 	db.session.delete(dbtoken)
 	flash(_('New password set'))
 	ldap.session.commit()
 	db.session.commit()
 	return redirect(url_for('session.login'))
 
+# Deprecated
 @bp.route("/token/mail_verification/<token>")
-@login_required()
-def token_mail(token):
-	dbtoken = MailToken.query.get(token)
-	if not dbtoken or dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
+def token_mail_legacy(token):
+	matching_token = None
+	filter_expr = MailToken.created >= (datetime.datetime.now() - datetime.timedelta(days=2))
+	for dbtoken in MailToken.query.filter(filter_expr):
+		if secrets.compare_digest(dbtoken.token, token):
+			matching_token = dbtoken
+	if not matching_token:
+		flash(_('Token expired, please try again.'))
+		return redirect(url_for('session.login'))
+	return redirect(url_for('mail_password', token_id=matching_token.id, token=token))
+
+@bp.route("/token/mail_verification/<int:token_id>/<token>")
+def token_mail(token_id, token):
+	dbtoken = MailToken.query.get(token_id)
+	if not dbtoken or not secrets.compare_digest(dbtoken.token, token) or \
+			dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
 		flash(_('Token expired, please try again.'))
 		if dbtoken:
 			db.session.delete(dbtoken)
 			db.session.commit()
 		return redirect(url_for('selfservice.index'))
-
 	user = User.query.filter_by(loginname=dbtoken.loginname).one()
 	user.set_mail(dbtoken.newmail)
 	flash(_('New mail set'))
@@ -157,7 +184,7 @@ def send_mail_verification(loginname, newmail):
 
 	user = User.query.filter_by(loginname=loginname).one()
 
-	if not sendmail(newmail, 'Mail verification', 'selfservice/mailverification.mail.txt', user=user, token=token.token):
+	if not sendmail(newmail, 'Mail verification', 'selfservice/mailverification.mail.txt', user=user, token=token):
 		flash(_('Mail to "%(mail_address)s" could not be sent!', mail_address=newmail))
 
 def send_passwordreset(user, new=False):
@@ -177,5 +204,5 @@ def send_passwordreset(user, new=False):
 		template = 'selfservice/passwordreset.mail.txt'
 		subject = 'Password reset'
 
-	if not sendmail(user.mail, subject, template, user=user, token=token.token):
+	if not sendmail(user.mail, subject, template, user=user, token=token):
 		flash(_('Mail to "%(mail_address)s" could not be sent!', mail_address=user.mail))
