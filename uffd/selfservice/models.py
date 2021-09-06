@@ -1,19 +1,21 @@
 import datetime
 
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, String, DateTime, Integer
 
 from uffd.database import db
 from uffd.utils import token_urlfriendly
 
-class Token():
-	token = Column(String(128), primary_key=True, default=token_urlfriendly)
-	created = Column(DateTime, default=datetime.datetime.now)
-
-class PasswordToken(Token, db.Model):
+class PasswordToken(db.Model):
 	__tablename__ = 'passwordToken'
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	token = Column(String(128), default=token_urlfriendly, nullable=False)
+	created = Column(DateTime, default=datetime.datetime.now)
 	loginname = Column(String(32))
 
-class MailToken(Token, db.Model):
+class MailToken(db.Model):
 	__tablename__ = 'mailToken'
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	token = Column(String(128), default=token_urlfriendly, nullable=False)
+	created = Column(DateTime, default=datetime.datetime.now)
 	loginname = Column(String(32))
 	newmail = Column(String(255))
