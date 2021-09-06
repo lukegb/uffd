@@ -94,7 +94,7 @@ class InviteGrant(db.Model):
 
 class InviteSignup(Signup):
 	__tablename__ = 'invite_signup'
-	token = Column(String(128), ForeignKey('signup.token'), primary_key=True)
+	id = Column(Integer(), ForeignKey('signup.id'), primary_key=True)
 	invite_id = Column(Integer(), ForeignKey('invite.id'), nullable=False)
 	invite = relationship('Invite', back_populates='signups')
 

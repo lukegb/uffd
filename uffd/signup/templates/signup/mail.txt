@@ -4,7 +4,7 @@ an account was created on the {{ config.ORGANISATION_NAME }} infrastructure with
 
 Please visit the following url to complete the account registration:
 
-{{ url_for('signup.signup_confirm', token=signup.token, _external=True) }}
+{{ url_for('signup.signup_confirm', signup_id=signup.id, token=signup.token, _external=True) }}
 
 **The link is valid for 48h**
 

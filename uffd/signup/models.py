@@ -1,7 +1,7 @@
 import datetime
 from crypt import crypt
 
-from sqlalchemy import Column, String, Text, DateTime
+from sqlalchemy import Column, String, Text, DateTime, Integer
 
 from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
@@ -26,7 +26,8 @@ class Signup(db.Model):
 	As long as they are not completed, signup requests have no effect each other
 	or different parts of the application.'''
 	__tablename__ = 'signup'
-	token = Column(String(128), primary_key=True, default=token_urlfriendly)
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	token = Column(String(128), default=token_urlfriendly, nullable=False)
 	created = Column(DateTime, default=datetime.datetime.now, nullable=False)
 	loginname = Column(Text)
 	displayname = Column(Text)

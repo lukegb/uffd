@@ -1,4 +1,6 @@
 import functools
+import secrets
+import datetime
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
 from flask_babel import gettext as _
@@ -69,19 +71,32 @@ def signup_submit():
 	signup_ratelimit.log(request.form['mail'])
 	return render_template('signup/submitted.html', signup=signup)
 
-# signup_confirm* views are always accessible so other modules (e.g. invite) can reuse them
+# Deprecated
 @bp.route('/confirm/<token>')
-def signup_confirm(token):
-	signup = Signup.query.get(token)
-	if not signup or signup.expired or signup.completed:
+def signup_confirm_legacy(token):
+	matching_signup = None
+	filter_expr = Signup.created >= (datetime.datetime.now() - datetime.timedelta(hours=48))
+	for signup in Signup.query.filter(filter_expr):
+		if secrets.compare_digest(signup.token, token):
+			matching_signup = signup
+	if not matching_signup:
+		flash(_('Invalid signup link'))
+		return redirect(url_for('session.login'))
+	return redirect(url_for('signup.signup_confirm', signup_id=matching_signup.id, token=token))
+
+# signup_confirm* views are always accessible so other modules (e.g. invite) can reuse them
+@bp.route('/confirm/<int:signup_id>/<token>')
+def signup_confirm(signup_id, token):
+	signup = Signup.query.get(signup_id)
+	if not signup or not secrets.compare_digest(signup.token, token) or signup.expired or signup.completed:
 		flash(_('Invalid signup link'))
 		return redirect(url_for('index'))
 	return render_template('signup/confirm.html', signup=signup)
 
-@bp.route('/confirm/<token>', methods=['POST'])
-def signup_confirm_submit(token):
-	signup = Signup.query.get(token)
-	if not signup or signup.expired or signup.completed:
+@bp.route('/confirm/<int:signup_id>/<token>', methods=['POST'])
+def signup_confirm_submit(signup_id, token):
+	signup = Signup.query.get(signup_id)
+	if not signup or not secrets.compare_digest(signup.token, token) or signup.expired or signup.completed:
 		flash(_('Invalid signup link'))
 		return redirect(url_for('index'))
 	confirm_delay = confirm_ratelimit.get_delay(token)
