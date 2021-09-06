@@ -1,6 +1,7 @@
 import datetime
 import functools
 import urllib.parse
+import secrets
 
 from flask import Blueprint, request, jsonify, render_template, session, redirect, url_for, flash
 from flask_oauthlib.provider import OAuth2Provider
@@ -21,7 +22,15 @@ def load_client(client_id):
 
 @oauth.grantgetter
 def load_grant(client_id, code):
-	return OAuth2Grant.query.filter_by(client_id=client_id, code=code).first()
+	if '-' not in code:
+		return None
+	grant_id, grant_code = code.split('-', 2)
+	grant = OAuth2Grant.query.get(grant_id)
+	if not grant or grant.client_id != client_id:
+		return None
+	if not secrets.compare_digest(grant.code, grant_code):
+		return None
+	return grant
 
 @oauth.grantsetter
 def save_grant(client_id, code, oauthreq, *args, **kwargs): # pylint: disable=unused-argument
@@ -30,14 +39,28 @@ def save_grant(client_id, code, oauthreq, *args, **kwargs): # pylint: disable=un
 		code=code['code'], redirect_uri=oauthreq.redirect_uri, expires=expires, _scopes=' '.join(oauthreq.scopes))
 	db.session.add(grant)
 	db.session.commit()
+	code['code'] = f"{grant.id}-{code['code']}"
 	return grant
 
 @oauth.tokengetter
 def load_token(access_token=None, refresh_token=None):
+	# pylint: disable=too-many-return-statements
 	if access_token:
-		return OAuth2Token.query.filter_by(access_token=access_token).first()
+		if '-' not in access_token:
+			return None
+		tok_id, tok_secret = access_token.split('-', 2)
+		tok = OAuth2Token.query.get(tok_id)
+		if not tok or not secrets.compare_digest(tok.access_token, tok_secret):
+			return None
+		return tok
 	if refresh_token:
-		return OAuth2Token.query.filter_by(refresh_token=refresh_token).first()
+		if '-' not in refresh_token:
+			return None
+		tok_id, tok_secret = refresh_token.split('-', 2)
+		tok = OAuth2Token.query.get(tok_id)
+		if not tok or not secrets.compare_digest(tok.refresh_token, tok_secret):
+			return None
+		return tok
 	return None
 
 @oauth.tokensetter
@@ -56,6 +79,8 @@ def save_token(token_data, oauthreq, *args, **kwargs): # pylint: disable=unused-
 	)
 	db.session.add(tok)
 	db.session.commit()
+	token_data['access_token'] = f"{tok.id}-{token_data['access_token']}"
+	token_data['refresh_token'] = f"{tok.id}-{token_data['refresh_token']}"
 	return tok
 
 bp = Blueprint('oauth2', __name__, url_prefix='/oauth2/', template_folder='templates')
