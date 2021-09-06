@@ -1,4 +1,5 @@
 import functools
+import secrets
 
 from flask import Blueprint, jsonify, current_app, request, abort
 
@@ -15,7 +16,10 @@ def apikey_required(scope=None):
 			if 'Authorization' not in request.headers or not request.headers['Authorization'].startswith('Bearer '):
 				return 'Unauthorized', 401, {'WWW-Authenticate': 'Bearer'}
 			token = request.headers['Authorization'][7:].strip()
-			request.api_client = current_app.config['API_CLIENTS'].get(token)
+			request.api_client = None
+			for client_token, client in current_app.config['API_CLIENTS'].items():
+				if secrets.compare_digest(client_token, token):
+					request.api_client = client
 			if request.api_client is None:
 				return 'Unauthorized', 401, {'WWW-Authenticate': 'Bearer error="invalid_token"'}
 			if scope is not None and scope not in request.api_client.get('scopes', []):
