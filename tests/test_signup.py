@@ -19,9 +19,9 @@ from utils import dump, UffdTestCase, db_flush
 def refetch_signup(signup):
 	db.session.add(signup)
 	db.session.commit()
-	token = signup.token
+	id = signup.id
 	db_flush()
-	return Signup.query.get(token)
+	return Signup.query.get(id)
 
 # We assume in all tests that Signup.validate and Signup.check_password do
 # not alter any state
@@ -166,18 +166,18 @@ class TestSignupModel(UffdTestCase):
 		self.assert_validate_valid(signup)
 		db.session.add(signup)
 		db.session.commit()
-		signup1_token = signup.token
+		signup1_id = signup.id
 		signup = Signup(loginname='newuser', displayname='New User', mail='test2@example.com', password='notsecret')
 		self.assert_validate_valid(signup)
 		db.session.add(signup)
 		db.session.commit()
-		signup2_token = signup.token
+		signup2_id = signup.id
 		db_flush()
-		signup = Signup.query.get(signup2_token)
+		signup = Signup.query.get(signup2_id)
 		self.assert_finish_success(signup, 'notsecret')
 		db.session.commit()
 		db_flush()
-		signup = Signup.query.get(signup1_token)
+		signup = Signup.query.get(signup1_id)
 		self.assert_finish_failure(signup, 'notsecret')
 		user = User.query.get('uid=newuser,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
 		self.assertEqual(user.mail, 'test2@example.com')
@@ -333,14 +333,14 @@ class TestSignupViews(UffdTestCase):
 		self.assertFalse(signup.completed)
 		if self.use_openldap:
 			self.assertIsNone(login_get_user('newuser', 'notsecret'))
-		r = self.client.get(path=url_for('signup.signup_confirm', token=signup.token), follow_redirects=True)
+		r = self.client.get(path=url_for('signup.signup_confirm', signup_id=signup.id, token=signup.token), follow_redirects=True)
 		dump('test_signup_confirm', r)
 		self.assertEqual(r.status_code, 200)
 		signup = refetch_signup(signup)
 		self.assertFalse(signup.completed)
 		if self.use_openldap:
 			self.assertIsNone(login_get_user('newuser', 'notsecret'))
-		r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
+		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		dump('test_signup_confirm_submit', r)
 		self.assertEqual(r.status_code, 200)
 		signup = refetch_signup(signup)
@@ -364,9 +364,9 @@ class TestSignupViews(UffdTestCase):
 		self.assertFalse(signup.completed)
 		self.assertIsNotNone(request.user)
 		self.assertEqual(request.user.loginname, self.get_user().loginname)
-		r = self.client.get(path=url_for('signup.signup_confirm', token=signup.token), follow_redirects=True)
+		r = self.client.get(path=url_for('signup.signup_confirm', signup_id=signup.id, token=signup.token), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
-		r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
+		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		self.assertEqual(r.status_code, 200)
 		signup = refetch_signup(signup)
 		self.assertTrue(signup.completed)
@@ -374,10 +374,10 @@ class TestSignupViews(UffdTestCase):
 		self.assertEqual(request.user.loginname, 'newuser')
 
 	def test_confirm_notfound(self):
-		r = self.client.get(path=url_for('signup.signup_confirm', token='notasignuptoken'), follow_redirects=True)
+		r = self.client.get(path=url_for('signup.signup_confirm', signup_id=1, token='notasignuptoken'), follow_redirects=True)
 		dump('test_signup_confirm_notfound', r)
 		self.assertEqual(r.status_code, 200)
-		r = self.client.post(path=url_for('signup.signup_confirm_submit', token='notasignuptoken'), follow_redirects=True, data={'password': 'notsecret'})
+		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=1, token='notasignuptoken'), follow_redirects=True, data={'password': 'notsecret'})
 		dump('test_signup_confirm_submit_notfound', r)
 		self.assertEqual(r.status_code, 200)
 
@@ -385,10 +385,10 @@ class TestSignupViews(UffdTestCase):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		signup.created = datetime.datetime.now() - datetime.timedelta(hours=49)
 		signup = refetch_signup(signup)
-		r = self.client.get(path=url_for('signup.signup_confirm', token=signup.token), follow_redirects=True)
+		r = self.client.get(path=url_for('signup.signup_confirm', signup_id=signup.id, token=signup.token), follow_redirects=True)
 		dump('test_signup_confirm_expired', r)
 		self.assertEqual(r.status_code, 200)
-		r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
+		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		dump('test_signup_confirm_submit_expired', r)
 		self.assertEqual(r.status_code, 200)
 
@@ -397,17 +397,17 @@ class TestSignupViews(UffdTestCase):
 		signup.user = self.get_user()
 		signup = refetch_signup(signup)
 		self.assertTrue(signup.completed)
-		r = self.client.get(path=url_for('signup.signup_confirm', token=signup.token), follow_redirects=True)
+		r = self.client.get(path=url_for('signup.signup_confirm', signup_id=signup.id, token=signup.token), follow_redirects=True)
 		dump('test_signup_confirm_completed', r)
 		self.assertEqual(r.status_code, 200)
-		r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
+		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		dump('test_signup_confirm_submit_completed', r)
 		self.assertEqual(r.status_code, 200)
 
 	def test_confirm_wrongpassword(self):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		signup = refetch_signup(signup)
-		r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'wrongpassword'})
+		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'wrongpassword'})
 		dump('test_signup_confirm_wrongpassword', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(signup.completed)
@@ -416,7 +416,7 @@ class TestSignupViews(UffdTestCase):
 		# finish returns None and error message (here: because the user already exists)
 		signup = Signup(loginname=self.get_user().loginname, displayname='New User', mail='test@example.com', password='notsecret')
 		signup = refetch_signup(signup)
-		r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
+		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		dump('test_signup_confirm_error', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(signup.completed)
@@ -425,12 +425,12 @@ class TestSignupViews(UffdTestCase):
 		for i in range(20):
 			signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 			signup = refetch_signup(signup)
-			r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'wrongpassword%d'%i})
+			r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'wrongpassword%d'%i})
 			self.assertEqual(r.status_code, 200)
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		signup = refetch_signup(signup)
 		self.assertFalse(signup.completed)
-		r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
+		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		dump('test_signup_confirm_hostlimit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(signup.completed)
@@ -440,10 +440,10 @@ class TestSignupViews(UffdTestCase):
 		signup = refetch_signup(signup)
 		self.assertFalse(signup.completed)
 		for i in range(5):
-			r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'wrongpassword%d'%i})
+			r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'wrongpassword%d'%i})
 			self.assertEqual(r.status_code, 200)
 		self.assertFalse(signup.completed)
-		r = self.client.post(path=url_for('signup.signup_confirm_submit', token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
+		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		dump('test_signup_confirm_confirmlimit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(signup.completed)

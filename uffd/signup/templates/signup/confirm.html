@@ -1,7 +1,7 @@
 {% extends 'base_narrow.html' %}
 
 {% block body %}
-<form action="{{ url_for(".signup_confirm_submit", token=signup.token) }}" method="POST">
+<form action="{{ url_for(".signup_confirm_submit", signup_id=signup.id, token=signup.token) }}" method="POST">
 	<div class="col-12">
 		<h2 class="text-center">{{_('Complete Registration')}}</h2>
 	</div>
