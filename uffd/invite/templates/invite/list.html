@@ -22,8 +22,8 @@
 			<tr>
 				<td>
 					{% if invite.creator == request.user and invite.active %}
-					<a href="{{ url_for('invite.use', token=invite.token) }}"><code>{{ invite.short_token }}</code></a>
-					<button type="button" class="btn btn-link btn-sm p-0 copy-clipboard" data-copy="{{ url_for('invite.use', token=invite.token, _external=True) }}" title="{{_('Copy link to clipboard')}}"><i class="fas fa-clipboard"></i></button>
+					<a href="{{ url_for('invite.use', invite_id=invite.id, token=invite.token) }}"><code>{{ invite.short_token }}</code></a>
+					<button type="button" class="btn btn-link btn-sm p-0 copy-clipboard" data-copy="{{ url_for('invite.use', invite_id=invite.id, token=invite.token, _external=True) }}" title="{{_('Copy link to clipboard')}}"><i class="fas fa-clipboard"></i></button>
 					<button type="button" class="btn btn-link btn-sm p-0" data-toggle="modal" data-target="#modal-{{ invite.id }}-qrcode" title="{{_('Show link as QR code')}}"><i class="fas fa-qrcode"></i></button>
 					{% else %}
 					<code>{{ invite.short_token }}</code>
@@ -143,7 +143,7 @@
 				</button>
 			</div>
 			<div class="modal-body">
-				{{ url_for('invite.use', token=invite.token, _external=True)|qrcode_svg(width='100%', height='100%') }}
+				{{ url_for('invite.use', invite_id=invite.id, token=invite.token, _external=True)|qrcode_svg(width='100%', height='100%') }}
 			</div>
 		</div>
 	</div>

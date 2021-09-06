@@ -24,17 +24,17 @@
 	{% endif %}
 	{% if request.user %}
 		{% if invite.roles %}
-			<form method="POST" action="{{ url_for("invite.grant", token=invite.token) }}" class="mb-2">
+			<form method="POST" action="{{ url_for("invite.grant", invite_id=invite.id, token=invite.token) }}" class="mb-2">
 				<button type="submit" class="btn btn-primary btn-block">{{_('Add the roles to your account now')}}</button>
 			</form>
 			<a href="{{ url_for("session.logout", ref=url_for("session.login", ref=request.full_path)) }}" class="btn btn-secondary btn-block">{{_('Logout and switch to a different account')}}</a>
 		{% endif %}
 		{% if invite.allow_signup %}
-			<a href="{{ url_for("session.logout", ref=url_for("invite.signup_start", token=invite.token)) }}" class="btn btn-secondary btn-block">{{_('Logout to register a new account')}}</a>
+			<a href="{{ url_for("session.logout", ref=url_for("invite.signup_start", invite_id=invite.id, token=invite.token)) }}" class="btn btn-secondary btn-block">{{_('Logout to register a new account')}}</a>
 		{% endif %}
 	{% else %}
 		{% if invite.allow_signup %}
-			<a href="{{ url_for("invite.signup_start", token=invite.token) }}" class="btn btn-primary btn-block">{{_('Register a new account')}}</a>
+			<a href="{{ url_for("invite.signup_start", invite_id=invite.id, token=invite.token) }}" class="btn btn-primary btn-block">{{_('Register a new account')}}</a>
 		{% endif %}
 		{% if invite.roles %}
 			<a href="{{ url_for("session.login", ref=request.full_path) }}" class="btn btn-primary btn-block">{{_('Login and add the roles to your account')}}</a>
