@@ -6,7 +6,10 @@ from flask import Flask, redirect, url_for, request, render_template
 from flask_babel import Babel
 from werkzeug.routing import IntegerConverter
 from werkzeug.serving import make_ssl_devcert
-from werkzeug.contrib.profiler import ProfilerMiddleware
+try:
+	from werkzeug.middleware.profiler import ProfilerMiddleware
+except ImportError:
+	from werkzeug.contrib.profiler import ProfilerMiddleware
 from werkzeug.exceptions import InternalServerError, Forbidden
 from flask_migrate import Migrate
 
