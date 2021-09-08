@@ -20,6 +20,7 @@ def dump(basename, resp):
 		f.write(resp.data)
 
 def db_flush():
+	db.session.rollback()
 	db.session = db.create_scoped_session()
 	if hasattr(request, 'ldap_connection'):
 		del request.ldap_session
