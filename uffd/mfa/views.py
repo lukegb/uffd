@@ -111,6 +111,7 @@ try:
 		from fido2.server import Fido2Server, RelyingParty as PublicKeyCredentialRpEntity
 		from fido2.ctap2 import AttestationObject, AuthenticatorData
 		from fido2 import cbor
+		# pylint: disable=no-member
 		cbor.encode = cbor.dumps
 		cbor.decode = lambda arg: cbor.loads(arg)[0]
 	elif fido2.__version__.startswith('0.9.'):

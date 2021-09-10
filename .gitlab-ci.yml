@@ -44,7 +44,8 @@ db_migrations_updated:
   - FLASK_APP=uffd flask db upgrade
   - FLASK_APP=uffd flask db migrate 2>&1 | grep -q 'No changes in schema detected'
 
-linter:
+linter:buster:
+  image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
   script:
   - pip3 install pylint-gitlab pylint-flask-sqlalchemy # this force-updates jinja2 and some other packages!
@@ -58,7 +59,24 @@ linter:
     reports:
       codequality: codeclimate.json
 
-unittests:
+
+linter:bullseye:
+  image: registry.git.cccv.de/uffd/docker-images/bullseye
+  stage: test
+  script:
+  - pip3 install pylint-gitlab pylint-flask-sqlalchemy # this force-updates jinja2 and some other packages!
+  - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabCodeClimateReporter uffd > codeclimate.json
+  - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabPagesHtmlReporter uffd > pylint.html
+  - python3 -m pylint --rcfile .pylintrc --output-format=text uffd
+  artifacts:
+    when: always
+    paths:
+    - pylint.html
+    reports:
+      codequality: codeclimate.json
+
+unittests:buster:
+  image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
   script:
   - service slapd start
@@ -76,6 +94,26 @@ unittests:
       cobertura: coverage.xml
       junit: report.xml
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
+
+unittests:bullseye:
+  image: registry.git.cccv.de/uffd/docker-images/bullseye
+  stage: test
+  script:
+  - service slapd start
+  - UNITTEST_OPENLDAP=1 python3-coverage run --include 'uffd/*.py' -m pytest --junitxml=report.xml || true
+  #- python3-coverage report -m
+  - python3-coverage html
+  #- python3-coverage xml
+  artifacts:
+    when: always
+    paths:
+    - htmlcov/index.html
+    - htmlcov
+    expose_as: 'Coverage Report'
+    reports:
+      #cobertura: coverage.xml
+      junit: report.xml
+  #coverage: '/^TOTAL.*\s+(\d+\%)$/'
 
 html5validator:
   stage: test
@@ -103,14 +141,37 @@ trans_de:
   variables:
     TRANSLATION_LANGUAGE: de
 
-test:package:pip:
+test:package:pip:buster:
+  image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
   script:
   - pip3 install dist/*.tar.gz
   dependencies:
   - build:pip
 
-test:package:apt:
+test:package:pip:bullseye:
+  image: registry.git.cccv.de/uffd/docker-images/bullseye
+  stage: test
+  script:
+  - pip3 install dist/*.tar.gz
+  dependencies:
+  - build:pip
+
+test:package:apt:buster:
+  image: registry.git.cccv.de/uffd/docker-images/buster
+  stage: test
+  script:
+  - apt -y install ./build/*.deb
+  - service uwsgi start uffd || ( service uwsgi status uffd ; sleep 15; cat /var/log/uwsgi/app/uffd.log; )
+  - echo "server { listen 127.0.0.1:5000 default_server;  include /etc/uffd/nginx.include.conf; }" > /etc/nginx/sites-enabled/uffd.ini
+  - service nginx start || ( service nginx status; nginx -t; exit 1; )
+  - uffd-admin routes
+  - curl -Lv 127.0.0.1:5000
+  dependencies:
+  - build:apt
+
+test:package:apt:bullseye:
+  image: registry.git.cccv.de/uffd/docker-images/bullseye
   stage: test
   script:
   - apt -y install ./build/*.deb

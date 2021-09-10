@@ -169,7 +169,7 @@ class TestViews(UffdTestCase):
 	def test_token_invalid_code(self):
 		r = self.client.post(path=url_for('oauth2.token'),
 			data={'grant_type': 'authorization_code', 'code': 'abcdef', 'redirect_uri': 'http://localhost:5009/callback', 'client_id': 'test', 'client_secret': 'testsecret'}, follow_redirects=True)
-		self.assertEqual(r.status_code, 401)
+		self.assertIn(r.status_code, [400, 401]) # oauthlib behaviour changed between v2.1.0 and v3.1.0
 		self.assertEqual(r.content_type, 'application/json')
 
 	def test_token_invalid_client(self):
