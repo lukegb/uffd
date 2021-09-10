@@ -58,6 +58,10 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 		                    redirect_uri=oauthreq.redirect_uri, expires=expires, _scopes=' '.join(oauthreq.scopes))
 		db.session.add(grant)
 		db.session.commit()
+		# Oauthlib does not really provide a way to customize grant code generation.
+		# Actually `code` is created just before `save_authorization_code` is called
+		# and the same dict is later used to generate the OAuth2 response. So by
+		# modifing the `code` dict we can actually influence the grant code.
 		code['code'] = f"{grant.id}-{code['code']}"
 
 	def validate_code(self, client_id, code, client, oauthreq, *args, **kwargs):
@@ -94,6 +98,11 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 		)
 		db.session.add(tok)
 		db.session.commit()
+		# Oauthlib does not really provide a way to customize access/refresh token
+		# generation. Actually `token_data` is created just before
+		# `save_bearer_token` is called and the same dict is later used to generate
+		# the OAuth2 response. So by modifing the `token_data` dict we can actually
+		# influence the tokens.
 		token_data['access_token'] = f"{tok.id}-{token_data['access_token']}"
 		token_data['refresh_token'] = f"{tok.id}-{token_data['refresh_token']}"
 		return oauthreq.client.default_redirect_uri
