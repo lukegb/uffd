@@ -4,6 +4,8 @@ variables:
   DEBIAN_FRONTEND: noninteractive 
   GIT_SUBMODULE_STRATEGY: normal
   PYTHONPATH: deps/ldapalchemy
+  APT_API_URL: https://packages.cccv.de
+  APT_REPO: uffd
 
 before_script:
   - python3 -V
@@ -199,6 +201,13 @@ publish:pip:
 publish:apt:
   extends: .publish
   script:
-  - exit 0
+  - export DEBPATH="$(echo build/*.deb)"
+  - echo Upload deb file, add it to repo and clean up upload
+  - curl --user "${APTLY_API_USER}:${APTLY_API_PW}" -X POST -F file=@"$DEBPATH" "${APT_API_URL}/api/files/${APT_REPO}-ci-upload-${CI_JOB_ID}"
+  - curl --user "${APTLY_API_USER}:${APTLY_API_PW}" -X POST "${APT_API_URL}/api/repos/${APT_REPO}/file/${APT_REPO}-ci-upload-${CI_JOB_ID}"
+  - curl --user "${APTLY_API_USER}:${APTLY_API_PW}" -X DELETE "${APT_API_URL}/api/files/${APT_REPO}-ci-upload-${CI_JOB_ID}"
+  - echo Update published repo for all distros
+  - 'curl --user "${APTLY_API_USER}:${APTLY_API_PW}" -X PUT -H "Content-Type: application/json" --data "{ }" "${APT_API_URL}/api/publish/uffd/buster"'
+  - 'curl --user "${APTLY_API_USER}:${APTLY_API_PW}" -X PUT -H "Content-Type: application/json" --data "{ }" "${APT_API_URL}/api/publish/uffd/bullseye"'
   dependencies:
   - build:apt

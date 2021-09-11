@@ -12,7 +12,7 @@ Homepage: https://git.cccv.de/uffd/uffd
 Vcs-Git: https://git.cccv.de/uffd/uffd.git
 
 Package: uffd
-Architecture: any
+Architecture: all
 Depends:
  ${misc:Depends},
 # Unlike most debian python packages, we depend directly on the deb packages and do not want to populate our dependencies from the setup.py .
