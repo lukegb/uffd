@@ -33,7 +33,8 @@ def upgrade():
 		sa.Column('user_dn', sa.String(length=128), nullable=False),
 		sa.Column('code0', sa.String(length=32), nullable=False),
 		sa.Column('code1', sa.String(length=32), nullable=False),
-		sa.ForeignKeyConstraint(['initiation_id'], ['device_login_initiation.id'], name=op.f('fk_device_login_confirmation_initiation_id_device_login_initiation')),
+		# name would be fk_device_login_confirmation_initiation_id_device_login_initiation, but that is too long for MySQL
+		sa.ForeignKeyConstraint(['initiation_id'], ['device_login_initiation.id'], name=op.f('fk_device_login_confirmation_initiation_id_')),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_device_login_confirmation')),
 		sa.UniqueConstraint('initiation_id', 'code0', name=op.f('uq_device_login_confirmation_initiation_id_code0')),
 		sa.UniqueConstraint('initiation_id', 'code1', name=op.f('uq_device_login_confirmation_initiation_id_code1')),

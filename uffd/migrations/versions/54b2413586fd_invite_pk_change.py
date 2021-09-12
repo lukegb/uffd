@@ -44,10 +44,17 @@ def upgrade():
 		sa.Column('disabled', sa.Boolean(name=op.f('ck_invite_disabled')), nullable=False),
 		sa.PrimaryKeyConstraint('token', name=op.f('pk_invite'))
 	)
-	with op.batch_alter_table('invite', copy_from=table) as batch_op:
+	with op.batch_alter_table('invite_grant', schema=None) as batch_op:
+		batch_op.drop_constraint('fk_invite_grant_invite_token_invite', type_='foreignkey')
+	with op.batch_alter_table('invite_roles', schema=None) as batch_op:
+		batch_op.drop_constraint('fk_invite_roles_invite_token_invite', type_='foreignkey')
+	with op.batch_alter_table('invite_signup', schema=None) as batch_op:
+		batch_op.drop_constraint('fk_invite_signup_invite_token_invite', type_='foreignkey')
+	with op.batch_alter_table('invite', copy_from=table, recreate='always') as batch_op:
 		batch_op.drop_constraint(batch_op.f('pk_invite'), type_='primary')
-		batch_op.add_column(sa.Column('id', sa.Integer(), autoincrement=True, nullable=False))
+		batch_op.add_column(sa.Column('id', sa.Integer(), nullable=True))
 		batch_op.create_primary_key(batch_op.f('pk_invite'), ['id'])
+		batch_op.alter_column('id', autoincrement=True, nullable=False, existing_type=sa.Integer())
 		batch_op.create_unique_constraint(batch_op.f('uq_invite_token'), ['token'])
 	with op.batch_alter_table('invite_grant', schema=None) as batch_op:
 		batch_op.add_column(sa.Column('invite_id', sa.Integer(), nullable=True))
@@ -62,27 +69,27 @@ def upgrade():
 
 	with op.batch_alter_table('invite_grant', schema=None) as batch_op:
 		batch_op.alter_column('invite_id', existing_type=sa.INTEGER(), nullable=False)
-		batch_op.drop_constraint('fk_invite_grant_invite_token_invite', type_='foreignkey')
 		batch_op.create_foreign_key(batch_op.f('fk_invite_grant_invite_id_invite'), 'invite', ['invite_id'], ['id'])
 		batch_op.drop_column('invite_token')
 	with op.batch_alter_table('invite_roles', schema=None) as batch_op:
 		batch_op.drop_constraint(batch_op.f('pk_invite_roles'), type_='primary')
 		batch_op.create_primary_key(batch_op.f('pk_invite_roles'), ['invite_id', 'role_id'])
-		batch_op.drop_constraint('fk_invite_roles_invite_token_invite', type_='foreignkey')
 		batch_op.create_foreign_key(batch_op.f('fk_invite_roles_invite_id_invite'), 'invite', ['invite_id'], ['id'])
 		batch_op.drop_column('invite_token')
 	with op.batch_alter_table('invite_signup', schema=None) as batch_op:
 		batch_op.alter_column('invite_id', existing_type=sa.INTEGER(), nullable=False)
-		batch_op.drop_constraint('fk_invite_signup_invite_token_invite', type_='foreignkey')
 		batch_op.create_foreign_key(batch_op.f('fk_invite_signup_invite_id_invite'), 'invite', ['invite_id'], ['id'])
 		batch_op.drop_column('invite_token')
 
 def downgrade():
 	with op.batch_alter_table('invite_signup', schema=None) as batch_op:
+		batch_op.drop_constraint(batch_op.f('fk_invite_signup_invite_id_invite'), type_='foreignkey')
 		batch_op.add_column(sa.Column('invite_token', sa.VARCHAR(length=128), nullable=True))
 	with op.batch_alter_table('invite_roles', schema=None) as batch_op:
+		batch_op.drop_constraint(batch_op.f('fk_invite_roles_invite_id_invite'), type_='foreignkey')
 		batch_op.add_column(sa.Column('invite_token', sa.VARCHAR(length=128), nullable=True))
 	with op.batch_alter_table('invite_grant', schema=None) as batch_op:
+		batch_op.drop_constraint(batch_op.f('fk_invite_grant_invite_id_invite'), type_='foreignkey')
 		batch_op.add_column(sa.Column('invite_token', sa.VARCHAR(length=128), nullable=True))
 
 	op.execute(invite_grant.update().values(invite_token=sa.select([invite.c.token]).where(invite.c.id==invite_grant.c.invite_id).as_scalar()))
@@ -91,20 +98,14 @@ def downgrade():
 
 	with op.batch_alter_table('invite_signup', schema=None) as batch_op:
 		batch_op.alter_column('invite_token', existing_type=sa.VARCHAR(length=128), nullable=False)
-		batch_op.drop_constraint(batch_op.f('fk_invite_signup_invite_id_invite'), type_='foreignkey')
-		batch_op.create_foreign_key('fk_invite_signup_invite_token_invite', 'invite', ['invite_token'], ['token'])
 		batch_op.drop_column('invite_id')
 	with op.batch_alter_table('invite_roles', schema=None) as batch_op:
 		batch_op.alter_column('invite_token', existing_type=sa.VARCHAR(length=128), nullable=False)
 		batch_op.drop_constraint(batch_op.f('pk_invite_roles'), type_='primary')
 		batch_op.create_primary_key(batch_op.f('pk_invite_roles'), ['invite_token', 'role_id'])
-		batch_op.drop_constraint(batch_op.f('fk_invite_roles_invite_id_invite'), type_='foreignkey')
-		batch_op.create_foreign_key('fk_invite_roles_invite_token_invite', 'invite', ['invite_token'], ['token'])
 		batch_op.drop_column('invite_id')
 	with op.batch_alter_table('invite_grant', schema=None) as batch_op:
 		batch_op.alter_column('invite_token', existing_type=sa.VARCHAR(length=128), nullable=False)
-		batch_op.drop_constraint(batch_op.f('fk_invite_grant_invite_id_invite'), type_='foreignkey')
-		batch_op.create_foreign_key('fk_invite_grant_invite_token_invite', 'invite', ['invite_token'], ['token'])
 		batch_op.drop_column('invite_id')
 
 	# CHECK constraints get lost when reflecting from the actual table
@@ -121,8 +122,15 @@ def downgrade():
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_invite')),
 		sa.UniqueConstraint('token', name=op.f('uq_invite_token'))
 	)
-	with op.batch_alter_table('invite', copy_from=table) as batch_op:
+	with op.batch_alter_table('invite', copy_from=table, recreate='always') as batch_op:
 		batch_op.drop_constraint(batch_op.f('uq_invite_token'), type_='unique')
+		batch_op.alter_column('id', autoincrement=False, existing_type=sa.Integer())
 		batch_op.drop_constraint(batch_op.f('pk_invite'), type_='primary')
 		batch_op.drop_column('id')
 		batch_op.create_primary_key(batch_op.f('pk_invite'), ['token'])
+	with op.batch_alter_table('invite_signup', schema=None) as batch_op:
+		batch_op.create_foreign_key('fk_invite_signup_invite_token_invite', 'invite', ['invite_token'], ['token'])
+	with op.batch_alter_table('invite_roles', schema=None) as batch_op:
+		batch_op.create_foreign_key('fk_invite_roles_invite_token_invite', 'invite', ['invite_token'], ['token'])
+	with op.batch_alter_table('invite_grant', schema=None) as batch_op:
+		batch_op.create_foreign_key('fk_invite_grant_invite_token_invite', 'invite', ['invite_token'], ['token'])

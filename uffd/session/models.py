@@ -114,7 +114,8 @@ class DeviceLoginConfirmation(db.Model):
 	__tablename__ = 'device_login_confirmation'
 
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	initiation_id = Column(Integer(), ForeignKey('device_login_initiation.id'), nullable=False)
+	initiation_id = Column(Integer(), ForeignKey('device_login_initiation.id',
+	                       name='fk_device_login_confirmation_initiation_id_'), nullable=False)
 	initiation = relationship('DeviceLoginInitiation', back_populates='confirmations')
 	user_dn = Column(String(128), nullable=False, unique=True)
 	user = DBRelationship('user_dn', User)

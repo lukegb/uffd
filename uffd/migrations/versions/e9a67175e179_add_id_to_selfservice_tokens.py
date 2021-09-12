@@ -23,9 +23,10 @@ def upgrade():
 		sa.PrimaryKeyConstraint('token', name=op.f('pk_mailToken'))
 	)
 	with op.batch_alter_table(table.name, copy_from=table, recreate='always') as batch_op:
-		batch_op.add_column(sa.Column('id', sa.Integer(), autoincrement=True, nullable=False))
 		batch_op.drop_constraint('pk_mailToken', 'primary')
+		batch_op.add_column(sa.Column('id', sa.Integer(), nullable=True))
 		batch_op.create_primary_key('pk_mailToken', ['id'])
+		batch_op.alter_column('id', autoincrement=True, nullable=False, existing_type=sa.Integer())
 	table = sa.Table('passwordToken', meta,
 		sa.Column('token', sa.String(length=128), nullable=False),
 		sa.Column('created', sa.DateTime(), nullable=True),
@@ -33,9 +34,10 @@ def upgrade():
 		sa.PrimaryKeyConstraint('token', name=op.f('pk_passwordToken'))
 	)
 	with op.batch_alter_table(table.name, copy_from=table, recreate='always') as batch_op:
-		batch_op.add_column(sa.Column('id', sa.Integer(), autoincrement=True, nullable=False))
 		batch_op.drop_constraint('pk_passwordToken', 'primary')
+		batch_op.add_column(sa.Column('id', sa.Integer(), nullable=True))
 		batch_op.create_primary_key('pk_passwordToken', ['id'])
+		batch_op.alter_column('id', autoincrement=True, nullable=False, existing_type=sa.Integer())
 
 def downgrade():
 	meta = sa.MetaData(bind=op.get_bind())
@@ -47,7 +49,8 @@ def downgrade():
 		sa.Column('newmail', sa.String(length=255), nullable=True),
 		sa.PrimaryKeyConstraint('token', name=op.f('pk_mailToken'))
 	)
-	with op.batch_alter_table(table.name, copy_from=table, recreate='always') as batch_op:
+	with op.batch_alter_table(table.name, copy_from=table) as batch_op:
+		batch_op.alter_column('id', autoincrement=False, existing_type=sa.Integer())
 		batch_op.drop_constraint('pk_mailToken', 'primary')
 		batch_op.create_primary_key('pk_mailToken', ['token'])
 		batch_op.drop_column('id')
@@ -58,8 +61,8 @@ def downgrade():
 		sa.Column('loginname', sa.String(length=32), nullable=True),
 		sa.PrimaryKeyConstraint('token', name=op.f('pk_passwordToken'))
 	)
-	with op.batch_alter_table(table.name, copy_from=table, recreate='always') as batch_op:
-		batch_op.add_column(sa.Column('id', sa.Integer(), autoincrement=True, nullable=False))
+	with op.batch_alter_table(table.name, copy_from=table) as batch_op:
+		batch_op.alter_column('id', autoincrement=False, existing_type=sa.Integer())
 		batch_op.drop_constraint('pk_passwordToken', 'primary')
 		batch_op.create_primary_key('pk_passwordToken', ['token'])
 		batch_op.drop_column('id')

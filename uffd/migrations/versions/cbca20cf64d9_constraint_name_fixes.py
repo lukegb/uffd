@@ -19,10 +19,63 @@ def upgrade():
 	# The only difference is that all contraints are named according to the newly
 	# defined naming conventions. This enables changing constraints in future
 	# migrations.
-	meta = sa.MetaData(bind=op.get_bind())
+	#
 	# We call batch_alter_table without any operations to have it recreate all
 	# tables with the column/constraint definitions from "table" and populate it
 	# with the data from the original table.
+
+	# First recreate tables that have (unnamed) foreign keys without any foreign keys
+	meta = sa.MetaData(bind=op.get_bind())
+	table = sa.Table('invite_grant', meta,
+		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+		sa.Column('invite_token', sa.String(length=128), nullable=False),
+		sa.Column('user_dn', sa.String(length=128), nullable=False),
+		sa.PrimaryKeyConstraint('id', name=op.f('pk_invite_grant'))
+	)
+	with op.batch_alter_table(table.name, copy_from=table, recreate='always') as batch_op:
+		pass
+	table = sa.Table('invite_roles', meta,
+		sa.Column('invite_token', sa.String(length=128), nullable=False),
+		sa.Column('role_id', sa.Integer(), nullable=False),
+		sa.PrimaryKeyConstraint('invite_token', 'role_id', name=op.f('pk_invite_roles'))
+	)
+	with op.batch_alter_table(table.name, copy_from=table, recreate='always') as batch_op:
+		pass
+	table = sa.Table('invite_signup', meta,
+		sa.Column('token', sa.String(length=128), nullable=False),
+		sa.Column('invite_token', sa.String(length=128), nullable=False),
+		sa.PrimaryKeyConstraint('token', name=op.f('pk_invite_signup'))
+	)
+	with op.batch_alter_table(table.name, copy_from=table, recreate='always') as batch_op:
+		pass
+	table = sa.Table('role-group', meta,
+		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+		sa.Column('dn', sa.String(length=128), nullable=True),
+		sa.Column('role_id', sa.Integer(), nullable=True),
+		sa.PrimaryKeyConstraint('id', name=op.f('pk_role-group')),
+		sa.UniqueConstraint('dn', 'role_id', name=op.f('uq_role-group_dn'))
+	)
+	with op.batch_alter_table(table.name, copy_from=table, recreate='always') as batch_op:
+		pass
+	table = sa.Table('role-inclusion', meta,
+		sa.Column('role_id', sa.Integer(), nullable=False),
+		sa.Column('included_role_id', sa.Integer(), nullable=False),
+		sa.PrimaryKeyConstraint('role_id', 'included_role_id', name=op.f('pk_role-inclusion'))
+	)
+	with op.batch_alter_table(table.name, copy_from=table, recreate='always') as batch_op:
+		pass
+	table = sa.Table('role-user', meta,
+		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+		sa.Column('dn', sa.String(length=128), nullable=True),
+		sa.Column('role_id', sa.Integer(), nullable=True),
+		sa.PrimaryKeyConstraint('id', name=op.f('pk_role-user')),
+		sa.UniqueConstraint('dn', 'role_id', name=op.f('uq_role-user_dn'))
+	)
+	with op.batch_alter_table(table.name, copy_from=table, recreate='always') as batch_op:
+		pass
+
+	# Then recreate all tables with properly named constraints and readd foreign key constraints
+	meta = sa.MetaData(bind=op.get_bind())
 	table = sa.Table('invite', meta,
 		sa.Column('token', sa.String(length=128), nullable=False),
 		sa.Column('created', sa.DateTime(), nullable=False),
@@ -182,5 +235,6 @@ def upgrade():
 		pass
 
 def downgrade():
-	# upgrade only adds names to all constraints, no need to undo anything
-	pass
+	# upgrade only adds names to all constraints, no need to undo much
+	with op.batch_alter_table('oauth2grant', schema=None) as batch_op:
+		batch_op.create_index(batch_op.f('ix_oauth2grant_code'), ['code'], unique=False)

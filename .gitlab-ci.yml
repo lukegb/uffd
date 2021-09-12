@@ -46,6 +46,17 @@ db_migrations_updated:
   - FLASK_APP=uffd flask db upgrade
   - FLASK_APP=uffd flask db migrate 2>&1 | grep -q 'No changes in schema detected'
 
+test_db_migrations:sqlite:
+  stage: test
+  script:
+  - python3 check_migrations.py sqlite
+
+test_db_migrations:mysql:
+  stage: test
+  script:
+  - service mysql start
+  - python3 check_migrations.py mysql
+
 linter:buster:
   image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
