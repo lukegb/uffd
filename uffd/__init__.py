@@ -76,7 +76,7 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 		pass
 
 	db.init_app(app)
-	Migrate(app, db, render_as_batch=True, directory='uffd/migrations')
+	Migrate(app, db, render_as_batch=True, directory=os.path.join(app.root_path, 'migrations'))
 
 	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp + rolemod.bp + api.bp:
 		app.register_blueprint(i)
