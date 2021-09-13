@@ -1,3 +1,45 @@
+uffd (1.1.0) unstable; urgency=medium
+
+  [ Julian Rother ]
+  * Switched tests from tmpfile to in-memory databases
+  * Catch LDAPSASLPrepError on login
+  * Restrict password alphabet to SASLprep-safe ASCII subset
+  * Replace flask_oauthlib with plain oauthlib
+  * Fix for 45d4598 (Replace flask_oauthlib with plain oauthlib)
+  * Don't display login page if user is already logged in
+  * Display per-client-customizable message on login page
+  * Dedicated error page for permission errors
+  * Fix HTML element id construction in role view
+  * Removed TestUserViewsOLUserAsUser test cases
+  * Make sure that users can only confirm their own verification tokens
+  * Refactor permission checking and differenciate login and selfservice access
+  * Refactor base template and add narrow base template
+  * Handle if user referenced in session does not exist
+  * Support for python3-fido2 v0.9.x (Debian Bullseye)
+  * Support for python3-werkzeug v1.0.x (Debian Bullseye)
+  * Properly rollback db transaction in db_flush (tests)
+  * Fix debian package dependency on python3-oauthlib
+  * Verify OAuth2 codes/tokens in constant-time
+  * Verify invite link secrets in constant-time
+  * Verify selfservice link secrets in constant-time
+  * Verify signup link secrets in constant-time
+  * Verify api keys in constant-time
+  * Explain OAuth2 code/token customization hack
+  * Add CI tests for Bullseye and fix remaining compatability issues
+  * Publish Debian packages to packages.cccv.de
+
+  [ C-Tim ]
+  * fix(uffd-admin): Fix bug with util-linux fallback path
+  * fix(migrations): Calculate correct path for migrations instead of assuming cwd
+
+  [ Julian Rother ]
+  * CI check for CHANGELOG on release
+  * Refactor migrations to support MySQL/MariaDB
+  * Add Debian repo signing key and install instructions
+  * Auto-generate SECRET_KEY in Debian package, minor improvement of uffd-admin
+
+ -- root <root@runner-f9u6bnzu-project-27-concurrent-0>  Mon, 13 Sep 2021 12:07:04 +0000
+
 uffd (1.0.0) unstable; urgency=medium
 
   [ nd ]
