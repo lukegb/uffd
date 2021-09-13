@@ -159,6 +159,15 @@ test:package:pip:bullseye:
   dependencies:
   - build:pip
 
+test:package:apt:changelog:
+  stage: test
+  rules:
+  - if: '$CI_COMMIT_TAG =~ /v[0-9]+[.][0-9]+[.][0-9]+.*/'
+  script:
+  - head -n 1 debian/changelog | grep -qv UNRELEASED || { echo 'CHANGELOG not up-to-date!'; exit 1; }
+  dependencies:
+  - build:apt
+
 test:package:apt:buster:
   image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
