@@ -1,15 +1,15 @@
-#!/bin/bash -x
+#!/bin/sh
 
-set -e
+set -eu
 
 export FLASK_APP=/usr/share/uffd/uffd
 export CONFIG_FILENAME=/etc/uffd/uffd.cfg
 
 if [ "$(whoami)" = "uffd" ]; then
 	flask "$@"
-elif command -v sudo &> /dev/null; then
+elif command -v sudo > /dev/null 2>&1; then
 	exec sudo --preserve-env=FLASK_APP,CONFIG_FILENAME -u uffd flask "$@"
-elif command -v runuser &> /dev/null; then
+elif command -v runuser > /dev/null 2>&1; then
 	exec runuser --preserve-environment -u uffd -- flask "$@"
 else
 	echo "Could not not become 'uffd' user, exiting"
