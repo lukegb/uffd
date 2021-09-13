@@ -90,6 +90,12 @@ class TestViews(UffdTestCase):
 		r = self.client.get(path=url_for('oauth2.authorize', response_type='code', client_id='test', state='teststate', redirect_uri='http://localhost:5009/callback'), follow_redirects=False)
 		self.assert_authorization(r)
 
+	# Regression test for #115 (OAuth2 authorize endpoint rejects empty scope parameter)
+	def test_authorization_empty_scope(self):
+		self.login_as('user')
+		r = self.client.get(path=url_for('oauth2.authorize', response_type='code', client_id='test', state='teststate', scope='', redirect_uri='http://localhost:5009/callback'), follow_redirects=False)
+		self.assert_authorization(r)
+
 	def test_authorization_invalid_scope(self):
 		self.login_as('user')
 		r = self.client.get(path=url_for('oauth2.authorize', response_type='code', client_id='test', state='teststate', redirect_uri='http://localhost:5009/callback', scope='invalid'), follow_redirects=False)

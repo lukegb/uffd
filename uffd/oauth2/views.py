@@ -50,6 +50,8 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 		return oauthreq.client.default_scopes
 
 	def validate_scopes(self, client_id, scopes, client, oauthreq, *args, **kwargs):
+		if scopes == ['']:
+			oauthreq.scopes = scopes = self.get_default_scopes(client_id, oauthreq)
 		return set(scopes).issubset({'profile'})
 
 	def save_authorization_code(self, client_id, code, oauthreq, *args, **kwargs):
