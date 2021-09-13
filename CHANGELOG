@@ -1,3 +1,12 @@
+uffd (1.1.1) unstable; urgency=medium
+
+  [ Julian Rother ]
+  * Fix regression: OAuth2 authorize endpoint rejects empty scope parameter
+  * Fix regression: OAuth2 token endpoint does not support Basic-Auth
+  * Verify 2FA recovery codes and TOTP codes in constant-time
+
+ -- root <root@runner-f9u6bnzu-project-27-concurrent-0>  Mon, 13 Sep 2021 20:18:30 +0000
+
 uffd (1.1.0) unstable; urgency=medium
 
   [ Julian Rother ]
