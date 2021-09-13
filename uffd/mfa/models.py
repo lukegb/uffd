@@ -61,7 +61,7 @@ class RecoveryCodeMethod(MFAMethod):
 
 	def verify(self, code):
 		code = code.replace(' ', '').lower()
-		return crypt.crypt(code, self.code_hash) == self.code_hash
+		return secrets.compare_digest(crypt.crypt(code, self.code_hash), self.code_hash)
 
 def _hotp(counter, key, digits=6):
 	'''Generates HMAC-based one-time password according to RFC4226
@@ -122,8 +122,9 @@ class TOTPMethod(MFAMethod):
 
 		:returns: True if code is valid, False otherwise'''
 		counter = int(time.time()/30)
-		if _hotp(counter-1, self.raw_key) == code or _hotp(counter, self.raw_key) == code:
-			return True
+		for valid_code in [_hotp(counter-1, self.raw_key), _hotp(counter, self.raw_key)]:
+			if secrets.compare_digest(code, valid_code):
+				return True
 		return False
 
 class WebauthnMethod(MFAMethod):
