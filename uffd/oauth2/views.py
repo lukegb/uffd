@@ -1,6 +1,7 @@
 import datetime
 import functools
 import secrets
+import urllib.parse
 
 from flask import Blueprint, request, jsonify, render_template, session, redirect, url_for, flash, abort
 import oauthlib.oauth2
@@ -29,6 +30,16 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 			return False
 
 	def authenticate_client(self, oauthreq, *args, **kwargs):
+		authorization = oauthreq.extra_credentials.get('authorization')
+		if authorization:
+			# From RFC6749 2.3.1:
+			# Clients in possession of a client password MAY use the HTTP Basic authentication
+			# scheme as defined in [RFC2617] to authenticate with the authorization server.
+			# The client identifier is encoded using the "application/x-www-form-urlencoded"
+			# encoding algorithm per Appendix B, and the encoded value is used as the username
+			# the client password is encoded using the same algorithm and used as the password.
+			oauthreq.client_id = urllib.parse.unquote(authorization.username)
+			oauthreq.client_secret = urllib.parse.unquote(authorization.password)
 		if oauthreq.client_secret is None:
 			return False
 		try:
@@ -203,7 +214,8 @@ def authorize():
 
 @bp.route('/token', methods=['GET', 'POST'])
 def token():
-	headers, body, status = server.create_token_response(request.url, request.method, request.form, request.headers)
+	headers, body, status = server.create_token_response(request.url, request.method, request.form,
+	                                                     request.headers, {'authorization': request.authorization})
 	return body, status, headers
 
 def oauth_required(*scopes):

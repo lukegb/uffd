@@ -172,6 +172,16 @@ class TestViews(UffdTestCase):
 		self.assertEqual(r.json['token_type'], 'Bearer')
 		self.assertEqual(r.json['scope'], 'profile')
 
+	# Regression test for #114 (OAuth2 token endpoint does not support Basic-Auth)
+	def test_token_basicauth(self):
+		r = self.client.post(path=url_for('oauth2.token'),
+			data={'grant_type': 'authorization_code', 'code': self.get_auth_code(), 'redirect_uri': 'http://localhost:5009/callback'},
+			headers={'Authorization': f'Basic dGVzdDp0ZXN0c2VjcmV0'}, follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.content_type, 'application/json')
+		self.assertEqual(r.json['token_type'], 'Bearer')
+		self.assertEqual(r.json['scope'], 'profile')
+
 	def test_token_invalid_code(self):
 		r = self.client.post(path=url_for('oauth2.token'),
 			data={'grant_type': 'authorization_code', 'code': 'abcdef', 'redirect_uri': 'http://localhost:5009/callback', 'client_id': 'test', 'client_secret': 'testsecret'}, follow_redirects=True)
