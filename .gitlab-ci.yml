@@ -6,6 +6,7 @@ variables:
   PYTHONPATH: deps/ldapalchemy
   APT_API_URL: https://packages.cccv.de
   APT_REPO: uffd
+  PYLINT_PIN: pylint~=2.10.0
 
 before_script:
   - python3 -V
@@ -61,7 +62,7 @@ linter:buster:
   image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
   script:
-  - pip3 install pylint-gitlab pylint-flask-sqlalchemy # this force-updates jinja2 and some other packages!
+  - pip3 install $PYLINT_PIN pylint-gitlab pylint-flask-sqlalchemy # this force-updates jinja2 and some other packages!
   - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabCodeClimateReporter uffd > codeclimate.json
   - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabPagesHtmlReporter uffd > pylint.html
   - python3 -m pylint --rcfile .pylintrc --output-format=text uffd
@@ -77,7 +78,7 @@ linter:bullseye:
   image: registry.git.cccv.de/uffd/docker-images/bullseye
   stage: test
   script:
-  - pip3 install pylint-gitlab pylint-flask-sqlalchemy # this force-updates jinja2 and some other packages!
+  - pip3 install $PYLINT_PIN pylint-gitlab pylint-flask-sqlalchemy # this force-updates jinja2 and some other packages!
   - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabCodeClimateReporter uffd > codeclimate.json
   - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabPagesHtmlReporter uffd > pylint.html
   - python3 -m pylint --rcfile .pylintrc --output-format=text uffd
