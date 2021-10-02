@@ -1,7 +1,7 @@
 import datetime
 import secrets
 
-from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, session, abort
+from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, abort
 from flask_babel import gettext as _, lazy_gettext
 
 from uffd.navbar import register_navbar
@@ -12,7 +12,6 @@ from uffd.selfservice.models import PasswordToken, MailToken
 from uffd.sendmail import sendmail
 from uffd.role.models import Role
 from uffd.database import db
-from uffd.ldap import ldap
 from uffd.ratelimit import host_ratelimit, Ratelimit, format_delay
 
 bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix='/self/')
@@ -32,36 +31,29 @@ def index():
 @csrf_protect(blueprint=bp)
 @login_required(selfservice_acl_check)
 def update_profile():
-	user = request.user
-	if request.values['displayname'] != user.displayname:
-		if user.set_displayname(request.values['displayname']):
+	if request.values['displayname'] != request.user.displayname:
+		if request.user.set_displayname(request.values['displayname']):
 			flash(_('Display name changed.'))
 		else:
 			flash(_('Display name is not valid.'))
-	if request.values['mail'] != user.mail:
-		send_mail_verification(user.loginname, request.values['mail'])
+	if request.values['mail'] != request.user.mail:
+		send_mail_verification(request.user, request.values['mail'])
 		flash(_('We sent you an email, please verify your mail address.'))
-	ldap.session.commit()
+	db.session.commit()
 	return redirect(url_for('selfservice.index'))
 
 @bp.route("/changepassword", methods=(['POST']))
 @csrf_protect(blueprint=bp)
 @login_required(selfservice_acl_check)
 def change_password():
-	password_changed = False
-	user = request.user
 	if not request.values['password1'] == request.values['password2']:
 		flash(_('Passwords do not match'))
 	else:
-		if user.set_password(request.values['password1']):
+		if request.user.set_password(request.values['password1']):
 			flash(_('Password changed'))
-			password_changed = True
 		else:
 			flash(_('Invalid password'))
-	ldap.session.commit()
-	# When using a user_connection, update the connection on password-change
-	if password_changed and current_app.config['LDAP_SERVICE_USER_BIND']:
-		session['user_pw'] = request.values['password1']
+	db.session.commit()
 	return redirect(url_for('selfservice.index'))
 
 @bp.route("/passwordreset", methods=(['GET', 'POST']))
@@ -118,15 +110,13 @@ def token_password(token_id, token):
 	if not request.values['password1'] == request.values['password2']:
 		flash(_('Passwords do not match, please try again.'))
 		return render_template('selfservice/set_password.html', token=dbtoken)
-	user = User.query.filter_by(loginname=dbtoken.loginname).one()
-	if not user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
+	if not dbtoken.user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
 		abort(403)
-	if not user.set_password(request.values['password1']):
+	if not dbtoken.user.set_password(request.values['password1']):
 		flash(_('Password ist not valid, please try again.'))
 		return render_template('selfservice/set_password.html', token=dbtoken)
 	db.session.delete(dbtoken)
 	flash(_('New password set'))
-	ldap.session.commit()
 	db.session.commit()
 	return redirect(url_for('session.login'))
 
@@ -154,13 +144,11 @@ def token_mail(token_id, token):
 			db.session.delete(dbtoken)
 			db.session.commit()
 		return redirect(url_for('selfservice.index'))
-	user = User.query.filter_by(loginname=dbtoken.loginname).one()
-	if user != request.user:
+	if dbtoken.user != request.user:
 		abort(403, description=_('This link was generated for another user. Login as the correct user to continue.'))
-	user.set_mail(dbtoken.newmail)
+	dbtoken.user.set_mail(dbtoken.newmail)
 	flash(_('New mail set'))
 	db.session.delete(dbtoken)
-	ldap.session.commit()
 	db.session.commit()
 	return redirect(url_for('selfservice.index'))
 
@@ -172,36 +160,26 @@ def leave_role(roleid):
 		flash(_('Leaving roles is disabled'))
 		return redirect(url_for('selfservice.index'))
 	role = Role.query.get_or_404(roleid)
-	role.members.discard(request.user)
+	role.members.remove(request.user)
 	request.user.update_groups()
-	ldap.session.commit()
 	db.session.commit()
 	flash(_('You left role %(role_name)s', role_name=role.name))
 	return redirect(url_for('selfservice.index'))
 
-def send_mail_verification(loginname, newmail):
-	expired_tokens = MailToken.query.filter(MailToken.created < (datetime.datetime.now() - datetime.timedelta(days=2))).all()
-	duplicate_tokens = MailToken.query.filter(MailToken.loginname == loginname).all()
-	for i in expired_tokens + duplicate_tokens:
-		db.session.delete(i)
-	token = MailToken()
-	token.loginname = loginname
-	token.newmail = newmail
+def send_mail_verification(user, newmail):
+	MailToken.query.filter(db.or_(MailToken.created < (datetime.datetime.now() - datetime.timedelta(days=2)),
+	                              MailToken.user == user)).delete()
+	token = MailToken(user=user, newmail=newmail)
 	db.session.add(token)
 	db.session.commit()
-
-	user = User.query.filter_by(loginname=loginname).one()
 
 	if not sendmail(newmail, 'Mail verification', 'selfservice/mailverification.mail.txt', user=user, token=token):
 		flash(_('Mail to "%(mail_address)s" could not be sent!', mail_address=newmail))
 
 def send_passwordreset(user, new=False):
-	expired_tokens = PasswordToken.query.filter(PasswordToken.created < (datetime.datetime.now() - datetime.timedelta(days=2))).all()
-	duplicate_tokens = PasswordToken.query.filter(PasswordToken.loginname == user.loginname).all()
-	for i in expired_tokens + duplicate_tokens:
-		db.session.delete(i)
-	token = PasswordToken()
-	token.loginname = user.loginname
+	PasswordToken.query.filter(db.or_(PasswordToken.created < (datetime.datetime.now() - datetime.timedelta(days=2)),
+	                                  PasswordToken.user == user)).delete()
+	token = PasswordToken(user=user)
 	db.session.add(token)
 	db.session.commit()
 

@@ -22,11 +22,11 @@ def run_test(dburi, revision):
 		'DEBUG': True,
 		'SQLALCHEMY_DATABASE_URI': dburi,
 		'SECRET_KEY': 'DEBUGKEY',
-		'LDAP_SERVICE_MOCK': True,
 		'MAIL_SKIP_SEND': True,
 		'SELF_SIGNUP': True,
 		'ENABLE_INVITE': True,
-		'ENABLE_PASSWORDRESET': True
+		'ENABLE_PASSWORDRESET': True,
+		'LDAP_SERVICE_MOCK': True
 	}
 	app = create_app(config)
 	with app.test_request_context():
@@ -39,20 +39,20 @@ def run_test(dburi, revision):
 		db.session.add(WebauthnMethod(user=user, name='mywebauthn', cred=b''))
 		role = Role(name='role', groups={group: RoleGroup(group=group)})
 		db.session.add(role)
-		role.members.add(user)
-		db.session.add(Role(name='base', included_roles=[role], locked=True, is_default=True, moderator_group_dn=group.dn, groups={group: RoleGroup(group=group)}))
+		role.members.append(user)
+		db.session.add(Role(name='base', included_roles=[role], locked=True, is_default=True, moderator_group=group, groups={group: RoleGroup(group=group)}))
 		db.session.add(Signup(loginname='newuser', displayname='New User', mail='newuser@example.com', password='newpassword'))
-		db.session.add(Signup(loginname='testuser', displayname='Testuser', mail='testuser@example.com', password='testpassword', user_dn=user.dn))
+		db.session.add(Signup(loginname='testuser', displayname='Testuser', mail='testuser@example.com', password='testpassword', user=user))
 		invite = Invite(valid_until=datetime.datetime.now(), roles=[role])
 		db.session.add(invite)
 		invite.signups.append(InviteSignup(loginname='newuser', displayname='New User', mail='newuser@example.com', password='newpassword'))
-		invite.grants.append(InviteGrant(user_dn=user.dn))
-		db.session.add(Invite(creator_dn=user.dn, valid_until=datetime.datetime.now()))
-		db.session.add(OAuth2Grant(user_dn=user.dn, client_id='testclient', code='testcode', redirect_uri='http://example.com/callback', expires=datetime.datetime.now()))
-		db.session.add(OAuth2Token(user_dn=user.dn, client_id='testclient', token_type='Bearer', access_token='testcode', refresh_token='testcode', expires=datetime.datetime.now()))
-		db.session.add(OAuth2DeviceLoginInitiation(oauth2_client_id='testclient', confirmations=[DeviceLoginConfirmation(user_dn=user.dn)]))
-		db.session.add(PasswordToken(loginname='testuser'))
-		db.session.add(MailToken(loginname='testuser', newmail='test@example.com'))
+		invite.grants.append(InviteGrant(user=user))
+		db.session.add(Invite(creator=user, valid_until=datetime.datetime.now()))
+		db.session.add(OAuth2Grant(user=user, client_id='testclient', code='testcode', redirect_uri='http://example.com/callback', expires=datetime.datetime.now()))
+		db.session.add(OAuth2Token(user=user, client_id='testclient', token_type='Bearer', access_token='testcode', refresh_token='testcode', expires=datetime.datetime.now()))
+		db.session.add(OAuth2DeviceLoginInitiation(oauth2_client_id='testclient', confirmations=[DeviceLoginConfirmation(user=user)]))
+		db.session.add(PasswordToken(user=user))
+		db.session.add(MailToken(user=user, newmail='test@example.com'))
 		db.session.commit()
 		flask_migrate.downgrade(revision=revision)
 		flask_migrate.upgrade(revision='head')

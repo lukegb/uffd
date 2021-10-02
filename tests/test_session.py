@@ -4,7 +4,7 @@ import unittest
 from flask import url_for, request
 
 # These imports are required, because otherwise we get circular imports?!
-from uffd import ldap, user
+from uffd import user
 
 from uffd.session.views import login_required
 from uffd.session.models import DeviceLoginConfirmation
@@ -63,7 +63,7 @@ class TestSession(UffdTestCase):
 
 	def test_titlecase_password(self):
 		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': self.test_data.get('user').get('loginname').title(), 'password': self.test_data.get('user').get('password')}, follow_redirects=True)
+			data={'loginname': self.get_user().loginname.title(), 'password': 'userpassword'}, follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		self.assertLoggedIn()
 
@@ -74,7 +74,7 @@ class TestSession(UffdTestCase):
 
 	def test_wrong_password(self):
 		r = self.client.post(path=url_for('session.login'),
-							data={'loginname': self.test_data.get('user').get('loginname'), 'password': 'wrongpassword'},
+							data={'loginname': self.get_user().loginname, 'password': 'wrongpassword'},
 							follow_redirects=True)
 		dump('login_wrong_password', r)
 		self.assertEqual(r.status_code, 200)
@@ -82,7 +82,7 @@ class TestSession(UffdTestCase):
 
 	def test_empty_password(self):
 		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': self.test_data.get('user').get('loginname'), 'password': ''}, follow_redirects=True)
+			data={'loginname': self.get_user().loginname, 'password': ''}, follow_redirects=True)
 		dump('login_empty_password', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertLoggedOut()
@@ -90,14 +90,14 @@ class TestSession(UffdTestCase):
 	# Regression test for #100 (uncatched LDAPSASLPrepError)
 	def test_saslprep_invalid_password(self):
 		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': self.test_data.get('user').get('loginname'), 'password': 'wrongpassword\n'}, follow_redirects=True)
+			data={'loginname': 'testuser', 'password': 'wrongpassword\n'}, follow_redirects=True)
 		dump('login_saslprep_invalid_password', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertLoggedOut()
 
 	def test_wrong_user(self):
 		r = self.client.post(path=url_for('session.login'),
-							data={'loginname': 'nouser', 'password': self.test_data.get('user').get('password')},
+							data={'loginname': 'nouser', 'password': 'userpassword'},
 							follow_redirects=True)
 		dump('login_wrong_user', r)
 		self.assertEqual(r.status_code, 200)
@@ -105,7 +105,7 @@ class TestSession(UffdTestCase):
 
 	def test_empty_user(self):
 		r = self.client.post(path=url_for('session.login'),
-			data={'loginname': '', 'password': self.test_data.get('user').get('password')}, follow_redirects=True)
+			data={'loginname': '', 'password': 'userpassword'}, follow_redirects=True)
 		dump('login_empty_user', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertLoggedOut()
@@ -140,7 +140,7 @@ class TestSession(UffdTestCase):
 	def test_ratelimit(self):
 		for i in range(20):
 			self.client.post(path=url_for('session.login'),
-							data={'loginname': self.test_data.get('user').get('loginname'),
+							data={'loginname': self.get_user().loginname,
 								'password': 'wrongpassword_%i'%i}, follow_redirects=True)
 		r = self.login_as('user')
 		dump('login_ratelimit', r)
@@ -173,9 +173,3 @@ class TestSession(UffdTestCase):
 		r = self.client.get(path=url_for('session.deviceauth_finish'), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(DeviceLoginConfirmation.query.all(), [])
-
-class TestSessionOL(TestSession):
-	use_openldap = True
-
-class TestSessionOLUser(TestSessionOL):
-	use_userconnection = True

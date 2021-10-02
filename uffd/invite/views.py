@@ -7,11 +7,10 @@ import sqlalchemy
 
 from uffd.csrf import csrf_protect
 from uffd.database import db
-from uffd.ldap import ldap
 from uffd.session import login_required
 from uffd.role.models import Role
 from uffd.invite.models import Invite, InviteSignup, InviteGrant
-from uffd.user.models import User
+from uffd.user.models import User, Group
 from uffd.sendmail import sendmail
 from uffd.navbar import register_navbar
 from uffd.ratelimit import host_ratelimit, format_delay
@@ -27,21 +26,21 @@ def invite_acl_check():
 		return True
 	if request.user.is_in_group(current_app.config['ACL_SIGNUP_GROUP']):
 		return True
-	if Role.query.filter(Role.moderator_group_dn.in_(request.user.group_dns)).count():
+	if Role.query.join(Role.moderator_group).join(Group.members).filter(User.id==request.user.id).count():
 		return True
 	return False
 
 def view_acl_filter(user):
 	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
 		return sqlalchemy.true()
-	creator_filter = (Invite.creator_dn == user.dn)
-	rolemod_filter = Invite.roles.any(Role.moderator_group_dn.in_(user.group_dns))
+	creator_filter = (Invite.creator == user)
+	rolemod_filter = Invite.roles.any(Role.moderator_group.has(Group.id.in_([group.id for group in user.groups])))
 	return creator_filter | rolemod_filter
 
 def reset_acl_filter(user):
 	if user.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
 		return sqlalchemy.true()
-	return Invite.creator_dn == user.dn
+	return Invite.creator == user
 
 @bp.route('/')
 @register_navbar(14, lazy_gettext('Invites'), icon='link', blueprint=bp, visible=invite_acl_check)
@@ -58,7 +57,7 @@ def new():
 		roles = Role.query.all()
 	else:
 		allow_signup = request.user.is_in_group(current_app.config['ACL_SIGNUP_GROUP'])
-		roles = Role.query.filter(Role.moderator_group_dn.in_(request.user.group_dns)).all()
+		roles = Role.query.join(Role.moderator_group).join(Group.members).filter(User.id==request.user.id).all()
 	return render_template('invite/new.html', roles=roles, allow_signup=allow_signup)
 
 @bp.route('/new', methods=['POST'])
@@ -137,7 +136,6 @@ def grant(invite_id, token):
 	if not success:
 		flash(msg)
 		return redirect(url_for('selfservice.index'))
-	ldap.session.commit()
 	db.session.commit()
 	flash(_('Roles successfully updated'))
 	return redirect(url_for('selfservice.index'))

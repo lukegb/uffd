@@ -6,9 +6,7 @@ from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
-from uffd.user.models import User
 from uffd.utils import token_typeable
 
 # Device login provides a convenient and secure way to log into SSO-enabled
@@ -115,10 +113,11 @@ class DeviceLoginConfirmation(db.Model):
 
 	id = Column(Integer(), primary_key=True, autoincrement=True)
 	initiation_id = Column(Integer(), ForeignKey('device_login_initiation.id',
-	                       name='fk_device_login_confirmation_initiation_id_'), nullable=False)
+	                       name='fk_device_login_confirmation_initiation_id_',
+	                       onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	initiation = relationship('DeviceLoginInitiation', back_populates='confirmations')
-	user_dn = Column(String(128), nullable=False, unique=True)
-	user = DBRelationship('user_dn', User)
+	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False, unique=True)
+	user = relationship('User')
 	code0 = Column(String(32), nullable=False, default=lambda: token_typeable(1))
 	code1 = Column(String(32), nullable=False, default=lambda: token_typeable(1))
 

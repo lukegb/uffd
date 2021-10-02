@@ -3,6 +3,7 @@ import io
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
 from flask_babel import gettext as _, lazy_gettext
+from sqlalchemy.exc import IntegrityError
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
@@ -10,7 +11,6 @@ from uffd.selfservice import send_passwordreset
 from uffd.session import login_required
 from uffd.role.models import Role
 from uffd.database import db
-from uffd.ldap import ldap, LDAPCommitError
 
 from .models import User
 
@@ -31,17 +31,17 @@ def user_acl():
 def index():
 	return render_template('user/list.html', users=User.query.all())
 
-@bp.route("/<int:uid>")
+@bp.route("/<int:id>")
 @bp.route("/new")
-def show(uid=None):
-	user = User() if uid is None else User.query.filter_by(uid=uid).first_or_404()
+def show(id=None):
+	user = User() if id is None else User.query.get_or_404(id)
 	return render_template('user/show.html', user=user, roles=Role.query.all())
 
-@bp.route("/<int:uid>/update", methods=['POST'])
+@bp.route("/<int:id>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
 @csrf_protect(blueprint=bp)
-def update(uid=None):
-	if uid is None:
+def update(id=None):
+	if id is None:
 		user = User()
 		ignore_blocklist = request.form.get('ignore-loginname-blocklist', False)
 		if request.form.get('serviceaccount'):
@@ -50,30 +50,29 @@ def update(uid=None):
 			flash(_('Login name does not meet requirements'))
 			return redirect(url_for('user.show'))
 	else:
-		user = User.query.filter_by(uid=uid).first_or_404()
+		user = User.query.get_or_404(id)
 	if user.mail != request.form['mail'] and not user.set_mail(request.form['mail']):
 		flash(_('Mail is invalid'))
-		return redirect(url_for('user.show', uid=uid))
+		return redirect(url_for('user.show', id=id))
 	new_displayname = request.form['displayname'] if request.form['displayname'] else request.form['loginname']
 	if user.displayname != new_displayname and not user.set_displayname(new_displayname):
 		flash(_('Display name does not meet requirements'))
-		return redirect(url_for('user.show', uid=uid))
+		return redirect(url_for('user.show', id=id))
 	new_password = request.form.get('password')
-	if uid is not None and new_password:
+	if id is not None and new_password:
 		if not user.set_password(new_password):
 			flash(_('Password is invalid'))
-			return redirect(url_for('user.show', uid=uid))
-	ldap.session.add(user)
+			return redirect(url_for('user.show', id=id))
+	db.session.add(user)
 	user.roles.clear()
 	for role in Role.query.all():
 		if not user.is_service_user and role.is_default:
 			continue
 		if request.values.get('role-{}'.format(role.id), False):
-			user.roles.add(role)
+			user.roles.append(role)
 	user.update_groups()
-	ldap.session.commit()
 	db.session.commit()
-	if uid is None:
+	if id is None:
 		if user.is_service_user:
 			flash(_('Service user created'))
 		else:
@@ -81,15 +80,14 @@ def update(uid=None):
 			flash(_('User created. We sent the user a password reset link by mail'))
 	else:
 		flash(_('User updated'))
-	return redirect(url_for('user.show', uid=user.uid))
+	return redirect(url_for('user.show', id=user.id))
 
-@bp.route("/<int:uid>/del")
+@bp.route("/<int:id>/del")
 @csrf_protect(blueprint=bp)
-def delete(uid):
-	user = User.query.filter_by(uid=uid).first_or_404()
+def delete(id):
+	user = User.query.get_or_404(id)
 	user.roles.clear()
-	ldap.session.delete(user)
-	ldap.session.commit()
+	db.session.delete(user)
 	db.session.commit()
 	flash(_('Deleted user'))
 	return redirect(url_for('user.index'))
@@ -119,17 +117,15 @@ def csvimport():
 			if not newuser.set_mail(row[1]):
 				flash("invalid mail address, skipped : {}".format(row))
 				continue
-			ldap.session.add(newuser)
+			db.session.add(newuser)
 			for role in roles:
 				if str(role.id) in row[2].split(';'):
-					role.members.add(newuser)
+					role.members.append(newuser)
 			newuser.update_groups()
 			try:
-				ldap.session.commit()
 				db.session.commit()
-			except LDAPCommitError:
+			except IntegrityError:
 				flash('Error adding user {}'.format(row[0]))
-				ldap.session.rollback()
 				db.session.rollback()
 				continue
 			send_passwordreset(newuser, new=True)

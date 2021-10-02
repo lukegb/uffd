@@ -12,9 +12,9 @@ import urllib.parse
 import crypt
 
 from flask import request, current_app
-from sqlalchemy import Column, Integer, Enum, String, DateTime, Text
+from sqlalchemy import Column, Integer, Enum, String, DateTime, Text, ForeignKey
+from sqlalchemy.orm import relationship, backref
 
-from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
 from uffd.user.models import User
 
@@ -28,11 +28,11 @@ class MFAType(enum.Enum):
 class MFAMethod(db.Model):
 	__tablename__ = 'mfa_method'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	type = Column(Enum(MFAType))
-	created = Column(DateTime())
+	type = Column(Enum(MFAType), nullable=False)
+	created = Column(DateTime(), nullable=False, default=datetime.datetime.now)
 	name = Column(String(128))
-	dn = Column(String(128))
-	user = DBRelationship('dn', User, backref='mfa_methods')
+	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	user = relationship('User', backref=backref('mfa_methods', cascade='all, delete-orphan'))
 
 	__mapper_args__ = {
 		'polymorphic_on': type,
@@ -46,7 +46,7 @@ class MFAMethod(db.Model):
 class RecoveryCodeMethod(MFAMethod):
 	code_salt = Column('recovery_salt', String(64))
 	code_hash = Column('recovery_hash', String(256))
-	user = DBRelationship('dn', User, backref='mfa_recovery_codes')
+	user = relationship('User', backref='mfa_recovery_codes')
 
 	__mapper_args__ = {
 		'polymorphic_identity': MFAType.RECOVERY_CODE
@@ -79,7 +79,7 @@ def _hotp(counter, key, digits=6):
 
 class TOTPMethod(MFAMethod):
 	key = Column('totp_key', String(64))
-	user = DBRelationship('dn', User, backref='mfa_totp_methods')
+	user = relationship('User', backref='mfa_totp_methods')
 
 	__mapper_args__ = {
 		'polymorphic_identity': MFAType.TOTP
@@ -129,7 +129,7 @@ class TOTPMethod(MFAMethod):
 
 class WebauthnMethod(MFAMethod):
 	_cred = Column('webauthn_cred', Text())
-	user = DBRelationship('dn', User, backref='mfa_webauthn_methods')
+	user = relationship('User', backref='mfa_webauthn_methods')
 
 	__mapper_args__ = {
 		'polymorphic_identity': MFAType.WEBAUTHN

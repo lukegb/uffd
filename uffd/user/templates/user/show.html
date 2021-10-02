@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<form action="{{ url_for("user.update", uid=user.uid) }}" method="POST">
+<form action="{{ url_for("user.update", id=user.id) }}" method="POST">
 <div class="align-self-center">
 	<div class="float-sm-right pb-2">
 		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> {{_("Save")}}</button>
 		<a href="{{ url_for("user.index") }}" class="btn btn-secondary">{{_("Cancel")}}</a>
-		{% if user.uid %}
-			<a href="{{ url_for("mfa.admin_disable", uid=user.uid) }}" class="btn btn-secondary">{{_("Reset 2FA")}}</a>
-			<a href="{{ url_for("user.delete", uid=user.uid) }}" onClick='return confirm({{_("Are you sure?")|tojson}});' class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
+		{% if user.id %}
+			<a href="{{ url_for("mfa.admin_disable", id=user.id) }}" class="btn btn-secondary">{{_("Reset 2FA")}}</a>
+			<a href="{{ url_for("user.delete", id=user.id) }}" onClick='return confirm({{_("Are you sure?")|tojson}});' class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
 		{% else %}
 			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
 		{% endif %}
@@ -30,13 +30,13 @@
 					<span class="badge badge-secondary">{{_('service')}}</span>
 					{% endif %}
 				</label>
-				{% if user.uid %}
-				<input type="number" class="form-control" id="user-uid" name="uid" value="{{ user.uid or '' }}" readonly>
+				{% if user.id %}
+				<input type="number" class="form-control" id="user-uid" name="uid" value="{{ user.unix_uid }}" readonly>
 				{% else %}
 				<input type="text" class="form-control" id="user-uid" name="uid" placeholder="{{_('will be choosen')}}" readonly>
 				{% endif %}
 			</div>
-			{% if not user.uid %}
+			{% if not user.id %}
 			<div class="form-group col">
 				<div class="form-check">
 					<input class="form-check-input" type="checkbox" id="user-serviceaccount" name="serviceaccount" value="1" aria-label="enabled">
@@ -46,12 +46,12 @@
 			{% endif %}
 			<div class="form-group col">
 				<label for="user-loginname">{{_("Login Name")}}</label>
-				<input type="text" class="form-control" id="user-loginname" name="loginname" value="{{ user.loginname or '' }}" {% if user.uid %}readonly{% endif %}>
+				<input type="text" class="form-control" id="user-loginname" name="loginname" value="{{ user.loginname or '' }}" {% if user.id %}readonly{% endif %}>
 				<small class="form-text text-muted">
 					{{_("Only letters, numbers, dashes (\"-\") and underscores (\"_\") are allowed. At most 32, at least 2 characters. There is a word blocklist. Must be unique.")}}
 				</small>
 			</div>
-			{% if not user.uid %}
+			{% if not user.id %}
 			<div class="form-group col">
 				<div class="form-check">
 					<input class="form-check-input" type="checkbox" id="ignore-loginname-blocklist" name="ignore-loginname-blocklist" value="1" aria-label="enabled">
@@ -75,7 +75,7 @@
 			</div>
 			<div class="form-group col">
 				<label for="user-loginname">{{_("Password")}}</label>
-				{% if user.uid %}
+				{% if user.id %}
 				<input type="password" class="form-control" id="user-password" name="password" placeholder="●●●●●●●●" minlength={{ User.PASSWORD_MINLEN }} maxlength={{ User.PASSWORD_MAXLEN }} pattern="{{ User.PASSWORD_REGEX }}">
 				{% else %}
 				<input type="password" class="form-control" id="user-password" name="password" placeholder="{{_("mail to set it will be sent")}}" readonly>
@@ -130,9 +130,9 @@
 					</thead>
 					<tbody>
 						{% for group in user.groups|sort(attribute="name") %}
-						<tr id="group-{{ group.gid }}">
+						<tr id="group-{{ group.id }}">
 							<td>
-								<a href="{{ url_for("group.show", gid=group.gid) }}">
+								<a href="{{ url_for("group.show", id=group.id) }}">
 									{{ group.name }}
 								</a>
 							</td>

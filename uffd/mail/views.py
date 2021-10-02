@@ -3,7 +3,7 @@ from flask_babel import gettext as _, lazy_gettext
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
-from uffd.ldap import ldap
+from uffd.database import db
 from uffd.session import login_required
 
 from uffd.mail.models import Mail
@@ -41,8 +41,8 @@ def update(uid=None):
 		mail = Mail(uid=request.form.get('mail-uid'))
 	mail.receivers = request.form.get('mail-receivers', '').splitlines()
 	mail.destinations = request.form.get('mail-destinations', '').splitlines()
-	ldap.session.add(mail)
-	ldap.session.commit()
+	db.session.add(mail)
+	db.session.commit()
 	flash(_('Mail mapping updated.'))
 	return redirect(url_for('mail.show', uid=mail.uid))
 
@@ -50,7 +50,7 @@ def update(uid=None):
 @csrf_protect(blueprint=bp)
 def delete(uid):
 	mail = Mail.query.filter_by(uid=uid).first_or_404()
-	ldap.session.delete(mail)
-	ldap.session.commit()
+	db.session.delete(mail)
+	db.session.commit()
 	flash(_('Deleted mail mapping.'))
 	return redirect(url_for('mail.index'))

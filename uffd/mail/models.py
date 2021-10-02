@@ -1,13 +1,32 @@
-from uffd.ldap import ldap
-from uffd.lazyconfig import lazyconfig_str, lazyconfig_list
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.associationproxy import association_proxy
 
-class Mail(ldap.Model):
-	ldap_search_base = lazyconfig_str('LDAP_MAIL_SEARCH_BASE')
-	ldap_filter_params = lazyconfig_list('LDAP_MAIL_SEARCH_FILTER')
-	ldap_object_classes = lazyconfig_list('LDAP_MAIL_OBJECTCLASSES')
-	ldap_dn_attribute = lazyconfig_str('LDAP_MAIL_DN_ATTRIBUTE')
-	ldap_dn_base = lazyconfig_str('LDAP_MAIL_SEARCH_BASE')
+from uffd.database import db
 
-	uid = ldap.Attribute(lazyconfig_str('LDAP_MAIL_UID_ATTRIBUTE'))
-	receivers = ldap.Attribute(lazyconfig_str('LDAP_MAIL_RECEIVERS_ATTRIBUTE'), multi=True)
-	destinations = ldap.Attribute(lazyconfig_str('LDAP_MAIL_DESTINATIONS_ATTRIBUTE'), multi=True)
+class Mail(db.Model):
+	__tablename__ = 'mail'
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	uid = Column(String(32), unique=True, nullable=False)
+	_receivers = relationship('MailReceiveAddress', cascade='all, delete-orphan')
+	receivers = association_proxy('_receivers', 'address')
+	_destinations = relationship('MailDestinationAddress', cascade='all, delete-orphan')
+	destinations = association_proxy('_destinations', 'address')
+
+class MailReceiveAddress(db.Model):
+	__tablename__ = 'mail_receive_address'
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	mail_id = Column(Integer(), ForeignKey('mail.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	address = Column(String(128), nullable=False)
+
+	def __init__(self, address):
+		self.address = address
+
+class MailDestinationAddress(db.Model):
+	__tablename__ = 'mail_destination_address'
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	mail_id = Column(Integer(), ForeignKey('mail.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	address = Column(String(128), nullable=False)
+
+	def __init__(self, address):
+		self.address = address

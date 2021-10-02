@@ -1,24 +1,47 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<form action="{{ url_for("group.show", gid=group.gid) }}" method="POST">
+<form action="{{ url_for("group.update", id=group.id) }}" method="POST">
 <div class="align-self-center">
+	<div class="clearfix pb-2 col">
+		<div class="float-sm-right">
+			<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> {{_("Save")}}</button>
+			<a href="{{ url_for("group.index") }}" class="btn btn-secondary">{{_("Cancel")}}</a>
+			{% if group.id %}
+				<a href="{{ url_for("group.delete", id=group.id) }}" onClick='return confirm({{_("Are you sure?")|tojson}});' class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
+			{% else %}
+				<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
+			{% endif %}
+		</div>
+	</div>
 	<div class="form-group col">
-		<label for="group-gid">{{_("GID")}}</label>
-		<input type="number" class="form-control" id="group-gid" name="gid" value="{{ group.gid }}" readonly>
+		<label for="group-gid">{{_("Group ID")}}</label>
+		{% if not group.id %}
+		<input type="number" class="form-control" id="group-gid" name="unix_gid" value="" placeholder="Automatically chosen if empty">
+		{% else %}
+		<input type="number" class="form-control" id="group-gid" name="unix_gid" value="{{ group.unix_gid }}" readonly>
+		{% endif %}
 	</div>
 	<div class="form-group col">
 		<label for="group-loginname">{{_("Name")}}</label>
-		<input type="text" class="form-control" id="group-loginname" name="loginname" value="{{ group.name }}" readonly>
+		<input type="text" class="form-control" id="group-loginname" name="name" value="{{ group.name or '' }}" {{ 'readonly' if group.id }}>
 	</div>
+	<div class="form-group col">
+		<label for="group-description">{{_("Description")}}</label>
+		<textarea class="form-control" id="group-description" name="description" rows="5">{{ group.description or '' }}</textarea>
+		<small class="form-text text-muted">
+		</small>
+	</div>
+	{% if group.id %}
 	<div class="col"> 
 		<span>{{_("Members")}}:</span>
 		<ul class="row">
 		{% for member in group.members|sort(attribute='loginname') %}
-			<li class="col-12 col-xs-6 col-sm-4 col-md-3 col-lg-2"><a href="{{ url_for("user.show", uid=member.uid) }}">{{ member.loginname }}</a></li>
+			<li class="col-12 col-xs-6 col-sm-4 col-md-3 col-lg-2"><a href="{{ url_for("user.show", id=member.id) }}">{{ member.loginname }}</a></li>
 		{% endfor %}
 		</ul>
 	</div>
+	{% endif %}
 </div>
 </form>
 {% endblock %}

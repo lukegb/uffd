@@ -52,7 +52,7 @@
 						<tr>
 							<td>{{ member.displayname }} ({{ member.loginname }})</td>
 							<td class="text-right">
-								<a class="btn btn-danger py-0" href="{{ url_for('rolemod.delete_member', role_id=role.id, member_dn=member.dn) }}">{{_('Remove')}}</a>
+								<a class="btn btn-danger py-0" href="{{ url_for('rolemod.delete_member', role_id=role.id, member_id=member.id) }}">{{_('Remove')}}</a>
 							</td>
 						</tr>
 						{% endfor %}

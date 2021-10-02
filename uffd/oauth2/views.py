@@ -67,7 +67,7 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 
 	def save_authorization_code(self, client_id, code, oauthreq, *args, **kwargs):
 		expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
-		grant = OAuth2Grant(user_dn=oauthreq.user.dn, client_id=client_id, code=code['code'],
+		grant = OAuth2Grant(user=oauthreq.user, client_id=client_id, code=code['code'],
 		                    redirect_uri=oauthreq.redirect_uri, expires=expires, _scopes=' '.join(oauthreq.scopes))
 		db.session.add(grant)
 		db.session.commit()
@@ -97,11 +97,11 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 		db.session.commit()
 
 	def save_bearer_token(self, token_data, oauthreq, *args, **kwargs):
-		OAuth2Token.query.filter_by(client_id=oauthreq.client.client_id, user_dn=oauthreq.user.dn).delete()
+		OAuth2Token.query.filter_by(client_id=oauthreq.client.client_id, user=oauthreq.user).delete()
 		expires_in = token_data.get('expires_in')
 		expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)
 		tok = OAuth2Token(
-			user_dn=oauthreq.user.dn,
+			user=oauthreq.user,
 			client_id=oauthreq.client.client_id,
 			token_type=token_data['token_type'],
 			access_token=token_data['access_token'],
@@ -234,15 +234,11 @@ def oauth_required(*scopes):
 @oauth_required('profile')
 def userinfo():
 	user = request.oauth.user
-	# We once exposed the entryUUID here as "ldap_uuid" until realising that it
-	# can (and does!) change randomly and is therefore entirely useless as an
-	# indentifier.
 	return jsonify(
-		id=user.uid,
+		id=user.unix_uid,
 		name=user.displayname,
 		nickname=user.loginname,
 		email=user.mail,
-		ldap_dn=user.dn,
 		groups=[group.name for group in user.groups]
 	)
 

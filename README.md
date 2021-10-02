@@ -1,7 +1,6 @@
 # Uffd
 
-This is the UserFerwaltungsFrontend.
-A web service to manage LDAP users, groups and permissions.
+Uffd (UserFerwaltungsFrontend) is a web-based user management and single sign-on software.
 
 Development chat: [#uffd-development](https://rocket.cccv.de/channel/uffd-development)
 
@@ -10,14 +9,14 @@ Development chat: [#uffd-development](https://rocket.cccv.de/channel/uffd-develo
 Please note that we refer to Debian packages here and **not** pip packages.
 
 - python3
-- python3-ldap3
 - python3-flask
 - python3-flask-sqlalchemy
 - python3-flask-migrate
 - python3-qrcode
-- python3-fido2 (version 0.5.0, optional)
+- python3-fido2 (version 0.5.0 or 0.9.1, optional)
 - python3-oauthlib
 - python3-flask-babel
+- python3-mysqldb or python3-pymysql for MySQL/MariaDB support
 
 Some of the dependencies (especially fido2) changed their API in recent versions, so make sure to install the versions from Debian Buster or Bullseye.
 For development, you can also use virtualenv with the supplied `requirements.txt`.
@@ -34,10 +33,14 @@ FLASK_APP=uffd flask db upgrade
 FLASK_APP=uffd FLASK_ENV=development flask run
 ```
 
-During development, you may want to enable LDAP mocking, as you otherwise need to have access to an actual LDAP server with the required schema.
-You can do so by setting `LDAP_SERVICE_MOCK=True` in the config.
-Afterwards you can login as a normal user with "testuser" and "userpassword", or as an admin with "testadmin" and "adminpassword".
-Please note that the mocked LDAP functionality is very limited and many uffd features do not work correctly without a real LDAP server.
+During development, you may want to create some example data:
+
+```
+FLASK_APP=uffd flask create-examples
+```
+
+Afterwards you can login as a normal user with "testuser" and "userpassword", or as an admin with "testad
+min" and "adminpassword".
 
 ## Deployment
 
@@ -62,6 +65,27 @@ The Debian package uses uwsgi to run uffd and ships an `uffd-admin` to execute f
 If you upgrade, make sure to run `flask db upgrade` after every update! The Debian package takes care of this by itself using uwsgi pre start hooks.
 For an example uwsgi config, see our [uswgi.ini](uwsgi.ini). You might find our [nginx include file](nginx.include.conf) helpful to setup a web server in front of uwsgi.
 
+## Migration from version 1
+
+Prior to version 2 uffd stored users, groups and mail aliases in an LDAP server.
+To migrate from version 1 to a later version, make sure to keep the v1 config file as it is with all LDAP settings.
+Running the database migrations with `flask db upgrade` automatically imports all users, groups and mail forwardings from LDAP to the database.
+Note that all LDAP attributes must be readable, including the password field.
+Make sure to have a working backup of the database before running the database upgrade!
+Downgrading is not supported.
+
+After running the migrations you can remove all `LDAP_*`-prefixed settings from the config file except the following ones that are renamed:
+
+* `LDAP_USER_GID` -> `USER_GID`
+* `LDAP_USER_MIN_UID` -> `USER_MIN_UID`
+* `LDAP_USER_MAX_UID` -> `USER_MAX_UID`
+* `LDAP_USER_SERVICE_MIN_UID` -> `USER_SERVICE_MIN_UID`
+* `LDAP_USER_SERVICE_MAX_UID` -> `USER_SERVICE_MAX_UID`
+* `LDAP_GROUP_MIN_GID` -> `GROUP_MIN_GID`
+* `LDAP_GROUP_MAX_GID` -> `GROUP_MAX_GID`
+
+Upgrading will not perform any write access to the LDAP server.
+
 ## Python Coding Style Conventions
 
 PEP 8 without double new lines, tabs instead of spaces and a max line length of 160 characters.
@@ -73,15 +97,6 @@ Uffd reads its default config from `uffd/default_config.cfg`.
 You can overwrite config variables by creating a config file in the `instance` folder.
 The file must be named `config.cfg` (Python syntax), `config.json` or `config.yml`/`config.yaml`.
 You can also set a custom file name with the environment variable `CONFIG_FILENAME`.
-
-## Bind with LDAP service account or as user?
-
-Uffd can use a dedicated service account for LDAP operations by setting `LDAP_SERVICE_BIND_DN`.
-Leave that variable blank to use anonymous bind.
-Or set `LDAP_SERVICE_USER_BIND` to use the credentials of the currently logged in user.
-
-If you choose to run with user credentials, some features are not available, like password resets
-or self signup, since in both cases, no user credentials can exist.
 
 ## OAuth2 Single-Sign-On Provider
 
@@ -101,7 +116,6 @@ The userinfo endpoint returns json data with the following structure:
   "name": "Test User",
   "nickname": "testuser"
   "email": "testuser@example.com",
-  "ldap_dn": "uid=testuser,ou=users,dc=example,dc=com",
   "groups": [
     "uffd_access",
     "users"
@@ -109,8 +123,7 @@ The userinfo endpoint returns json data with the following structure:
 }
 ```
 
-`id` is the uidNumber, `name` the display name (cn) and `nickname` the uid of the user's LDAP object.
-
+`id` is the numeric (Unix) user id, `name` the display name and `nickname` the loginname of the user.
 
 ## Translation
 

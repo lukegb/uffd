@@ -1,42 +1,67 @@
 import secrets
 import string
 import re
+import hashlib
+import base64
 
 from flask import current_app, escape
 from flask_babel import lazy_gettext
-from ldap3.utils.hashed import hashed, HASHED_SALTED_SHA512
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql.expression import func
 
-from uffd.ldap import ldap
-from uffd.lazyconfig import lazyconfig_str, lazyconfig_list
+from uffd.database import db
 
-def get_next_uid(service=False):
-	if service:
-		new_uid_min = current_app.config['LDAP_USER_SERVICE_MIN_UID']
-		new_uid_max = current_app.config['LDAP_USER_SERVICE_MAX_UID']
+# Interface inspired by argon2-cffi
+class PasswordHasher:
+	# pylint: disable=no-self-use
+	def hash(self, password):
+		salt = secrets.token_bytes(8)
+		ctx = hashlib.sha512()
+		ctx.update(password.encode())
+		ctx.update(salt)
+		return '{ssha512}'+base64.b64encode(ctx.digest()+salt).decode()
+
+	def verify(self, hash, password):
+		if hash is None:
+			return False
+		if hash.startswith('{ssha512}'):
+			data = base64.b64decode(hash[len('{ssha512}'):].encode())
+			ctx = hashlib.sha512()
+			digest = data[:ctx.digest_size]
+			salt = data[ctx.digest_size:]
+			ctx.update(password.encode())
+			ctx.update(salt)
+			return secrets.compare_digest(digest, ctx.digest())
+		return False
+
+	# pylint: disable=unused-argument
+	def check_needs_rehash(self, hash):
+		return False
+
+def get_next_unix_uid(context):
+	is_service_user = bool(context.get_current_parameters().get('is_service_user', False))
+	if is_service_user:
+		min_uid = current_app.config['USER_SERVICE_MIN_UID']
+		max_uid = current_app.config['USER_SERVICE_MAX_UID']
 	else:
-		new_uid_min = current_app.config['LDAP_USER_MIN_UID']
-		new_uid_max = current_app.config['LDAP_USER_MAX_UID']
-	next_uid = new_uid_min
-	for user in User.query.all():
-		if user.uid <= new_uid_max:
-			next_uid = max(next_uid, user.uid + 1)
-	if next_uid > new_uid_max:
+		min_uid = current_app.config['USER_MIN_UID']
+		max_uid = current_app.config['USER_MAX_UID']
+	next_uid = max(min_uid,
+	               db.session.query(func.max(User.unix_uid + 1))\
+	                         .filter(User.is_service_user==is_service_user)\
+	                         .scalar() or 0)
+	if next_uid > max_uid:
 		raise Exception('No free uid found')
 	return next_uid
 
-class ObjectAttributeDict:
-	def __init__(self, obj):
-		self.obj = obj
+# pylint: disable=E1101
+user_groups = db.Table('user_groups',
+	Column('user_id', Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True),
+	Column('group_id', Integer(), ForeignKey('group.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
+)
 
-	def __getitem__(self, key):
-		return getattr(self.obj, key)
-
-def format_with_attributes(fmtstr, obj):
-	# Do str.format-style string formatting with the attributes of an object
-	# E.g. format_with_attributes("/home/{loginname}", obj) = "/home/foobar" if obj.loginname = "foobar"
-	return fmtstr.format_map(ObjectAttributeDict(obj))
-
-class BaseUser(ldap.Model):
+class User(db.Model):
 	# Allows 8 to 256 ASCII letters (lower and upper case), digits, spaces and
 	# symbols/punctuation characters. It disallows control characters and
 	# non-ASCII characters to prevent setting passwords considered invalid by
@@ -51,56 +76,28 @@ class BaseUser(ldap.Model):
 	                                    'Please use a password manager.',
 	                                    minlen=PASSWORD_MINLEN, maxlen=PASSWORD_MAXLEN, symbols=escape('!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'))
 
-	ldap_search_base = lazyconfig_str('LDAP_USER_SEARCH_BASE')
-	ldap_filter_params = lazyconfig_list('LDAP_USER_SEARCH_FILTER')
-	ldap_object_classes = lazyconfig_list('LDAP_USER_OBJECTCLASSES')
-	ldap_dn_base = lazyconfig_str('LDAP_USER_SEARCH_BASE')
-	ldap_dn_attribute = lazyconfig_str('LDAP_USER_DN_ATTRIBUTE')
-
-	uid = ldap.Attribute(lazyconfig_str('LDAP_USER_UID_ATTRIBUTE'), default=get_next_uid, aliases=lazyconfig_list('LDAP_USER_UID_ALIASES'))
-	loginname = ldap.Attribute(lazyconfig_str('LDAP_USER_LOGINNAME_ATTRIBUTE'), aliases=lazyconfig_list('LDAP_USER_LOGINNAME_ALIASES'))
-	displayname = ldap.Attribute(lazyconfig_str('LDAP_USER_DISPLAYNAME_ATTRIBUTE'), aliases=lazyconfig_list('LDAP_USER_DISPLAYNAME_ALIASES'))
-	mail = ldap.Attribute(lazyconfig_str('LDAP_USER_MAIL_ATTRIBUTE'), aliases=lazyconfig_list('LDAP_USER_MAIL_ALIASES'))
-	pwhash = ldap.Attribute('userPassword', default=lambda: hashed(HASHED_SALTED_SHA512, secrets.token_hex(128)))
-
-	groups = set() # Shuts up pylint, overwritten by back-reference
-	roles = set() # Shuts up pylint, overwritten by back-reference
+	__tablename__ = 'user'
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	unix_uid = Column(Integer(), unique=True, nullable=False, default=get_next_unix_uid)
+	loginname = Column(String(32), unique=True, nullable=False)
+	displayname = Column(String(128), nullable=False)
+	mail = Column(String(128), nullable=False)
+	pwhash = Column(String(256), nullable=True)
+	is_service_user = Column(Boolean(), default=False, nullable=False)
+	groups = relationship('Group', secondary='user_groups')
+	roles = relationship('Role', secondary='role_members', back_populates='members')
 
 	@property
-	def group_dns(self):
-		return [group.dn for group in self.groups]
-
-	@property
-	def is_service_user(self):
-		if self.uid is None:
-			return None
-		return self.uid >= current_app.config['LDAP_USER_SERVICE_MIN_UID'] and self.uid <= current_app.config['LDAP_USER_SERVICE_MAX_UID']
-
-	@is_service_user.setter
-	def is_service_user(self, value):
-		assert self.uid is None
-		if value:
-			self.uid = get_next_uid(service=True)
-
-	def add_default_attributes(self):
-		for name, values in current_app.config['LDAP_USER_DEFAULT_ATTRIBUTES'].items():
-			if self.ldap_object.getattr(name):
-				continue
-			if not isinstance(values, list):
-				values = [values]
-			formatted_values = []
-			for value in values:
-				if isinstance(value, str):
-					value = format_with_attributes(value, self)
-				formatted_values.append(value)
-			self.ldap_object.setattr(name, formatted_values)
-
-	ldap_add_hooks = ldap.Model.ldap_add_hooks + (add_default_attributes,)
+	def unix_gid(self):
+		return current_app.config['USER_GID']
 
 	# Write-only property
 	def password(self, value):
-		self.pwhash = hashed(HASHED_SALTED_SHA512, value)
+		self.pwhash = PasswordHasher().hash(value)
 	password = property(fset=password)
+
+	def check_password(self, value):
+		return PasswordHasher().verify(self.pwhash, value)
 
 	def is_in_group(self, name):
 		if not name:
@@ -155,15 +152,17 @@ class BaseUser(ldap.Model):
 		self.mail = value
 		return True
 
-User = BaseUser
+def get_next_unix_gid():
+	next_gid = max(current_app.config['GROUP_MIN_GID'],
+	               db.session.query(func.max(Group.unix_gid + 1)).scalar() or 0)
+	if next_gid > current_app.config['GROUP_MAX_GID']:
+		raise Exception('No free gid found')
+	return next_gid
 
-class Group(ldap.Model):
-	ldap_search_base = lazyconfig_str('LDAP_GROUP_SEARCH_BASE')
-	ldap_filter_params = lazyconfig_list('LDAP_GROUP_SEARCH_FILTER')
-
-	gid = ldap.Attribute(lazyconfig_str('LDAP_GROUP_GID_ATTRIBUTE'))
-	name = ldap.Attribute(lazyconfig_str('LDAP_GROUP_NAME_ATTRIBUTE'))
-	description = ldap.Attribute(lazyconfig_str('LDAP_GROUP_DESCRIPTION_ATTRIBUTE'), default='')
-	members = ldap.Relationship(lazyconfig_str('LDAP_GROUP_MEMBER_ATTRIBUTE'), User, backref='groups')
-
-	roles = [] # Shuts up pylint, overwritten by back-reference
+class Group(db.Model):
+	__tablename__ = 'group'
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	unix_gid = Column(Integer(), unique=True, nullable=False, default=get_next_unix_gid)
+	name = Column(String(32), unique=True, nullable=False)
+	description = Column(String(128), nullable=False, default='')
+	members = relationship('User', secondary='user_groups')

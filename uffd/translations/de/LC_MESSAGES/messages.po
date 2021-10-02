@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-09-05 01:02+0200\n"
+"POT-Creation-Date: 2021-09-15 10:56+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -62,42 +62,42 @@ msgstr ""
 "Einladungslink muss entweder Account-Registrierung erlauben oder Rollen "
 "vergeben"
 
-#: uffd/invite/views.py:109 uffd/invite/views.py:138
+#: uffd/invite/views.py:122 uffd/invite/views.py:157
 msgid "Invalid invite link"
 msgstr "Ungültiger Einladungslink"
 
-#: uffd/invite/views.py:126
+#: uffd/invite/views.py:140
 msgid "Roles successfully updated"
 msgstr "Rollen erfolgreich geändert"
 
-#: uffd/invite/views.py:141
+#: uffd/invite/views.py:160
 msgid "Invite link does not allow signup"
 msgstr "Einladungslink erlaubt keine Account-Registrierung"
 
-#: uffd/invite/views.py:163 uffd/selfservice/views.py:53
-#: uffd/signup/views.py:49
+#: uffd/invite/views.py:186 uffd/selfservice/views.py:50
+#: uffd/signup/views.py:50
 msgid "Passwords do not match"
 msgstr "Die Passwörter stimmen nicht überein"
 
-#: uffd/invite/views.py:168 uffd/signup/views.py:54
+#: uffd/invite/views.py:191 uffd/signup/views.py:55
 #, python-format
 msgid "Too many signup requests with this mail address! Please wait %(delay)s."
 msgstr ""
 "Zu viele Account-Registrierungen mit dieser E-Mail-Adresse! Bitte warte "
 "%(delay)s."
 
-#: uffd/invite/views.py:170 uffd/signup/views.py:56 uffd/signup/views.py:92
+#: uffd/invite/views.py:193 uffd/signup/views.py:57 uffd/signup/views.py:106
 #, python-format
 msgid "Too many requests! Please wait %(delay)s."
 msgstr "Zu viele Anfragen! Bitte warte %(delay)s."
 
-#: uffd/invite/views.py:183 uffd/signup/views.py:68
+#: uffd/invite/views.py:206 uffd/signup/views.py:69
 msgid "Cound not send mail"
 msgstr "Mailversand fehlgeschlagen"
 
 #: uffd/invite/templates/invite/list.html:6
 #: uffd/mail/templates/mail/list.html:8 uffd/role/templates/role/list.html:8
-#: uffd/user/templates/user/list.html:8
+#: uffd/user/templates/group/list.html:8 uffd/user/templates/user/list.html:8
 msgid "New"
 msgstr "Neu"
 
@@ -129,107 +129,107 @@ msgstr "Link kopieren"
 msgid "Show link as QR code"
 msgstr "Link als QR-Code anzeigen"
 
-#: uffd/invite/templates/invite/list.html:42
+#: uffd/invite/templates/invite/list.html:40
 msgid "Signup"
 msgstr "Account-Registrierung"
 
-#: uffd/invite/templates/invite/list.html:51
+#: uffd/invite/templates/invite/list.html:49
 msgid "Disabled"
 msgstr "Deaktiviert"
 
-#: uffd/invite/templates/invite/list.html:53
+#: uffd/invite/templates/invite/list.html:51
 msgid "Voided"
 msgstr "Verbraucht"
 
-#: uffd/invite/templates/invite/list.html:55
+#: uffd/invite/templates/invite/list.html:53
 msgid "Expired"
 msgstr "Abgelaufen"
 
-#: uffd/invite/templates/invite/list.html:57
+#: uffd/invite/templates/invite/list.html:55
 msgid "Invalid, unpermitted creator"
 msgstr "Ungültig, erstellt durch unberechtigten Account"
 
-#: uffd/invite/templates/invite/list.html:59
+#: uffd/invite/templates/invite/list.html:57
 msgid "Invalid"
 msgstr "Ungültig"
 
-#: uffd/invite/templates/invite/list.html:61
+#: uffd/invite/templates/invite/list.html:59
 #, python-format
 msgid "Valid once, expires %(expiry_date)s"
 msgstr "Einmal verwendbar, gültig bis %(expiry_date)s"
 
-#: uffd/invite/templates/invite/list.html:63
+#: uffd/invite/templates/invite/list.html:61
 #, python-format
 msgid "Valid, expires %(expiry_date)s"
 msgstr "Gültig bis %(expiry_date)s"
 
-#: uffd/invite/templates/invite/list.html:80
+#: uffd/invite/templates/invite/list.html:78
 msgid "Invite Link Details"
 msgstr "Details zum Einladungslink"
 
-#: uffd/invite/templates/invite/list.html:87
+#: uffd/invite/templates/invite/list.html:85
 msgid "Type:"
 msgstr "Typ:"
 
-#: uffd/invite/templates/invite/list.html:87
+#: uffd/invite/templates/invite/list.html:85
 msgid "Single-use"
 msgstr "Einmal verwendbar"
 
-#: uffd/invite/templates/invite/list.html:87
+#: uffd/invite/templates/invite/list.html:85
 #: uffd/invite/templates/invite/new.html:9
 msgid "Multi-use"
 msgstr "Mehrfach verwendbar"
 
-#: uffd/invite/templates/invite/list.html:88
+#: uffd/invite/templates/invite/list.html:86
 msgid "Created:"
 msgstr "Erstellt:"
 
-#: uffd/invite/templates/invite/list.html:89
+#: uffd/invite/templates/invite/list.html:87
 msgid "Expires:"
 msgstr "Ablaufdatum:"
 
-#: uffd/invite/templates/invite/list.html:90
+#: uffd/invite/templates/invite/list.html:88
 msgid "Permissions:"
 msgstr "Berechtigungen:"
 
-#: uffd/invite/templates/invite/list.html:93
+#: uffd/invite/templates/invite/list.html:91
 #: uffd/invite/templates/invite/new.html:21
 msgid "Link allows account registration"
 msgstr "Link erlaubt Account-Registrierung"
 
-#: uffd/invite/templates/invite/list.html:95
+#: uffd/invite/templates/invite/list.html:93
 #: uffd/invite/templates/invite/new.html:22
 msgid "No account registration allowed"
 msgstr "Keine Account-Registrierung möglich"
 
-#: uffd/invite/templates/invite/list.html:98
+#: uffd/invite/templates/invite/list.html:96
 #, python-format
 msgid "Link grants users the role \"%(name)s\""
 msgstr "Link gibt Accounts die Rolle \"%(name)s\""
 
-#: uffd/invite/templates/invite/list.html:104
+#: uffd/invite/templates/invite/list.html:102
 msgid "Never used"
 msgstr "Keine Verwendungen"
 
-#: uffd/invite/templates/invite/list.html:108
+#: uffd/invite/templates/invite/list.html:106
 #, python-format
 msgid "Registration of user <a href=\"%(user_url)s\">%(user_name)s</a>"
 msgstr "Account-Registrierung von <a href=\"%(user_url)s\">%(user_name)s</a>"
 
-#: uffd/invite/templates/invite/list.html:111
+#: uffd/invite/templates/invite/list.html:109
 #, python-format
 msgid "Roles granted to <a href=\"%(user_url)s\">%(user_name)s</a>"
 msgstr "Rollen an <a href=\"%(user_url)s\">%(user_name)s</a> vergeben"
 
-#: uffd/invite/templates/invite/list.html:122
+#: uffd/invite/templates/invite/list.html:120
 msgid "Disable Link"
 msgstr "Link deaktivieren"
 
-#: uffd/invite/templates/invite/list.html:126
+#: uffd/invite/templates/invite/list.html:124
 msgid "Reenable Link"
 msgstr "Link reaktivieren"
 
-#: uffd/invite/templates/invite/list.html:140
+#: uffd/invite/templates/invite/list.html:138
 msgid "Invite"
 msgstr "Einladungslink"
 
@@ -251,7 +251,7 @@ msgid "Must be within the next %(max_valid_days)d days"
 msgstr "Muss innerhalb der nächsten %(max_valid_days)d Tage liegen"
 
 #: uffd/invite/templates/invite/new.html:19
-#: uffd/signup/templates/signup/start.html:11
+#: uffd/signup/templates/signup/start.html:6
 msgid "Account Registration"
 msgstr "Account-Registrierung"
 
@@ -268,8 +268,8 @@ msgstr "Enthaltene Rollen"
 #: uffd/rolemod/templates/rolemod/list.html:9
 #: uffd/rolemod/templates/rolemod/show.html:46
 #: uffd/selfservice/templates/selfservice/self.html:101
-#: uffd/user/templates/group/list.html:10
-#: uffd/user/templates/group/show.html:11 uffd/user/templates/user/show.html:95
+#: uffd/user/templates/group/list.html:15
+#: uffd/user/templates/group/show.html:26 uffd/user/templates/user/show.html:95
 #: uffd/user/templates/user/show.html:127
 msgid "Name"
 msgstr "Name"
@@ -279,7 +279,8 @@ msgstr "Name"
 #: uffd/rolemod/templates/rolemod/list.html:10
 #: uffd/rolemod/templates/rolemod/show.html:28
 #: uffd/selfservice/templates/selfservice/self.html:102
-#: uffd/user/templates/group/list.html:11 uffd/user/templates/user/show.html:96
+#: uffd/user/templates/group/list.html:16
+#: uffd/user/templates/group/show.html:30 uffd/user/templates/user/show.html:96
 #: uffd/user/templates/user/show.html:128
 msgid "Description"
 msgstr "Beschreibung"
@@ -289,26 +290,26 @@ msgid "Create Link"
 msgstr "Link erstellen"
 
 #: uffd/invite/templates/invite/new.html:56
-#: uffd/mail/templates/mail/show.html:28 uffd/mfa/templates/mfa/auth.html:39
+#: uffd/mail/templates/mail/show.html:28 uffd/mfa/templates/mfa/auth.html:33
 #: uffd/role/templates/role/show.html:14
 #: uffd/rolemod/templates/rolemod/show.html:11
-#: uffd/session/templates/session/deviceauth.html:44
-#: uffd/session/templates/session/deviceauth.html:54
-#: uffd/session/templates/session/devicelogin.html:34
-#: uffd/user/templates/user/show.html:8
+#: uffd/session/templates/session/deviceauth.html:39
+#: uffd/session/templates/session/deviceauth.html:49
+#: uffd/session/templates/session/devicelogin.html:29
+#: uffd/user/templates/group/show.html:9 uffd/user/templates/user/show.html:8
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: uffd/invite/templates/invite/use.html:11
+#: uffd/invite/templates/invite/use.html:5
 msgid "Invite Link"
 msgstr "Einladungslink"
 
-#: uffd/invite/templates/invite/use.html:14
+#: uffd/invite/templates/invite/use.html:8
 #, python-format
 msgid "Welcome to the %(org_name)s Single-Sign-On!"
 msgstr "Willkommen im %(org_name)s Single-Sign-On!"
 
-#: uffd/invite/templates/invite/use.html:18
+#: uffd/invite/templates/invite/use.html:12
 msgid ""
 "With this link you can register a new user account with the following "
 "roles or add the roles to an existing account:"
@@ -316,33 +317,33 @@ msgstr ""
 "Mit diesem Link kannst du einen Account mit den folgenden Rollen "
 "erstellen oder diese Rollen zu einem existierenden Account hinzufügen:"
 
-#: uffd/invite/templates/invite/use.html:20
+#: uffd/invite/templates/invite/use.html:14
 msgid "With this link you can add the following roles to an existing account:"
 msgstr ""
 "Mit diesem Link kannst du die folgenden Rollen zu einem existierenden "
 "Account hinzufügen:"
 
-#: uffd/invite/templates/invite/use.html:22
+#: uffd/invite/templates/invite/use.html:16
 msgid "With this link you can register a new user account."
 msgstr "Mit diesem Link kannst du einen Account registieren."
 
-#: uffd/invite/templates/invite/use.html:34
+#: uffd/invite/templates/invite/use.html:28
 msgid "Add the roles to your account now"
 msgstr "Rollen jetzt zu deinem Account hinzufügen"
 
-#: uffd/invite/templates/invite/use.html:36
+#: uffd/invite/templates/invite/use.html:30
 msgid "Logout and switch to a different account"
 msgstr "Abmelden und zu einem anderen Account wechseln"
 
-#: uffd/invite/templates/invite/use.html:39
+#: uffd/invite/templates/invite/use.html:33
 msgid "Logout to register a new account"
 msgstr "Abmelden um einen neuen Account zu registrieren"
 
-#: uffd/invite/templates/invite/use.html:43
+#: uffd/invite/templates/invite/use.html:37
 msgid "Register a new account"
 msgstr "Neuen Account registrieren"
 
-#: uffd/invite/templates/invite/use.html:46
+#: uffd/invite/templates/invite/use.html:40
 msgid "Login and add the roles to your account"
 msgstr "Anmelden und die Rollen zu deinem Account hinzufügen"
 
@@ -372,30 +373,32 @@ msgstr "Eine Adresse pro Zeile"
 
 #: uffd/mail/templates/mail/show.html:27 uffd/role/templates/role/show.html:13
 #: uffd/rolemod/templates/rolemod/show.html:10
-#: uffd/user/templates/user/show.html:7
+#: uffd/user/templates/group/show.html:8 uffd/user/templates/user/show.html:7
 msgid "Save"
 msgstr "Speichern"
 
 #: uffd/mail/templates/mail/show.html:30 uffd/mail/templates/mail/show.html:32
 #: uffd/mfa/templates/mfa/setup.html:117 uffd/mfa/templates/mfa/setup.html:179
 #: uffd/role/templates/role/show.html:21 uffd/role/templates/role/show.html:24
-#: uffd/user/templates/user/show.html:11 uffd/user/templates/user/show.html:13
+#: uffd/user/templates/group/show.html:11
+#: uffd/user/templates/group/show.html:13 uffd/user/templates/user/show.html:11
+#: uffd/user/templates/user/show.html:13
 msgid "Delete"
 msgstr "Löschen"
 
-#: uffd/mfa/views.py:53
+#: uffd/mfa/views.py:51
 msgid "Two-factor authentication was reset"
 msgstr "Zwei-Faktor-Authentifizierung wurde zurückgesetzt"
 
-#: uffd/mfa/views.py:82
+#: uffd/mfa/views.py:80
 msgid "Generate recovery codes first!"
 msgstr "Generiere zuerst die Wiederherstellungscodes!"
 
-#: uffd/mfa/views.py:91
+#: uffd/mfa/views.py:88
 msgid "Code is invalid"
 msgstr "Wiederherstellungscode ist ungültig"
 
-#: uffd/mfa/views.py:115
+#: uffd/mfa/views.py:123
 #, python-format
 msgid ""
 "2FA WebAuthn support disabled because import of the fido2 module failed "
@@ -404,16 +407,16 @@ msgstr ""
 "2FA WebAuthn Unterstützung deaktiviert, da das fido2 Modul nicht geladen "
 "werden konnte (%s)"
 
-#: uffd/mfa/views.py:224
+#: uffd/mfa/views.py:232
 #, python-format
 msgid "We received too many invalid attempts! Please wait at least %s."
 msgstr "Wir haben zu viele fehlgeschlagene Versuche! Bitte warte mindestens %s."
 
-#: uffd/mfa/views.py:238
+#: uffd/mfa/views.py:246
 msgid "You have exhausted your recovery codes. Please generate new ones now!"
 msgstr "Du hast keine Wiederherstellungscode mehr. Bitte generiere diese jetzt!"
 
-#: uffd/mfa/views.py:241
+#: uffd/mfa/views.py:249
 msgid ""
 "You only have a few recovery codes remaining. Make sure to generate new "
 "ones before they run out."
@@ -421,38 +424,38 @@ msgstr ""
 "Du hast nur noch wenige Wiederherstellungscodes übrig. Bitte generiere "
 "diese erneut bevor keine mehr übrig sind."
 
-#: uffd/mfa/views.py:245
+#: uffd/mfa/views.py:253
 msgid "Two-factor authentication failed"
 msgstr "Zwei-Faktor-Authentifizierung fehlgeschlagen"
 
-#: uffd/mfa/templates/mfa/auth.html:12
+#: uffd/mfa/templates/mfa/auth.html:6
 #: uffd/selfservice/templates/selfservice/self.html:67
 msgid "Two-Factor Authentication"
 msgstr "Zwei-Faktor-Authentifizierung"
 
-#: uffd/mfa/templates/mfa/auth.html:17
+#: uffd/mfa/templates/mfa/auth.html:11
 msgid "Enable javascript for authentication with U2F/FIDO2 devices"
 msgstr "Aktiviere Javascript zur Authentifizierung mit U2F/FIDO2 Geräten"
 
-#: uffd/mfa/templates/mfa/auth.html:21
+#: uffd/mfa/templates/mfa/auth.html:15
 msgid "Authentication with U2F/FIDO2 devices is not supported by your browser"
 msgstr ""
 "Authentifizierung mit U2F/FIDO2 Geräten wird von deinem Browser nicht "
 "unterstützt"
 
-#: uffd/mfa/templates/mfa/auth.html:27
+#: uffd/mfa/templates/mfa/auth.html:21
 msgid "Authenticate with U2F/FIDO2 device"
 msgstr "Authentifiziere dich mit einem U2F/FIDO2 Gerät"
 
-#: uffd/mfa/templates/mfa/auth.html:30
+#: uffd/mfa/templates/mfa/auth.html:24
 msgid "or"
 msgstr "oder"
 
-#: uffd/mfa/templates/mfa/auth.html:33
+#: uffd/mfa/templates/mfa/auth.html:27
 msgid "Code from your authenticator app or recovery code"
 msgstr "Code aus deiner Authentifikator-App oder Wiederherstellungscode"
 
-#: uffd/mfa/templates/mfa/auth.html:36
+#: uffd/mfa/templates/mfa/auth.html:30
 msgid "Verify"
 msgstr "Verifizieren"
 
@@ -700,12 +703,12 @@ msgstr "Sekunden"
 msgid "Verify and complete setup"
 msgstr "Verifiziere und beende das Setup"
 
-#: uffd/oauth2/models.py:30
+#: uffd/oauth2/models.py:29
 msgid "You need to login to access this service"
 msgstr "Du musst dich anmelden, um auf diesen Dienst zugreifen zu können"
 
-#: uffd/oauth2/views.py:140 uffd/selfservice/views.py:79
-#: uffd/session/views.py:97
+#: uffd/oauth2/views.py:173 uffd/selfservice/views.py:72
+#: uffd/session/views.py:73
 #, python-format
 msgid ""
 "We received too many requests from your ip address/network! Please wait "
@@ -714,15 +717,15 @@ msgstr ""
 "Wir haben zu viele Anfragen von deiner IP-Adresses bzw. aus deinem "
 "Netzwerk empfangen! Bitte warte mindestens %(delay)s."
 
-#: uffd/oauth2/views.py:148
+#: uffd/oauth2/views.py:181
 msgid "Device login is currently not available. Try again later!"
 msgstr "Geräte-Login ist gerade nicht verfügbar. Versuche es später nochmal!"
 
-#: uffd/oauth2/views.py:161
+#: uffd/oauth2/views.py:194
 msgid "Device login failed"
 msgstr "Gerätelogin fehlgeschlagen"
 
-#: uffd/oauth2/views.py:174
+#: uffd/oauth2/views.py:207
 #, python-format
 msgid ""
 "You don't have the permission to access the service "
@@ -731,15 +734,15 @@ msgstr ""
 "Du bist nicht berechtigt, auf den Dienst <b>%(service_name)s</b> "
 "zuzugreifen."
 
-#: uffd/oauth2/templates/oauth2/logout.html:10 uffd/templates/base.html:99
+#: uffd/oauth2/templates/oauth2/logout.html:5 uffd/templates/base.html:99
 msgid "Logout"
 msgstr "Abmelden"
 
-#: uffd/oauth2/templates/oauth2/logout.html:15
+#: uffd/oauth2/templates/oauth2/logout.html:10
 msgid "Javascript is required for automatic logout"
 msgstr "Für das automatische Abmelden muss Javascript aktiviert sein"
 
-#: uffd/oauth2/templates/oauth2/logout.html:17
+#: uffd/oauth2/templates/oauth2/logout.html:12
 msgid ""
 "While you successfully logged out of the Single-Sign-On service, you may "
 "still be logged in on these services:"
@@ -747,7 +750,7 @@ msgstr ""
 "Während du nun aus dem Single-Sign-On abgemeldet bist, bist du eventuell "
 "weiterhin in folgenden Diensten angemeldet:"
 
-#: uffd/oauth2/templates/oauth2/logout.html:30
+#: uffd/oauth2/templates/oauth2/logout.html:25
 msgid ""
 "Please wait until you have been automatically logged out of all services "
 "or make sure of this yourself."
@@ -755,31 +758,31 @@ msgstr ""
 "Bitte warte, bis das automatische Abmelden bei allen Diensten "
 "abgeschlossen ist oder melde dich überall manuell ab."
 
-#: uffd/oauth2/templates/oauth2/logout.html:34
+#: uffd/oauth2/templates/oauth2/logout.html:29
 msgid "Logging you out on all services ..."
 msgstr "Abmeldung bei allen Diensten ..."
 
-#: uffd/oauth2/templates/oauth2/logout.html:38
+#: uffd/oauth2/templates/oauth2/logout.html:33
 msgid "Skip this and continue"
 msgstr "Automatisches Abmelden überspringen"
 
-#: uffd/oauth2/templates/oauth2/logout.html:82
+#: uffd/oauth2/templates/oauth2/logout.html:75
 msgid "Done, redirecting ..."
 msgstr "Abgeschlossen, leite weiter ..."
 
-#: uffd/oauth2/templates/oauth2/logout.html:86
+#: uffd/oauth2/templates/oauth2/logout.html:79
 msgid "Log out failed on some services. Retry?"
 msgstr ""
 "Automatisches Abmelden bei einigen Diensten fehlgeschlagen. Nochmal "
 "versuchen?"
 
-#: uffd/role/views.py:49 uffd/selfservice/templates/selfservice/self.html:86
+#: uffd/role/views.py:48 uffd/selfservice/templates/selfservice/self.html:86
 #: uffd/user/templates/user/list.html:20 uffd/user/templates/user/show.html:21
 #: uffd/user/templates/user/show.html:90
 msgid "Roles"
 msgstr "Rollen"
 
-#: uffd/role/views.py:99
+#: uffd/role/views.py:95
 msgid "Locked roles cannot be deleted"
 msgstr "Gesperrte Rollen können nicht gelöscht werden"
 
@@ -809,7 +812,7 @@ msgstr "Als Default setzen"
 
 #: uffd/role/templates/role/show.html:19 uffd/role/templates/role/show.html:21
 #: uffd/selfservice/templates/selfservice/self.html:117
-#: uffd/user/templates/user/show.html:11
+#: uffd/user/templates/group/show.html:11 uffd/user/templates/user/show.html:11
 msgid "Are you sure?"
 msgstr "Wirklich fortfahren?"
 
@@ -847,7 +850,7 @@ msgstr "Accounts mit Moderationsrechten"
 
 #: uffd/role/templates/role/show.html:71
 #: uffd/rolemod/templates/rolemod/show.html:18
-#: uffd/user/templates/group/show.html:15
+#: uffd/user/templates/group/show.html:37
 msgid "Members"
 msgstr "Mitglieder"
 
@@ -871,15 +874,15 @@ msgstr "derzeit enthaltene Gruppen"
 msgid "2FA required"
 msgstr "2FA erforderlich"
 
-#: uffd/rolemod/views.py:24
+#: uffd/rolemod/views.py:23
 msgid "Moderation"
 msgstr "Moderation"
 
-#: uffd/rolemod/views.py:46
+#: uffd/rolemod/views.py:43
 msgid "Description too long"
 msgstr "Beschreibung zu lang"
 
-#: uffd/rolemod/views.py:63
+#: uffd/rolemod/views.py:60
 msgid "Member removed"
 msgstr "Mitglied entfernt"
 
@@ -911,27 +914,27 @@ msgstr "Entfernen"
 msgid "Selfservice"
 msgstr "Selfservice"
 
-#: uffd/selfservice/views.py:37
+#: uffd/selfservice/views.py:36
 msgid "Display name changed."
 msgstr "Anzeigename geändert."
 
-#: uffd/selfservice/views.py:39
+#: uffd/selfservice/views.py:38
 msgid "Display name is not valid."
 msgstr "Anzeigename ist nicht valide."
 
-#: uffd/selfservice/views.py:42
+#: uffd/selfservice/views.py:41
 msgid "We sent you an email, please verify your mail address."
 msgstr "Wir haben dir eine E-Mail gesendet, bitte prüfe deine E-Mail-Adresse."
 
-#: uffd/selfservice/views.py:56
+#: uffd/selfservice/views.py:53
 msgid "Password changed"
 msgstr "Passwort geändert"
 
-#: uffd/selfservice/views.py:59
+#: uffd/selfservice/views.py:55
 msgid "Invalid password"
 msgstr "Passwort ungültig"
 
-#: uffd/selfservice/views.py:77
+#: uffd/selfservice/views.py:70
 #, python-format
 msgid ""
 "We received too many password reset requests for this user! Please wait "
@@ -940,7 +943,7 @@ msgstr ""
 "Wir haben zu viele fehlgeschlagene Anmeldeversuche für diesen Account! "
 "Bitte warte mindestens %(delay)s."
 
-#: uffd/selfservice/views.py:83
+#: uffd/selfservice/views.py:76
 msgid ""
 "We sent a mail to this user's mail address if you entered the correct "
 "mail and login name combination"
@@ -948,27 +951,28 @@ msgstr ""
 "Falls E-Mail-Adresse und Anmeldename richtig waren, wurde eine E-Mail an "
 "die Adresse gesendet."
 
-#: uffd/selfservice/views.py:93 uffd/selfservice/views.py:123
+#: uffd/selfservice/views.py:91 uffd/selfservice/views.py:100
+#: uffd/selfservice/views.py:133 uffd/selfservice/views.py:143
 msgid "Token expired, please try again."
 msgstr "Link abgelaufen, bitte versuche es erneut."
 
-#: uffd/selfservice/views.py:101
+#: uffd/selfservice/views.py:108
 msgid "You need to set a password, please try again."
 msgstr "Password fehlt, bitte versuche es erneut."
 
-#: uffd/selfservice/views.py:104
+#: uffd/selfservice/views.py:111
 msgid "Passwords do not match, please try again."
 msgstr "Die Passwörter stimmen nicht überein, bitte versuche es erneut"
 
-#: uffd/selfservice/views.py:110
+#: uffd/selfservice/views.py:117
 msgid "Password ist not valid, please try again."
 msgstr "Ungültiges Passwort, bitte versuche es erneut"
 
-#: uffd/selfservice/views.py:113
+#: uffd/selfservice/views.py:120
 msgid "New password set"
 msgstr "Passwort geändert"
 
-#: uffd/selfservice/views.py:131
+#: uffd/selfservice/views.py:150
 msgid ""
 "This link was generated for another user. Login as the correct user to "
 "continue."
@@ -976,41 +980,41 @@ msgstr ""
 "Dieser Link wurde für einen anderen Account erstellt. Melde dich mit dem "
 "richtigen Account an um Fortzufahren."
 
-#: uffd/selfservice/views.py:133
+#: uffd/selfservice/views.py:152
 msgid "New mail set"
 msgstr "E-Mail-Adresse geändert"
 
-#: uffd/selfservice/views.py:144
+#: uffd/selfservice/views.py:162
 msgid "Leaving roles is disabled"
 msgstr "Verlassen von Rollen ist deaktiviert"
 
-#: uffd/selfservice/views.py:151
+#: uffd/selfservice/views.py:168
 #, python-format
 msgid "You left role %(role_name)s"
 msgstr "Rolle %(role_name)s verlassen"
 
-#: uffd/selfservice/views.py:168 uffd/selfservice/views.py:188
+#: uffd/selfservice/views.py:185 uffd/selfservice/views.py:205
 #, python-format
 msgid "Mail to \"%(mail_address)s\" could not be sent!"
 msgstr "E-Mail an \"%(mail_address)s\" konnte nicht gesendet werden!"
 
-#: uffd/selfservice/templates/selfservice/forgot_password.html:11
+#: uffd/selfservice/templates/selfservice/forgot_password.html:6
 msgid "Forgot password"
 msgstr "Passwort vergessen"
 
-#: uffd/selfservice/templates/selfservice/forgot_password.html:14
+#: uffd/selfservice/templates/selfservice/forgot_password.html:9
 #: uffd/selfservice/templates/selfservice/self.html:21
-#: uffd/session/templates/session/login.html:14
-#: uffd/signup/templates/signup/start.html:19
+#: uffd/session/templates/session/login.html:9
+#: uffd/signup/templates/signup/start.html:14
 #: uffd/user/templates/user/list.html:18 uffd/user/templates/user/show.html:48
 msgid "Login Name"
 msgstr "Anmeldename"
 
-#: uffd/selfservice/templates/selfservice/forgot_password.html:18
+#: uffd/selfservice/templates/selfservice/forgot_password.html:13
 msgid "Mail Address"
 msgstr "E-Mail-Adresse"
 
-#: uffd/selfservice/templates/selfservice/forgot_password.html:22
+#: uffd/selfservice/templates/selfservice/forgot_password.html:17
 msgid "Send password reset mail"
 msgstr "Passwort-Zurücksetzen-Mail versenden"
 
@@ -1043,13 +1047,13 @@ msgid "Changes may take serveral minutes to be visible in all services."
 msgstr "Änderungen sind erst nach einigen Minuten in allen Diensten sichtbar."
 
 #: uffd/selfservice/templates/selfservice/self.html:25
-#: uffd/signup/templates/signup/start.html:32
+#: uffd/signup/templates/signup/start.html:27
 #: uffd/user/templates/user/list.html:19 uffd/user/templates/user/show.html:63
 msgid "Display Name"
 msgstr "Anzeigename"
 
 #: uffd/selfservice/templates/selfservice/self.html:29
-#: uffd/signup/templates/signup/start.html:39
+#: uffd/signup/templates/signup/start.html:34
 msgid "E-Mail Address"
 msgstr "E-Mail-Adresse"
 
@@ -1064,8 +1068,8 @@ msgid "Update Profile"
 msgstr "Änderungen speichern"
 
 #: uffd/selfservice/templates/selfservice/self.html:44
-#: uffd/session/templates/session/login.html:18
-#: uffd/signup/templates/signup/start.html:46
+#: uffd/session/templates/session/login.html:13
+#: uffd/signup/templates/signup/start.html:41
 #: uffd/user/templates/user/show.html:77
 msgid "Password"
 msgstr "Passwort"
@@ -1082,13 +1086,13 @@ msgstr ""
 " Support-Anfragen benötigt."
 
 #: uffd/selfservice/templates/selfservice/self.html:50
-#: uffd/selfservice/templates/selfservice/set_password.html:14
+#: uffd/selfservice/templates/selfservice/set_password.html:9
 msgid "New Password"
 msgstr "Neues Passwort"
 
 #: uffd/selfservice/templates/selfservice/self.html:56
-#: uffd/selfservice/templates/selfservice/set_password.html:21
-#: uffd/signup/templates/signup/start.html:53
+#: uffd/selfservice/templates/selfservice/set_password.html:16
+#: uffd/signup/templates/signup/start.html:48
 msgid "Repeat Password"
 msgstr "Passwort wiederholen"
 
@@ -1153,11 +1157,11 @@ msgstr "Verlassen"
 msgid "You currently don't have any roles"
 msgstr "Du hast derzeit keine Rollen"
 
-#: uffd/selfservice/templates/selfservice/set_password.html:11
+#: uffd/selfservice/templates/selfservice/set_password.html:6
 msgid "Reset password"
 msgstr "Passwort zurücksetzen"
 
-#: uffd/selfservice/templates/selfservice/set_password.html:25
+#: uffd/selfservice/templates/selfservice/set_password.html:20
 msgid "Set password"
 msgstr "Passwort setzen"
 
@@ -1182,7 +1186,7 @@ msgstr "Kein Zugriff"
 msgid "Close"
 msgstr "Schließen"
 
-#: uffd/session/views.py:95
+#: uffd/session/views.py:71
 #, python-format
 msgid ""
 "We received too many invalid login attempts for this user! Please wait at"
@@ -1191,52 +1195,52 @@ msgstr ""
 "Wir haben zu viele fehlgeschlagene Anmeldeversuche für diesen Account "
 "erhalten! Bitte warte mindestens %(delay)s."
 
-#: uffd/session/views.py:103
+#: uffd/session/views.py:79
 msgid "Login name or password is wrong"
 msgstr "Der Anmeldename oder das Passwort ist falsch"
 
-#: uffd/session/views.py:106
+#: uffd/session/views.py:82
 msgid "You do not have access to this service"
 msgstr "Du hast keinen Zugriff auf diesen Service"
 
-#: uffd/session/views.py:118 uffd/session/views.py:129
+#: uffd/session/views.py:94 uffd/session/views.py:105
 msgid "You need to login first"
 msgstr "Du musst dich erst anmelden"
 
-#: uffd/session/views.py:150 uffd/session/views.py:160
+#: uffd/session/views.py:126 uffd/session/views.py:136
 msgid "Initiation code is no longer valid"
 msgstr "Startcode ist nicht mehr gültig"
 
-#: uffd/session/views.py:164
+#: uffd/session/views.py:140
 msgid "Invalid confirmation code"
 msgstr "Ungültiger Bestätigungscode"
 
-#: uffd/session/views.py:176 uffd/session/views.py:187
+#: uffd/session/views.py:152 uffd/session/views.py:163
 msgid "Invalid initiation code"
 msgstr "Ungültiger Startcode"
 
-#: uffd/session/templates/session/deviceauth.html:17
+#: uffd/session/templates/session/deviceauth.html:12
 #: uffd/templates/base.html:92
 msgid "Authorize Device Login"
 msgstr "Gerätelogin erlauben"
 
-#: uffd/session/templates/session/deviceauth.html:20
+#: uffd/session/templates/session/deviceauth.html:15
 msgid "Log into a service on another device without entering your password."
 msgstr ""
 "Melde dich an einem Dienst auf einem anderen Gerät an ohne dein Password "
 "eingeben zu müssen."
 
-#: uffd/session/templates/session/deviceauth.html:23
-#: uffd/session/templates/session/devicelogin.html:18
+#: uffd/session/templates/session/deviceauth.html:18
+#: uffd/session/templates/session/devicelogin.html:13
 msgid "Initiation Code"
 msgstr "Startcode"
 
-#: uffd/session/templates/session/deviceauth.html:32
-#: uffd/session/templates/session/devicelogin.html:23
+#: uffd/session/templates/session/deviceauth.html:27
+#: uffd/session/templates/session/devicelogin.html:18
 msgid "Confirmation Code"
 msgstr "Bestätigungscode"
 
-#: uffd/session/templates/session/deviceauth.html:38
+#: uffd/session/templates/session/deviceauth.html:33
 msgid ""
 "Start logging into a service on the other device and chose \"Device "
 "Login\" on the login page. Enter the displayed initiation code in the box"
@@ -1246,21 +1250,21 @@ msgstr ""
 "\"Gerätelogin\" auf der Anmeldeseite aus. Gib den angezeigten Startcode "
 "oben ein."
 
-#: uffd/session/templates/session/deviceauth.html:41
-#: uffd/session/templates/session/devicelogin.html:30
+#: uffd/session/templates/session/deviceauth.html:36
+#: uffd/session/templates/session/devicelogin.html:25
 msgid "Continue"
 msgstr "Weiter"
 
-#: uffd/session/templates/session/deviceauth.html:48
+#: uffd/session/templates/session/deviceauth.html:43
 #, python-format
 msgid "Authorize the login for service <b>%(service_name)s</b>?"
 msgstr "Anmeldung an Dienst <b>%(service_name)s</b> erlauben?"
 
-#: uffd/session/templates/session/deviceauth.html:51
+#: uffd/session/templates/session/deviceauth.html:46
 msgid "Authorize Login"
 msgstr "Anmeldung erlauben"
 
-#: uffd/session/templates/session/deviceauth.html:58
+#: uffd/session/templates/session/deviceauth.html:53
 msgid ""
 "Enter the confirmation code on the other device and complete the login. "
 "Click <em>Finish</em> afterwards."
@@ -1268,16 +1272,16 @@ msgstr ""
 "Gib den Bestätigungscode auf dem anderen Gerät ein und schließe die "
 "Anmeldung ab. Clicke danach auf <em>Abschließen</em>."
 
-#: uffd/session/templates/session/deviceauth.html:61
+#: uffd/session/templates/session/deviceauth.html:56
 msgid "Finish"
 msgstr "Beenden"
 
-#: uffd/session/templates/session/devicelogin.html:11
+#: uffd/session/templates/session/devicelogin.html:6
 #: uffd/templates/base.html:93
 msgid "Device Login"
 msgstr "Gerätelogin"
 
-#: uffd/session/templates/session/devicelogin.html:14
+#: uffd/session/templates/session/devicelogin.html:9
 msgid ""
 "Use a login session on another device (e.g. your laptop) to log into a "
 "service without entering your password."
@@ -1285,7 +1289,7 @@ msgstr ""
 "Nutze eine Login-Sitzung auf einem anderen Gerät (z.B. deinem Laptop) um "
 "dich bei einem Dienst anzumelden."
 
-#: uffd/session/templates/session/devicelogin.html:27
+#: uffd/session/templates/session/devicelogin.html:22
 #, python-format
 msgid ""
 "Open <code><a href=\"%(deviceauth_url)s\">%(deviceauth_url)s</a></code> "
@@ -1296,65 +1300,65 @@ msgstr ""
 "auf dem anderen Gerät und gib dort den obenstehenden Startcode ein. Geben"
 " anschließend den Bestätigungscode hier ein."
 
-#: uffd/session/templates/session/login.html:11
-#: uffd/session/templates/session/login.html:22
+#: uffd/session/templates/session/login.html:6
+#: uffd/session/templates/session/login.html:17
 msgid "Login"
 msgstr "Anmelden"
 
-#: uffd/session/templates/session/login.html:25
+#: uffd/session/templates/session/login.html:20
 msgid "- or -"
 msgstr "- oder -"
 
-#: uffd/session/templates/session/login.html:27
+#: uffd/session/templates/session/login.html:22
 msgid "Login with another device"
 msgstr "Über anderes Gerät anmelden"
 
-#: uffd/session/templates/session/login.html:32
+#: uffd/session/templates/session/login.html:27
 msgid "Register"
 msgstr "Registrieren"
 
-#: uffd/session/templates/session/login.html:35
+#: uffd/session/templates/session/login.html:30
 msgid "Forgot Password?"
 msgstr "Passwort vergessen?"
 
-#: uffd/signup/views.py:23
+#: uffd/signup/views.py:24
 msgid "Singup not enabled"
 msgstr "Account-Registrierung ist deaktiviert"
 
-#: uffd/signup/views.py:77 uffd/signup/views.py:85
+#: uffd/signup/views.py:82 uffd/signup/views.py:91 uffd/signup/views.py:99
 msgid "Invalid signup link"
 msgstr "Ungültiger Account-Registrierungs-Link"
 
-#: uffd/signup/views.py:90
+#: uffd/signup/views.py:104
 #, python-format
 msgid "Too many failed attempts! Please wait %(delay)s."
 msgstr "Zu viele fehlgeschlagene Versuche! Bitte warte mindestens %(delay)s."
 
-#: uffd/signup/views.py:96
+#: uffd/signup/views.py:110
 msgid "Wrong password"
 msgstr "Falsches Passwort"
 
-#: uffd/signup/views.py:103
+#: uffd/signup/views.py:116
 msgid "Your account was successfully created"
 msgstr "Account erfolgreich erstellt"
 
-#: uffd/signup/templates/signup/confirm.html:11
+#: uffd/signup/templates/signup/confirm.html:6
 msgid "Complete Registration"
 msgstr "Account-Registrierung abschließen"
 
-#: uffd/signup/templates/signup/confirm.html:17
+#: uffd/signup/templates/signup/confirm.html:12
 msgid "Please enter your password to complete the account registration"
 msgstr "Bitte gib dein Passwort ein, um die Account-Registrierung abzuschließen"
 
-#: uffd/signup/templates/signup/confirm.html:21
+#: uffd/signup/templates/signup/confirm.html:16
 msgid "Complete Account Registration"
 msgstr "Account-Registrierung abschließen"
 
-#: uffd/signup/templates/signup/start.html:23
+#: uffd/signup/templates/signup/start.html:18
 msgid "Check"
 msgstr "Überprüfen"
 
-#: uffd/signup/templates/signup/start.html:28
+#: uffd/signup/templates/signup/start.html:23
 msgid ""
 "At least one and at most 32 lower-case characters, digits, dashes (\"-\")"
 " or underscores (\"_\"). <b>Cannot be changed later!</b>"
@@ -1362,11 +1366,11 @@ msgstr ""
 "1 bis 32 Kleinbuchstaben, Zahlen, Binde- (\"-\") und Unterstriche "
 "(\"_\"). <b>Kann später nicht geändert werden!</b>"
 
-#: uffd/signup/templates/signup/start.html:35
+#: uffd/signup/templates/signup/start.html:30
 msgid "At least one and at most 128 characters, no other special requirements."
 msgstr "Mindestens 1 und maximal 128 Zeichen, keine weiteren Einschränkungen."
 
-#: uffd/signup/templates/signup/start.html:42
+#: uffd/signup/templates/signup/start.html:37
 msgid ""
 "We will send a confirmation mail to this address that you need to "
 "complete the registration."
@@ -1374,27 +1378,27 @@ msgstr ""
 "Wir werden eine Bestätigungsmail an diese Adresse senden. Du benötigst "
 "sie, um die Account-Registrierung abzuschließen."
 
-#: uffd/signup/templates/signup/start.html:57
+#: uffd/signup/templates/signup/start.html:52
 msgid "Create Account"
 msgstr "Account registrieren"
 
-#: uffd/signup/templates/signup/start.html:86
+#: uffd/signup/templates/signup/start.html:79
 msgid "The name is already taken"
 msgstr "Dieser Name wird bereits verwendet"
 
-#: uffd/signup/templates/signup/start.html:89
+#: uffd/signup/templates/signup/start.html:82
 msgid "Too many requests! Please wait a bit before trying again!"
 msgstr "Zu viele Anfragen! Bitte warte etwas, bevor du es erneut versuchst!"
 
-#: uffd/signup/templates/signup/start.html:92
+#: uffd/signup/templates/signup/start.html:85
 msgid "The name is invalid"
 msgstr "Name ungültig"
 
-#: uffd/signup/templates/signup/submitted.html:11
+#: uffd/signup/templates/signup/submitted.html:5
 msgid "Confirm your E-Mail Address"
 msgstr "E-Mail-Adresse bestätigen"
 
-#: uffd/signup/templates/signup/submitted.html:13
+#: uffd/signup/templates/signup/submitted.html:7
 #, python-format
 msgid ""
 "We sent a confirmation mail to <b>%(signup_mail)s</b>. You need to "
@@ -1405,7 +1409,7 @@ msgstr ""
 "deine E-Mail-Adresse innerhalb von 48 Stunden bestätigen, um die Account-"
 "Registrierung abzuschließen."
 
-#: uffd/signup/templates/signup/submitted.html:14
+#: uffd/signup/templates/signup/submitted.html:8
 msgid ""
 "If you mistyped your mail address or don't receive the confirmation mail "
 "for another reason, retry the registration procedure from the beginning."
@@ -1430,7 +1434,7 @@ msgstr "Ändern"
 msgid "About uffd"
 msgstr "Über uffd"
 
-#: uffd/user/models.py:52
+#: uffd/user/models.py:77
 #, python-format
 msgid ""
 "At least %(minlen)d and at most %(maxlen)d characters. Only letters, "
@@ -1441,9 +1445,25 @@ msgstr ""
 "und manche Symbole (<code>%(symbols)s</code>), keine Umlaute. Bitte "
 "verwende einen Passwort-Manager."
 
-#: uffd/user/views_group.py:20
+#: uffd/user/views_group.py:23
 msgid "Groups"
 msgstr "Gruppen"
+
+#: uffd/user/views_group.py:51
+msgid "Group with this name or id already exists"
+msgstr "Gruppe mit diesem Namen oder dieser ID existiert bereits"
+
+#: uffd/user/views_group.py:56
+msgid "Group created"
+msgstr "Gruppe erstellt"
+
+#: uffd/user/views_group.py:58
+msgid "Group updated"
+msgstr "Gruppe aktualisiert"
+
+#: uffd/user/views_group.py:67
+msgid "Deleted group"
+msgstr "Gruppe gelöscht"
 
 #: uffd/user/views_user.py:30
 msgid "Users"
@@ -1465,27 +1485,31 @@ msgstr "Anzeigename entspricht nicht den Anforderungen"
 msgid "Password is invalid"
 msgstr "Passwort ist ungültig"
 
-#: uffd/user/views_user.py:78
+#: uffd/user/views_user.py:77
 msgid "Service user created"
 msgstr "Service-Account erstellt"
 
-#: uffd/user/views_user.py:81
+#: uffd/user/views_user.py:80
 msgid "User created. We sent the user a password reset link by mail"
 msgstr ""
 "Account erstellt. E-Mail mit einem Link zum Setzen des Passworts wurde "
 "versendet."
 
-#: uffd/user/views_user.py:83
+#: uffd/user/views_user.py:82
 msgid "User updated"
 msgstr "Account aktualisiert"
 
-#: uffd/user/views_user.py:94
+#: uffd/user/views_user.py:92
 msgid "Deleted user"
 msgstr "Account gelöscht"
 
-#: uffd/user/templates/group/list.html:9 uffd/user/templates/group/show.html:7
+#: uffd/user/templates/group/list.html:14
 msgid "GID"
 msgstr "GID"
+
+#: uffd/user/templates/group/show.html:18
+msgid "Group ID"
+msgstr "Gruppen ID"
 
 #: uffd/user/templates/user/list.html:11
 msgid "CSV import"

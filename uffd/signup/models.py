@@ -1,11 +1,10 @@
 import datetime
 from crypt import crypt
 
-from sqlalchemy import Column, String, Text, DateTime, Integer
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
+from sqlalchemy.orm import relationship, backref
 
-from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
-from uffd.ldap import ldap
 from uffd.user.models import User
 from uffd.utils import token_urlfriendly
 
@@ -33,8 +32,8 @@ class Signup(db.Model):
 	displayname = Column(Text)
 	mail = Column(Text)
 	pwhash = Column(Text)
-	user_dn = Column(String(128)) # Set after successful confirmation
-	user = DBRelationship('user_dn', User, backref='signups')
+	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=True, unique=True)
+	user = relationship('User', backref=backref('signups', cascade='all, delete-orphan'))
 
 	type = Column(String(50))
 	__mapper_args__ = {
@@ -58,7 +57,7 @@ class Signup(db.Model):
 
 	@property
 	def completed(self):
-		return self.user_dn is not None
+		return self.user is not None
 
 	def validate(self): # pylint: disable=too-many-return-statements
 		'''Return whether the signup request is valid and Signup.finish is likely to succeed
@@ -98,8 +97,8 @@ class Signup(db.Model):
 		if User.query.filter_by(loginname=self.loginname).all():
 			return None, 'A user with this login name already exists'
 		user = User(loginname=self.loginname, displayname=self.displayname, mail=self.mail, password=password)
-		ldap.session.add(user)
-		user.update_groups()
+		db.session.add(user)
+		user.update_groups() # pylint: disable=no-member
 		self.user = user
 		self.loginname = None
 		self.displayname = None

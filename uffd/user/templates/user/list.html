@@ -21,13 +21,13 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for user in users|sort(attribute="uid") %}
-				<tr id="user-{{ user.uid }}">
+				{% for user in users|sort(attribute="unix_uid") %}
+				<tr id="user-{{ user.id }}">
 					<th scope="row">
-						{{ user.uid }}
+						{{ user.unix_uid }}
 					</th>
 					<td>
-						<a href="{{ url_for("user.show", uid=user.uid) }}">
+						<a href="{{ url_for("user.show", id=user.id) }}">
 							{{ user.loginname }}
 						</a>
 						{% if user.is_service_user %}

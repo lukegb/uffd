@@ -6,7 +6,6 @@ from flask import url_for, session, request
 
 # These imports are required, because otherwise we get circular imports?!
 from uffd import user
-from uffd.ldap import ldap
 
 from uffd import create_app, db
 from uffd.signup.models import Signup
@@ -41,18 +40,18 @@ class TestSignupModel(UffdTestCase):
 	def assert_finish_success(self, signup, password):
 		self.assertIsNone(signup.user)
 		user, msg = signup.finish(password)
-		ldap.session.commit()
+		db.session.commit()
 		self.assertIsNotNone(user)
 		self.assertIsInstance(msg, str)
 		self.assertIsNotNone(signup.user)
 
 	def assert_finish_failure(self, signup, password):
-		prev_dn = signup.user_dn
+		prev_id = signup.user_id
 		user, msg = signup.finish(password)
 		self.assertIsNone(user)
 		self.assertIsInstance(msg, str)
 		self.assertNotEqual(msg, '')
-		self.assertEqual(signup.user_dn, prev_dn)
+		self.assertEqual(signup.user_id, prev_id)
 
 	def test_password(self):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com')
@@ -74,7 +73,7 @@ class TestSignupModel(UffdTestCase):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		self.assertFalse(signup.completed)
 		signup.finish('notsecret')
-		ldap.session.commit()
+		db.session.commit()
 		self.assertTrue(signup.completed)
 		signup = refetch_signup(signup)
 		self.assertTrue(signup.completed)
@@ -123,15 +122,11 @@ class TestSignupModel(UffdTestCase):
 
 	def test_finish(self):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
-		if self.use_openldap:
-			self.assertIsNone(login_get_user('newuser', 'notsecret'))
 		self.assert_finish_success(signup, 'notsecret')
-		user = User.query.get('uid=newuser,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
+		user = User.query.filter_by(loginname='newuser').one_or_none()
 		self.assertEqual(user.loginname, 'newuser')
 		self.assertEqual(user.displayname, 'New User')
 		self.assertEqual(user.mail, 'test@example.com')
-		if self.use_openldap:
-			self.assertIsNotNone(login_get_user('newuser', 'notsecret'))
 
 	def test_finish_completed(self):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
@@ -179,11 +174,8 @@ class TestSignupModel(UffdTestCase):
 		db_flush()
 		signup = Signup.query.get(signup1_id)
 		self.assert_finish_failure(signup, 'notsecret')
-		user = User.query.get('uid=newuser,{}'.format(self.app.config['LDAP_USER_SEARCH_BASE']))
+		user = User.query.filter_by(loginname='newuser').one_or_none()
 		self.assertEqual(user.mail, 'test2@example.com')
-
-class TestSignupModelOL(TestSignupModel):
-	use_openldap = True
 
 class TestSignupViews(UffdTestCase):
 	def setUpApp(self):
@@ -331,15 +323,13 @@ class TestSignupViews(UffdTestCase):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		signup = refetch_signup(signup)
 		self.assertFalse(signup.completed)
-		if self.use_openldap:
-			self.assertIsNone(login_get_user('newuser', 'notsecret'))
+		self.assertIsNone(login_get_user('newuser', 'notsecret'))
 		r = self.client.get(path=url_for('signup.signup_confirm', signup_id=signup.id, token=signup.token), follow_redirects=True)
 		dump('test_signup_confirm', r)
 		self.assertEqual(r.status_code, 200)
 		signup = refetch_signup(signup)
 		self.assertFalse(signup.completed)
-		if self.use_openldap:
-			self.assertIsNone(login_get_user('newuser', 'notsecret'))
+		self.assertIsNone(login_get_user('newuser', 'notsecret'))
 		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		dump('test_signup_confirm_submit', r)
 		self.assertEqual(r.status_code, 200)
@@ -348,19 +338,16 @@ class TestSignupViews(UffdTestCase):
 		self.assertEqual(signup.user.loginname, 'newuser')
 		self.assertEqual(signup.user.displayname, 'New User')
 		self.assertEqual(signup.user.mail, 'test@example.com')
-		if self.use_openldap:
-			self.assertIsNotNone(login_get_user('newuser', 'notsecret'))
-		self.assertIsNotNone(request.user)
-		self.assertEqual(request.user.loginname, 'newuser')
+		self.assertIsNotNone(login_get_user('newuser', 'notsecret'))
 
 	def test_confirm_loggedin(self):
 		baserole = Role(name='baserole', is_default=True)
 		db.session.add(baserole)
 		baserole.groups[self.get_access_group()] = RoleGroup()
 		db.session.commit()
+		self.login_as('user')
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		signup = refetch_signup(signup)
-		self.login_as('user')
 		self.assertFalse(signup.completed)
 		self.assertIsNotNone(request.user)
 		self.assertEqual(request.user.loginname, self.get_user().loginname)
@@ -409,6 +396,7 @@ class TestSignupViews(UffdTestCase):
 		signup = refetch_signup(signup)
 		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'wrongpassword'})
 		dump('test_signup_confirm_wrongpassword', r)
+		signup = refetch_signup(signup)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(signup.completed)
 
@@ -418,6 +406,7 @@ class TestSignupViews(UffdTestCase):
 		signup = refetch_signup(signup)
 		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		dump('test_signup_confirm_error', r)
+		signup = refetch_signup(signup)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(signup.completed)
 
@@ -447,6 +436,3 @@ class TestSignupViews(UffdTestCase):
 		dump('test_signup_confirm_confirmlimit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(signup.completed)
-
-class TestSignupViewsOL(TestSignupViews):
-	use_openldap = True

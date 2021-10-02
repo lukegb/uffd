@@ -55,7 +55,7 @@
 				<select class="form-control" id="moderator-group" name="moderator-group" {{ 'disabled' if role.locked }}>
 					<option value="" class="text-muted">{{_("No Moderator Group")}}</option>
 					{% for group in groups %}
-					<option value="{{ group.dn }}" {{ 'selected' if group == role.moderator_group }}>{{ group.name }}</option>
+					<option value="{{ group.id }}" {{ 'selected' if group == role.moderator_group }}>{{ group.name }}</option>
 					{% endfor %}
 				</select>
 			</div>
@@ -63,7 +63,7 @@
 				<span>{{_("Moderators")}}:</span>
 				<ul class="row">
 					{% for moderator in role.moderator_group.members %}
-					<li class="col-12 col-xs-6 col-sm-4 col-md-3 col-lg-2"><a href="{{ url_for("user.show", uid=moderator.uid) }}">{{ moderator.loginname }}</a></li>
+					<li class="col-12 col-xs-6 col-sm-4 col-md-3 col-lg-2"><a href="{{ url_for("user.show", id=moderator.id) }}">{{ moderator.loginname }}</a></li>
 					{% endfor %}
 				</ul>
 			</div>
@@ -71,7 +71,7 @@
 				<span>{{_("Members")}}:</span>
 				<ul class="row">
 				{% for member in role.members|sort(attribute='loginname') %}
-					<li class="col-12 col-xs-6 col-sm-4 col-md-3 col-lg-2"><a href="{{ url_for("user.show", uid=member.uid) }}">{{ member.loginname }}</a></li>
+					<li class="col-12 col-xs-6 col-sm-4 col-md-3 col-lg-2"><a href="{{ url_for("user.show", id=member.id) }}">{{ member.loginname }}</a></li>
 				{% endfor %}
 				</ul>
 			</div>
@@ -108,7 +108,7 @@
 							</td>
 							<td>
 								{% for group in r.groups_effective|sort(attribute='name') %}
-									<a href="{{ url_for("group.show", gid=group.gid) }}">{{ group.name }}</a>{{ ', ' if not loop.last }}
+									<a href="{{ url_for("group.show", id=group.id) }}">{{ group.name }}</a>{{ ', ' if not loop.last }}
 								{% endfor %}
 							</td>
 						</tr>
@@ -131,14 +131,14 @@
 					</thead>
 					<tbody>
 						{% for group in groups|sort(attribute="name") %}
-						<tr id="group-{{ group.gid }}">
+						<tr id="group-{{ group.id }}">
 							<td>
 								<div class="form-check">
-									<input class="form-check-input" type="checkbox" id="group-{{ group.gid }}-checkbox" name="group-{{ group.gid }}" value="1" aria-label="enabled" {% if group in role.groups %}checked{% endif %} {{ 'disabled' if role.locked }}>
+									<input class="form-check-input" type="checkbox" id="group-{{ group.id }}-checkbox" name="group-{{ group.id }}" value="1" aria-label="enabled" {% if group in role.groups %}checked{% endif %} {{ 'disabled' if role.locked }}>
 								</div>
 							</td>
 							<td>
-								<a href="{{ url_for("group.show", gid=group.gid) }}">
+								<a href="{{ url_for("group.show", id=group.id) }}">
 									{{ group.name }}
 								</a>
 							</td>
@@ -147,7 +147,7 @@
 							</td>
 							<td>
 								<div class="form-check">
-									<input class="form-check-input" type="checkbox" id="group-mfa-{{ group.gid }}-checkbox" name="group-mfa-{{ group.gid }}" value="1" aria-label="enabled" {% if group in role.groups and role.groups[group].requires_mfa %}checked{% endif %} {{ 'disabled' if role.locked }}>
+									<input class="form-check-input" type="checkbox" id="group-mfa-{{ group.id }}-checkbox" name="group-mfa-{{ group.id }}" value="1" aria-label="enabled" {% if group in role.groups and role.groups[group].requires_mfa %}checked{% endif %} {{ 'disabled' if role.locked }}>
 								</div>
 							</td>
 						</tr>

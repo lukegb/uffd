@@ -18,7 +18,6 @@ Depends:
 # Unlike most debian python packages, we depend directly on the deb packages and do not want to populate our dependencies from the setup.py .
 # Because of this we do not use the variable from pybuild.
 # ${python3:Depends},
- python3-ldap3,
  python3-flask,
  python3-flask-sqlalchemy,
  python3-flask-migrate,
@@ -30,4 +29,5 @@ Depends:
  uwsgi-plugin-python3,
 Recommends:
  nginx,
-Description: UserFerwaltungsFrontend: Ldap based single sign on and user management web software
+ python3-mysqldb,
+Description: Web-based user management and single sign-on software

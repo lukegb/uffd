@@ -3,6 +3,11 @@
 {% block body %}
 <div class="row">
 	<div class="col">
+		<p class="text-right">
+			<a class="btn btn-primary" href="{{ url_for("group.show") }}">
+				<i class="fa fa-plus" aria-hidden="true"></i> {{_("New")}}
+			</a>
+		</p>
 		<table class="table table-striped table-sm">
 			<thead>
 				<tr>
@@ -12,13 +17,13 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for group in groups|sort(attribute="gid") %}
-				<tr id="group-{{ group.gid }}">
+				{% for group in groups|sort(attribute="unix_gid") %}
+				<tr id="group-{{ group.id }}">
 					<th scope="row">
-						{{ group.gid }}
+						{{ group.unix_gid }}
 					</th>
 					<td>
-						<a href="{{ url_for("group.show", gid=group.gid) }}">
+						<a href="{{ url_for("group.show", id=group.id) }}">
 							{{ group.name }}
 						</a>
 					</td>

@@ -13,14 +13,13 @@ except ImportError:
 from werkzeug.exceptions import InternalServerError, Forbidden
 from flask_migrate import Migrate
 
-import uffd.ldap
 from uffd.database import db, SQLAlchemyJSON
 from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
 from uffd.secure_redirect import secure_local_redirect
 from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services, signup, rolemod, invite, api
 from uffd.user.models import User, Group
-from uffd.role.models import Role
+from uffd.role.models import Role, RoleGroup
 from uffd.mail.models import Mail
 
 def load_config_file(app, cfg_name, silent=False):
@@ -41,7 +40,7 @@ def load_config_file(app, cfg_name, silent=False):
 		app.config.from_pyfile(cfg_path, silent=True)
 	return True
 
-def create_app(test_config=None): # pylint: disable=too-many-locals
+def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-statements
 	# create and configure the app
 	app = Flask(__name__, instance_relative_config=False)
 	app.json_encoder = SQLAlchemyJSON
@@ -81,12 +80,6 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp + rolemod.bp + api.bp:
 		app.register_blueprint(i)
 
-	if app.config['LDAP_SERVICE_USER_BIND'] and (app.config['ENABLE_INVITE'] or
-	                                             app.config['SELF_SIGNUP'] or
-	                                             app.config['ENABLE_PASSWORDRESET'] or
-	                                             app.config['ENABLE_ROLESELFSERVICE']):
-		raise InternalServerError(description="You cannot use INVITES, SIGNUP, PASSWORDRESET or ROLESELFSERVICE when using a USER_BIND!")
-
 	if app.config['ENABLE_INVITE'] or app.config['SELF_SIGNUP']:
 		for i in signup.bp:
 			app.register_blueprint(i)
@@ -97,7 +90,7 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 	@app.shell_context_processor
 	def push_request_context(): #pylint: disable=unused-variable
 		app.test_request_context().push() # LDAP ORM requires request context
-		return {'db': db, 'ldap': uffd.ldap.ldap, 'User': User, 'Group': Group, 'Role': Role, 'Mail': Mail}
+		return {'db': db, 'User': User, 'Group': Group, 'Role': Role, 'Mail': Mail}
 
 	@app.errorhandler(403)
 	def handle_403(error):
@@ -113,11 +106,6 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 		if 'lang' in request.values:
 			resp.set_cookie('language', request.values['lang'])
 		return resp
-
-	@app.teardown_request
-	def close_connection(exception): #pylint: disable=unused-variable,unused-argument
-		if hasattr(request, "ldap_connection"):
-			request.ldap_connection.unbind()
 
 	@app.cli.command("gendevcert", help='Generates a self-signed TLS certificate for development')
 	def gendevcert(): #pylint: disable=unused-variable
@@ -136,6 +124,28 @@ def create_app(test_config=None): # pylint: disable=too-many-locals
 		os.environ['FLASK_RUN_FROM_CLI'] = 'false'
 		app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
 		app.run(debug=True)
+
+	@app.cli.command("create-examples", help='Create example users, groups and roles')
+	def create_examples(): #pylint: disable=unused-variable
+		assert app.debug
+		with app.test_request_context():
+			access_group = Group(name='uffd_access', description='Access to Single-Sign-On and Selfservice')
+			db.session.add(access_group)
+			admin_group = Group(name='uffd_admin', description='Admin access to uffd')
+			db.session.add(admin_group)
+			base_role = Role(name='base', is_default=True, groups={access_group: RoleGroup(group=access_group)}, description='Base role for all regular users')
+			db.session.add(base_role)
+			admin_role = Role(name='admin', groups={admin_group: RoleGroup(group=admin_group)}, description='Admin role')
+			db.session.add(admin_role)
+			testuser = User(loginname='testuser', password='userpassword', mail='test@example.com', displayname='Test User')
+			testuser.update_groups()
+			db.session.add(testuser)
+			testadmin = User(loginname='testadmin', password='adminpassword', mail='admin@example.com', displayname='Test Admin', roles=[admin_role])
+			testadmin.update_groups()
+			db.session.add(testadmin)
+			testmail = Mail(uid='test', receivers=['test1@example.com', 'test2@example.com'], destinations=['testuser@mail.example.com'])
+			db.session.add(testmail)
+			db.session.commit()
 
 	babel = Babel(app)
 

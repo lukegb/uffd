@@ -4,15 +4,13 @@ from flask import current_app
 from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 
-from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
-from uffd.user.models import User
 from uffd.signup.models import Signup
 from uffd.utils import token_urlfriendly
 
 invite_roles = db.Table('invite_roles',
-	Column('invite_id', Integer(), ForeignKey('invite.id'), primary_key=True),
-	Column('role_id', Integer, ForeignKey('role.id'), primary_key=True)
+	Column('invite_id', Integer(), ForeignKey('invite.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True),
+	Column('role_id', Integer, ForeignKey('role.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
 )
 
 class Invite(db.Model):
@@ -20,16 +18,16 @@ class Invite(db.Model):
 	id = Column(Integer(), primary_key=True, autoincrement=True)
 	token = Column(String(128), unique=True, nullable=False, default=token_urlfriendly)
 	created = Column(DateTime, default=datetime.datetime.now, nullable=False)
-	creator_dn = Column(String(128), nullable=True)
-	creator = DBRelationship('creator_dn', User)
+	creator_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE'), nullable=True)
+	creator = relationship('User')
 	valid_until = Column(DateTime, nullable=False)
 	single_use = Column(Boolean, default=True, nullable=False)
 	allow_signup = Column(Boolean, default=True, nullable=False)
 	used = Column(Boolean, default=False, nullable=False)
 	disabled = Column(Boolean, default=False, nullable=False)
 	roles = relationship('Role', secondary=invite_roles)
-	signups = relationship('InviteSignup', back_populates='invite', lazy=True)
-	grants = relationship('InviteGrant', back_populates='invite', lazy=True)
+	signups = relationship('InviteSignup', back_populates='invite', lazy=True, cascade='all, delete-orphan')
+	grants = relationship('InviteGrant', back_populates='invite', lazy=True, cascade='all, delete-orphan')
 
 	@property
 	def expired(self):
@@ -41,8 +39,6 @@ class Invite(db.Model):
 
 	@property
 	def permitted(self):
-		if self.creator_dn is None:
-			return True # Legacy invite link without creator
 		if self.creator is None:
 			return False # Creator does not exist (anymore)
 		if self.creator.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
@@ -74,10 +70,10 @@ class Invite(db.Model):
 class InviteGrant(db.Model):
 	__tablename__ = 'invite_grant'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	invite_id = Column(Integer(), ForeignKey('invite.id'), nullable=False)
+	invite_id = Column(Integer(), ForeignKey('invite.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	invite = relationship('Invite', back_populates='grants')
-	user_dn = Column(String(128), nullable=False)
-	user = DBRelationship('user_dn', User)
+	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	user = relationship('User')
 
 	def apply(self):
 		if not self.invite.active:
@@ -87,15 +83,15 @@ class InviteGrant(db.Model):
 		if set(self.invite.roles).issubset(self.user.roles):
 			return False, 'Invite link does not grant any new roles'
 		for role in self.invite.roles:
-			self.user.roles.add(role)
+			self.user.roles.append(role)
 		self.user.update_groups()
 		self.invite.used = True
 		return True, 'Success'
 
 class InviteSignup(Signup):
 	__tablename__ = 'invite_signup'
-	id = Column(Integer(), ForeignKey('signup.id'), primary_key=True)
-	invite_id = Column(Integer(), ForeignKey('invite.id'), nullable=False)
+	id = Column(Integer(), ForeignKey('signup.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
+	invite_id = Column(Integer(), ForeignKey('invite.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	invite = relationship('Invite', back_populates='signups')
 
 	__mapper_args__ = {
@@ -113,7 +109,7 @@ class InviteSignup(Signup):
 		user, msg = super().finish(password)
 		if user is not None:
 			for role in self.invite.roles:
-				user.roles.add(role)
+				user.roles.append(role)
 			user.update_groups()
 			self.invite.used = True
 		return user, msg

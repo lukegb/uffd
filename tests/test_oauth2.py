@@ -4,12 +4,12 @@ from urllib.parse import urlparse, parse_qs
 from flask import url_for, session
 
 # These imports are required, because otherwise we get circular imports?!
-from uffd import ldap, user
+from uffd import user
 
 from uffd.user.models import User
 from uffd.session.models import DeviceLoginConfirmation
 from uffd.oauth2.models import OAuth2Client, OAuth2DeviceLoginInitiation
-from uffd import create_app, db, ldap
+from uffd import create_app, db
 
 from utils import dump, UffdTestCase
 
@@ -69,7 +69,7 @@ class TestViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.content_type, 'application/json')
 		user = self.get_user()
-		self.assertEqual(r.json['id'], user.uid)
+		self.assertEqual(r.json['id'], user.unix_uid)
 		self.assertEqual(r.json['name'], user.displayname)
 		self.assertEqual(r.json['nickname'], user.loginname)
 		self.assertEqual(r.json['email'], user.mail)

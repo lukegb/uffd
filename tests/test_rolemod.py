@@ -3,7 +3,6 @@ from flask import url_for
 from uffd.user.models import User, Group
 from uffd.role.models import Role, RoleGroup
 from uffd.database import db
-from uffd.ldap import ldap
 
 from utils import dump, UffdTestCase
 
@@ -41,7 +40,7 @@ class TestRolemodViews(UffdTestCase):
 	def test_show(self):
 		role = Role(name='test', moderator_group=self.get_access_group())
 		db.session.add(role)
-		role.members.add(self.get_admin())
+		role.members.append(self.get_admin())
 		db.session.commit()
 		r = self.client.get(path=url_for('rolemod.show', role_id=role.id), follow_redirects=True)
 		dump('rolemod_show', r)
@@ -119,16 +118,16 @@ class TestRolemodViews(UffdTestCase):
 		role = Role(name='test', moderator_group=self.get_access_group())
 		role.groups[self.get_admin_group()] = RoleGroup()
 		db.session.add(role)
-		role.members.add(self.get_admin())
+		role.members.append(self.get_admin())
 		db.session.commit()
 		role.update_member_groups()
-		ldap.session.commit()
+		db.session.commit()
 		user = self.get_admin()
 		group = self.get_admin_group()
 		self.assertTrue(user in group.members)
 		role = Role.query.get(role.id)
 		self.assertTrue(user in role.members)
-		r = self.client.get(path=url_for('rolemod.delete_member', role_id=role.id, member_dn=user.dn), follow_redirects=True)
+		r = self.client.get(path=url_for('rolemod.delete_member', role_id=role.id, member_id=user.id), follow_redirects=True)
 		dump('rolemod_delete_member', r)
 		self.assertEqual(r.status_code, 200)
 		user_updated = self.get_admin()
@@ -143,7 +142,7 @@ class TestRolemodViews(UffdTestCase):
 		db.session.add(role)
 		db.session.commit()
 		user = self.get_admin()
-		r = self.client.get(path=url_for('rolemod.delete_member', role_id=role.id, member_dn=user.dn), follow_redirects=True)
+		r = self.client.get(path=url_for('rolemod.delete_member', role_id=role.id, member_id=user.id), follow_redirects=True)
 		dump('rolemod_delete_member_nomember', r)
 		self.assertEqual(r.status_code, 200)
 
@@ -152,12 +151,12 @@ class TestRolemodViews(UffdTestCase):
 		db.session.add(Role(name='other_role', moderator_group=self.get_access_group()))
 		role = Role(name='test', moderator_group=self.get_admin_group())
 		db.session.add(role)
-		role.members.add(self.get_admin())
+		role.members.append(self.get_admin())
 		db.session.commit()
 		user = self.get_admin()
 		role = Role.query.get(role.id)
 		self.assertTrue(user in role.members)
-		r = self.client.get(path=url_for('rolemod.delete_member', role_id=role.id, member_dn=user.dn), follow_redirects=True)
+		r = self.client.get(path=url_for('rolemod.delete_member', role_id=role.id, member_id=user.id), follow_redirects=True)
 		dump('rolemod_delete_member_noperm', r)
 		self.assertEqual(r.status_code, 403)
 		user_updated = self.get_admin()
@@ -169,12 +168,12 @@ class TestRolemodViews(UffdTestCase):
 		db.session.add(Role(name='other_role', moderator_group=self.get_access_group()))
 		role = Role(name='test')
 		db.session.add(role)
-		role.members.add(self.get_admin())
+		role.members.append(self.get_admin())
 		db.session.commit()
 		user = self.get_admin()
 		role = Role.query.get(role.id)
 		self.assertTrue(user in role.members)
-		r = self.client.get(path=url_for('rolemod.delete_member', role_id=role.id, member_dn=user.dn), follow_redirects=True)
+		r = self.client.get(path=url_for('rolemod.delete_member', role_id=role.id, member_id=user.id), follow_redirects=True)
 		dump('rolemod_delete_member_nomod', r)
 		self.assertEqual(r.status_code, 403)
 		user_updated = self.get_admin()

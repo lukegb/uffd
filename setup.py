@@ -8,7 +8,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 setup(
 	name='uffd',
 	version=os.environ.get('PACKAGE_VERSION', 'local'),
-	description='Ldap based single sign on and user management web software',
+	description='Web-based user management and single sign-on software',
 	long_description=long_description,
 	long_description_content_type='text/markdown',
 	url='https://git.cccv.de/uffd/uffd',
@@ -32,7 +32,6 @@ setup(
 	install_requires=[
 		# Versions Debian Buster packages are based on.
 		# DO NOT USE FOR PRODUCTION, those in the setup.py are not updated regularly
-		'ldap3==2.4.1',
 		'flask==1.0.2',
 		'Flask-SQLAlchemy==2.1',
 		'qrcode==6.1',

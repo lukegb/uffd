@@ -1,38 +1,28 @@
 from sqlalchemy import Column, String, Integer, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.collections import MappedCollection, collection
-from sqlalchemy.ext.declarative import declared_attr
 
-from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
-from uffd.user.models import User, Group
+from uffd.user.models import User
 
 class RoleGroup(db.Model):
-	__tablename__ = 'role-group'
-	role_id = Column(Integer(), ForeignKey('role.id'), primary_key=True)
-	group_dn = Column(String(128), primary_key=True)
+	__tablename__ = 'role_groups'
+	role_id = Column(Integer(), ForeignKey('role.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
+	role = relationship('Role')
+	group_id = Column(Integer(), ForeignKey('group.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
+	group = relationship('Group')
 	requires_mfa = Column(Boolean(), default=False, nullable=False)
 
-	role = relationship('Role')
-	group = DBRelationship('group_dn', Group)
-
-class RoleUser(db.Model):
-	__tablename__ = 'role-user'
-	__table_args__ = (
-		db.UniqueConstraint('dn', 'role_id'),
-	)
-
-	id = Column(Integer(), primary_key=True, autoincrement=True)
-	dn = Column(String(128))
-
-	@declared_attr
-	def role_id(self):
-		return Column(ForeignKey('role.id'))
+# pylint: disable=E1101
+role_members = db.Table('role_members',
+	db.Column('role_id', db.Integer(), db.ForeignKey('role.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True),
+	db.Column('user_id', db.Integer(), db.ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
+)
 
 # pylint: disable=E1101
 role_inclusion = db.Table('role-inclusion',
-	Column('role_id', Integer, ForeignKey('role.id'), primary_key=True),
-	Column('included_role_id', Integer, ForeignKey('role.id'), primary_key=True)
+	Column('role_id', Integer, ForeignKey('role.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True),
+	Column('included_role_id', Integer, ForeignKey('role.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
 )
 
 def flatten_recursive(objs, attr):
@@ -72,8 +62,9 @@ def update_user_groups(user):
 	groups_added = groups - current_groups
 	groups_removed = current_groups - groups
 	for group in groups_removed:
-		user.groups.discard(group)
-	user.groups.update(groups_added)
+		user.groups.remove(group)
+	for group in groups_added:
+		user.groups.append(group)
 	return groups_added, groups_removed
 
 User.update_groups = update_user_groups
@@ -90,19 +81,18 @@ class RoleGroupMap(MappedCollection):
 class Role(db.Model):
 	__tablename__ = 'role'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	name = Column(String(32), unique=True)
-	description = Column(Text(), default='')
+	name = Column(String(32), unique=True, nullable=False)
+	description = Column(Text(), default='', nullable=False)
 	included_roles = relationship('Role', secondary=role_inclusion,
 	                               primaryjoin=id == role_inclusion.c.role_id,
 	                               secondaryjoin=id == role_inclusion.c.included_role_id,
 																 backref='including_roles')
 	including_roles = [] # overwritten by backref
 
-	moderator_group_dn = Column(String(128), nullable=True)
-	moderator_group = DBRelationship('moderator_group_dn', Group)
+	moderator_group_id = Column(Integer(), ForeignKey('group.id', onupdate='CASCADE', ondelete='SET NULL'), nullable=True)
+	moderator_group = relationship('Group')
 
-	db_members = relationship("RoleUser", backref="role", cascade="all, delete-orphan")
-	members = DBRelationship('db_members', User, RoleUser, backattr='role', backref='roles')
+	members = relationship('User', secondary='role_members', back_populates='roles')
 
 	groups = relationship('RoleGroup', collection_class=RoleGroupMap, cascade='all, delete-orphan')
 

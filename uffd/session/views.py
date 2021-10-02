@@ -9,7 +9,6 @@ from uffd.database import db
 from uffd.csrf import csrf_protect
 from uffd.secure_redirect import secure_local_redirect
 from uffd.user.models import User
-from uffd.ldap import ldap, test_user_bind, LDAPInvalidDnError, LDAPBindError, LDAPPasswordIsMandatoryError, LDAPSASLPrepError
 from uffd.ratelimit import Ratelimit, host_ratelimit, format_delay
 from uffd.session.models import DeviceLoginInitiation, DeviceLoginConfirmation
 
@@ -21,13 +20,13 @@ login_ratelimit = Ratelimit('login', 1*60, 3)
 def set_request_user():
 	request.user = None
 	request.user_pre_mfa = None
-	if 'user_dn' not in session:
+	if 'user_id' not in session:
 		return
 	if 'logintime' not in session:
 		return
 	if datetime.datetime.now().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
 		return
-	user = User.query.get(session['user_dn'])
+	user = User.query.get(session['user_id'])
 	if not user or not user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
 		return
 	request.user_pre_mfa = user
@@ -35,30 +34,10 @@ def set_request_user():
 		request.user = user
 
 def login_get_user(loginname, password):
-	dn = User(loginname=loginname).dn
-
-	# If we use a service connection, test user bind seperately
-	if not current_app.config['LDAP_SERVICE_USER_BIND'] or current_app.config.get('LDAP_SERVICE_MOCK', False):
-		if not test_user_bind(dn, password):
-			return None
-	# If we use a user connection, just create the connection normally
-	else:
-		# ldap.get_connection gets the credentials from the session, so set it here initially
-		session['user_dn'] = dn
-		session['user_pw'] = password
-		try:
-			ldap.get_connection()
-		except (LDAPBindError, LDAPPasswordIsMandatoryError, LDAPSASLPrepError):
-			session.clear()
-			return None
-
-	try:
-		user = User.query.get(dn)
-		if user:
-			return user
-	except LDAPInvalidDnError:
-		pass
-	return None
+	user = User.query.filter_by(loginname=loginname).one_or_none()
+	if user is None or not user.check_password(password):
+		return None
+	return user
 
 @bp.route("/logout")
 def logout():
@@ -68,12 +47,9 @@ def logout():
 	session.clear()
 	return resp
 
-def set_session(user, password='', skip_mfa=False):
+def set_session(user, skip_mfa=False):
 	session.clear()
-	session['user_dn'] = user.dn
-	# only save the password if we use a user connection
-	if password and current_app.config['LDAP_SERVICE_USER_BIND']:
-		session['user_pw'] = password
+	session['user_id'] = user.id
 	session['logintime'] = datetime.datetime.now().timestamp()
 	session['_csrf_token'] = secrets.token_hex(128)
 	if skip_mfa:
@@ -105,7 +81,7 @@ def login():
 	if not user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
 		flash(_('You do not have access to this service'))
 		return render_template('session/login.html', ref=request.values.get('ref'))
-	set_session(user, password=password)
+	set_session(user)
 	return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
 
 def login_required_pre_mfa(no_redirect=False):
@@ -181,7 +157,7 @@ def deviceauth():
 @login_required()
 @csrf_protect(blueprint=bp)
 def deviceauth_submit():
-	DeviceLoginConfirmation.query.filter_by(user_dn=request.user.dn).delete()
+	DeviceLoginConfirmation.query.filter_by(user=request.user).delete()
 	initiation = DeviceLoginInitiation.query.filter_by(code=request.form['initiation-code']).one_or_none()
 	if initiation is None or initiation.expired:
 		flash(_('Invalid initiation code'))
@@ -194,6 +170,6 @@ def deviceauth_submit():
 @bp.route("/device/finish", methods=['GET', 'POST'])
 @login_required()
 def deviceauth_finish():
-	DeviceLoginConfirmation.query.filter_by(user_dn=request.user.dn).delete()
+	DeviceLoginConfirmation.query.filter_by(user=request.user).delete()
 	db.session.commit()
 	return redirect(url_for('index'))

@@ -7,6 +7,7 @@ from flask import request, url_for
 
 from uffd import create_app, db
 from uffd.user.models import User, Group
+from uffd.mail.models import Mail
 
 def dump(basename, resp):
 	basename = basename.replace('.', '_').replace('/', '_')
@@ -22,32 +23,37 @@ def dump(basename, resp):
 def db_flush():
 	db.session.rollback()
 	db.session = db.create_scoped_session()
-	if hasattr(request, 'ldap_connection'):
-		del request.ldap_session
 
 class UffdTestCase(unittest.TestCase):
-	use_openldap = False
-	use_userconnection = False
-
 	def get_user(self):
-		return User.query.get(self.test_data.get('user').get('dn'))
+		return User.query.filter_by(loginname='testuser').one_or_none()
 
 	def get_admin(self):
-		return User.query.get(self.test_data.get('admin').get('dn'))
+		return User.query.filter_by(loginname='testadmin').one_or_none()
 
 	def get_admin_group(self):
-		return Group.query.get(self.test_data.get('group_uffd_admin').get('dn'))
+		return Group.query.filter_by(name='uffd_admin').one_or_none()
 
 	def get_access_group(self):
-		return Group.query.get(self.test_data.get('group_uffd_access').get('dn'))
+		return Group.query.filter_by(name='uffd_access').one_or_none()
 
 	def get_users_group(self):
-		return Group.query.get(self.test_data.get('group_users').get('dn'))
+		return Group.query.filter_by(name='users').one_or_none()
+
+	def get_mail(self):
+		return Mail.query.filter_by(uid='test').one_or_none()
 
 	def login_as(self, user, ref=None):
+		loginname = None
+		password = None
+		if user == 'user':
+			loginname = 'testuser'
+			password = 'userpassword'
+		elif user == 'admin':
+			loginname = 'testadmin'
+			password = 'adminpassword'
 		return self.client.post(path=url_for('session.login', ref=ref),
-								data={'loginname': self.test_data.get(user).get('loginname'),
-									'password': self.test_data.get(user).get('password')}, follow_redirects=True)
+								data={'loginname': loginname, 'password': password}, follow_redirects=True)
 
 	def setUp(self):
 		# It would be far better to create a minimal app here, but since the
@@ -57,51 +63,10 @@ class UffdTestCase(unittest.TestCase):
 			'DEBUG': True,
 			'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
 			'SECRET_KEY': 'DEBUGKEY',
-			'LDAP_SERVICE_MOCK': True,
 			'MAIL_SKIP_SEND': True,
 			'SELF_SIGNUP': True,
 			'ENABLE_INVITE': True,
 			'ENABLE_PASSWORDRESET': True
-		}
-		if self.use_openldap:
-			if not os.environ.get('UNITTEST_OPENLDAP'):
-				self.skipTest('OPENLDAP_TESTING not set')
-			config['LDAP_SERVICE_MOCK'] = False
-			config['LDAP_SERVICE_URL'] = 'ldap://localhost'
-			if self.use_userconnection:
-				config['LDAP_SERVICE_USER_BIND'] = True
-				config['SELF_SIGNUP'] = False
-				config['ENABLE_INVITE'] = False
-				config['ENABLE_PASSWORDRESET'] = False
-				config['ENABLE_ROLESELFSERVICE'] = False
-			else:
-				config['LDAP_SERVICE_BIND_DN'] = 'cn=uffd,ou=system,dc=example,dc=com'
-			config['LDAP_SERVICE_BIND_PASSWORD'] = 'uffd-ldap-password'
-			os.system("ldapdelete -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w '{}' -H '{}' -f tests/openldap_ldifs/ldap_server_entries_cleanup.ldif > /dev/null 2>&1".format(config['LDAP_SERVICE_BIND_PASSWORD'], config['LDAP_SERVICE_URL']))
-			os.system("ldapadd -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w '{}' -H '{}' -f tests/openldap_ldifs/ldap_server_entries_add.ldif".format(config['LDAP_SERVICE_BIND_PASSWORD'], config['LDAP_SERVICE_URL']))
-			os.system("ldapmodify -c -D 'cn=uffd,ou=system,dc=example,dc=com' -w '{}' -H '{}' -f tests/openldap_ldifs/ldap_server_entries_modify.ldif".format(config['LDAP_SERVICE_BIND_PASSWORD'], config['LDAP_SERVICE_URL']))
-			#os.system("/usr/sbin/slapcat -n 1 -l /dev/stdout")
-
-		self.test_data = {
-			'admin': {
-				'loginname': 'testadmin',
-				'dn': 'uid=testadmin,ou=users,dc=example,dc=com',
-				'password': 'adminpassword'
-			},
-			'user': {
-				'loginname': 'testuser',
-				'dn': 'uid=testuser,ou=users,dc=example,dc=com',
-				'password': 'userpassword'
-			},
-			'group_uffd_access': {
-				'dn': 'cn=uffd_access,ou=groups,dc=example,dc=com'
-			},
-			'group_uffd_admin': {
-				'dn': 'cn=uffd_admin,ou=groups,dc=example,dc=com'
-			},
-			'group_users': {
-				'dn': 'cn=users,ou=groups,dc=example,dc=com'
-			}
 		}
 
 		self.app = create_app(config)
@@ -111,6 +76,20 @@ class UffdTestCase(unittest.TestCase):
 		# Just do some request so that we can use url_for
 		self.client.get(path='/')
 		db.create_all()
+		# This reflects the old LDAP example data
+		users_group = Group(name='users', unix_gid=20001, description='Base group for all users')
+		db.session.add(users_group)
+		access_group = Group(name='uffd_access', unix_gid=20002, description='Access to Single-Sign-On and Selfservice')
+		db.session.add(access_group)
+		admin_group = Group(name='uffd_admin', unix_gid=20003, description='Admin access to uffd')
+		db.session.add(admin_group)
+		testuser = User(loginname='testuser', unix_uid=10000, password='userpassword', mail='test@example.com', displayname='Test User', groups=[users_group, access_group])
+		db.session.add(testuser)
+		testadmin = User(loginname='testadmin', unix_uid=10001, password='adminpassword', mail='admin@example.com', displayname='Test Admin', groups=[users_group, access_group, admin_group])
+		db.session.add(testadmin)
+		testmail = Mail(uid='test', receivers=['test1@example.com', 'test2@example.com'], destinations=['testuser@mail.example.com'])
+		db.session.add(testmail)
+		db.session.commit()
 
 	def setUpApp(self):
 		pass

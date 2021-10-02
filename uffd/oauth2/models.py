@@ -1,10 +1,9 @@
 from flask import current_app
 from flask_babel import get_locale, gettext as _
-from sqlalchemy import Column, Integer, String, DateTime, Text
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
+from sqlalchemy.orm import relationship
 
-from uffd.ldapalchemy.dbutils import DBRelationship
 from uffd.database import db
-from uffd.user.models import User
 from uffd.session.models import DeviceLoginInitiation, DeviceLoginType
 
 class OAuth2Client:
@@ -42,12 +41,12 @@ class OAuth2Client:
 
 class OAuth2Grant(db.Model):
 	__tablename__ = 'oauth2grant'
-	id = Column(Integer, primary_key=True)
+	id = Column(Integer, primary_key=True, autoincrement=True)
 
-	user_dn = Column(String(128))
-	user = DBRelationship('user_dn', User, backref='oauth2_grants')
+	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	user = relationship('User')
 
-	client_id = Column(String(40))
+	client_id = Column(String(40), nullable=False)
 
 	@property
 	def client(self):
@@ -58,10 +57,10 @@ class OAuth2Grant(db.Model):
 		self.client_id = newclient.client_id
 
 	code = Column(String(255), index=True, nullable=False)
-	redirect_uri = Column(String(255))
-	expires = Column(DateTime)
+	redirect_uri = Column(String(255), nullable=False)
+	expires = Column(DateTime, nullable=False)
 
-	_scopes = Column(Text)
+	_scopes = Column(Text, nullable=False, default='')
 	@property
 	def scopes(self):
 		if self._scopes:
@@ -75,12 +74,12 @@ class OAuth2Grant(db.Model):
 
 class OAuth2Token(db.Model):
 	__tablename__ = 'oauth2token'
-	id = Column(Integer, primary_key=True)
+	id = Column(Integer, primary_key=True, autoincrement=True)
 
-	user_dn = Column(String(128))
-	user = DBRelationship('user_dn', User, backref='oauth2_tokens')
+	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	user = relationship('User')
 
-	client_id = Column(String(40))
+	client_id = Column(String(40), nullable=False)
 
 	@property
 	def client(self):
@@ -91,12 +90,12 @@ class OAuth2Token(db.Model):
 		self.client_id = newclient.client_id
 
 	# currently only bearer is supported
-	token_type = Column(String(40))
-	access_token = Column(String(255), unique=True)
-	refresh_token = Column(String(255), unique=True)
-	expires = Column(DateTime)
+	token_type = Column(String(40), nullable=False)
+	access_token = Column(String(255), unique=True, nullable=False)
+	refresh_token = Column(String(255), unique=True, nullable=False)
+	expires = Column(DateTime, nullable=False)
 
-	_scopes = Column(Text)
+	_scopes = Column(Text, nullable=False, default='')
 	@property
 	def scopes(self):
 		if self._scopes:

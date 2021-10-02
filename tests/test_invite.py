@@ -6,7 +6,6 @@ from flask import url_for, session, current_app
 
 # These imports are required, because otherwise we get circular imports?!
 from uffd import user
-from uffd.ldap import ldap
 
 from uffd import create_app, db
 from uffd.invite.models import Invite, InviteGrant, InviteSignup
@@ -18,7 +17,7 @@ from utils import dump, UffdTestCase, db_flush
 
 class TestInviteModel(UffdTestCase):
 	def test_expire(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60))
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), creator=self.get_admin())
 		self.assertFalse(invite.expired)
 		self.assertTrue(invite.active)
 		invite.valid_until = datetime.datetime.now() - datetime.timedelta(seconds=60)
@@ -26,13 +25,13 @@ class TestInviteModel(UffdTestCase):
 		self.assertFalse(invite.active)
 
 	def test_void(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), single_use=False)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), single_use=False, creator=self.get_admin())
 		self.assertFalse(invite.voided)
 		self.assertTrue(invite.active)
 		invite.used = True
 		self.assertFalse(invite.voided)
 		self.assertTrue(invite.active)
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), single_use=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), single_use=True, creator=self.get_admin())
 		self.assertFalse(invite.voided)
 		self.assertTrue(invite.active)
 		invite.used = True
@@ -42,50 +41,47 @@ class TestInviteModel(UffdTestCase):
 	def test_permitted(self):
 		role = Role(name='testrole')
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, roles=[role])
-		self.assertTrue(invite.permitted)
-		self.assertTrue(invite.active)
-		invite.creator_dn = 'uid=doesnotexist,ou=users,dc=example,dc=com'
 		self.assertFalse(invite.permitted)
 		self.assertFalse(invite.active)
-		invite.creator_dn = self.test_data.get('admin').get('dn')
+		invite.creator = self.get_admin()
 		self.assertTrue(invite.permitted)
 		self.assertTrue(invite.active)
-		invite.creator_dn = self.test_data.get('user').get('dn')
+		invite.creator = self.get_user()
 		self.assertFalse(invite.permitted)
 		self.assertFalse(invite.active)
-		role.moderator_group_dn = self.test_data.get('group_uffd_access').get('dn')
+		role.moderator_group = self.get_access_group()
 		current_app.config['ACL_SIGNUP_GROUP'] = 'uffd_access'
 		self.assertTrue(invite.permitted)
 		self.assertTrue(invite.active)
-		role.moderator_group_dn = None
+		role.moderator_group = None
 		self.assertFalse(invite.permitted)
 		self.assertFalse(invite.active)
-		role.moderator_group_dn = self.test_data.get('group_uffd_access').get('dn')
+		role.moderator_group = self.get_access_group()
 		current_app.config['ACL_SIGNUP_GROUP'] = 'uffd_admin'
 		self.assertFalse(invite.permitted)
 		self.assertFalse(invite.active)
 
 	def test_disable(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60))
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), creator=self.get_admin())
 		self.assertTrue(invite.active)
 		invite.disable()
 		self.assertFalse(invite.active)
 
 	def test_reset_disabled(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60))
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), creator=self.get_admin())
 		invite.disable()
 		self.assertFalse(invite.active)
 		invite.reset()
 		self.assertTrue(invite.active)
 
 	def test_reset_expired(self):
-		invite = Invite(valid_until=datetime.datetime.now() - datetime.timedelta(seconds=60))
+		invite = Invite(valid_until=datetime.datetime.now() - datetime.timedelta(seconds=60), creator=self.get_admin())
 		self.assertFalse(invite.active)
 		invite.reset()
 		self.assertFalse(invite.active)
 
 	def test_reset_single_use(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), single_use=False)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), single_use=False, creator=self.get_admin())
 		invite.used = True
 		invite.disable()
 		self.assertFalse(invite.active)
@@ -93,7 +89,7 @@ class TestInviteModel(UffdTestCase):
 		self.assertTrue(invite.active)
 
 	def test_short_token(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60))
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		self.assertTrue(len(invite.short_token) <= len(invite.token)/3)
@@ -104,14 +100,14 @@ class TestInviteGrantModel(UffdTestCase):
 		group0 = self.get_access_group()
 		role0 = Role(name='baserole', groups={group0: RoleGroup(group=group0)})
 		db.session.add(role0)
-		user.roles.add(role0)
+		user.roles.append(role0)
 		user.update_groups()
 		group1 = self.get_admin_group()
 		role1 = Role(name='testrole1', groups={group1: RoleGroup(group=group1)})
 		db.session.add(role1)
 		role2 = Role(name='testrole2')
 		db.session.add(role2)
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role1, role2])
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role1, role2], creator=self.get_admin())
 		self.assertIn(role0, user.roles)
 		self.assertNotIn(role1, user.roles)
 		self.assertNotIn(role2, user.roles)
@@ -128,21 +124,20 @@ class TestInviteGrantModel(UffdTestCase):
 		self.assertIn(group1, user.groups)
 		self.assertTrue(invite.used)
 		db.session.commit()
-		ldap.session.commit()
 		db_flush()
 		user = self.get_user()
 		self.assertIn('baserole', [role.name for role in user.roles_effective])
 		self.assertIn('testrole1', [role.name for role in user.roles])
 		self.assertIn('testrole2', [role.name for role in user.roles])
-		self.assertIn(self.test_data.get('group_uffd_access').get('dn'), [group.dn for group in user.groups])
-		self.assertIn(self.test_data.get('group_uffd_admin').get('dn'), [group.dn for group in user.groups])
+		self.assertIn(self.get_access_group(), user.groups)
+		self.assertIn(self.get_admin_group(), user.groups)
 
 	def test_inactive(self):
 		user = self.get_user()
 		group = self.get_admin_group()
 		role = Role(name='testrole1', groups={group: RoleGroup(group=group)})
 		db.session.add(role)
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role], single_use=True, used=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role], single_use=True, used=True, creator=self.get_admin())
 		self.assertFalse(invite.active)
 		grant = InviteGrant(invite=invite, user=user)
 		success, msg = grant.apply()
@@ -153,7 +148,7 @@ class TestInviteGrantModel(UffdTestCase):
 
 	def test_no_roles(self):
 		user = self.get_user()
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60))
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), creator=self.get_admin())
 		self.assertTrue(invite.active)
 		grant = InviteGrant(invite=invite, user=user)
 		success, msg = grant.apply()
@@ -164,8 +159,8 @@ class TestInviteGrantModel(UffdTestCase):
 		user = self.get_user()
 		role = Role(name='testrole1')
 		db.session.add(role)
-		user.roles.add(role)
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role])
+		user.roles.append(role)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role], creator=self.get_admin())
 		self.assertTrue(invite.active)
 		grant = InviteGrant(invite=invite, user=user)
 		success, msg = grant.apply()
@@ -190,7 +185,7 @@ class TestInviteSignupModel(UffdTestCase):
 		db.session.add(role1)
 		role2 = Role(name='testrole2')
 		db.session.add(role2)
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role1, role2], allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role1, role2], allow_signup=True, creator=self.get_admin())
 		signup = InviteSignup(invite=invite, loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		self.assertFalse(invite.used)
 		valid, msg = signup.validate()
@@ -202,7 +197,7 @@ class TestInviteSignupModel(UffdTestCase):
 		self.assertEqual(user.loginname, 'newuser')
 		self.assertEqual(user.displayname, 'New User')
 		self.assertEqual(user.mail, 'test@example.com')
-		self.assertEqual(signup.user.dn, user.dn)
+		self.assertEqual(signup.user, user)
 		self.assertIn(base_role, user.roles_effective)
 		self.assertIn(role1, user.roles)
 		self.assertIn(role2, user.roles)
@@ -210,7 +205,6 @@ class TestInviteSignupModel(UffdTestCase):
 		self.assertIn(base_group2, user.groups)
 		self.assertIn(group, user.groups)
 		db.session.commit()
-		ldap.session.commit()
 		db_flush()
 		self.assertEqual(len(User.query.filter_by(loginname='newuser').all()), 1)
 
@@ -219,7 +213,7 @@ class TestInviteSignupModel(UffdTestCase):
 		base_role = Role.query.filter_by(name='base').one()
 		base_group1 = self.get_access_group()
 		base_group2 = self.get_users_group()
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		signup = InviteSignup(invite=invite, loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		self.assertFalse(invite.used)
 		valid, msg = signup.validate()
@@ -231,19 +225,18 @@ class TestInviteSignupModel(UffdTestCase):
 		self.assertEqual(user.loginname, 'newuser')
 		self.assertEqual(user.displayname, 'New User')
 		self.assertEqual(user.mail, 'test@example.com')
-		self.assertEqual(signup.user.dn, user.dn)
+		self.assertEqual(signup.user, user)
 		self.assertIn(base_role, user.roles_effective)
 		self.assertEqual(len(user.roles_effective), 1)
 		self.assertIn(base_group1, user.groups)
 		self.assertIn(base_group2, user.groups)
 		self.assertEqual(len(user.groups), 2)
 		db.session.commit()
-		ldap.session.commit()
 		db_flush()
 		self.assertEqual(len(User.query.filter_by(loginname='newuser').all()), 1)
 
 	def test_inactive(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, single_use=True, used=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, single_use=True, used=True, creator=self.get_admin())
 		self.assertFalse(invite.active)
 		signup = InviteSignup(invite=invite, loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		valid, msg = signup.validate()
@@ -254,7 +247,7 @@ class TestInviteSignupModel(UffdTestCase):
 		self.assertIsInstance(msg, str)
 
 	def test_invalid(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		self.assertTrue(invite.active)
 		signup = InviteSignup(invite=invite, loginname='', displayname='New User', mail='test@example.com', password='notsecret')
 		valid, msg = signup.validate()
@@ -262,7 +255,7 @@ class TestInviteSignupModel(UffdTestCase):
 		self.assertIsInstance(msg, str)
 
 	def test_invalid2(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		self.assertTrue(invite.active)
 		signup = InviteSignup(invite=invite, loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		user, msg = signup.finish('wrongpassword')
@@ -270,7 +263,7 @@ class TestInviteSignupModel(UffdTestCase):
 		self.assertIsInstance(msg, str)
 
 	def test_no_signup(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=False)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=False, creator=self.get_admin())
 		self.assertTrue(invite.active)
 		signup = InviteSignup(invite=invite, loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		valid, msg = signup.validate()
@@ -295,16 +288,18 @@ class TestInviteAdminViews(UffdTestCase):
 		role2 = Role(name='testrole2')
 		db.session.add(role2)
 		# All possible states
-		db.session.add(Invite(valid_until=valid_until, single_use=False))
-		db.session.add(Invite(valid_until=valid_until, single_use=True, used=False))
-		db.session.add(Invite(valid_until=valid_until, single_use=True, used=True, signups=[InviteSignup(user=user1)]))
-		db.session.add(Invite(valid_until=valid_until_expired))
-		db.session.add(Invite(valid_until=valid_until, disabled=True))
+		db.session.add(Invite(valid_until=valid_until, single_use=False, creator=self.get_admin()))
+		db.session.add(Invite(valid_until=valid_until, single_use=True, used=False, creator=self.get_admin()))
+		invite = Invite(valid_until=valid_until, single_use=True, used=True, creator=self.get_admin())
+		invite.signups = [InviteSignup(user=user1)]
+		db.session.add(invite)
+		db.session.add(Invite(valid_until=valid_until_expired, creator=self.get_admin()))
+		db.session.add(Invite(valid_until=valid_until, disabled=True, creator=self.get_admin()))
 		# Different permissions
-		db.session.add(Invite(valid_until=valid_until, allow_signup=True))
-		db.session.add(Invite(valid_until=valid_until, allow_signup=False))
-		db.session.add(Invite(valid_until=valid_until, allow_signup=True, roles=[role1], grants=[InviteGrant(user=user2)]))
-		db.session.add(Invite(valid_until=valid_until, allow_signup=False, roles=[role1, role2]))
+		db.session.add(Invite(valid_until=valid_until, allow_signup=True, creator=self.get_admin()))
+		db.session.add(Invite(valid_until=valid_until, allow_signup=False, creator=self.get_admin()))
+		db.session.add(Invite(valid_until=valid_until, allow_signup=True, roles=[role1], grants=[InviteGrant(user=user2)], creator=self.get_admin()))
+		db.session.add(Invite(valid_until=valid_until, allow_signup=False, roles=[role1, role2], creator=self.get_admin()))
 		db.session.commit()
 		self.login_as('admin')
 		r = self.client.get(path=url_for('invite.index'), follow_redirects=True)
@@ -331,9 +326,9 @@ class TestInviteAdminViews(UffdTestCase):
 	def test_index_signupperm(self):
 		current_app.config['ACL_SIGNUP_GROUP'] = 'uffd_access'
 		valid_until = datetime.datetime.now() + datetime.timedelta(seconds=60)
-		invite1 = Invite(valid_until=valid_until, allow_signup=True, creator_dn=self.test_data.get('admin').get('dn'))
+		invite1 = Invite(valid_until=valid_until, allow_signup=True, creator=self.get_admin())
 		db.session.add(invite1)
-		invite2 = Invite(valid_until=valid_until, allow_signup=True, creator_dn=self.test_data.get('user').get('dn'))
+		invite2 = Invite(valid_until=valid_until, allow_signup=True, creator=self.get_user())
 		db.session.add(invite2)
 		invite3 = Invite(valid_until=valid_until, allow_signup=True)
 		db.session.add(invite3)
@@ -351,7 +346,7 @@ class TestInviteAdminViews(UffdTestCase):
 	def test_index_rolemod(self):
 		role1 = Role(name='testrole1')
 		db.session.add(role1)
-		role2 = Role(name='testrole2', moderator_group_dn=self.test_data.get('group_uffd_access').get('dn'))
+		role2 = Role(name='testrole2', moderator_group=self.get_access_group())
 		db.session.add(role2)
 		valid_until = datetime.datetime.now() + datetime.timedelta(seconds=60)
 		db.session.add(Invite(valid_until=valid_until, roles=[role1]))
@@ -412,7 +407,7 @@ class TestInviteAdminViews(UffdTestCase):
 	def test_disable(self):
 		self.login_as('admin')
 		valid_until = datetime.datetime.now() + datetime.timedelta(seconds=60)
-		invite = Invite(valid_until=valid_until)
+		invite = Invite(valid_until=valid_until, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		id = invite.id
@@ -425,7 +420,7 @@ class TestInviteAdminViews(UffdTestCase):
 		current_app.config['ACL_SIGNUP_GROUP'] = 'uffd_access'
 		self.login_as('user')
 		valid_until = datetime.datetime.now() + datetime.timedelta(seconds=60)
-		invite = Invite(valid_until=valid_until, creator_dn=self.test_data.get('user').get('dn'))
+		invite = Invite(valid_until=valid_until, creator=self.get_user())
 		db.session.add(invite)
 		db.session.commit()
 		id = invite.id
@@ -437,9 +432,9 @@ class TestInviteAdminViews(UffdTestCase):
 	def test_disable_rolemod(self):
 		self.login_as('user')
 		valid_until = datetime.datetime.now() + datetime.timedelta(seconds=60)
-		role = Role(name='testrole', moderator_group_dn=self.test_data.get('group_uffd_access').get('dn'))
+		role = Role(name='testrole', moderator_group=self.get_access_group())
 		db.session.add(role)
-		invite = Invite(valid_until=valid_until, creator_dn=self.test_data.get('admin').get('dn'), roles=[role])
+		invite = Invite(valid_until=valid_until, creator=self.get_admin(), roles=[role])
 		db.session.add(invite)
 		db.session.commit()
 		id = invite.id
@@ -450,10 +445,10 @@ class TestInviteAdminViews(UffdTestCase):
 	def test_disable_noperm(self):
 		self.login_as('user')
 		valid_until = datetime.datetime.now() + datetime.timedelta(seconds=60)
-		db.session.add(Role(name='testrole1', moderator_group_dn=self.test_data.get('group_uffd_access').get('dn')))
-		role = Role(name='testrole2', moderator_group_dn=self.test_data.get('group_uffd_admin').get('dn'))
+		db.session.add(Role(name='testrole1', moderator_group=self.get_access_group()))
+		role = Role(name='testrole2', moderator_group=self.get_admin_group())
 		db.session.add(role)
-		invite = Invite(valid_until=valid_until, creator_dn=self.test_data.get('admin').get('dn'), roles=[role])
+		invite = Invite(valid_until=valid_until, creator=self.get_admin(), roles=[role])
 		db.session.add(invite)
 		db.session.commit()
 		id = invite.id
@@ -464,7 +459,7 @@ class TestInviteAdminViews(UffdTestCase):
 	def test_reset_disabled(self):
 		self.login_as('admin')
 		valid_until = datetime.datetime.now() + datetime.timedelta(seconds=60)
-		invite = Invite(valid_until=valid_until, disabled=True)
+		invite = Invite(valid_until=valid_until, disabled=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		id = invite.id
@@ -476,7 +471,7 @@ class TestInviteAdminViews(UffdTestCase):
 	def test_reset_voided(self):
 		self.login_as('admin')
 		valid_until = datetime.datetime.now() + datetime.timedelta(seconds=60)
-		invite = Invite(valid_until=valid_until, single_use=True, used=True)
+		invite = Invite(valid_until=valid_until, single_use=True, used=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		id = invite.id
@@ -489,7 +484,7 @@ class TestInviteAdminViews(UffdTestCase):
 		current_app.config['ACL_SIGNUP_GROUP'] = 'uffd_access'
 		self.login_as('user')
 		valid_until = datetime.datetime.now() + datetime.timedelta(seconds=60)
-		invite = Invite(valid_until=valid_until, disabled=True, creator_dn=self.test_data.get('user').get('dn'))
+		invite = Invite(valid_until=valid_until, disabled=True, creator=self.get_user())
 		db.session.add(invite)
 		db.session.commit()
 		id = invite.id
@@ -501,9 +496,9 @@ class TestInviteAdminViews(UffdTestCase):
 	def test_reset_foreign(self):
 		self.login_as('user')
 		valid_until = datetime.datetime.now() + datetime.timedelta(seconds=60)
-		role = Role(name='testrole', moderator_group_dn=self.test_data.get('group_uffd_access').get('dn'))
+		role = Role(name='testrole', moderator_group=self.get_access_group())
 		db.session.add(role)
-		invite = Invite(valid_until=valid_until, disabled=True, creator_dn=self.test_data.get('admin').get('dn'), roles=[role])
+		invite = Invite(valid_until=valid_until, disabled=True, creator=self.get_admin(), roles=[role])
 		db.session.add(invite)
 		db.session.commit()
 		id = invite.id
@@ -551,17 +546,16 @@ class TestInviteUseViews(UffdTestCase):
 		group0 = self.get_access_group()
 		role0 = Role(name='baserole', groups={group0: RoleGroup(group=group0)})
 		db.session.add(role0)
-		user.roles.add(role0)
+		user.roles.append(role0)
 		user.update_groups()
 		group1 = self.get_admin_group()
 		role1 = Role(name='testrole1', groups={group1: RoleGroup(group=group1)})
 		db.session.add(role1)
 		role2 = Role(name='testrole2')
 		db.session.add(role2)
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role1, role2])
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role1, role2], creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
-		ldap.session.commit()
 		invite_id = invite.id
 		token = invite.token
 		self.assertIn(role0, user.roles)
@@ -581,8 +575,8 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertIn('baserole', [role.name for role in user.roles])
 		self.assertIn('testrole1', [role.name for role in user.roles])
 		self.assertIn('testrole2', [role.name for role in user.roles])
-		self.assertIn(self.test_data.get('group_uffd_access').get('dn'), [group.dn for group in user.groups])
-		self.assertIn(self.test_data.get('group_uffd_admin').get('dn'), [group.dn for group in user.groups])
+		self.assertIn(self.get_access_group(), user.groups)
+		self.assertIn(self.get_admin_group(), user.groups)
 
 	def test_grant_invalid_invite(self):
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), disabled=True)
@@ -612,7 +606,7 @@ class TestInviteUseViews(UffdTestCase):
 		user = self.get_user()
 		role = Role(name='testrole')
 		db.session.add(role)
-		user.roles.add(role)
+		user.roles.append(role)
 		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role])
 		db.session.add(invite)
 		db.session.commit()
@@ -634,7 +628,7 @@ class TestInviteUseViews(UffdTestCase):
 		db.session.add(role1)
 		role2 = Role(name='testrole2')
 		db.session.add(role2)
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role1, role2], allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), roles=[role1, role2], allow_signup=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		invite_id = invite.id
@@ -656,7 +650,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertTrue(signup.validate()[0])
 
 	def test_signup_invalid_invite(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, disabled=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, disabled=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		r = self.client.get(path=url_for('invite.signup_start', invite_id=invite.id, token=invite.token), follow_redirects=True)
@@ -664,7 +658,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 
 	def test_signup_nosignup(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=False)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=False, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		r = self.client.get(path=url_for('invite.signup_start', invite_id=invite.id, token=invite.token), follow_redirects=True)
@@ -672,7 +666,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 
 	def test_signup_wrongpassword(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		r = self.client.post(path=url_for('invite.signup_submit', invite_id=invite.id, token=invite.token),
@@ -682,7 +676,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 
 	def test_signup_invalid(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		r = self.client.post(path=url_for('invite.signup_submit', invite_id=invite.id, token=invite.token),
@@ -693,7 +687,7 @@ class TestInviteUseViews(UffdTestCase):
 
 	def test_signup_mailerror(self):
 		self.app.config['MAIL_SKIP_SEND'] = 'fail'
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		r = self.client.post(path=url_for('invite.signup_submit', invite_id=invite.id, token=invite.token),
@@ -703,7 +697,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 
 	def test_signup_hostlimit(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		invite_id = invite.id
@@ -723,7 +717,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertIsNone(self.app.last_mail)
 
 	def test_signup_mailimit(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		invite_id = invite.id
@@ -743,7 +737,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertIsNone(self.app.last_mail)
 
 	def test_signup_check(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		invite_id = invite.id
@@ -755,19 +749,20 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertEqual(r.json['status'], 'ok')
 
 	def test_signup_check_invalid(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		invite_id = invite.id
 		token = invite.token
 		r = self.client.post(path=url_for('invite.signup_check', invite_id=invite_id, token=token), follow_redirects=True,
 		                     data={'loginname': ''})
+		print(r.data)
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.content_type, 'application/json')
 		self.assertEqual(r.json['status'], 'invalid')
 
 	def test_signup_check_exists(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		invite_id = invite.id
@@ -779,7 +774,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertEqual(r.json['status'], 'exists')
 
 	def test_signup_check_nosignup(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=False)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=False, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		invite_id = invite.id
@@ -791,7 +786,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertEqual(r.json['status'], 'error')
 
 	def test_signup_check_error(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, disabled=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, disabled=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		invite_id = invite.id
@@ -803,7 +798,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertEqual(r.json['status'], 'error')
 
 	def test_signup_check_ratelimited(self):
-		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True)
+		invite = Invite(valid_until=datetime.datetime.now() + datetime.timedelta(seconds=60), allow_signup=True, creator=self.get_admin())
 		db.session.add(invite)
 		db.session.commit()
 		invite_id = invite.id
@@ -818,6 +813,3 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.content_type, 'application/json')
 		self.assertEqual(r.json['status'], 'ratelimited')
-
-class TestInviteUseViewsOL(TestInviteUseViews):
-	use_openldap = True

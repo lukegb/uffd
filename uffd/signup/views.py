@@ -6,7 +6,6 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_babel import gettext as _
 
 from uffd.database import db
-from uffd.ldap import ldap
 from uffd.session import set_session
 from uffd.user.models import User
 from uffd.sendmail import sendmail
@@ -113,7 +112,6 @@ def signup_confirm_submit(signup_id, token):
 	if user is None:
 		return render_template('signup/confirm.html', signup=signup, error=msg)
 	db.session.commit()
-	ldap.session.commit()
-	set_session(user, password=request.form['password'], skip_mfa=True)
+	set_session(user, skip_mfa=True)
 	flash(_('Your account was successfully created'))
 	return redirect(url_for('selfservice.index'))
