@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-09-15 10:56+0200\n"
+"POT-Creation-Date: 2021-10-04 00:22+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -134,6 +134,7 @@ msgid "Signup"
 msgstr "Account-Registrierung"
 
 #: uffd/invite/templates/invite/list.html:49
+#: uffd/user/templates/user/show.html:91
 msgid "Disabled"
 msgstr "Deaktiviert"
 
@@ -269,8 +270,9 @@ msgstr "Enthaltene Rollen"
 #: uffd/rolemod/templates/rolemod/show.html:46
 #: uffd/selfservice/templates/selfservice/self.html:101
 #: uffd/user/templates/group/list.html:15
-#: uffd/user/templates/group/show.html:26 uffd/user/templates/user/show.html:95
-#: uffd/user/templates/user/show.html:127
+#: uffd/user/templates/group/show.html:26
+#: uffd/user/templates/user/show.html:106
+#: uffd/user/templates/user/show.html:138
 msgid "Name"
 msgstr "Name"
 
@@ -280,8 +282,9 @@ msgstr "Name"
 #: uffd/rolemod/templates/rolemod/show.html:28
 #: uffd/selfservice/templates/selfservice/self.html:102
 #: uffd/user/templates/group/list.html:16
-#: uffd/user/templates/group/show.html:30 uffd/user/templates/user/show.html:96
-#: uffd/user/templates/user/show.html:128
+#: uffd/user/templates/group/show.html:30
+#: uffd/user/templates/user/show.html:107
+#: uffd/user/templates/user/show.html:139
 msgid "Description"
 msgstr "Beschreibung"
 
@@ -381,8 +384,8 @@ msgstr "Speichern"
 #: uffd/mfa/templates/mfa/setup.html:117 uffd/mfa/templates/mfa/setup.html:179
 #: uffd/role/templates/role/show.html:21 uffd/role/templates/role/show.html:24
 #: uffd/user/templates/group/show.html:11
-#: uffd/user/templates/group/show.html:13 uffd/user/templates/user/show.html:11
-#: uffd/user/templates/user/show.html:13
+#: uffd/user/templates/group/show.html:13 uffd/user/templates/user/show.html:10
+#: uffd/user/templates/user/show.html:12
 msgid "Delete"
 msgstr "Löschen"
 
@@ -430,6 +433,7 @@ msgstr "Zwei-Faktor-Authentifizierung fehlgeschlagen"
 
 #: uffd/mfa/templates/mfa/auth.html:6
 #: uffd/selfservice/templates/selfservice/self.html:67
+#: uffd/user/templates/user/show.html:89
 msgid "Two-Factor Authentication"
 msgstr "Zwei-Faktor-Authentifizierung"
 
@@ -510,6 +514,7 @@ msgstr "Zwei-Faktor-Authentifizierung zurücksetzen"
 
 #: uffd/mfa/templates/mfa/setup.html:46
 #: uffd/mfa/templates/mfa/setup_recovery.html:5
+#: uffd/user/templates/user/show.html:92
 msgid "Recovery Codes"
 msgstr "Wiederherstellungscodes"
 
@@ -547,7 +552,7 @@ msgstr "Generiere neue Wiederherstellungscodes"
 msgid "You have no remaining recovery codes."
 msgstr "Du hast keine Wiederherstellungscodes übrig."
 
-#: uffd/mfa/templates/mfa/setup.html:85
+#: uffd/mfa/templates/mfa/setup.html:85 uffd/user/templates/user/show.html:92
 msgid "Authenticator Apps (TOTP)"
 msgstr "Authentifikator-Apps (TOTP)"
 
@@ -577,7 +582,7 @@ msgstr "Registriert am"
 msgid "No authenticator apps registered yet"
 msgstr "Bisher keine Authentifikator-Apps registriert"
 
-#: uffd/mfa/templates/mfa/setup.html:134
+#: uffd/mfa/templates/mfa/setup.html:134 uffd/user/templates/user/show.html:92
 msgid "U2F and FIDO2 Devices"
 msgstr "U2F und FIDO2 Geräte"
 
@@ -777,8 +782,8 @@ msgstr ""
 "versuchen?"
 
 #: uffd/role/views.py:48 uffd/selfservice/templates/selfservice/self.html:86
-#: uffd/user/templates/user/list.html:20 uffd/user/templates/user/show.html:21
-#: uffd/user/templates/user/show.html:90
+#: uffd/user/templates/user/list.html:20 uffd/user/templates/user/show.html:20
+#: uffd/user/templates/user/show.html:101
 msgid "Roles"
 msgstr "Rollen"
 
@@ -812,7 +817,8 @@ msgstr "Als Default setzen"
 
 #: uffd/role/templates/role/show.html:19 uffd/role/templates/role/show.html:21
 #: uffd/selfservice/templates/selfservice/self.html:117
-#: uffd/user/templates/group/show.html:11 uffd/user/templates/user/show.html:11
+#: uffd/user/templates/group/show.html:11 uffd/user/templates/user/show.html:10
+#: uffd/user/templates/user/show.html:94
 msgid "Are you sure?"
 msgstr "Wirklich fortfahren?"
 
@@ -952,7 +958,7 @@ msgstr ""
 "die Adresse gesendet."
 
 #: uffd/selfservice/views.py:91 uffd/selfservice/views.py:100
-#: uffd/selfservice/views.py:133 uffd/selfservice/views.py:143
+#: uffd/selfservice/views.py:132 uffd/selfservice/views.py:142
 msgid "Token expired, please try again."
 msgstr "Link abgelaufen, bitte versuche es erneut."
 
@@ -964,15 +970,15 @@ msgstr "Password fehlt, bitte versuche es erneut."
 msgid "Passwords do not match, please try again."
 msgstr "Die Passwörter stimmen nicht überein, bitte versuche es erneut"
 
-#: uffd/selfservice/views.py:117
+#: uffd/selfservice/views.py:116
 msgid "Password ist not valid, please try again."
 msgstr "Ungültiges Passwort, bitte versuche es erneut"
 
-#: uffd/selfservice/views.py:120
+#: uffd/selfservice/views.py:119
 msgid "New password set"
 msgstr "Passwort geändert"
 
-#: uffd/selfservice/views.py:150
+#: uffd/selfservice/views.py:148
 msgid ""
 "This link was generated for another user. Login as the correct user to "
 "continue."
@@ -980,20 +986,20 @@ msgstr ""
 "Dieser Link wurde für einen anderen Account erstellt. Melde dich mit dem "
 "richtigen Account an um Fortzufahren."
 
-#: uffd/selfservice/views.py:152
+#: uffd/selfservice/views.py:150
 msgid "New mail set"
 msgstr "E-Mail-Adresse geändert"
 
-#: uffd/selfservice/views.py:162
+#: uffd/selfservice/views.py:160
 msgid "Leaving roles is disabled"
 msgstr "Verlassen von Rollen ist deaktiviert"
 
-#: uffd/selfservice/views.py:168
+#: uffd/selfservice/views.py:166
 #, python-format
 msgid "You left role %(role_name)s"
 msgstr "Rolle %(role_name)s verlassen"
 
-#: uffd/selfservice/views.py:185 uffd/selfservice/views.py:205
+#: uffd/selfservice/views.py:177 uffd/selfservice/views.py:194
 #, python-format
 msgid "Mail to \"%(mail_address)s\" could not be sent!"
 msgstr "E-Mail an \"%(mail_address)s\" konnte nicht gesendet werden!"
@@ -1006,7 +1012,7 @@ msgstr "Passwort vergessen"
 #: uffd/selfservice/templates/selfservice/self.html:21
 #: uffd/session/templates/session/login.html:9
 #: uffd/signup/templates/signup/start.html:14
-#: uffd/user/templates/user/list.html:18 uffd/user/templates/user/show.html:48
+#: uffd/user/templates/user/list.html:18 uffd/user/templates/user/show.html:47
 msgid "Login Name"
 msgstr "Anmeldename"
 
@@ -1028,7 +1034,7 @@ msgstr ""
 "\tDiese Berechtigungen werden erst aktiv, wenn du dies getan hast."
 
 #: uffd/selfservice/templates/selfservice/self.html:14
-#: uffd/user/templates/user/show.html:18
+#: uffd/user/templates/user/show.html:17
 msgid "Profile"
 msgstr "Profil"
 
@@ -1048,7 +1054,7 @@ msgstr "Änderungen sind erst nach einigen Minuten in allen Diensten sichtbar."
 
 #: uffd/selfservice/templates/selfservice/self.html:25
 #: uffd/signup/templates/signup/start.html:27
-#: uffd/user/templates/user/list.html:19 uffd/user/templates/user/show.html:63
+#: uffd/user/templates/user/list.html:19 uffd/user/templates/user/show.html:62
 msgid "Display Name"
 msgstr "Anzeigename"
 
@@ -1070,7 +1076,7 @@ msgstr "Änderungen speichern"
 #: uffd/selfservice/templates/selfservice/self.html:44
 #: uffd/session/templates/session/login.html:13
 #: uffd/signup/templates/signup/start.html:41
-#: uffd/user/templates/user/show.html:77
+#: uffd/user/templates/user/show.html:76
 msgid "Password"
 msgstr "Passwort"
 
@@ -1519,7 +1525,7 @@ msgstr "CSV-Import"
 msgid "UID"
 msgstr "UID"
 
-#: uffd/user/templates/user/list.html:34 uffd/user/templates/user/show.html:30
+#: uffd/user/templates/user/list.html:34 uffd/user/templates/user/show.html:29
 msgid "service"
 msgstr "service"
 
@@ -1537,7 +1543,7 @@ msgstr ""
 "Anzeigename oder das Password können (derzeit) nicht gesetzt werden. "
 "Beispiel:"
 
-#: uffd/user/templates/user/list.html:75 uffd/user/templates/user/show.html:58
+#: uffd/user/templates/user/list.html:75 uffd/user/templates/user/show.html:57
 msgid "Ignore login name blocklist"
 msgstr "Liste der nicht erlaubten Anmeldenamen ignorieren"
 
@@ -1545,23 +1551,19 @@ msgstr "Liste der nicht erlaubten Anmeldenamen ignorieren"
 msgid "Import"
 msgstr "Importieren"
 
-#: uffd/user/templates/user/show.html:10
-msgid "Reset 2FA"
-msgstr "2FA zurücksetzen"
-
-#: uffd/user/templates/user/show.html:28
+#: uffd/user/templates/user/show.html:27
 msgid "User ID"
 msgstr "Account ID"
 
-#: uffd/user/templates/user/show.html:36
+#: uffd/user/templates/user/show.html:35
 msgid "will be choosen"
 msgstr "wird automatisch bestimmt"
 
-#: uffd/user/templates/user/show.html:43
+#: uffd/user/templates/user/show.html:42
 msgid "Service User"
 msgstr "Service-Account"
 
-#: uffd/user/templates/user/show.html:51
+#: uffd/user/templates/user/show.html:50
 msgid ""
 "Only letters, numbers, dashes (\"-\") and underscores (\"_\") are "
 "allowed. At most 32, at least 2 characters. There is a word blocklist. "
@@ -1571,7 +1573,7 @@ msgstr ""
 "erlaubt. Maximal 32, mindestens 2 Zeichen. Es gibt eine Liste nicht "
 "erlaubter Namen. Muss einmalig sein."
 
-#: uffd/user/templates/user/show.html:66
+#: uffd/user/templates/user/show.html:65
 msgid ""
 "If you leave this empty it will be set to the login name. At most 128, at"
 " least 2 characters. No character restrictions."
@@ -1579,11 +1581,11 @@ msgstr ""
 "Wenn das Feld leer bleibt, wird der Anmeldename verwendet. Maximal 128, "
 "mindestens 2 Zeichen. Keine Zeichenbeschränkung."
 
-#: uffd/user/templates/user/show.html:70
+#: uffd/user/templates/user/show.html:69
 msgid "Mail"
 msgstr "E-Mail-Adresse"
 
-#: uffd/user/templates/user/show.html:73
+#: uffd/user/templates/user/show.html:72
 msgid ""
 "Do a sanity check here. A user can take over another account if both have"
 " the same mail address set."
@@ -1592,11 +1594,23 @@ msgstr ""
 "anderen Account übernehmen, wenn beide die selbe E-Mail-Adresse "
 "verwenden."
 
-#: uffd/user/templates/user/show.html:81
+#: uffd/user/templates/user/show.html:80
 msgid "mail to set it will be sent"
 msgstr "Mail zum Setzen wird versendet"
 
-#: uffd/user/templates/user/show.html:123
+#: uffd/user/templates/user/show.html:91
+msgid "Status:"
+msgstr "Status:"
+
+#: uffd/user/templates/user/show.html:91
+msgid "Enabled"
+msgstr "Aktiv"
+
+#: uffd/user/templates/user/show.html:94
+msgid "Reset 2FA"
+msgstr "2FA zurücksetzen"
+
+#: uffd/user/templates/user/show.html:134
 msgid "Resulting groups (only updated after save)"
 msgstr "Resultierende Gruppen (wird nur aktualisiert beim Speichern)"
 

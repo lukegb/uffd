@@ -7,7 +7,6 @@
 		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> {{_("Save")}}</button>
 		<a href="{{ url_for("user.index") }}" class="btn btn-secondary">{{_("Cancel")}}</a>
 		{% if user.id %}
-			<a href="{{ url_for("mfa.admin_disable", id=user.id) }}" class="btn btn-secondary">{{_("Reset 2FA")}}</a>
 			<a href="{{ url_for("user.delete", id=user.id) }}" onClick='return confirm({{_("Are you sure?")|tojson}});' class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
 		{% else %}
 			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
@@ -84,6 +83,18 @@
 					{{ User.PASSWORD_DESCRIPTION|safe }}
 				</small>
 			</div>
+
+			{% if user.id %}
+			<div class="form-group col">
+				<div class="mb-1">{{_("Two-Factor Authentication")}}</div>
+				<p>
+					{{ _("Status:") }} {{ _("Enabled") if user.mfa_enabled else _("Disabled") }}<br>
+					{{ user.mfa_recovery_codes|length }} {{ _("Recovery Codes") }}, {{ user.mfa_totp_methods|length }} {{ _("Authenticator Apps (TOTP)") }}, {{ user.mfa_webauthn_methods|length }} {{ _("U2F and FIDO2 Devices") }}
+				</p>
+				<a href="{{ url_for("mfa.admin_disable", id=user.id) }}" onClick='return confirm({{_("Are you sure?")|tojson}});' class="btn btn-secondary">{{_("Reset 2FA")}}</a>
+			</div>
+			{% endif %}
+
 		</div>
 		<div class="tab-pane fade" id="roles" role="tabpanel" aria-labelledby="roles-tab">
 			<div class="form-group col">
