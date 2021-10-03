@@ -36,7 +36,13 @@ FLASK_APP=uffd FLASK_ENV=development flask run
 During development, you may want to create some example data:
 
 ```
-FLASK_APP=uffd flask create-examples
+export FLASK_APP=uffd
+flask group create 'uffd_access' --description 'Access to Single-Sign-On and Selfservice'
+flask group create 'uffd_admin' --description 'Admin access to uffd'
+flask role create 'base' --default --add-group 'uffd_access'
+flask role create 'admin' --default --add-group 'uffd_admin'
+flask user create 'testuser' --password 'userpassword' --mail 'test@example.com' --displayname 'Test User'
+flask user create 'testadmin' --password 'adminpassword' --mail 'admin@example.com' --displayname 'Test Admin' --add-role 'admin'
 ```
 
 Afterwards you can login as a normal user with "testuser" and "userpassword", or as an admin with "testad

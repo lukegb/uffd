@@ -129,28 +129,6 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 		app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
 		app.run(debug=True)
 
-	@app.cli.command("create-examples", help='Create example users, groups and roles')
-	def create_examples(): #pylint: disable=unused-variable
-		assert app.debug
-		with app.test_request_context():
-			access_group = Group(name='uffd_access', description='Access to Single-Sign-On and Selfservice')
-			db.session.add(access_group)
-			admin_group = Group(name='uffd_admin', description='Admin access to uffd')
-			db.session.add(admin_group)
-			base_role = Role(name='base', is_default=True, groups={access_group: RoleGroup(group=access_group)}, description='Base role for all regular users')
-			db.session.add(base_role)
-			admin_role = Role(name='admin', groups={admin_group: RoleGroup(group=admin_group)}, description='Admin role')
-			db.session.add(admin_role)
-			testuser = User(loginname='testuser', password='userpassword', mail='test@example.com', displayname='Test User')
-			testuser.update_groups()
-			db.session.add(testuser)
-			testadmin = User(loginname='testadmin', password='adminpassword', mail='admin@example.com', displayname='Test Admin', roles=[admin_role])
-			testadmin.update_groups()
-			db.session.add(testadmin)
-			testmail = Mail(uid='test', receivers=['test1@example.com', 'test2@example.com'], destinations=['testuser@mail.example.com'])
-			db.session.add(testmail)
-			db.session.commit()
-
 	babel = Babel(app)
 
 	@babel.localeselector
