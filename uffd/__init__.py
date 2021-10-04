@@ -40,16 +40,9 @@ def load_config_file(app, cfg_name, silent=False):
 		app.config.from_pyfile(cfg_path, silent=True)
 	return True
 
-def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-statements
-	# create and configure the app
-	app = Flask(__name__, instance_relative_config=False)
-	app.json_encoder = SQLAlchemyJSON
-
+def init_config(app: Flask, test_config):
 	# set development default config values
-	app.config.from_mapping(
-		SECRET_KEY=secrets.token_hex(128),
-		SQLALCHEMY_DATABASE_URI="sqlite:///{}".format(os.path.join(app.instance_path, 'uffd.sqlit3')),
-	)
+	app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(app.instance_path, 'uffd.sqlit3')}"
 	app.config.from_pyfile('default_config.cfg')
 
 	# load config
@@ -63,6 +56,17 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 				break
 	# Prior to v1.1 login required ACL_SELFSERVICE_GROUP and ACL_ACCESS_GROUP did not exist
 	app.config.setdefault('ACL_ACCESS_GROUP', app.config['ACL_SELFSERVICE_GROUP'])
+
+	if app.env == "production" and app.secret_key is None:
+		raise Exception("SECRET_KEY not configured and we are running in production mode!")
+	app.config.setdefault("SECRET_KEY", secrets.token_hex(128))
+
+def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-statements
+	# create and configure the app
+	app = Flask(__name__, instance_relative_config=False)
+	app.json_encoder = SQLAlchemyJSON
+
+	init_config(app, test_config)
 
 	register_template_helper(app)
 	setup_navbar(app)

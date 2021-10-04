@@ -44,8 +44,8 @@ build:apt:
 db_migrations_updated:
   stage: test
   script:
-  - FLASK_APP=uffd flask db upgrade
-  - FLASK_APP=uffd flask db migrate 2>&1 | grep -q 'No changes in schema detected'
+  - FLASK_APP=uffd FLASK_ENV=testing flask db upgrade
+  - FLASK_APP=uffd FLASK_ENV=testing flask db migrate 2>&1 | grep -q 'No changes in schema detected'
 
 test_db_migrations:sqlite:
   stage: test
