@@ -1,4 +1,4 @@
-uwsgi.ini			/etc/uffd/
-nginx.include.conf		/etc/uffd/
-debian/uffd.cfg			/etc/uffd/
-debian/contrib/uffd-admin	/usr/bin/
+uwsgi.ini /etc/uffd/
+nginx.include.conf /etc/uffd/
+debian/contrib/uffd.cfg /etc/uffd/
+debian/contrib/uffd-admin /usr/bin/
