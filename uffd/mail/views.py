@@ -19,7 +19,7 @@ def mail_acl():
 	pass
 
 @bp.route("/")
-@register_navbar(29, lazy_gettext('Forwardings'), icon='envelope', blueprint=bp, visible=mail_acl_check)
+@register_navbar(lazy_gettext('Forwardings'), icon='envelope', blueprint=bp, visible=mail_acl_check)
 def index():
 	return render_template('mail/list.html', mails=Mail.query.all())
 

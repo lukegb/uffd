@@ -45,7 +45,7 @@ def role_acl():
 	pass
 
 @bp.route("/")
-@register_navbar(25, lazy_gettext('Roles'), icon='key', blueprint=bp, visible=role_acl_check)
+@register_navbar(lazy_gettext('Roles'), icon='key', blueprint=bp, visible=role_acl_check)
 def index():
 	return render_template('role/list.html', roles=Role.query.all())
 

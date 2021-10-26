@@ -20,7 +20,7 @@ def acl_check():
 		abort(403)
 
 @bp.route("/")
-@register_navbar(12, lazy_gettext('Moderation'), icon='user-lock', blueprint=bp, visible=user_is_rolemod)
+@register_navbar(lazy_gettext('Moderation'), icon='user-lock', blueprint=bp, visible=user_is_rolemod)
 def index():
 	roles = Role.query.join(Role.moderator_group).join(Group.members).filter(User.id==request.user.id).all()
 	return render_template('rolemod/list.html', roles=roles)

@@ -43,7 +43,7 @@ def reset_acl_filter(user):
 	return Invite.creator == user
 
 @bp.route('/')
-@register_navbar(14, lazy_gettext('Invites'), icon='link', blueprint=bp, visible=invite_acl_check)
+@register_navbar(lazy_gettext('Invites'), icon='link', blueprint=bp, visible=invite_acl_check)
 @login_required(invite_acl_check)
 def index():
 	invites = Invite.query.filter(view_acl_filter(request.user)).all()

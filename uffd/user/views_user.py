@@ -27,7 +27,7 @@ def user_acl():
 	pass
 
 @bp.route("/")
-@register_navbar(21, lazy_gettext('Users'), icon='users', blueprint=bp, visible=user_acl_check)
+@register_navbar(lazy_gettext('Users'), icon='users', blueprint=bp, visible=user_acl_check)
 def index():
 	return render_template('user/list.html', users=User.query.all())
 

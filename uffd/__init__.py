@@ -69,7 +69,10 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 	init_config(app, test_config)
 
 	register_template_helper(app)
-	setup_navbar(app)
+
+	# Sort the navbar positions by their blueprint names (from the left)
+	positions = ["selfservice", "services", "rolemod", "invite", "user", "group", "role", "mail"]
+	setup_navbar(app, positions)
 
 	# We never want to fail here, but at a file access that doesn't work.
 	# We might only have read access to app.instance_path

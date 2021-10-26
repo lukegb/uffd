@@ -22,7 +22,7 @@ def selfservice_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP'])
 
 @bp.route("/")
-@register_navbar(0, lazy_gettext('Selfservice'), icon='portrait', blueprint=bp, visible=selfservice_acl_check)
+@register_navbar(lazy_gettext('Selfservice'), icon='portrait', blueprint=bp, visible=selfservice_acl_check)
 @login_required(selfservice_acl_check)
 def index():
 	return render_template('selfservice/self.html', user=request.user)
