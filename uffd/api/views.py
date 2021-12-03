@@ -10,20 +10,32 @@ from uffd.session.views import login_get_user, login_ratelimit
 bp = Blueprint('api', __name__, template_folder='templates', url_prefix='/api/v1/')
 
 def apikey_required(scope=None):
+	# pylint: disable=too-many-return-statements
 	def wrapper(func):
 		@functools.wraps(func)
 		def decorator(*args, **kwargs):
-			if 'Authorization' not in request.headers or not request.headers['Authorization'].startswith('Bearer '):
-				return 'Unauthorized', 401, {'WWW-Authenticate': 'Bearer'}
-			token = request.headers['Authorization'][7:].strip()
-			request.api_client = None
-			for client_token, client in current_app.config['API_CLIENTS'].items():
-				if secrets.compare_digest(client_token, token):
-					request.api_client = client
-			if request.api_client is None:
-				return 'Unauthorized', 401, {'WWW-Authenticate': 'Bearer error="invalid_token"'}
-			if scope is not None and scope not in request.api_client.get('scopes', []):
-				return 'Unauthorized', 401, {'WWW-Authenticate': 'Bearer error="insufficient_scope",scope="%s"'%scope}
+			if request.authorization and request.authorization.password:
+				if request.authorization.username not in current_app.config['API_CLIENTS_2']:
+					return 'Unauthorized', 401, {'WWW-Authenticate': ['Basic realm="api"']}
+				client = current_app.config['API_CLIENTS_2'][request.authorization.username]
+				if not secrets.compare_digest(request.authorization.password, client['client_secret']):
+					return 'Unauthorized', 401, {'WWW-Authenticate': ['Basic realm="api"']}
+				if scope is not None and scope not in client.get('scopes', []):
+					return 'Forbidden', 403
+			# To be removed in uffd v2
+			elif 'Authorization' in request.headers and request.headers['Authorization'].startswith('Bearer '):
+				token = request.headers['Authorization'][7:].strip()
+				client = None
+				for client_token, data in current_app.config['API_CLIENTS'].items():
+					if secrets.compare_digest(client_token, token):
+						client = data
+				if client is None:
+					return 'Unauthorized', 401, {'WWW-Authenticate': 'Bearer error="invalid_token"'}
+				client_scopes = ['getusers'] + client.get('scopes', [])
+				if scope is not None and scope not in client_scopes:
+					return 'Unauthorized', 401, {'WWW-Authenticate': 'Bearer error="insufficient_scope",scope="%s"'%scope}
+			else:
+				return 'Unauthorized', 401, {'WWW-Authenticate': ['Bearer', 'Basic realm="api"']}
 			return func(*args, **kwargs)
 		return decorator
 	return wrapper
@@ -33,7 +45,7 @@ def generate_group_dict(group):
 	        'members': [user.loginname for user in group.members]}
 
 @bp.route('/getgroups', methods=['GET', 'POST'])
-@apikey_required()
+@apikey_required('getusers')
 def getgroups():
 	if len(request.values) > 1:
 		abort(400)
@@ -59,7 +71,7 @@ def generate_user_dict(user, all_groups=None):
 	        'groups': [group.name for group in all_groups if user in group.members]}
 
 @bp.route('/getusers', methods=['GET', 'POST'])
-@apikey_required()
+@apikey_required('getusers')
 def getusers():
 	if len(request.values) > 1:
 		abort(400)
