@@ -363,6 +363,16 @@ class TestInviteAdminViews(UffdTestCase):
 		self.assertNotIn('testrole1'.encode(), r.data)
 		self.assertIn('testrole2'.encode(), r.data)
 
+	# Regression test for #130
+	def test_index_deleted_dn(self):
+		valid_until = datetime.datetime.now() + datetime.timedelta(seconds=60)
+		db.session.add(Invite(valid_until=valid_until, single_use=True, used=True, signups=[InviteSignup(user_dn='uid=doesnotexist,ou=users,dc=example,dc=com')]))
+		db.session.commit()
+		self.login_as('admin')
+		r = self.client.get(path=url_for('invite.index'), follow_redirects=True)
+		dump('invite_index_deleted_dn', r)
+		self.assertEqual(r.status_code, 200)
+
 	def test_new(self):
 		self.login_as('admin')
 		role = Role(name='testrole1')

@@ -105,7 +105,11 @@
 						{% else %}
 						<ul>
 							{% for signup in invite.signups if signup.completed %}
-							<li>{{_('Registration of user <a href="%(user_url)s">%(user_name)s</a>', user_url=url_for('user.show', uid=signup.user.uid)|e, user_name=signup.user.loginname|e)|safe}}</li>
+								{% if signup.user %}
+								<li>{{_('Registration of user <a href="%(user_url)s">%(user_name)s</a>', user_url=url_for('user.show', uid=signup.user.uid)|e, user_name=signup.user.loginname|e)|safe}}</li>
+								{% else %}
+								<li>{{_('Registration of a user (no longer available)')}}</li>
+								{% endif %}
 							{% endfor %}
 							{% for grant in invite.grants if grant.user %}
 							<li>{{_('Roles granted to <a href="%(user_url)s">%(user_name)s</a>', user_url=url_for('user.show', uid=grant.user.uid)|e, user_name=grant.user.loginname|e)|safe}}</li>
