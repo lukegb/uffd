@@ -24,7 +24,10 @@
 	</div>
 	<div class="form-group col">
 		<label for="group-loginname">{{_("Name")}}</label>
-		<input type="text" class="form-control" id="group-loginname" name="name" value="{{ group.name or '' }}" {{ 'readonly' if group.id }}>
+		<input type="text" class="form-control" id="group-loginname" name="name" minlength=1 maxlength=32 pattern="[a-z0-9_-]*" value="{{ group.name or '' }}" {{ 'readonly' if group.id }}>
+		<small class="form-text text-muted">
+			{{_('At least one and at most 32 lower-case characters, digits, dashes ("-") or underscores ("_"). <b>Cannot be changed later!</b>')|safe}}
+		</small>
 	</div>
 	<div class="form-group col">
 		<label for="group-description">{{_("Description")}}</label>

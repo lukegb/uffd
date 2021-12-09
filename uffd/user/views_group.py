@@ -38,7 +38,9 @@ def update(id=None):
 		group = Group()
 		if request.form['unix_gid']:
 			group.unix_gid = int(request.form['unix_gid'])
-		group.name = request.form['name']
+		if not group.set_name(request.form['name']):
+			flash(_('Invalid name'))
+			return render_template('group/show.html', group=group), 400
 	else:
 		group = Group.query.get_or_404(id)
 	group.description = request.form['description']

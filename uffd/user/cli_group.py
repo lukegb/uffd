@@ -37,8 +37,11 @@ def show(name):
 @click.option('--description', default='', help='Set description text. Empty per default.')
 def create(name, description):
 	with current_app.test_request_context():
+		group = Group(description=description)
+		if not group.set_name(name):
+			raise click.ClickException('Invalid name')
 		try:
-			db.session.add(Group(name=name, description=description))
+			db.session.add(group)
 			db.session.commit()
 		except IntegrityError as ex:
 			raise click.ClickException(f'Group creation failed: {ex}')

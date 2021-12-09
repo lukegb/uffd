@@ -506,6 +506,33 @@ class TestGroupViews(UffdTestCase):
 		self.assertEqual(group.description, 'Original description')
 		self.assertEqual(group.unix_gid, gid)
 
+	def test_new_name_too_long(self):
+		r = self.client.post(path=url_for('group.update'),
+			data={'unix_gid': '', 'name': 'a'*33, 'description': 'New description'},
+			follow_redirects=True)
+		dump('group_new_name_too_long', r)
+		self.assertEqual(r.status_code, 400)
+		group = Group.query.filter_by(name='a'*33).one_or_none()
+		self.assertIsNone(group)
+
+	def test_new_name_too_short(self):
+		r = self.client.post(path=url_for('group.update'),
+			data={'unix_gid': '', 'name': '', 'description': 'New description'},
+			follow_redirects=True)
+		dump('group_new_name_too_short', r)
+		self.assertEqual(r.status_code, 400)
+		group = Group.query.filter_by(name='').one_or_none()
+		self.assertIsNone(group)
+
+	def test_new_name_invalid(self):
+		r = self.client.post(path=url_for('group.update'),
+			data={'unix_gid': '', 'name': 'foo bar', 'description': 'New description'},
+			follow_redirects=True)
+		dump('group_new_name_invalid', r)
+		self.assertEqual(r.status_code, 400)
+		group = Group.query.filter_by(name='foo bar').one_or_none()
+		self.assertIsNone(group)
+
 	def test_new_existing_gid(self):
 		gid = self.app.config['GROUP_MAX_GID'] - 1
 		db.session.add(Group(name='newgroup', description='Original description', unix_gid=gid))
@@ -571,9 +598,8 @@ class TestGroupCLI(UffdTestCase):
 	def test_create(self):
 		result = self.app.test_cli_runner().invoke(args=['group', 'create', 'users']) # Duplicate name
 		self.assertEqual(result.exit_code, 1)
-		# See #127 (Enforce alphabet and length constraints for Group.name)
-		#result = self.app.test_cli_runner().invoke(args=['group', 'create', 'new group'])
-		#self.assertEqual(result.exit_code, 1)
+		result = self.app.test_cli_runner().invoke(args=['group', 'create', 'new group'])
+		self.assertEqual(result.exit_code, 1)
 		result = self.app.test_cli_runner().invoke(args=['group', 'create', 'newgroup', '--description', 'A new group'])
 		self.assertEqual(result.exit_code, 0)
 		with self.app.test_request_context():

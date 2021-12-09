@@ -170,3 +170,12 @@ class Group(db.Model):
 	name = Column(String(32), unique=True, nullable=False)
 	description = Column(String(128), nullable=False, default='')
 	members = relationship('User', secondary='user_groups')
+
+	def set_name(self, value):
+		if len(value) > 32 or len(value) < 1:
+			return False
+		for char in value:
+			if not char in string.ascii_lowercase + string.digits + '_-':
+				return False
+		self.name = value
+		return True
