@@ -152,6 +152,10 @@ class User(db.Model):
 		self.mail = value
 		return True
 
+	# Somehow pylint non-deterministically fails to detect that .update_groups is set in invite.modes
+	def update_groups(self):
+		pass
+
 def get_next_unix_gid():
 	next_gid = max(current_app.config['GROUP_MIN_GID'],
 	               db.session.query(func.max(Group.unix_gid + 1)).scalar() or 0)
