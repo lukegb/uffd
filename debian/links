@@ -1,3 +1,2 @@
-/etc/uffd/uffd.cfg /usr/share/uffd/uffd/instance/config.cfg
 /etc/uffd/uwsgi.ini /etc/uwsgi/apps-available/uffd.ini
 /etc/uwsgi/apps-available/uffd.ini /etc/uwsgi/apps-enabled/uffd.ini

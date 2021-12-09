@@ -22,22 +22,21 @@ from uffd.user.models import User, Group
 from uffd.role.models import Role, RoleGroup
 from uffd.mail.models import Mail
 
-def load_config_file(app, cfg_name, silent=False):
-	cfg_path = os.path.join(app.instance_path, cfg_name)
-	if not os.path.exists(cfg_path):
+def load_config_file(app, path, silent=False):
+	if not os.path.exists(path):
 		if not silent:
-			raise Exception(f"Config file {cfg_path} not found")
+			raise Exception(f"Config file {path} not found")
 		return False
 
-	if cfg_path.endswith(".json"):
-		app.config.from_json(cfg_path)
-	elif cfg_path.endswith(".yaml") or cfg_path.endswith(".yml"):
+	if path.endswith(".json"):
+		app.config.from_json(path)
+	elif path.endswith(".yaml") or path.endswith(".yml"):
 		import yaml  # pylint: disable=import-outside-toplevel disable=import-error
-		with open(cfg_path, encoding='utf-8') as ymlfile:
+		with open(path, encoding='utf-8') as ymlfile:
 			data = yaml.safe_load(ymlfile)
 		app.config.from_mapping(data)
 	else:
-		app.config.from_pyfile(cfg_path, silent=True)
+		app.config.from_pyfile(path, silent=True)
 	return True
 
 def init_config(app: Flask, test_config):
@@ -48,11 +47,11 @@ def init_config(app: Flask, test_config):
 	# load config
 	if test_config is not None:
 		app.config.from_mapping(test_config)
-	elif os.environ.get("CONFIG_FILENAME"):
-		load_config_file(app, os.environ["CONFIG_FILENAME"], silent=False)
+	elif os.environ.get('CONFIG_PATH'):
+		load_config_file(app, os.environ['CONFIG_PATH'], silent=False)
 	else:
-		for cfg_name in ["config.cfg", "config.json", "config.yml", "config.yaml"]:
-			if load_config_file(app, cfg_name, silent=True):
+		for filename in ["config.cfg", "config.json", "config.yml", "config.yaml"]:
+			if load_config_file(app, os.path.join(app.instance_path, filename), silent=True):
 				break
 	# Prior to v1.1 login required ACL_SELFSERVICE_GROUP and ACL_ACCESS_GROUP did not exist
 	app.config.setdefault('ACL_ACCESS_GROUP', app.config['ACL_SELFSERVICE_GROUP'])

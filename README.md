@@ -73,6 +73,9 @@ For an example uwsgi config, see our [uswgi.ini](uwsgi.ini). You might find our 
 
 ## Migration from version 1
 
+If a custom config file name was set with `CONFIG_FILENAME`, this must be replaced with `CONFIG_PATH`.
+The new variable must be set to a full path instead of a filename relative to the application's instance directory.
+
 Prior to version 2 uffd stored users, groups and mail aliases in an LDAP server.
 To migrate from version 1 to a later version, make sure to keep the v1 config file as it is with all LDAP settings.
 Running the database migrations with `flask db upgrade` automatically imports all users, groups and mail forwardings from LDAP to the database.
@@ -102,7 +105,7 @@ We ship a [pylint](https://pylint.org/) config to verify changes with.
 Uffd reads its default config from `uffd/default_config.cfg`.
 You can overwrite config variables by creating a config file in the `instance` folder.
 The file must be named `config.cfg` (Python syntax), `config.json` or `config.yml`/`config.yaml`.
-You can also set a custom file name with the environment variable `CONFIG_FILENAME`.
+You can also set a custom file path with the environment variable `CONFIG_PATH`.
 
 ## OAuth2 Single-Sign-On Provider
 
