@@ -22,20 +22,8 @@ def apikey_required(scope=None):
 					return 'Unauthorized', 401, {'WWW-Authenticate': ['Basic realm="api"']}
 				if scope is not None and scope not in client.get('scopes', []):
 					return 'Forbidden', 403
-			# To be removed in uffd v2
-			elif 'Authorization' in request.headers and request.headers['Authorization'].startswith('Bearer '):
-				token = request.headers['Authorization'][7:].strip()
-				client = None
-				for client_token, data in current_app.config['API_CLIENTS'].items():
-					if secrets.compare_digest(client_token, token):
-						client = data
-				if client is None:
-					return 'Unauthorized', 401, {'WWW-Authenticate': 'Bearer error="invalid_token"'}
-				client_scopes = ['getusers'] + client.get('scopes', [])
-				if scope is not None and scope not in client_scopes:
-					return 'Unauthorized', 401, {'WWW-Authenticate': 'Bearer error="insufficient_scope",scope="%s"'%scope}
 			else:
-				return 'Unauthorized', 401, {'WWW-Authenticate': ['Bearer', 'Basic realm="api"']}
+				return 'Unauthorized', 401, {'WWW-Authenticate': ['Basic realm="api"']}
 			return func(*args, **kwargs)
 		return decorator
 	return wrapper
