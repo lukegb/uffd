@@ -53,8 +53,6 @@ def init_config(app: Flask, test_config):
 		for filename in ["config.cfg", "config.json", "config.yml", "config.yaml"]:
 			if load_config_file(app, os.path.join(app.instance_path, filename), silent=True):
 				break
-	# Prior to v1.1 login required ACL_SELFSERVICE_GROUP and ACL_ACCESS_GROUP did not exist
-	app.config.setdefault('ACL_ACCESS_GROUP', app.config['ACL_SELFSERVICE_GROUP'])
 
 	if app.env == "production" and app.secret_key is None:
 		raise Exception("SECRET_KEY not configured and we are running in production mode!")

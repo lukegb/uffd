@@ -95,6 +95,8 @@ After running the migrations you can remove all `LDAP_*`-prefixed settings from 
 
 Upgrading will not perform any write access to the LDAP server.
 
+If the config option `ACL_SELFSERVICE_GROUP` is set but not `ACL_ACCESS_GROUP`, make sure to set `ACL_ACCESS_GROUP` to the same value as `ACL_SELFSERVICE_GROUP`,
+
 ## Python Coding Style Conventions
 
 PEP 8 without double new lines, tabs instead of spaces and a max line length of 160 characters.
