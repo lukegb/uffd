@@ -90,11 +90,7 @@
 		{% endif %}
 	</div>
 	<div class="col-12 col-md-7">
-		{% if config['ENABLE_INVITE'] %}
 		<p>{{_("Administrators and role moderators can invite you to new roles.")}}</p>
-		{% else %}
-		<p>{{_("Administrators can add new roles to your account.")}}</p>
-		{% endif %}
 		<table class="table">
 			<thead>
 				<tr>
@@ -113,11 +109,9 @@
 					</td>
 					<td>{{ role.description }}</td>
 					<td>
-						{% if config['ENABLE_ROLESELFSERVICE'] %}
 						<form action="{{ url_for("selfservice.leave_role", roleid=role.id) }}" method="POST" onsubmit='return confirm({{_("Are you sure?")|tojson|e}});'>
 							<button type="submit" class="btn btn-sm btn-danger float-right">{{_("Leave")}}</button>
 						</form>
-						{% endif %}
 					</td>
 				</tr>
 				{% endfor %}

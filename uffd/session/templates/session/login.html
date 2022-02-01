@@ -26,9 +26,7 @@
 		{% if config['SELF_SIGNUP'] %}
 		<a href="{{ url_for("signup.signup_start") }}" class="float-left">{{_("Register")}}</a>
 		{% endif %}
-		{% if config['ENABLE_PASSWORDRESET'] %}
 		<a href="{{ url_for("selfservice.forgot_password") }}" class="float-right">{{_("Forgot Password?")}}</a>
-		{% endif %}
 	</div>
 </form>
 {% endblock %}

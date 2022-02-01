@@ -130,9 +130,6 @@ def token_mail(token_id, token):
 @csrf_protect(blueprint=bp)
 @login_required(selfservice_acl_check)
 def leave_role(roleid):
-	if not current_app.config['ENABLE_ROLESELFSERVICE']:
-		flash(_('Leaving roles is disabled'))
-		return redirect(url_for('selfservice.index'))
 	role = Role.query.get_or_404(roleid)
 	role.members.remove(request.user)
 	request.user.update_groups()

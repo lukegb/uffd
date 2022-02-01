@@ -65,8 +65,6 @@ class UffdTestCase(unittest.TestCase):
 			'SECRET_KEY': 'DEBUGKEY',
 			'MAIL_SKIP_SEND': True,
 			'SELF_SIGNUP': True,
-			'ENABLE_INVITE': True,
-			'ENABLE_PASSWORDRESET': True
 		}
 
 		self.app = create_app(config)

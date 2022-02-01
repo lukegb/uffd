@@ -59,7 +59,6 @@ def init_config(app: Flask, test_config):
 	app.config.setdefault("SECRET_KEY", secrets.token_hex(128))
 
 def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-statements
-	# create and configure the app
 	app = Flask(__name__, instance_relative_config=False)
 	app.json_encoder = SQLAlchemyJSON
 
@@ -81,15 +80,9 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 	db.init_app(app)
 	Migrate(app, db, render_as_batch=True, directory=os.path.join(app.root_path, 'migrations'))
 
-	for i in user.bp + selfservice.bp + role.bp + mail.bp + session.bp + csrf.bp + mfa.bp + oauth2.bp + services.bp + rolemod.bp + api.bp:
-		app.register_blueprint(i)
-
-	if app.config['ENABLE_INVITE'] or app.config['SELF_SIGNUP']:
-		for i in signup.bp:
-			app.register_blueprint(i)
-	if app.config['ENABLE_INVITE']:
-		for i in invite.bp:
-			app.register_blueprint(i)
+	for module in [user, selfservice, role, mail, session, csrf, mfa, oauth2, services, rolemod, api, signup, invite]:
+		for bp in module.bp:
+			app.register_blueprint(bp)
 
 	@app.shell_context_processor
 	def push_request_context(): #pylint: disable=unused-variable
