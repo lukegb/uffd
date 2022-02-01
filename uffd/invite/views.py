@@ -102,17 +102,6 @@ def reset(invite_id):
 	db.session.commit()
 	return redirect(url_for('.index'))
 
-# Deprecated
-@bp.route('/<token>')
-def use_legacy(token):
-	matching_invite = None
-	for invite in Invite.query.filter(Invite.valid_until > datetime.datetime.now().replace(second=0, microsecond=0)):
-		if secrets.compare_digest(invite.token, token):
-			matching_invite = invite
-	if not matching_invite:
-		abort(404)
-	return redirect(url_for('invite.use', invite_id=matching_invite.id, token=token))
-
 @bp.route('/<int:invite_id>/<token>')
 def use(invite_id, token):
 	invite = Invite.query.get(invite_id)

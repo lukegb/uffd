@@ -79,19 +79,6 @@ def forgot_password():
 		send_passwordreset(user)
 	return redirect(url_for('session.login'))
 
-# Deprecated
-@bp.route('/token/password/<token>')
-def token_password_legacy(token):
-	matching_token = None
-	filter_expr = PasswordToken.created >= (datetime.datetime.now() - datetime.timedelta(days=2))
-	for dbtoken in PasswordToken.query.filter(filter_expr):
-		if secrets.compare_digest(dbtoken.token, token):
-			matching_token = dbtoken
-	if not matching_token:
-		flash(_('Token expired, please try again.'))
-		return redirect(url_for('session.login'))
-	return redirect(url_for('token_password', token_id=matching_token.id, token=token))
-
 @bp.route("/token/password/<int:token_id>/<token>", methods=(['POST', 'GET']))
 def token_password(token_id, token):
 	dbtoken = PasswordToken.query.get(token_id)
@@ -119,19 +106,6 @@ def token_password(token_id, token):
 	flash(_('New password set'))
 	db.session.commit()
 	return redirect(url_for('session.login'))
-
-# Deprecated
-@bp.route("/token/mail_verification/<token>")
-def token_mail_legacy(token):
-	matching_token = None
-	filter_expr = MailToken.created >= (datetime.datetime.now() - datetime.timedelta(days=2))
-	for dbtoken in MailToken.query.filter(filter_expr):
-		if secrets.compare_digest(dbtoken.token, token):
-			matching_token = dbtoken
-	if not matching_token:
-		flash(_('Token expired, please try again.'))
-		return redirect(url_for('session.login'))
-	return redirect(url_for('mail_password', token_id=matching_token.id, token=token))
 
 @bp.route("/token/mail_verification/<int:token_id>/<token>")
 @login_required(selfservice_acl_check)
