@@ -13,7 +13,7 @@
 		<label for="mail-receivers">{{_('Receiving addresses')}}</label>
 		<textarea rows="10" class="form-control" id="mail-receivers" name="mail-receivers">{{ mail.receivers|join('\n') }}</textarea>
 		<small class="form-text text-muted">
-			{{_('One address per line')}}
+			{{_('One address pattern (local+ext@domain, local@domain, local, @domain) per line. Only lower-case ASCII letters, digits and symbols.')}}
 		</small>
 	</div>
 	<div class="form-group col">

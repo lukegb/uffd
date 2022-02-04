@@ -115,7 +115,7 @@ def getmails():
 	elif key == 'name' and len(values) == 1:
 		mails = Mail.query.filter_by(uid=values[0]).all()
 	elif key == 'receive_address' and len(values) == 1:
-		mails = Mail.query.filter(Mail.receivers.any(MailReceiveAddress.address==values[0])).all()
+		mails = Mail.query.filter(Mail.receivers.any(MailReceiveAddress.address==values[0].lower())).all()
 	elif key == 'destination_address' and len(values) == 1:
 		mails = Mail.query.filter(Mail.destinations.any(MailDestinationAddress.address==values[0])).all()
 	else:

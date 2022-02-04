@@ -41,6 +41,10 @@ def update(uid=None):
 		mail = Mail(uid=request.form.get('mail-uid'))
 	mail.receivers = request.form.get('mail-receivers', '').splitlines()
 	mail.destinations = request.form.get('mail-destinations', '').splitlines()
+	if mail.invalid_receivers:
+		for addr in mail.invalid_receivers:
+			flash(_('Invalid receive address: %(mail_address)s', mail_address=addr))
+		return render_template('mail/show.html', mail=mail)
 	db.session.add(mail)
 	db.session.commit()
 	flash(_('Mail mapping updated.'))

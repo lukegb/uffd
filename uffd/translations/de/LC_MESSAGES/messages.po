@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-10-04 00:22+0200\n"
+"POT-Creation-Date: 2022-02-03 16:51+0100\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -62,36 +62,36 @@ msgstr ""
 "Einladungslink muss entweder Account-Registrierung erlauben oder Rollen "
 "vergeben"
 
-#: uffd/invite/views.py:122 uffd/invite/views.py:157
+#: uffd/invite/views.py:111 uffd/invite/views.py:146
 msgid "Invalid invite link"
 msgstr "Ungültiger Einladungslink"
 
-#: uffd/invite/views.py:140
+#: uffd/invite/views.py:129
 msgid "Roles successfully updated"
 msgstr "Rollen erfolgreich geändert"
 
-#: uffd/invite/views.py:160
+#: uffd/invite/views.py:149
 msgid "Invite link does not allow signup"
 msgstr "Einladungslink erlaubt keine Account-Registrierung"
 
-#: uffd/invite/views.py:186 uffd/selfservice/views.py:50
-#: uffd/signup/views.py:50
+#: uffd/invite/views.py:175 uffd/selfservice/views.py:50
+#: uffd/signup/views.py:49
 msgid "Passwords do not match"
 msgstr "Die Passwörter stimmen nicht überein"
 
-#: uffd/invite/views.py:191 uffd/signup/views.py:55
+#: uffd/invite/views.py:180 uffd/signup/views.py:54
 #, python-format
 msgid "Too many signup requests with this mail address! Please wait %(delay)s."
 msgstr ""
 "Zu viele Account-Registrierungen mit dieser E-Mail-Adresse! Bitte warte "
 "%(delay)s."
 
-#: uffd/invite/views.py:193 uffd/signup/views.py:57 uffd/signup/views.py:106
+#: uffd/invite/views.py:182 uffd/signup/views.py:56 uffd/signup/views.py:92
 #, python-format
 msgid "Too many requests! Please wait %(delay)s."
 msgstr "Zu viele Anfragen! Bitte warte %(delay)s."
 
-#: uffd/invite/views.py:206 uffd/signup/views.py:69
+#: uffd/invite/views.py:195 uffd/signup/views.py:68
 msgid "Cound not send mail"
 msgstr "Mailversand fehlgeschlagen"
 
@@ -267,8 +267,8 @@ msgstr "Enthaltene Rollen"
 #: uffd/mfa/templates/mfa/setup.html:158 uffd/mfa/templates/mfa/setup.html:169
 #: uffd/role/templates/role/list.html:14
 #: uffd/rolemod/templates/rolemod/list.html:9
-#: uffd/rolemod/templates/rolemod/show.html:46
-#: uffd/selfservice/templates/selfservice/self.html:101
+#: uffd/rolemod/templates/rolemod/show.html:44
+#: uffd/selfservice/templates/selfservice/self.html:97
 #: uffd/user/templates/group/list.html:15
 #: uffd/user/templates/group/show.html:26
 #: uffd/user/templates/user/show.html:106
@@ -279,10 +279,10 @@ msgstr "Name"
 #: uffd/invite/templates/invite/new.html:36
 #: uffd/role/templates/role/list.html:15 uffd/role/templates/role/show.html:48
 #: uffd/rolemod/templates/rolemod/list.html:10
-#: uffd/rolemod/templates/rolemod/show.html:28
-#: uffd/selfservice/templates/selfservice/self.html:102
+#: uffd/rolemod/templates/rolemod/show.html:26
+#: uffd/selfservice/templates/selfservice/self.html:98
 #: uffd/user/templates/group/list.html:16
-#: uffd/user/templates/group/show.html:30
+#: uffd/user/templates/group/show.html:33
 #: uffd/user/templates/user/show.html:107
 #: uffd/user/templates/user/show.html:139
 msgid "Description"
@@ -295,7 +295,7 @@ msgstr "Link erstellen"
 #: uffd/invite/templates/invite/new.html:56
 #: uffd/mail/templates/mail/show.html:28 uffd/mfa/templates/mfa/auth.html:33
 #: uffd/role/templates/role/show.html:14
-#: uffd/rolemod/templates/rolemod/show.html:11
+#: uffd/rolemod/templates/rolemod/show.html:9
 #: uffd/session/templates/session/deviceauth.html:39
 #: uffd/session/templates/session/deviceauth.html:49
 #: uffd/session/templates/session/devicelogin.html:29
@@ -355,10 +355,15 @@ msgid "Forwardings"
 msgstr "Weiterleitungen"
 
 #: uffd/mail/views.py:46
+#, python-format
+msgid "Invalid receive address: %(mail_address)s"
+msgstr "Ungültige Empfangsadresse: %(mail_address)s"
+
+#: uffd/mail/views.py:50
 msgid "Mail mapping updated."
 msgstr "Mailweiterleitung geändert."
 
-#: uffd/mail/views.py:55
+#: uffd/mail/views.py:59
 msgid "Deleted mail mapping."
 msgstr "Mailweiterleitung gelöscht."
 
@@ -370,12 +375,20 @@ msgstr "Empfangsadressen"
 msgid "Destinations"
 msgstr "Zieladressen"
 
-#: uffd/mail/templates/mail/show.html:16 uffd/mail/templates/mail/show.html:23
+#: uffd/mail/templates/mail/show.html:16
+msgid ""
+"One address pattern (local+ext@domain, local@domain, local, @domain) per "
+"line. Only lower-case ASCII letters, digits and symbols."
+msgstr ""
+"Ein Adressmuster (local+ext@domain, local@domain, local, @domain) pro "
+"Zeile. Nur ASCII-Kleinbuchstaben, -Ziffern und -Symbole."
+
+#: uffd/mail/templates/mail/show.html:23
 msgid "One address per line"
 msgstr "Eine Adresse pro Zeile"
 
 #: uffd/mail/templates/mail/show.html:27 uffd/role/templates/role/show.html:13
-#: uffd/rolemod/templates/rolemod/show.html:10
+#: uffd/rolemod/templates/rolemod/show.html:8
 #: uffd/user/templates/group/show.html:8 uffd/user/templates/user/show.html:7
 msgid "Save"
 msgstr "Speichern"
@@ -816,7 +829,7 @@ msgid "Set as default"
 msgstr "Als Default setzen"
 
 #: uffd/role/templates/role/show.html:19 uffd/role/templates/role/show.html:21
-#: uffd/selfservice/templates/selfservice/self.html:117
+#: uffd/selfservice/templates/selfservice/self.html:112
 #: uffd/user/templates/group/show.html:11 uffd/user/templates/user/show.html:10
 #: uffd/user/templates/user/show.html:94
 msgid "Are you sure?"
@@ -855,8 +868,8 @@ msgid "Moderators"
 msgstr "Accounts mit Moderationsrechten"
 
 #: uffd/role/templates/role/show.html:71
-#: uffd/rolemod/templates/rolemod/show.html:18
-#: uffd/user/templates/group/show.html:37
+#: uffd/rolemod/templates/rolemod/show.html:16
+#: uffd/user/templates/group/show.html:40
 msgid "Members"
 msgstr "Mitglieder"
 
@@ -892,27 +905,27 @@ msgstr "Beschreibung zu lang"
 msgid "Member removed"
 msgstr "Mitglied entfernt"
 
-#: uffd/rolemod/templates/rolemod/show.html:8
+#: uffd/rolemod/templates/rolemod/show.html:7
 msgid "Invite Members"
 msgstr "Mitglieder einladen"
 
-#: uffd/rolemod/templates/rolemod/show.html:15
+#: uffd/rolemod/templates/rolemod/show.html:13
 msgid "Overview"
 msgstr "Übersicht"
 
-#: uffd/rolemod/templates/rolemod/show.html:24
+#: uffd/rolemod/templates/rolemod/show.html:22
 msgid "Role name"
 msgstr "Rollenname"
 
-#: uffd/rolemod/templates/rolemod/show.html:32
+#: uffd/rolemod/templates/rolemod/show.html:30
 msgid "Moderators:"
 msgstr "Accounts mit Moderationsrechten:"
 
-#: uffd/rolemod/templates/rolemod/show.html:42
+#: uffd/rolemod/templates/rolemod/show.html:40
 msgid "Role members:"
 msgstr "Mitglieder:"
 
-#: uffd/rolemod/templates/rolemod/show.html:55
+#: uffd/rolemod/templates/rolemod/show.html:53
 msgid "Remove"
 msgstr "Entfernen"
 
@@ -957,28 +970,27 @@ msgstr ""
 "Falls E-Mail-Adresse und Anmeldename richtig waren, wurde eine E-Mail an "
 "die Adresse gesendet."
 
-#: uffd/selfservice/views.py:91 uffd/selfservice/views.py:100
-#: uffd/selfservice/views.py:132 uffd/selfservice/views.py:142
+#: uffd/selfservice/views.py:87 uffd/selfservice/views.py:116
 msgid "Token expired, please try again."
 msgstr "Link abgelaufen, bitte versuche es erneut."
 
-#: uffd/selfservice/views.py:108
+#: uffd/selfservice/views.py:95
 msgid "You need to set a password, please try again."
 msgstr "Password fehlt, bitte versuche es erneut."
 
-#: uffd/selfservice/views.py:111
+#: uffd/selfservice/views.py:98
 msgid "Passwords do not match, please try again."
 msgstr "Die Passwörter stimmen nicht überein, bitte versuche es erneut"
 
-#: uffd/selfservice/views.py:116
+#: uffd/selfservice/views.py:103
 msgid "Password ist not valid, please try again."
 msgstr "Ungültiges Passwort, bitte versuche es erneut"
 
-#: uffd/selfservice/views.py:119
+#: uffd/selfservice/views.py:106
 msgid "New password set"
 msgstr "Passwort geändert"
 
-#: uffd/selfservice/views.py:148
+#: uffd/selfservice/views.py:122
 msgid ""
 "This link was generated for another user. Login as the correct user to "
 "continue."
@@ -986,20 +998,16 @@ msgstr ""
 "Dieser Link wurde für einen anderen Account erstellt. Melde dich mit dem "
 "richtigen Account an um Fortzufahren."
 
-#: uffd/selfservice/views.py:150
+#: uffd/selfservice/views.py:124
 msgid "New mail set"
 msgstr "E-Mail-Adresse geändert"
 
-#: uffd/selfservice/views.py:160
-msgid "Leaving roles is disabled"
-msgstr "Verlassen von Rollen ist deaktiviert"
-
-#: uffd/selfservice/views.py:166
+#: uffd/selfservice/views.py:137
 #, python-format
 msgid "You left role %(role_name)s"
 msgstr "Rolle %(role_name)s verlassen"
 
-#: uffd/selfservice/views.py:177 uffd/selfservice/views.py:194
+#: uffd/selfservice/views.py:148 uffd/selfservice/views.py:165
 #, python-format
 msgid "Mail to \"%(mail_address)s\" could not be sent!"
 msgstr "E-Mail an \"%(mail_address)s\" konnte nicht gesendet werden!"
@@ -1137,17 +1145,13 @@ msgstr ""
 "Auf <a href=\"%(services_url)s\">Dienste</a> erhälst du einen Überblick "
 "über deine aktuellen Berechtigungen."
 
-#: uffd/selfservice/templates/selfservice/self.html:94
+#: uffd/selfservice/templates/selfservice/self.html:93
 msgid "Administrators and role moderators can invite you to new roles."
 msgstr ""
 "Accounts mit Adminrechten oder Rollen-Moderationsrechten können dich zu "
 "Rollen einladen."
 
-#: uffd/selfservice/templates/selfservice/self.html:96
-msgid "Administrators can add new roles to your account."
-msgstr "Accounts mit Adminrechten können dich zu neuen Rollen hinzufügen."
-
-#: uffd/selfservice/templates/selfservice/self.html:111
+#: uffd/selfservice/templates/selfservice/self.html:107
 msgid ""
 "Some permissions in this role require you to setup two-factor "
 "authentication"
@@ -1155,11 +1159,11 @@ msgstr ""
 "Einige Berechtigungen dieser Rolle erfordern das Einrichten von Zwei-"
 "Faktor-Authentifikation"
 
-#: uffd/selfservice/templates/selfservice/self.html:118
+#: uffd/selfservice/templates/selfservice/self.html:113
 msgid "Leave"
 msgstr "Verlassen"
 
-#: uffd/selfservice/templates/selfservice/self.html:126
+#: uffd/selfservice/templates/selfservice/self.html:120
 msgid "You currently don't have any roles"
 msgstr "Du hast derzeit keine Rollen"
 
@@ -1323,28 +1327,28 @@ msgstr "Über anderes Gerät anmelden"
 msgid "Register"
 msgstr "Registrieren"
 
-#: uffd/session/templates/session/login.html:30
+#: uffd/session/templates/session/login.html:29
 msgid "Forgot Password?"
 msgstr "Passwort vergessen?"
 
-#: uffd/signup/views.py:24
+#: uffd/signup/views.py:23
 msgid "Singup not enabled"
 msgstr "Account-Registrierung ist deaktiviert"
 
-#: uffd/signup/views.py:82 uffd/signup/views.py:91 uffd/signup/views.py:99
+#: uffd/signup/views.py:77 uffd/signup/views.py:85
 msgid "Invalid signup link"
 msgstr "Ungültiger Account-Registrierungs-Link"
 
-#: uffd/signup/views.py:104
+#: uffd/signup/views.py:90
 #, python-format
 msgid "Too many failed attempts! Please wait %(delay)s."
 msgstr "Zu viele fehlgeschlagene Versuche! Bitte warte mindestens %(delay)s."
 
-#: uffd/signup/views.py:110
+#: uffd/signup/views.py:96
 msgid "Wrong password"
 msgstr "Falsches Passwort"
 
-#: uffd/signup/views.py:116
+#: uffd/signup/views.py:102
 msgid "Your account was successfully created"
 msgstr "Account erfolgreich erstellt"
 
@@ -1365,6 +1369,7 @@ msgid "Check"
 msgstr "Überprüfen"
 
 #: uffd/signup/templates/signup/start.html:23
+#: uffd/user/templates/group/show.html:29
 msgid ""
 "At least one and at most 32 lower-case characters, digits, dashes (\"-\")"
 " or underscores (\"_\"). <b>Cannot be changed later!</b>"
@@ -1455,19 +1460,23 @@ msgstr ""
 msgid "Groups"
 msgstr "Gruppen"
 
-#: uffd/user/views_group.py:51
+#: uffd/user/views_group.py:42
+msgid "Invalid name"
+msgstr "Ungültiger Name"
+
+#: uffd/user/views_group.py:53
 msgid "Group with this name or id already exists"
 msgstr "Gruppe mit diesem Namen oder dieser ID existiert bereits"
 
-#: uffd/user/views_group.py:56
+#: uffd/user/views_group.py:58
 msgid "Group created"
 msgstr "Gruppe erstellt"
 
-#: uffd/user/views_group.py:58
+#: uffd/user/views_group.py:60
 msgid "Group updated"
 msgstr "Gruppe aktualisiert"
 
-#: uffd/user/views_group.py:67
+#: uffd/user/views_group.py:69
 msgid "Deleted group"
 msgstr "Gruppe gelöscht"
 

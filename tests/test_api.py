@@ -55,3 +55,28 @@ class TestAPIAuth(UffdTestCase):
 	def test_no_auth(self):
 		r = self.client.get(path=url_for('testendpoint1'), follow_redirects=True)
 		self.assertEqual(r.status_code, 401)
+
+class TestAPIViews(UffdTestCase):
+	def setUpApp(self):
+		self.app.config['API_CLIENTS_2'] = {
+			'test': {'client_secret': 'test', 'scopes': ['getmails']},
+		}
+
+	def test_lookup(self):
+		r = self.client.get(path=url_for('api.getmails', receive_address='test1@example.com'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, [{'name': 'test', 'receive_addresses': ['test1@example.com', 'test2@example.com'], 'destination_addresses': ['testuser@mail.example.com']}])
+		r = self.client.get(path=url_for('api.getmails', receive_address='test2@example.com'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, [{'name': 'test', 'receive_addresses': ['test1@example.com', 'test2@example.com'], 'destination_addresses': ['testuser@mail.example.com']}])
+
+	def test_lookup_notfound(self):
+		r = self.client.get(path=url_for('api.getmails', receive_address='test3@example.com'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, [])
+
+	def test_lookup_case_folding(self):
+		r = self.client.get(path=url_for('api.getmails', receive_address='Test1@example.com'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, [{'name': 'test', 'receive_addresses': ['test1@example.com', 'test2@example.com'], 'destination_addresses': ['testuser@mail.example.com']}])
+
