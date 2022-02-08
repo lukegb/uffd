@@ -8,7 +8,7 @@ from uffd.user.models import User
 class RoleGroup(db.Model):
 	__tablename__ = 'role_groups'
 	role_id = Column(Integer(), ForeignKey('role.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
-	role = relationship('Role')
+	role = relationship('Role', back_populates='groups')
 	group_id = Column(Integer(), ForeignKey('group.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
 	group = relationship('Group')
 	requires_mfa = Column(Boolean(), default=False, nullable=False)
@@ -94,7 +94,7 @@ class Role(db.Model):
 
 	members = relationship('User', secondary='role_members', back_populates='roles')
 
-	groups = relationship('RoleGroup', collection_class=RoleGroupMap, cascade='all, delete-orphan')
+	groups = relationship('RoleGroup', collection_class=RoleGroupMap, cascade='all, delete-orphan', back_populates='role')
 
 	# Roles that are managed externally (e.g. by Ansible) can be locked to
 	# prevent accidental editing of name, moderator group, included roles

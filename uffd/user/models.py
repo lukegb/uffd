@@ -84,7 +84,7 @@ class User(db.Model):
 	mail = Column(String(128), nullable=False)
 	pwhash = Column(String(256), nullable=True)
 	is_service_user = Column(Boolean(), default=False, nullable=False)
-	groups = relationship('Group', secondary='user_groups')
+	groups = relationship('Group', secondary='user_groups', back_populates='members')
 	roles = relationship('Role', secondary='role_members', back_populates='members')
 
 	@property
@@ -169,7 +169,7 @@ class Group(db.Model):
 	unix_gid = Column(Integer(), unique=True, nullable=False, default=get_next_unix_gid)
 	name = Column(String(32), unique=True, nullable=False)
 	description = Column(String(128), nullable=False, default='')
-	members = relationship('User', secondary='user_groups')
+	members = relationship('User', secondary='user_groups', back_populates='groups')
 
 	def set_name(self, value):
 		if len(value) > 32 or len(value) < 1:
