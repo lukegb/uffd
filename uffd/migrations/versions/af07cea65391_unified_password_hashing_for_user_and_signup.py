@@ -1,4 +1,4 @@
-"""Unified password hashing for User and Signup
+"""unified password hashing for User and Signup
 
 Revision ID: af07cea65391
 Revises: 042879d5e3ac
@@ -13,23 +13,23 @@ down_revision = '042879d5e3ac'
 branch_labels = None
 depends_on = None
 
-meta = sa.MetaData(bind=op.get_bind())
-signup = sa.Table('signup', meta,
-	sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-	sa.Column('token', sa.String(length=128), nullable=False),
-	sa.Column('created', sa.DateTime(), nullable=False),
-	sa.Column('loginname', sa.Text(), nullable=True),
-	sa.Column('displayname', sa.Text(), nullable=True),
-	sa.Column('mail', sa.Text(), nullable=True),
-	sa.Column('pwhash', sa.Text(), nullable=True),
-	sa.Column('user_id', sa.Integer(), nullable=True),
-	sa.Column('type', sa.String(length=50), nullable=True),
-	sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_signup_user_id_user'), onupdate='CASCADE', ondelete='CASCADE'),
-	sa.PrimaryKeyConstraint('id', name=op.f('pk_signup')),
-	sa.UniqueConstraint('user_id', name=op.f('uq_signup_user_id'))
-)
-
 def upgrade():
+	meta = sa.MetaData(bind=op.get_bind())
+	signup = sa.Table('signup', meta,
+		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+		sa.Column('token', sa.String(length=128), nullable=False),
+		sa.Column('created', sa.DateTime(), nullable=False),
+		sa.Column('loginname', sa.Text(), nullable=True),
+		sa.Column('displayname', sa.Text(), nullable=True),
+		sa.Column('mail', sa.Text(), nullable=True),
+		sa.Column('pwhash', sa.Text(), nullable=True),
+		sa.Column('user_id', sa.Integer(), nullable=True),
+		sa.Column('type', sa.String(length=50), nullable=True),
+		sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_signup_user_id_user'), onupdate='CASCADE', ondelete='CASCADE'),
+		sa.PrimaryKeyConstraint('id', name=op.f('pk_signup')),
+		sa.UniqueConstraint('user_id', name=op.f('uq_signup_user_id'))
+	)
+
 	user = sa.Table('user', meta,
 		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
 		sa.Column('unix_uid', sa.Integer(), nullable=False),
@@ -48,6 +48,22 @@ def upgrade():
 	op.execute(signup.update().values(pwhash=('{crypt}' + signup.c.pwhash)))
 
 def downgrade():
+	meta = sa.MetaData(bind=op.get_bind())
+	signup = sa.Table('signup', meta,
+		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+		sa.Column('token', sa.String(length=128), nullable=False),
+		sa.Column('created', sa.DateTime(), nullable=False),
+		sa.Column('loginname', sa.Text(), nullable=True),
+		sa.Column('displayname', sa.Text(), nullable=True),
+		sa.Column('mail', sa.Text(), nullable=True),
+		sa.Column('pwhash', sa.Text(), nullable=True),
+		sa.Column('user_id', sa.Integer(), nullable=True),
+		sa.Column('type', sa.String(length=50), nullable=True),
+		sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_signup_user_id_user'), onupdate='CASCADE', ondelete='CASCADE'),
+		sa.PrimaryKeyConstraint('id', name=op.f('pk_signup')),
+		sa.UniqueConstraint('user_id', name=op.f('uq_signup_user_id'))
+	)
+
 	user = sa.Table('user', meta,
 		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
 		sa.Column('unix_uid', sa.Integer(), nullable=False),
