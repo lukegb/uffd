@@ -130,6 +130,31 @@ class TestCryptPasswordHash(unittest.TestCase):
 		self.assertTrue(obj.verify('password'))
 		self.assertFalse(obj.verify('notpassword'))
 
+class TestArgon2PasswordHash(unittest.TestCase):
+	def test_verify(self):
+		obj = Argon2PasswordHash('{argon2}$argon2id$v=19$m=102400,t=2,p=8$Jc8LpCgPLjwlN/7efHLvwQ$ZqSg3CFb2/hBb3X8hOq4aw')
+		self.assertTrue(obj.verify('password'))
+		self.assertFalse(obj.verify('notpassword'))
+		obj = Argon2PasswordHash('{argon2}$invalid$')
+		self.assertFalse(obj.verify('password'))
+
+	def test_from_password(self):
+		obj = Argon2PasswordHash.from_password('password')
+		self.assertIsNotNone(obj.value)
+		self.assertTrue(obj.value.startswith('{argon2}'))
+		self.assertTrue(obj.verify('password'))
+		self.assertFalse(obj.verify('notpassword'))
+
+	def test_needs_rehash(self):
+		obj = Argon2PasswordHash('{argon2}$argon2id$v=19$m=102400,t=2,p=8$Jc8LpCgPLjwlN/7efHLvwQ$ZqSg3CFb2/hBb3X8hOq4aw')
+		self.assertFalse(obj.needs_rehash)
+		obj = Argon2PasswordHash('{argon2}$argon2id$v=19$m=102400,t=2,p=8$Jc8LpCgPLjwlN/7efHLvwQ$ZqSg3CFb2/hBb3X8hOq4aw', target_cls=PlaintextPasswordHash)
+		self.assertTrue(obj.needs_rehash)
+		obj = Argon2PasswordHash('{argon2}$argon2d$v=19$m=102400,t=2,p=8$kshPgLU1+h72l/Z8QWh8Ig$tYerKCe/5I2BCPKu8hCl2w')
+		self.assertTrue(obj.needs_rehash)
+		obj = Argon2PasswordHash('{argon2}$argon2id$v=19$m=102400,t=1,p=8$aa6i4vg/szKX5xHVGFaAeQ$v6j0ltuVqQaZlmuepaVJ1A')
+		self.assertTrue(obj.needs_rehash)
+
 class TestInvalidPasswordHash(unittest.TestCase):
 	def test(self):
 		obj = InvalidPasswordHash('test')

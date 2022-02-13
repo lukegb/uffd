@@ -2,6 +2,7 @@ import secrets
 import hashlib
 import base64
 from crypt import crypt
+import argon2
 
 def build_value(method_name, data):
 	return '{' + method_name + '}' + data
@@ -179,6 +180,28 @@ class CryptPasswordHash(PasswordHash):
 	def verify(self, password):
 		return secrets.compare_digest(crypt(password, self.data), self.data)
 
+@registry.register
+class Argon2PasswordHash(PasswordHash):
+	METHOD_NAME = 'argon2'
+
+	hasher = argon2.PasswordHasher()
+
+	@classmethod
+	def from_password(cls, password):
+		return cls(build_value(cls.METHOD_NAME, cls.hasher.hash(password)))
+
+	def verify(self, password):
+		try:
+			return self.hasher.verify(self.data, password)
+		except argon2.exceptions.Argon2Error:
+			return False
+		except argon2.exceptions.InvalidHash:
+			return False
+
+	@property
+	def needs_rehash(self):
+		return super().needs_rehash or self.hasher.check_needs_rehash(self.data)
+
 class InvalidPasswordHash:
 	def __init__(self, value=None):
 		self.value = value
@@ -262,9 +285,8 @@ class PasswordHashAttribute:
 		setattr(obj, self.attribute_name, value.value)
 
 # Hashing method for (potentially) low entropy secrets like user passwords. Is
-# usually slow and uses salting to make dictionary attacks difficult. Note
-# that SSHA512 is not slow and should be replaced with a modern alternative.
-LowEntropyPasswordHash = SaltedSHA512PasswordHash
+# usually slow and uses salting to make dictionary attacks difficult.
+LowEntropyPasswordHash = Argon2PasswordHash
 
 # Hashing method for high entropy secrets like API keys. The secrets are
 # generated instead of user-selected to ensure a high level of entropy. Is

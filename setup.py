@@ -40,6 +40,7 @@ setup(
 		'Flask-Migrate==2.1.1',
 		'Flask-Babel==0.11.2',
 		'alembic==1.0.0',
+		'argon2-cffi==18.3.0',
 
 		# The main dependencies on their own lead to version collisions and pip is
 		# not very good at resolving them, so we pin the versions from Debian Buster

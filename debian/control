@@ -25,6 +25,7 @@ Depends:
  python3-fido2,
  python3-oauthlib,
  python3-flask-babel,
+ python3-argon2,
  uwsgi,
  uwsgi-plugin-python3,
 Recommends:
