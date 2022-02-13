@@ -57,7 +57,11 @@ def signup_submit():
 	host_ratelimit.log()
 	signup = Signup(loginname=request.form['loginname'],
 	                displayname=request.form['displayname'],
-	                mail=request.form['mail'], password=request.form['password1'])
+	                mail=request.form['mail'])
+	# If the password is invalid, signup.set_password returns False and does not
+	# set signup.password. We don't need to check the return value here, because
+	# we call signup.verify next and that checks if signup.password is set.
+	signup.set_password(request.form['password1'])
 	valid, msg = signup.validate()
 	if not valid:
 		return render_template('signup/start.html', error=msg)
@@ -90,7 +94,7 @@ def signup_confirm_submit(signup_id, token):
 		return render_template('signup/confirm.html', signup=signup, error=_('Too many failed attempts! Please wait %(delay)s.', delay=format_delay(confirm_delay)))
 	if host_delay:
 		return render_template('signup/confirm.html', signup=signup, error=_('Too many requests! Please wait %(delay)s.', delay=format_delay(host_delay)))
-	if not signup.check_password(request.form['password']):
+	if not signup.password.verify(request.form['password']):
 		host_ratelimit.log()
 		confirm_ratelimit.log(token)
 		return render_template('signup/confirm.html', signup=signup, error=_('Wrong password'))

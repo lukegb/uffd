@@ -22,7 +22,7 @@ def refetch_signup(signup):
 	db_flush()
 	return Signup.query.get(id)
 
-# We assume in all tests that Signup.validate and Signup.check_password do
+# We assume in all tests that Signup.validate and Signup.password.verify do
 # not alter any state
 
 class TestSignupModel(UffdTestCase):
@@ -55,12 +55,12 @@ class TestSignupModel(UffdTestCase):
 
 	def test_password(self):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com')
-		self.assertFalse(signup.check_password('notsecret'))
-		self.assertFalse(signup.check_password(''))
-		self.assertFalse(signup.check_password('wrongpassword'))
-		signup.password = 'notsecret'
-		self.assertTrue(signup.check_password('notsecret'))
-		self.assertFalse(signup.check_password('wrongpassword'))
+		self.assertFalse(signup.password.verify('notsecret'))
+		self.assertFalse(signup.password.verify(''))
+		self.assertFalse(signup.password.verify('wrongpassword'))
+		self.assertTrue(signup.set_password('notsecret'))
+		self.assertTrue(signup.password.verify('notsecret'))
+		self.assertFalse(signup.password.verify('wrongpassword'))
 
 	def test_expired(self):
 		# TODO: Find a better way to test this!
@@ -111,7 +111,8 @@ class TestSignupModel(UffdTestCase):
 		self.assert_validate_invalid(refetch_signup(signup))
 
 	def test_validate_password(self):
-		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='')
+		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com')
+		self.assertFalse(signup.set_password(''))
 		self.assert_validate_invalid(signup)
 		self.assert_validate_invalid(refetch_signup(signup))
 
@@ -200,7 +201,7 @@ class TestSignupViews(UffdTestCase):
 		self.assertEqual(signup.displayname, 'New User')
 		self.assertEqual(signup.mail, 'test@example.com')
 		self.assertIn(signup.token, str(self.app.last_mail.get_content()))
-		self.assertTrue(signup.check_password('notsecret'))
+		self.assertTrue(signup.password.verify('notsecret'))
 		self.assertTrue(signup.validate()[0])
 
 	def test_signup_disabled(self):

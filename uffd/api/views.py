@@ -6,6 +6,7 @@ from flask import Blueprint, jsonify, current_app, request, abort
 from uffd.user.models import User, Group
 from uffd.mail.models import Mail, MailReceiveAddress, MailDestinationAddress
 from uffd.session.views import login_get_user, login_ratelimit
+from uffd.database import db
 
 bp = Blueprint('api', __name__, template_folder='templates', url_prefix='/api/v1/')
 
@@ -97,6 +98,9 @@ def checkpassword():
 	if user is None:
 		login_ratelimit.log(username)
 		return jsonify(None)
+	if user.password.needs_rehash:
+		user.password = password
+		db.session.commit()
 	return jsonify(generate_user_dict(user))
 
 def generate_mail_dict(mail):

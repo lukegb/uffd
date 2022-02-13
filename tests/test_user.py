@@ -162,7 +162,7 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(user_updated.mail, 'newuser@example.com')
 		self.assertEqual(user_updated.unix_uid, user_unupdated.unix_uid)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
-		self.assertTrue(user_updated.check_password('userpassword'))
+		self.assertTrue(user_updated.password.verify('userpassword'))
 		self.assertEqual(roles, ['base', 'role1'])
 
 	def test_update_password(self):
@@ -179,8 +179,8 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(user_updated.mail, 'newuser@example.com')
 		self.assertEqual(user_updated.unix_uid, user_unupdated.unix_uid)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
-		self.assertTrue(user_updated.check_password('newpassword'))
-		self.assertFalse(user_updated.check_password('userpassword'))
+		self.assertTrue(user_updated.password.verify('newpassword'))
+		self.assertFalse(user_updated.password.verify('userpassword'))
 
 	def test_update_invalid_password(self):
 		user_unupdated = self.get_user()
@@ -192,8 +192,8 @@ class TestUserViews(UffdTestCase):
 		dump('user_update_invalid_password', r)
 		self.assertEqual(r.status_code, 200)
 		user_updated = self.get_user()
-		self.assertFalse(user_updated.check_password('A'))
-		self.assertTrue(user_updated.check_password('userpassword'))
+		self.assertFalse(user_updated.password.verify('A'))
+		self.assertTrue(user_updated.password.verify('userpassword'))
 		self.assertEqual(user_updated.displayname, user_unupdated.displayname)
 		self.assertEqual(user_updated.mail, user_unupdated.mail)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
@@ -209,8 +209,8 @@ class TestUserViews(UffdTestCase):
 		dump('user_update_invalid_password', r)
 		self.assertEqual(r.status_code, 200)
 		user_updated = self.get_user()
-		self.assertFalse(user_updated.check_password('newpassword\n'))
-		self.assertTrue(user_updated.check_password('userpassword'))
+		self.assertFalse(user_updated.password.verify('newpassword\n'))
+		self.assertTrue(user_updated.password.verify('userpassword'))
 		self.assertEqual(user_updated.displayname, user_unupdated.displayname)
 		self.assertEqual(user_updated.mail, user_unupdated.mail)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
@@ -228,8 +228,8 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(user_updated.displayname, user_unupdated.displayname)
 		self.assertEqual(user_updated.mail, user_unupdated.mail)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
-		self.assertFalse(user_updated.check_password('newpassword'))
-		self.assertTrue(user_updated.check_password('userpassword'))
+		self.assertFalse(user_updated.password.verify('newpassword'))
+		self.assertTrue(user_updated.password.verify('userpassword'))
 
 	def test_update_invalid_display_name(self):
 		user_unupdated = self.get_user()
@@ -244,8 +244,8 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(user_updated.displayname, user_unupdated.displayname)
 		self.assertEqual(user_updated.mail, user_unupdated.mail)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
-		self.assertFalse(user_updated.check_password('newpassword'))
-		self.assertTrue(user_updated.check_password('userpassword'))
+		self.assertFalse(user_updated.password.verify('newpassword'))
+		self.assertTrue(user_updated.password.verify('userpassword'))
 
 	def test_show(self):
 		r = self.client.get(path=url_for('user.show', id=self.get_user().id), follow_redirects=True)
@@ -393,7 +393,7 @@ class TestUserCLI(UffdTestCase):
 			self.assertIsNotNone(user)
 			self.assertEqual(user.mail, 'newmail@example.com')
 			self.assertEqual(user.displayname, 'New Display Name')
-			self.assertTrue(user.check_password('newpassword'))
+			self.assertTrue(user.password.verify('newpassword'))
 			self.assertEqual(user.roles, Role.query.filter_by(name='admin').all())
 			self.assertIn(self.get_admin_group(), user.groups)
 
@@ -416,7 +416,7 @@ class TestUserCLI(UffdTestCase):
 			self.assertIsNotNone(user)
 			self.assertEqual(user.mail, 'newmail@example.com')
 			self.assertEqual(user.displayname, 'New Display Name')
-			self.assertTrue(user.check_password('newpassword'))
+			self.assertTrue(user.password.verify('newpassword'))
 		result = self.app.test_cli_runner().invoke(args=['user', 'update', 'testuser', '--add-role', 'admin', '--add-role', 'test'])
 		self.assertEqual(result.exit_code, 0)
 		with self.app.test_request_context():

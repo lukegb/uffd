@@ -1,43 +1,14 @@
-import secrets
 import string
 import re
-import hashlib
-import base64
 
 from flask import current_app, escape
 from flask_babel import lazy_gettext
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
 from uffd.database import db
-
-# Interface inspired by argon2-cffi
-class PasswordHasher:
-	# pylint: disable=no-self-use
-	def hash(self, password):
-		salt = secrets.token_bytes(8)
-		ctx = hashlib.sha512()
-		ctx.update(password.encode())
-		ctx.update(salt)
-		return '{ssha512}'+base64.b64encode(ctx.digest()+salt).decode()
-
-	def verify(self, hash, password):
-		if hash is None:
-			return False
-		if hash.startswith('{ssha512}'):
-			data = base64.b64decode(hash[len('{ssha512}'):].encode())
-			ctx = hashlib.sha512()
-			digest = data[:ctx.digest_size]
-			salt = data[ctx.digest_size:]
-			ctx.update(password.encode())
-			ctx.update(salt)
-			return secrets.compare_digest(digest, ctx.digest())
-		return False
-
-	# pylint: disable=unused-argument
-	def check_needs_rehash(self, hash):
-		return False
+from uffd.password_hash import PasswordHashAttribute, LowEntropyPasswordHash
 
 def get_next_unix_uid(context):
 	is_service_user = bool(context.get_current_parameters().get('is_service_user', False))
@@ -82,7 +53,8 @@ class User(db.Model):
 	loginname = Column(String(32), unique=True, nullable=False)
 	displayname = Column(String(128), nullable=False)
 	mail = Column(String(128), nullable=False)
-	pwhash = Column(String(256), nullable=True)
+	_password = Column('pwhash', Text(), nullable=True)
+	password = PasswordHashAttribute('_password', LowEntropyPasswordHash)
 	is_service_user = Column(Boolean(), default=False, nullable=False)
 	groups = relationship('Group', secondary='user_groups', back_populates='members')
 	roles = relationship('Role', secondary='role_members', back_populates='members')
@@ -90,14 +62,6 @@ class User(db.Model):
 	@property
 	def unix_gid(self):
 		return current_app.config['USER_GID']
-
-	# Write-only property
-	def password(self, value):
-		self.pwhash = PasswordHasher().hash(value)
-	password = property(fset=password)
-
-	def check_password(self, value):
-		return PasswordHasher().verify(self.pwhash, value)
 
 	def is_in_group(self, name):
 		if not name:

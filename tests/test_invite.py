@@ -646,7 +646,7 @@ class TestInviteUseViews(UffdTestCase):
 		self.assertEqual(signup.displayname, 'New User')
 		self.assertEqual(signup.mail, 'test@example.com')
 		self.assertIn(signup.token, str(self.app.last_mail.get_content()))
-		self.assertTrue(signup.check_password('notsecret'))
+		self.assertTrue(signup.password.verify('notsecret'))
 		self.assertTrue(signup.validate()[0])
 
 	def test_signup_invalid_invite(self):

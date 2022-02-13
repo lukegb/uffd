@@ -3,7 +3,10 @@ import base64
 from flask import url_for
 
 from uffd.api.views import apikey_required
-from utils import UffdTestCase
+from uffd.user.models import User
+from uffd.password_hash import PlaintextPasswordHash
+from uffd.database import db
+from utils import UffdTestCase, db_flush
 
 def basic_auth(username, password):
 	return ('Authorization', 'Basic ' + base64.b64encode(f'{username}:{password}'.encode()).decode())
@@ -56,7 +59,7 @@ class TestAPIAuth(UffdTestCase):
 		r = self.client.get(path=url_for('testendpoint1'), follow_redirects=True)
 		self.assertEqual(r.status_code, 401)
 
-class TestAPIViews(UffdTestCase):
+class TestAPIGetmails(UffdTestCase):
 	def setUpApp(self):
 		self.app.config['API_CLIENTS_2'] = {
 			'test': {'client_secret': 'test', 'scopes': ['getmails']},
@@ -80,3 +83,29 @@ class TestAPIViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.json, [{'name': 'test', 'receive_addresses': ['test1@example.com', 'test2@example.com'], 'destination_addresses': ['testuser@mail.example.com']}])
 
+class TestAPICheckPassword(UffdTestCase):
+	def setUpApp(self):
+		self.app.config['API_CLIENTS_2'] = {
+			'test': {'client_secret': 'test', 'scopes': ['checkpassword']},
+		}
+
+	def test(self):
+		r = self.client.post(path=url_for('api.checkpassword'), data={'loginname': 'testuser', 'password': 'userpassword'}, headers=[basic_auth('test', 'test')])
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json['loginname'], 'testuser')
+
+	def test_password_rehash(self):
+		self.get_user().password = PlaintextPasswordHash.from_password('userpassword')
+		db.session.commit()
+		self.assertIsInstance(self.get_user().password, PlaintextPasswordHash)
+		db_flush()
+		r = self.client.post(path=url_for('api.checkpassword'), data={'loginname': 'testuser', 'password': 'userpassword'}, headers=[basic_auth('test', 'test')])
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json['loginname'], 'testuser')
+		self.assertIsInstance(self.get_user().password, User.password.method_cls)
+		self.assertTrue(self.get_user().password.verify('userpassword'))
+
+	def test_wrong_password(self):
+		r = self.client.post(path=url_for('api.checkpassword'), data={'loginname': 'testuser', 'password': 'wrongpassword'}, headers=[basic_auth('test', 'test')])
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, None)

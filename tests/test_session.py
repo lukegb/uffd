@@ -9,9 +9,11 @@ from uffd import user
 from uffd.session.views import login_required
 from uffd.session.models import DeviceLoginConfirmation
 from uffd.oauth2.models import OAuth2DeviceLoginInitiation
+from uffd.user.models import User
+from uffd.password_hash import PlaintextPasswordHash
 from uffd import create_app, db
 
-from utils import dump, UffdTestCase
+from utils import dump, UffdTestCase, db_flush
 
 class TestSession(UffdTestCase):
 	def setUpApp(self):
@@ -60,6 +62,17 @@ class TestSession(UffdTestCase):
 		dump('login_post', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertLoggedIn()
+
+	def test_login_password_rehash(self):
+		self.get_user().password = PlaintextPasswordHash.from_password('userpassword')
+		db.session.commit()
+		self.assertIsInstance(self.get_user().password, PlaintextPasswordHash)
+		db_flush()
+		r = self.login_as('user')
+		self.assertEqual(r.status_code, 200)
+		self.assertLoggedIn()
+		self.assertIsInstance(self.get_user().password, User.password.method_cls)
+		self.assertTrue(self.get_user().password.verify('userpassword'))
 
 	def test_titlecase_password(self):
 		r = self.client.post(path=url_for('session.login'),

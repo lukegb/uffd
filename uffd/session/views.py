@@ -35,7 +35,7 @@ def set_request_user():
 
 def login_get_user(loginname, password):
 	user = User.query.filter_by(loginname=loginname).one_or_none()
-	if user is None or not user.check_password(password):
+	if user is None or not user.password.verify(password):
 		return None
 	return user
 
@@ -78,6 +78,9 @@ def login():
 		host_ratelimit.log()
 		flash(_('Login name or password is wrong'))
 		return render_template('session/login.html', ref=request.values.get('ref'))
+	if user.password.needs_rehash:
+		user.password = password
+		db.session.commit()
 	if not user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
 		flash(_('You do not have access to this service'))
 		return render_template('session/login.html', ref=request.values.get('ref'))

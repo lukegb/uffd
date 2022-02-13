@@ -1,5 +1,4 @@
 import datetime
-from crypt import crypt
 
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
@@ -7,6 +6,7 @@ from sqlalchemy.orm import relationship, backref
 from uffd.database import db
 from uffd.user.models import User
 from uffd.utils import token_urlfriendly
+from uffd.password_hash import PasswordHashAttribute, LowEntropyPasswordHash
 
 class Signup(db.Model):
 	'''Model that represents a self-signup request
@@ -31,7 +31,8 @@ class Signup(db.Model):
 	loginname = Column(Text)
 	displayname = Column(Text)
 	mail = Column(Text)
-	pwhash = Column(Text)
+	_password = Column('pwhash', Text)
+	password = PasswordHashAttribute('_password', LowEntropyPasswordHash)
 	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=True, unique=True)
 	user = relationship('User', backref=backref('signups', cascade='all, delete-orphan'))
 
@@ -41,15 +42,11 @@ class Signup(db.Model):
 		'polymorphic_on': type
 	}
 
-	# Write-only property
-	def password(self, value):
+	def set_password(self, value):
 		if not User().set_password(value):
-			return
-		self.pwhash = crypt(value)
-	password = property(fset=password)
-
-	def check_password(self, value):
-		return self.pwhash is not None and crypt(value, self.pwhash) == self.pwhash
+			return False
+		self.password = value
+		return True
 
 	@property
 	def expired(self):
@@ -73,7 +70,7 @@ class Signup(db.Model):
 			return False, 'Display name is invalid'
 		if not User().set_mail(self.mail):
 			return False, 'Mail address is invalid'
-		if self.pwhash is None:
+		if not self.password:
 			return False, 'Invalid password'
 		if User.query.filter_by(loginname=self.loginname).all():
 			return False, 'A user with this login name already exists'
@@ -92,16 +89,16 @@ class Signup(db.Model):
 		          User object.'''
 		if self.completed or self.expired:
 			return None, 'Invalid signup request'
-		if not self.check_password(password):
+		if not self.password.verify(password):
 			return None, 'Wrong password'
 		if User.query.filter_by(loginname=self.loginname).all():
 			return None, 'A user with this login name already exists'
-		user = User(loginname=self.loginname, displayname=self.displayname, mail=self.mail, password=password)
+		user = User(loginname=self.loginname, displayname=self.displayname, mail=self.mail, password=self.password)
 		db.session.add(user)
 		user.update_groups() # pylint: disable=no-member
 		self.user = user
 		self.loginname = None
 		self.displayname = None
 		self.mail = None
-		self.pwhash = None
+		self.password = None
 		return user, 'Success'

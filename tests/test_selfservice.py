@@ -87,7 +87,7 @@ class TestSelfservice(UffdTestCase):
 		dump('change_password', r)
 		self.assertEqual(r.status_code, 200)
 		_user = request.user
-		self.assertTrue(_user.check_password('newpassword'))
+		self.assertTrue(_user.password.verify('newpassword'))
 
 	def test_change_password_invalid(self):
 		self.login_as('user')
@@ -98,8 +98,8 @@ class TestSelfservice(UffdTestCase):
 		dump('change_password_invalid', r)
 		self.assertEqual(r.status_code, 200)
 		_user = request.user
-		self.assertFalse(_user.check_password('shortpw'))
-		self.assertTrue(_user.check_password('userpassword'))
+		self.assertFalse(_user.password.verify('shortpw'))
+		self.assertTrue(_user.password.verify('userpassword'))
 
 	# Regression test for #100 (login not possible if password contains character disallowed by SASLprep)
 	def test_change_password_samlprep_invalid(self):
@@ -111,8 +111,8 @@ class TestSelfservice(UffdTestCase):
 		dump('change_password_samlprep_invalid', r)
 		self.assertEqual(r.status_code, 200)
 		_user = request.user
-		self.assertFalse(_user.check_password('shortpw\n'))
-		self.assertTrue(_user.check_password('userpassword'))
+		self.assertFalse(_user.password.verify('shortpw\n'))
+		self.assertTrue(_user.password.verify('userpassword'))
 
 	def test_change_password_mismatch(self):
 		self.login_as('user')
@@ -123,9 +123,9 @@ class TestSelfservice(UffdTestCase):
 		dump('change_password_mismatch', r)
 		self.assertEqual(r.status_code, 200)
 		_user = request.user
-		self.assertFalse(_user.check_password('newpassword1'))
-		self.assertFalse(_user.check_password('newpassword2'))
-		self.assertTrue(_user.check_password('userpassword'))
+		self.assertFalse(_user.password.verify('newpassword1'))
+		self.assertFalse(_user.password.verify('newpassword2'))
+		self.assertTrue(_user.password.verify('userpassword'))
 
 	def test_leave_role(self):
 		baserole = Role(name='baserole', is_default=True)
@@ -258,7 +258,7 @@ class TestSelfservice(UffdTestCase):
 			data={'password1': 'newpassword', 'password2': 'newpassword'}, follow_redirects=True)
 		dump('token_password_submit', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertTrue(self.get_user().check_password('newpassword'))
+		self.assertTrue(self.get_user().password.verify('newpassword'))
 
 	def test_token_password_emptydb(self):
 		user = self.get_user()
@@ -271,7 +271,7 @@ class TestSelfservice(UffdTestCase):
 		dump('token_password_emptydb_submit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIn(b'Token expired, please try again', r.data)
-		self.assertTrue(self.get_user().check_password('userpassword'))
+		self.assertTrue(self.get_user().password.verify('userpassword'))
 
 	def test_token_password_invalid(self):
 		user = self.get_user()
@@ -287,7 +287,7 @@ class TestSelfservice(UffdTestCase):
 		dump('token_password_invalid_submit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIn(b'Token expired, please try again', r.data)
-		self.assertTrue(self.get_user().check_password('userpassword'))
+		self.assertTrue(self.get_user().password.verify('userpassword'))
 
 	def test_token_password_expired(self):
 		user = self.get_user()
@@ -303,7 +303,7 @@ class TestSelfservice(UffdTestCase):
 		dump('token_password_invalid_expired_submit', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIn(b'Token expired, please try again', r.data)
-		self.assertTrue(self.get_user().check_password('userpassword'))
+		self.assertTrue(self.get_user().password.verify('userpassword'))
 
 	def test_token_password_different_passwords(self):
 		user = self.get_user()
@@ -316,4 +316,4 @@ class TestSelfservice(UffdTestCase):
 			data={'password1': 'newpassword', 'password2': 'differentpassword'}, follow_redirects=True)
 		dump('token_password_different_passwords_submit', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertTrue(self.get_user().check_password('userpassword'))
+		self.assertTrue(self.get_user().password.verify('userpassword'))
