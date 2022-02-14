@@ -13,7 +13,7 @@ except ImportError:
 from werkzeug.exceptions import InternalServerError, Forbidden
 from flask_migrate import Migrate
 
-from uffd.database import db, SQLAlchemyJSON
+from uffd.database import db, SQLAlchemyJSON, customize_db_engine
 from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
 from uffd.secure_redirect import secure_local_redirect
@@ -79,6 +79,8 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 
 	db.init_app(app)
 	Migrate(app, db, render_as_batch=True, directory=os.path.join(app.root_path, 'migrations'))
+	with app.app_context():
+		customize_db_engine(db.engine)
 
 	for module in [user, selfservice, role, mail, session, csrf, mfa, oauth2, services, rolemod, api, signup, invite]:
 		for bp in module.bp:
