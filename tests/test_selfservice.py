@@ -200,7 +200,8 @@ class TestSelfservice(UffdTestCase):
 		_user = request.user
 		self.assertEqual(_user.mail, old_mail)
 		tokens = MailToken.query.filter(MailToken.user == _user).all()
-		self.assertEqual(len(tokens), 0)
+		self.assertEqual(len(tokens), 1)
+		self.assertTrue(tokens[0].expired)
 
 	def test_forgot_password(self):
 		user = self.get_user()
@@ -251,6 +252,7 @@ class TestSelfservice(UffdTestCase):
 		token = PasswordToken(user=user)
 		db.session.add(token)
 		db.session.commit()
+		self.assertFalse(token.expired)
 		r = self.client.get(path=url_for('selfservice.token_password', token_id=token.id, token=token.token), follow_redirects=True)
 		dump('token_password', r)
 		self.assertEqual(r.status_code, 200)
@@ -265,12 +267,12 @@ class TestSelfservice(UffdTestCase):
 		r = self.client.get(path=url_for('selfservice.token_password', token_id=1, token='A'*128), follow_redirects=True)
 		dump('token_password_emptydb', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertIn(b'Token expired, please try again', r.data)
+		self.assertIn(b'Link invalid or expired', r.data)
 		r = self.client.post(path=url_for('selfservice.token_password', token_id=1, token='A'*128),
 			data={'password1': 'newpassword', 'password2': 'newpassword'}, follow_redirects=True)
 		dump('token_password_emptydb_submit', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertIn(b'Token expired, please try again', r.data)
+		self.assertIn(b'Link invalid or expired', r.data)
 		self.assertTrue(self.get_user().password.verify('userpassword'))
 
 	def test_token_password_invalid(self):
@@ -281,12 +283,12 @@ class TestSelfservice(UffdTestCase):
 		r = self.client.get(path=url_for('selfservice.token_password', token_id=token.id, token='A'*128), follow_redirects=True)
 		dump('token_password_invalid', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertIn(b'Token expired, please try again', r.data)
+		self.assertIn(b'Link invalid or expired', r.data)
 		r = self.client.post(path=url_for('selfservice.token_password', token_id=token.id, token='A'*128),
 			data={'password1': 'newpassword', 'password2': 'newpassword'}, follow_redirects=True)
 		dump('token_password_invalid_submit', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertIn(b'Token expired, please try again', r.data)
+		self.assertIn(b'Link invalid or expired', r.data)
 		self.assertTrue(self.get_user().password.verify('userpassword'))
 
 	def test_token_password_expired(self):
@@ -294,15 +296,16 @@ class TestSelfservice(UffdTestCase):
 		token = PasswordToken(user=user, created=(datetime.datetime.now() - datetime.timedelta(days=10)))
 		db.session.add(token)
 		db.session.commit()
+		self.assertTrue(token.expired)
 		r = self.client.get(path=url_for('selfservice.token_password', token_id=token.id, token=token.token), follow_redirects=True)
 		dump('token_password_invalid_expired', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertIn(b'Token expired, please try again', r.data)
+		self.assertIn(b'Link invalid or expired', r.data)
 		r = self.client.post(path=url_for('selfservice.token_password', token_id=token.id, token=token.token),
 			data={'password1': 'newpassword', 'password2': 'newpassword'}, follow_redirects=True)
 		dump('token_password_invalid_expired_submit', r)
 		self.assertEqual(r.status_code, 200)
-		self.assertIn(b'Token expired, please try again', r.data)
+		self.assertIn(b'Link invalid or expired', r.data)
 		self.assertTrue(self.get_user().password.verify('userpassword'))
 
 	def test_token_password_different_passwords(self):

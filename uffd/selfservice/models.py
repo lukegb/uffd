@@ -2,10 +2,13 @@ import datetime
 
 from sqlalchemy import Column, String, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from uffd.database import db
+from uffd.tasks import cleanup_task
 from uffd.utils import token_urlfriendly
 
+@cleanup_task.delete_by_attribute('expired')
 class PasswordToken(db.Model):
 	__tablename__ = 'passwordToken'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
@@ -14,6 +17,13 @@ class PasswordToken(db.Model):
 	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	user = relationship('User')
 
+	@hybrid_property
+	def expired(self):
+		if self.created is None:
+			return False
+		return self.created < datetime.datetime.now() - datetime.timedelta(days=2)
+
+@cleanup_task.delete_by_attribute('expired')
 class MailToken(db.Model):
 	__tablename__ = 'mailToken'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
@@ -22,3 +32,9 @@ class MailToken(db.Model):
 	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	user = relationship('User')
 	newmail = Column(String(255))
+
+	@hybrid_property
+	def expired(self):
+		if self.created is None:
+			return False
+		return self.created < datetime.datetime.now() - datetime.timedelta(days=2)

@@ -2,12 +2,15 @@ import datetime
 
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from uffd.database import db
+from uffd.tasks import cleanup_task
 from uffd.user.models import User
 from uffd.utils import token_urlfriendly
 from uffd.password_hash import PasswordHashAttribute, LowEntropyPasswordHash
 
+@cleanup_task.delete_by_attribute('expired_and_not_completed')
 class Signup(db.Model):
 	'''Model that represents a self-signup request
 
@@ -22,8 +25,8 @@ class Signup(db.Model):
 	address does not allow a third party to complete the signup procedure and
 	set a new password with the (also mail-based) password reset functionality.
 
-	As long as they are not completed, signup requests have no effect each other
-	or different parts of the application.'''
+	As long as they are not completed, signup requests have no effect on each
+	other or different parts of the application.'''
 	__tablename__ = 'signup'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
 	token = Column(String(128), default=token_urlfriendly, nullable=False)
@@ -48,13 +51,20 @@ class Signup(db.Model):
 		self.password = value
 		return True
 
-	@property
+	@hybrid_property
 	def expired(self):
-		return self.created is not None and datetime.datetime.now() >= self.created + datetime.timedelta(hours=48)
+		if self.created is None:
+			return False
+		return self.created < datetime.datetime.now() - datetime.timedelta(hours=48)
 
-	@property
+	@hybrid_property
 	def completed(self):
-		return self.user is not None
+		# pylint: disable=singleton-comparison
+		return self.user_id != None
+
+	@hybrid_property
+	def expired_and_not_completed(self):
+		return db.and_(self.expired, db.not_(self.completed))
 
 	def validate(self): # pylint: disable=too-many-return-statements
 		'''Return whether the signup request is valid and Signup.finish is likely to succeed

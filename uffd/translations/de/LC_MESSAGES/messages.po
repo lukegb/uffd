@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-02-03 16:51+0100\n"
+"POT-Creation-Date: 2022-02-15 23:23+0100\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -18,31 +18,31 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.9.1\n"
 
-#: uffd/ratelimit.py:70
+#: uffd/ratelimit.py:76
 msgid "a few seconds"
 msgstr "ein paar Sekunden"
 
-#: uffd/ratelimit.py:72
+#: uffd/ratelimit.py:78
 msgid "30 seconds"
 msgstr "30 Sekunden"
 
-#: uffd/ratelimit.py:74
+#: uffd/ratelimit.py:80
 msgid "one minute"
 msgstr "eine Minute"
 
-#: uffd/ratelimit.py:76
+#: uffd/ratelimit.py:82
 #, python-format
 msgid "%(minutes)d minutes"
 msgstr "%(minutes)d Minuten"
 
-#: uffd/ratelimit.py:78
+#: uffd/ratelimit.py:84
 msgid "one hour"
 msgstr "eine Stunde"
 
-#: uffd/ratelimit.py:79
+#: uffd/ratelimit.py:85
 #, python-format
 msgid "%(hours)d hours"
-msgstr "%(hours)d Stunden\""
+msgstr "%(hours)d Stunden"
 
 #: uffd/invite/views.py:46
 msgid "Invites"
@@ -74,7 +74,7 @@ msgstr "Rollen erfolgreich geändert"
 msgid "Invite link does not allow signup"
 msgstr "Einladungslink erlaubt keine Account-Registrierung"
 
-#: uffd/invite/views.py:175 uffd/selfservice/views.py:50
+#: uffd/invite/views.py:175 uffd/selfservice/views.py:49
 #: uffd/signup/views.py:49
 msgid "Passwords do not match"
 msgstr "Die Passwörter stimmen nicht überein"
@@ -86,12 +86,12 @@ msgstr ""
 "Zu viele Account-Registrierungen mit dieser E-Mail-Adresse! Bitte warte "
 "%(delay)s."
 
-#: uffd/invite/views.py:182 uffd/signup/views.py:56 uffd/signup/views.py:92
+#: uffd/invite/views.py:182 uffd/signup/views.py:56 uffd/signup/views.py:96
 #, python-format
 msgid "Too many requests! Please wait %(delay)s."
 msgstr "Zu viele Anfragen! Bitte warte %(delay)s."
 
-#: uffd/invite/views.py:195 uffd/signup/views.py:68
+#: uffd/invite/views.py:195 uffd/signup/views.py:72
 msgid "Cound not send mail"
 msgstr "Mailversand fehlgeschlagen"
 
@@ -721,11 +721,11 @@ msgstr "Sekunden"
 msgid "Verify and complete setup"
 msgstr "Verifiziere und beende das Setup"
 
-#: uffd/oauth2/models.py:29
+#: uffd/oauth2/models.py:33
 msgid "You need to login to access this service"
 msgstr "Du musst dich anmelden, um auf diesen Dienst zugreifen zu können"
 
-#: uffd/oauth2/views.py:173 uffd/selfservice/views.py:72
+#: uffd/oauth2/views.py:169 uffd/selfservice/views.py:71
 #: uffd/session/views.py:73
 #, python-format
 msgid ""
@@ -735,15 +735,15 @@ msgstr ""
 "Wir haben zu viele Anfragen von deiner IP-Adresses bzw. aus deinem "
 "Netzwerk empfangen! Bitte warte mindestens %(delay)s."
 
-#: uffd/oauth2/views.py:181
+#: uffd/oauth2/views.py:177
 msgid "Device login is currently not available. Try again later!"
 msgstr "Geräte-Login ist gerade nicht verfügbar. Versuche es später nochmal!"
 
-#: uffd/oauth2/views.py:194
+#: uffd/oauth2/views.py:190
 msgid "Device login failed"
 msgstr "Gerätelogin fehlgeschlagen"
 
-#: uffd/oauth2/views.py:207
+#: uffd/oauth2/views.py:203
 #, python-format
 msgid ""
 "You don't have the permission to access the service "
@@ -929,31 +929,31 @@ msgstr "Mitglieder:"
 msgid "Remove"
 msgstr "Entfernen"
 
-#: uffd/selfservice/views.py:25
+#: uffd/selfservice/views.py:24
 msgid "Selfservice"
 msgstr "Selfservice"
 
-#: uffd/selfservice/views.py:36
+#: uffd/selfservice/views.py:35
 msgid "Display name changed."
 msgstr "Anzeigename geändert."
 
-#: uffd/selfservice/views.py:38
+#: uffd/selfservice/views.py:37
 msgid "Display name is not valid."
 msgstr "Anzeigename ist nicht valide."
 
-#: uffd/selfservice/views.py:41
+#: uffd/selfservice/views.py:40
 msgid "We sent you an email, please verify your mail address."
 msgstr "Wir haben dir eine E-Mail gesendet, bitte prüfe deine E-Mail-Adresse."
 
-#: uffd/selfservice/views.py:53
+#: uffd/selfservice/views.py:52
 msgid "Password changed"
 msgstr "Passwort geändert"
 
-#: uffd/selfservice/views.py:55
+#: uffd/selfservice/views.py:54
 msgid "Invalid password"
 msgstr "Passwort ungültig"
 
-#: uffd/selfservice/views.py:70
+#: uffd/selfservice/views.py:69
 #, python-format
 msgid ""
 "We received too many password reset requests for this user! Please wait "
@@ -962,7 +962,7 @@ msgstr ""
 "Wir haben zu viele fehlgeschlagene Anmeldeversuche für diesen Account! "
 "Bitte warte mindestens %(delay)s."
 
-#: uffd/selfservice/views.py:76
+#: uffd/selfservice/views.py:75
 msgid ""
 "We sent a mail to this user's mail address if you entered the correct "
 "mail and login name combination"
@@ -970,27 +970,27 @@ msgstr ""
 "Falls E-Mail-Adresse und Anmeldename richtig waren, wurde eine E-Mail an "
 "die Adresse gesendet."
 
-#: uffd/selfservice/views.py:87 uffd/selfservice/views.py:116
-msgid "Token expired, please try again."
-msgstr "Link abgelaufen, bitte versuche es erneut."
+#: uffd/selfservice/views.py:86 uffd/selfservice/views.py:112
+msgid "Link invalid or expired"
+msgstr "Link ist ungültig oder abgelaufen"
 
-#: uffd/selfservice/views.py:95
+#: uffd/selfservice/views.py:91
 msgid "You need to set a password, please try again."
 msgstr "Password fehlt, bitte versuche es erneut."
 
-#: uffd/selfservice/views.py:98
+#: uffd/selfservice/views.py:94
 msgid "Passwords do not match, please try again."
 msgstr "Die Passwörter stimmen nicht überein, bitte versuche es erneut"
 
-#: uffd/selfservice/views.py:103
+#: uffd/selfservice/views.py:99
 msgid "Password ist not valid, please try again."
 msgstr "Ungültiges Passwort, bitte versuche es erneut"
 
-#: uffd/selfservice/views.py:106
+#: uffd/selfservice/views.py:103
 msgid "New password set"
 msgstr "Passwort geändert"
 
-#: uffd/selfservice/views.py:122
+#: uffd/selfservice/views.py:115
 msgid ""
 "This link was generated for another user. Login as the correct user to "
 "continue."
@@ -998,16 +998,16 @@ msgstr ""
 "Dieser Link wurde für einen anderen Account erstellt. Melde dich mit dem "
 "richtigen Account an um Fortzufahren."
 
-#: uffd/selfservice/views.py:124
+#: uffd/selfservice/views.py:119
 msgid "New mail set"
 msgstr "E-Mail-Adresse geändert"
 
-#: uffd/selfservice/views.py:137
+#: uffd/selfservice/views.py:130
 #, python-format
 msgid "You left role %(role_name)s"
 msgstr "Rolle %(role_name)s verlassen"
 
-#: uffd/selfservice/views.py:148 uffd/selfservice/views.py:165
+#: uffd/selfservice/views.py:140 uffd/selfservice/views.py:156
 #, python-format
 msgid "Mail to \"%(mail_address)s\" could not be sent!"
 msgstr "E-Mail an \"%(mail_address)s\" konnte nicht gesendet werden!"
@@ -1209,23 +1209,23 @@ msgstr ""
 msgid "Login name or password is wrong"
 msgstr "Der Anmeldename oder das Passwort ist falsch"
 
-#: uffd/session/views.py:82
+#: uffd/session/views.py:85
 msgid "You do not have access to this service"
 msgstr "Du hast keinen Zugriff auf diesen Service"
 
-#: uffd/session/views.py:94 uffd/session/views.py:105
+#: uffd/session/views.py:97 uffd/session/views.py:108
 msgid "You need to login first"
 msgstr "Du musst dich erst anmelden"
 
-#: uffd/session/views.py:126 uffd/session/views.py:136
+#: uffd/session/views.py:129 uffd/session/views.py:139
 msgid "Initiation code is no longer valid"
 msgstr "Startcode ist nicht mehr gültig"
 
-#: uffd/session/views.py:140
+#: uffd/session/views.py:143
 msgid "Invalid confirmation code"
 msgstr "Ungültiger Bestätigungscode"
 
-#: uffd/session/views.py:152 uffd/session/views.py:163
+#: uffd/session/views.py:155 uffd/session/views.py:166
 msgid "Invalid initiation code"
 msgstr "Ungültiger Startcode"
 
@@ -1335,20 +1335,20 @@ msgstr "Passwort vergessen?"
 msgid "Singup not enabled"
 msgstr "Account-Registrierung ist deaktiviert"
 
-#: uffd/signup/views.py:77 uffd/signup/views.py:85
+#: uffd/signup/views.py:81 uffd/signup/views.py:89
 msgid "Invalid signup link"
 msgstr "Ungültiger Account-Registrierungs-Link"
 
-#: uffd/signup/views.py:90
+#: uffd/signup/views.py:94
 #, python-format
 msgid "Too many failed attempts! Please wait %(delay)s."
 msgstr "Zu viele fehlgeschlagene Versuche! Bitte warte mindestens %(delay)s."
 
-#: uffd/signup/views.py:96
+#: uffd/signup/views.py:100
 msgid "Wrong password"
 msgstr "Falsches Passwort"
 
-#: uffd/signup/views.py:102
+#: uffd/signup/views.py:106
 msgid "Your account was successfully created"
 msgstr "Account erfolgreich erstellt"
 
@@ -1445,7 +1445,7 @@ msgstr "Ändern"
 msgid "About uffd"
 msgstr "Über uffd"
 
-#: uffd/user/models.py:77
+#: uffd/user/models.py:48
 #, python-format
 msgid ""
 "At least %(minlen)d and at most %(maxlen)d characters. Only letters, "

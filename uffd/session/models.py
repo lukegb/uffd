@@ -7,6 +7,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from uffd.database import db
+from uffd.tasks import cleanup_task
 from uffd.utils import token_typeable
 
 # Device login provides a convenient and secure way to log into SSO-enabled
@@ -55,6 +56,7 @@ from uffd.utils import token_typeable
 class DeviceLoginType(enum.Enum):
 	OAUTH2 = 0
 
+@cleanup_task.delete_by_attribute('expired')
 class DeviceLoginInitiation(db.Model):
 	'''Abstract initiation code class
 
@@ -92,6 +94,8 @@ class DeviceLoginInitiation(db.Model):
 
 	@hybrid_property
 	def expired(self):
+		if self.created is None:
+			return False
 		return self.created < datetime.datetime.now() - datetime.timedelta(minutes=30)
 
 	@property

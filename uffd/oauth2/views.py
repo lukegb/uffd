@@ -1,4 +1,3 @@
-import datetime
 import functools
 import secrets
 import urllib.parse
@@ -66,9 +65,8 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 		return set(scopes).issubset({'profile'})
 
 	def save_authorization_code(self, client_id, code, oauthreq, *args, **kwargs):
-		expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
 		grant = OAuth2Grant(user=oauthreq.user, client_id=client_id, code=code['code'],
-		                    redirect_uri=oauthreq.redirect_uri, expires=expires, _scopes=' '.join(oauthreq.scopes))
+		                    redirect_uri=oauthreq.redirect_uri, _scopes=' '.join(oauthreq.scopes))
 		db.session.add(grant)
 		db.session.commit()
 		# Oauthlib does not really provide a way to customize grant code generation.
@@ -86,7 +84,7 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 			return False
 		if not secrets.compare_digest(oauthreq.grant.code, grant_code):
 			return False
-		if datetime.datetime.utcnow() > oauthreq.grant.expires:
+		if oauthreq.grant.expired:
 			return False
 		oauthreq.user = oauthreq.grant.user
 		oauthreq.scopes = oauthreq.grant.scopes
@@ -98,15 +96,13 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 
 	def save_bearer_token(self, token_data, oauthreq, *args, **kwargs):
 		OAuth2Token.query.filter_by(client_id=oauthreq.client.client_id, user=oauthreq.user).delete()
-		expires_in = token_data.get('expires_in')
-		expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)
 		tok = OAuth2Token(
 			user=oauthreq.user,
 			client_id=oauthreq.client.client_id,
 			token_type=token_data['token_type'],
 			access_token=token_data['access_token'],
 			refresh_token=token_data['refresh_token'],
-			expires=expires,
+			expires_in_seconds=token_data['expires_in'],
 			_scopes=' '.join(oauthreq.scopes)
 		)
 		db.session.add(tok)
@@ -133,7 +129,7 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 		tok = OAuth2Token.query.get(tok_id)
 		if not tok or not secrets.compare_digest(tok.access_token, tok_secret):
 			return False
-		if datetime.datetime.utcnow() > tok.expires:
+		if tok.expired:
 			oauthreq.error_message = 'Token expired'
 			return False
 		if not set(scopes).issubset(tok.scopes):

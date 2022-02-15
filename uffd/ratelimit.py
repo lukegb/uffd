@@ -5,15 +5,23 @@ import math
 from flask import request
 from flask_babel import gettext as _
 from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from uffd.database import db
+from uffd.tasks import cleanup_task
 
+@cleanup_task.delete_by_attribute('expired')
 class RatelimitEvent(db.Model):
 	__tablename__ = 'ratelimit_event'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	timestamp = Column(DateTime(), default=datetime.datetime.now)
-	name = Column(String(128))
+	timestamp = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False)
+	expires = Column(DateTime(), nullable=False)
+	name = Column(String(128), nullable=False)
 	key = Column(String(128))
+
+	@hybrid_property
+	def expired(self):
+		return self.expires < datetime.datetime.utcnow()
 
 class Ratelimit:
 	def __init__(self, name, interval, limit):
@@ -22,25 +30,23 @@ class Ratelimit:
 		self.limit = limit
 		self.base = interval**(1/limit)
 
-	def cleanup(self):
-		limit = datetime.datetime.now() - datetime.timedelta(seconds=self.interval)
-		RatelimitEvent.query.filter(RatelimitEvent.name == self.name, RatelimitEvent.timestamp <= limit).delete()
-		db.session.commit()
-
 	def log(self, key=None):
-		db.session.add(RatelimitEvent(name=self.name, key=key))
+		db.session.add(RatelimitEvent(name=self.name, key=key, expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=self.interval)))
 		db.session.commit()
 
 	def get_delay(self, key=None):
-		self.cleanup()
-		events = RatelimitEvent.query.filter(RatelimitEvent.name == self.name, RatelimitEvent.key == key).all()
+		events = RatelimitEvent.query\
+				.filter(db.not_(RatelimitEvent.expired))\
+				.filter_by(name=self.name, key=key)\
+				.order_by(RatelimitEvent.timestamp)\
+				.all()
 		if not events:
 			return 0
 		delay = math.ceil(self.base**len(events))
 		if delay < 5:
 			delay = 0
-		delay = min(delay, 365*24*60*60) # prevent overflow of datetime objetcs
-		remaining = events[0].timestamp + datetime.timedelta(seconds=delay) - datetime.datetime.now()
+		delay = min(delay, 365*24*60*60) # prevent overflow of datetime objects
+		remaining = events[0].timestamp + datetime.timedelta(seconds=delay) - datetime.datetime.utcnow()
 		return max(0, math.ceil(remaining.total_seconds()))
 
 def get_addrkey(addr=None):

@@ -1,4 +1,3 @@
-import datetime
 import secrets
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, abort
@@ -83,11 +82,8 @@ def forgot_password():
 def token_password(token_id, token):
 	dbtoken = PasswordToken.query.get(token_id)
 	if not dbtoken or not secrets.compare_digest(dbtoken.token, token) or \
-			dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
-		flash(_('Token expired, please try again.'))
-		if dbtoken:
-			db.session.delete(dbtoken)
-			db.session.commit()
+			dbtoken.expired:
+		flash(_('Link invalid or expired'))
 		return redirect(url_for('session.login'))
 	if request.method == 'GET':
 		return render_template('selfservice/set_password.html', token=dbtoken)
@@ -103,8 +99,8 @@ def token_password(token_id, token):
 		flash(_('Password ist not valid, please try again.'))
 		return render_template('selfservice/set_password.html', token=dbtoken)
 	db.session.delete(dbtoken)
-	flash(_('New password set'))
 	db.session.commit()
+	flash(_('New password set'))
 	return redirect(url_for('session.login'))
 
 @bp.route("/token/mail_verification/<int:token_id>/<token>")
@@ -112,18 +108,15 @@ def token_password(token_id, token):
 def token_mail(token_id, token):
 	dbtoken = MailToken.query.get(token_id)
 	if not dbtoken or not secrets.compare_digest(dbtoken.token, token) or \
-			dbtoken.created < (datetime.datetime.now() - datetime.timedelta(days=2)):
-		flash(_('Token expired, please try again.'))
-		if dbtoken:
-			db.session.delete(dbtoken)
-			db.session.commit()
+			dbtoken.expired:
+		flash(_('Link invalid or expired'))
 		return redirect(url_for('selfservice.index'))
 	if dbtoken.user != request.user:
 		abort(403, description=_('This link was generated for another user. Login as the correct user to continue.'))
 	dbtoken.user.set_mail(dbtoken.newmail)
-	flash(_('New mail set'))
 	db.session.delete(dbtoken)
 	db.session.commit()
+	flash(_('New mail set'))
 	return redirect(url_for('selfservice.index'))
 
 @bp.route("/leaverole/<int:roleid>", methods=(['POST']))
@@ -138,8 +131,7 @@ def leave_role(roleid):
 	return redirect(url_for('selfservice.index'))
 
 def send_mail_verification(user, newmail):
-	MailToken.query.filter(db.or_(MailToken.created < (datetime.datetime.now() - datetime.timedelta(days=2)),
-	                              MailToken.user == user)).delete()
+	MailToken.query.filter(MailToken.user == user).delete()
 	token = MailToken(user=user, newmail=newmail)
 	db.session.add(token)
 	db.session.commit()
@@ -148,8 +140,7 @@ def send_mail_verification(user, newmail):
 		flash(_('Mail to "%(mail_address)s" could not be sent!', mail_address=newmail))
 
 def send_passwordreset(user, new=False):
-	PasswordToken.query.filter(db.or_(PasswordToken.created < (datetime.datetime.now() - datetime.timedelta(days=2)),
-	                                  PasswordToken.user == user)).delete()
+	PasswordToken.query.filter(PasswordToken.user == user).delete()
 	token = PasswordToken(user=user)
 	db.session.add(token)
 	db.session.commit()

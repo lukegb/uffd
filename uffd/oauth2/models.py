@@ -1,9 +1,13 @@
+import datetime
+
 from flask import current_app
 from flask_babel import get_locale, gettext as _
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from uffd.database import db
+from uffd.tasks import cleanup_task
 from uffd.session.models import DeviceLoginInitiation, DeviceLoginType
 
 class OAuth2Client:
@@ -39,6 +43,7 @@ class OAuth2Client:
 	def access_allowed(self, user):
 		return user.has_permission(self.required_group)
 
+@cleanup_task.delete_by_attribute('expired')
 class OAuth2Grant(db.Model):
 	__tablename__ = 'oauth2grant'
 	id = Column(Integer, primary_key=True, autoincrement=True)
@@ -58,7 +63,7 @@ class OAuth2Grant(db.Model):
 
 	code = Column(String(255), index=True, nullable=False)
 	redirect_uri = Column(String(255), nullable=False)
-	expires = Column(DateTime, nullable=False)
+	expires = Column(DateTime, nullable=False, default=lambda: datetime.datetime.utcnow() + datetime.timedelta(seconds=100))
 
 	_scopes = Column(Text, nullable=False, default='')
 	@property
@@ -72,6 +77,13 @@ class OAuth2Grant(db.Model):
 		db.session.commit()
 		return self
 
+	@hybrid_property
+	def expired(self):
+		if self.expires is None:
+			return False
+		return self.expires < datetime.datetime.utcnow()
+
+@cleanup_task.delete_by_attribute('expired')
 class OAuth2Token(db.Model):
 	__tablename__ = 'oauth2token'
 	id = Column(Integer, primary_key=True, autoincrement=True)
@@ -106,6 +118,14 @@ class OAuth2Token(db.Model):
 		db.session.delete(self)
 		db.session.commit()
 		return self
+
+	@hybrid_property
+	def expired(self):
+		return self.expires < datetime.datetime.utcnow()
+
+	def set_expires_in_seconds(self, seconds):
+		self.expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=seconds)
+	expires_in_seconds = property(fset=set_expires_in_seconds)
 
 class OAuth2DeviceLoginInitiation(DeviceLoginInitiation):
 	__mapper_args__ = {
