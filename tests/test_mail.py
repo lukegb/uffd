@@ -31,7 +31,7 @@ class TestMailViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 
 	def test_show(self):
-		r = self.client.get(path=url_for('mail.show', uid=self.get_mail().uid), follow_redirects=True)
+		r = self.client.get(path=url_for('mail.show', mai_id=self.get_mail().id), follow_redirects=True)
 		dump('mail_show', r)
 		self.assertEqual(r.status_code, 200)
 
@@ -46,7 +46,7 @@ class TestMailViews(UffdTestCase):
 		self.assertEqual(m.uid, 'test')
 		self.assertEqual(sorted(m.receivers), ['test1@example.com', 'test2@example.com'])
 		self.assertEqual(sorted(m.destinations), ['testuser@mail.example.com'])
-		r = self.client.post(path=url_for('mail.update', uid=m.uid),
+		r = self.client.post(path=url_for('mail.update', mail_id=m.id),
 			data={'mail-uid': 'test1', 'mail-receivers': 'foo@bar.com\ntest@bar.com',
 			'mail-destinations': 'testuser@mail.example.com\ntestadmin@mail.example.com'}, follow_redirects=True)
 		dump('mail_update', r)
@@ -83,7 +83,7 @@ class TestMailViews(UffdTestCase):
 
 	def test_delete(self):
 		self.assertIsNotNone(self.get_mail())
-		r = self.client.get(path=url_for('mail.delete', uid=self.get_mail().uid), follow_redirects=True)
+		r = self.client.get(path=url_for('mail.delete', mail_id=self.get_mail().id), follow_redirects=True)
 		dump('mail_delete', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(self.get_mail())

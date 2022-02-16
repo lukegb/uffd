@@ -23,20 +23,21 @@ def mail_acl():
 def index():
 	return render_template('mail/list.html', mails=Mail.query.all())
 
-@bp.route("/<uid>")
+@bp.route("/<int:mail_id>")
 @bp.route("/new")
-def show(uid=None):
-	mail = Mail()
-	if uid is not None:
-		mail = Mail.query.filter_by(uid=uid).first_or_404()
+def show(mail_id=None):
+	if mail_id is not None:
+		mail = Mail.query.get_or_404(mail_id)
+	else:
+		mail = Mail()
 	return render_template('mail/show.html', mail=mail)
 
-@bp.route("/<uid>/update", methods=['POST'])
+@bp.route("/<int:mail_id>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
 @csrf_protect(blueprint=bp)
-def update(uid=None):
-	if uid is not None:
-		mail = Mail.query.filter_by(uid=uid).first_or_404()
+def update(mail_id=None):
+	if mail_id is not None:
+		mail = Mail.query.get_or_404(mail_id)
 	else:
 		mail = Mail(uid=request.form.get('mail-uid'))
 	mail.receivers = request.form.get('mail-receivers', '').splitlines()
@@ -48,12 +49,12 @@ def update(uid=None):
 	db.session.add(mail)
 	db.session.commit()
 	flash(_('Mail mapping updated.'))
-	return redirect(url_for('mail.show', uid=mail.uid))
+	return redirect(url_for('mail.show', mail_id=mail.id))
 
-@bp.route("/<uid>/del")
+@bp.route("/<int:mail_id>/del")
 @csrf_protect(blueprint=bp)
-def delete(uid):
-	mail = Mail.query.filter_by(uid=uid).first_or_404()
+def delete(mail_id):
+	mail = Mail.query.get_or_404(mail_id)
 	db.session.delete(mail)
 	db.session.commit()
 	flash(_('Deleted mail mapping.'))

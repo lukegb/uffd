@@ -18,9 +18,9 @@
 			</thead>
 			<tbody>
 				{% for mail in mails|sort(attribute="uid") %}
-				<tr id="mail-{{ mail.uid }}">
+				<tr id="mail-{{ mail.id }}">
 					<th scope="row">
-						<a href="{{ url_for("mail.show", uid=mail.uid) }}">
+						<a href="{{ url_for("mail.show", mail_id=mail.id) }}">
 						{{ mail.uid }}
 						</a>
 					</th>
