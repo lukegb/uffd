@@ -2,11 +2,11 @@ import datetime
 
 from flask import current_app
 from flask_babel import get_locale, gettext as _
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from uffd.database import db
+from uffd.database import db, CommaSeparatedList
 from uffd.tasks import cleanup_task
 from uffd.session.models import DeviceLoginInitiation, DeviceLoginType
 
@@ -64,18 +64,7 @@ class OAuth2Grant(db.Model):
 	code = Column(String(255), index=True, nullable=False)
 	redirect_uri = Column(String(255), nullable=False)
 	expires = Column(DateTime, nullable=False, default=lambda: datetime.datetime.utcnow() + datetime.timedelta(seconds=100))
-
-	_scopes = Column(Text, nullable=False, default='')
-	@property
-	def scopes(self):
-		if self._scopes:
-			return self._scopes.split()
-		return []
-
-	def delete(self):
-		db.session.delete(self)
-		db.session.commit()
-		return self
+	scopes = Column('_scopes', CommaSeparatedList(), nullable=False, default=tuple())
 
 	@hybrid_property
 	def expired(self):
@@ -106,18 +95,7 @@ class OAuth2Token(db.Model):
 	access_token = Column(String(255), unique=True, nullable=False)
 	refresh_token = Column(String(255), unique=True, nullable=False)
 	expires = Column(DateTime, nullable=False)
-
-	_scopes = Column(Text, nullable=False, default='')
-	@property
-	def scopes(self):
-		if self._scopes:
-			return self._scopes.split()
-		return []
-
-	def delete(self):
-		db.session.delete(self)
-		db.session.commit()
-		return self
+	scopes = Column('_scopes', CommaSeparatedList(), nullable=False, default=tuple())
 
 	@hybrid_property
 	def expired(self):

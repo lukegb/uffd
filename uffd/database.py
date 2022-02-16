@@ -1,6 +1,8 @@
 from collections import OrderedDict
 
 from sqlalchemy import MetaData, event
+from sqlalchemy.types import TypeDecorator, Text
+from sqlalchemy.ext.mutable import MutableList
 from flask_sqlalchemy import SQLAlchemy
 from flask.json import JSONEncoder
 
@@ -40,3 +42,24 @@ class SQLAlchemyJSON(JSONEncoder):
 				result[key] = getattr(o, key)
 			return result
 		return JSONEncoder.default(self, o)
+
+class CommaSeparatedList(TypeDecorator):
+	# For some reason TypeDecorator.process_literal_param and
+	# TypeEngine.python_type are abstract but not actually required
+	# pylint: disable=abstract-method
+
+	impl = Text
+	cache_ok = True
+
+	def process_bind_param(self, value, dialect):
+		if value is None:
+			return None
+		for item in value:
+			if ',' in item:
+				raise ValueError('Items of comma-separated list must not contain commas')
+		return ','.join(value)
+
+	def process_result_value(self, value, dialect):
+		if value is None:
+			return None
+		return MutableList(value.split(','))

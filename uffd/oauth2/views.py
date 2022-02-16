@@ -66,7 +66,7 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 
 	def save_authorization_code(self, client_id, code, oauthreq, *args, **kwargs):
 		grant = OAuth2Grant(user=oauthreq.user, client_id=client_id, code=code['code'],
-		                    redirect_uri=oauthreq.redirect_uri, _scopes=' '.join(oauthreq.scopes))
+		                    redirect_uri=oauthreq.redirect_uri, scopes=oauthreq.scopes)
 		db.session.add(grant)
 		db.session.commit()
 		# Oauthlib does not really provide a way to customize grant code generation.
@@ -95,7 +95,6 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 		db.session.commit()
 
 	def save_bearer_token(self, token_data, oauthreq, *args, **kwargs):
-		OAuth2Token.query.filter_by(client_id=oauthreq.client.client_id, user=oauthreq.user).delete()
 		tok = OAuth2Token(
 			user=oauthreq.user,
 			client_id=oauthreq.client.client_id,
@@ -103,7 +102,7 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 			access_token=token_data['access_token'],
 			refresh_token=token_data['refresh_token'],
 			expires_in_seconds=token_data['expires_in'],
-			_scopes=' '.join(oauthreq.scopes)
+			scopes=oauthreq.scopes
 		)
 		db.session.add(tok)
 		db.session.commit()
