@@ -5,26 +5,9 @@ from flask import current_app, escape
 from flask_babel import lazy_gettext
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql.expression import func
 
 from uffd.database import db
 from uffd.password_hash import PasswordHashAttribute, LowEntropyPasswordHash
-
-def get_next_unix_uid(context):
-	is_service_user = bool(context.get_current_parameters().get('is_service_user', False))
-	if is_service_user:
-		min_uid = current_app.config['USER_SERVICE_MIN_UID']
-		max_uid = current_app.config['USER_SERVICE_MAX_UID']
-	else:
-		min_uid = current_app.config['USER_MIN_UID']
-		max_uid = current_app.config['USER_MAX_UID']
-	next_uid = max(min_uid,
-	               db.session.query(func.max(User.unix_uid + 1))\
-	                         .filter(User.is_service_user==is_service_user)\
-	                         .scalar() or 0)
-	if next_uid > max_uid:
-		raise Exception('No free uid found')
-	return next_uid
 
 # pylint: disable=E1101
 user_groups = db.Table('user_groups',
@@ -49,7 +32,8 @@ class User(db.Model):
 
 	__tablename__ = 'user'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	unix_uid = Column(Integer(), unique=True, nullable=False, default=get_next_unix_uid)
+	# Default is set in event handler below
+	unix_uid = Column(Integer(), unique=True, nullable=False)
 	loginname = Column(String(32), unique=True, nullable=False)
 	displayname = Column(String(128), nullable=False)
 	mail = Column(String(128), nullable=False)
@@ -120,17 +104,41 @@ class User(db.Model):
 	def update_groups(self):
 		pass
 
-def get_next_unix_gid():
-	next_gid = max(current_app.config['GROUP_MIN_GID'],
-	               db.session.query(func.max(Group.unix_gid + 1)).scalar() or 0)
-	if next_gid > current_app.config['GROUP_MAX_GID']:
-		raise Exception('No free gid found')
-	return next_gid
+def next_id_expr(column, min_value, max_value):
+	# db.func.max(column) + 1: highest used value in range + 1, NULL if no values in range
+	# db.func.min(..., max_value): clip to range
+	# db.func.coalesce(..., min_value): if NULL use min_value
+	# if range is exhausted, evaluates to max_value that violates the UNIQUE constraint
+	return db.select([db.func.coalesce(db.func.min(db.func.max(column) + 1, max_value), min_value)])\
+	         .where(column >= min_value)\
+	         .where(column <= max_value)
+
+# Emulates the behaviour of Column.default. We cannot use a static SQL
+# expression like we do for Group.unix_gid, because we need context
+# information. We also cannot set Column.default to a callable, because
+# SQLAlchemy always treats the return value as a literal value and does
+# not allow SQL expressions.
+@db.event.listens_for(User, 'before_insert')
+def set_default_unix_uid(mapper, connect, target):
+	# pylint: disable=unused-argument
+	if target.unix_uid is not None:
+		return
+	if target.is_service_user:
+		min_uid = current_app.config['USER_SERVICE_MIN_UID']
+		max_uid = current_app.config['USER_SERVICE_MAX_UID']
+	else:
+		min_uid = current_app.config['USER_MIN_UID']
+		max_uid = current_app.config['USER_MAX_UID']
+	target.unix_uid = next_id_expr(User.unix_uid, min_uid, max_uid)
+
+group_table = db.table('group', db.column('unix_gid'))
+min_gid = db.bindparam('min_gid', unique=True, callable_=lambda: current_app.config['GROUP_MIN_GID'], type_=db.Integer)
+max_gid = db.bindparam('max_gid', unique=True, callable_=lambda: current_app.config['GROUP_MAX_GID'], type_=db.Integer)
 
 class Group(db.Model):
 	__tablename__ = 'group'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	unix_gid = Column(Integer(), unique=True, nullable=False, default=get_next_unix_gid)
+	unix_gid = Column(Integer(), unique=True, nullable=False, default=next_id_expr(group_table.c.unix_gid, min_gid, max_gid))
 	name = Column(String(32), unique=True, nullable=False)
 	description = Column(String(128), nullable=False, default='')
 	members = relationship('User', secondary='user_groups', back_populates='groups')

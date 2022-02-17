@@ -2,6 +2,7 @@ import datetime
 import unittest
 
 from flask import url_for, session
+import sqlalchemy
 
 # These imports are required, because otherwise we get circular imports?!
 from uffd import user
@@ -36,6 +37,66 @@ class TestUserModel(UffdTestCase):
 		self.assertTrue(admin.has_permission([['uffd_admin', 'users'], ['users', 'uffd_access']]))
 		self.assertFalse(user_.has_permission(['uffd_admin', ['users', 'notagroup']]))
 		self.assertTrue(admin.has_permission(['uffd_admin', ['users', 'notagroup']]))
+
+	def test_unix_uid_generation(self):
+		self.app.config['USER_MIN_UID'] = 10000
+		self.app.config['USER_MAX_UID'] = 18999
+		self.app.config['USER_SERVICE_MIN_UID'] = 19000
+		self.app.config['USER_SERVICE_MAX_UID'] =19999
+		User.query.delete()
+		db.session.commit()
+		user0 = User(loginname='user0', displayname='user0', mail='user0@example.com')
+		user1 = User(loginname='user1', displayname='user1', mail='user1@example.com')
+		user2 = User(loginname='user2', displayname='user2', mail='user2@example.com')
+		db.session.add_all([user0, user1, user2])
+		db.session.commit()
+		self.assertEqual(user0.unix_uid, 10000)
+		self.assertEqual(user1.unix_uid, 10001)
+		self.assertEqual(user2.unix_uid, 10002)
+		db.session.delete(user1)
+		db.session.commit()
+		user3 = User(loginname='user3', displayname='user3', mail='user3@example.com')
+		db.session.add(user3)
+		db.session.commit()
+		self.assertEqual(user3.unix_uid, 10003)
+		service0 = User(loginname='service0', displayname='service0', mail='service0@example.com', is_service_user=True)
+		service1 = User(loginname='service1', displayname='service1', mail='service1@example.com', is_service_user=True)
+		db.session.add_all([service0, service1])
+		db.session.commit()
+		self.assertEqual(service0.unix_uid, 19000)
+		self.assertEqual(service1.unix_uid, 19001)
+
+	def test_unix_uid_generation_overlapping(self):
+		self.app.config['USER_MIN_UID'] = 10000
+		self.app.config['USER_MAX_UID'] = 19999
+		self.app.config['USER_SERVICE_MIN_UID'] = 10000
+		self.app.config['USER_SERVICE_MAX_UID'] = 19999
+		User.query.delete()
+		db.session.commit()
+		user0 = User(loginname='user0', displayname='user0', mail='user0@example.com')
+		service0 = User(loginname='service0', displayname='service0', mail='service0@example.com', is_service_user=True)
+		user1 = User(loginname='user1', displayname='user1', mail='user1@example.com')
+		db.session.add_all([user0, service0, user1])
+		db.session.commit()
+		self.assertEqual(user0.unix_uid, 10000)
+		self.assertEqual(service0.unix_uid, 10001)
+		self.assertEqual(user1.unix_uid, 10002)
+
+	def test_unix_uid_generation_overflow(self):
+		self.app.config['USER_MIN_UID'] = 10000
+		self.app.config['USER_MAX_UID'] = 10001
+		User.query.delete()
+		db.session.commit()
+		user0 = User(loginname='user0', displayname='user0', mail='user0@example.com')
+		user1 = User(loginname='user1', displayname='user1', mail='user1@example.com')
+		db.session.add_all([user0, user1])
+		db.session.commit()
+		self.assertEqual(user0.unix_uid, 10000)
+		self.assertEqual(user1.unix_uid, 10001)
+		with self.assertRaises(sqlalchemy.exc.IntegrityError):
+			user2 = User(loginname='user2', displayname='user2', mail='user2@example.com')
+			db.session.add(user2)
+			db.session.commit()
 
 class TestUserViews(UffdTestCase):
 	def setUp(self):
@@ -445,6 +506,44 @@ class TestUserCLI(UffdTestCase):
 			self.assertIsNone(User.query.filter_by(loginname='testuser').first())
 		result = self.app.test_cli_runner().invoke(args=['user', 'delete', 'doesnotexist'])
 		self.assertEqual(result.exit_code, 1)
+
+class TestGroupModel(UffdTestCase):
+	def test_unix_gid_generation(self):
+		self.app.config['GROUP_MIN_GID'] = 20000
+		self.app.config['GROUP_MAX_GID'] = 49999
+		Group.query.delete()
+		db.session.commit()
+		group0 = Group(name='group0', description='group0')
+		group1 = Group(name='group1', description='group1')
+		group2 = Group(name='group2', description='group2')
+		db.session.add_all([group0, group1, group2])
+		db.session.commit()
+		self.assertEqual(group0.unix_gid, 20000)
+		self.assertEqual(group1.unix_gid, 20001)
+		self.assertEqual(group2.unix_gid, 20002)
+		db.session.delete(group1)
+		db.session.commit()
+		group3 = Group(name='group3', description='group3')
+		db.session.add(group3)
+		db.session.commit()
+		self.assertEqual(group3.unix_gid, 20003)
+
+	def test_unix_gid_generation(self):
+		self.app.config['GROUP_MIN_GID'] = 20000
+		self.app.config['GROUP_MAX_GID'] = 20001
+		Group.query.delete()
+		db.session.commit()
+		group0 = Group(name='group0', description='group0')
+		group1 = Group(name='group1', description='group1')
+		db.session.add_all([group0, group1])
+		db.session.commit()
+		self.assertEqual(group0.unix_gid, 20000)
+		self.assertEqual(group1.unix_gid, 20001)
+		db.session.commit()
+		with self.assertRaises(sqlalchemy.exc.IntegrityError):
+			group2 = Group(name='group2', description='group2')
+			db.session.add(group2)
+			db.session.commit()
 
 class TestGroupViews(UffdTestCase):
 	def setUp(self):
