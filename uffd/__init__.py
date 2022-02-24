@@ -18,7 +18,7 @@ from uffd.tasks import cleanup_task
 from uffd.template_helper import register_template_helper
 from uffd.navbar import setup_navbar
 from uffd.secure_redirect import secure_local_redirect
-from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, services, signup, rolemod, invite, api
+from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, service, signup, rolemod, invite, api
 from uffd.user.models import User, Group
 from uffd.role.models import Role, RoleGroup
 from uffd.mail.models import Mail
@@ -68,7 +68,7 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 	register_template_helper(app)
 
 	# Sort the navbar positions by their blueprint names (from the left)
-	positions = ["selfservice", "services", "rolemod", "invite", "user", "group", "role", "mail"]
+	positions = ["selfservice", "service", "rolemod", "invite", "user", "group", "role", "mail"]
 	setup_navbar(app, positions)
 
 	# We never want to fail here, but at a file access that doesn't work.
@@ -85,7 +85,7 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 
 	cleanup_task.init_app(app, db)
 
-	for module in [user, selfservice, role, mail, session, csrf, mfa, oauth2, services, rolemod, api, signup, invite]:
+	for module in [user, selfservice, role, mail, session, csrf, mfa, oauth2, service, rolemod, api, signup, invite]:
 		for bp in module.bp:
 			app.register_blueprint(bp)
 

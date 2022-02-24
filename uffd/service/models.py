@@ -1,9 +1,37 @@
-from flask import Blueprint, render_template, current_app, abort, request
-from flask_babel import lazy_gettext, get_locale
+from flask import current_app
+from flask_babel import get_locale
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy.orm import relationship
 
-from uffd.navbar import register_navbar
+from uffd.database import db
 
-bp = Blueprint("services", __name__, template_folder='templates', url_prefix='/services')
+class Service(db.Model):
+	__tablename__ = 'service'
+	id = Column(Integer, primary_key=True, autoincrement=True)
+	name = Column(String(255), unique=True, nullable=False)
+
+	# If limit_access is False, all users have access and access_group is
+	# ignored. This attribute exists for legacy API and OAuth2 clients that
+	# were migrated from config definitions where a missing "required_group"
+	# parameter meant no access restrictions. Representing this state by
+	# setting access_group_id to NULL would lead to a bad/unintuitive ondelete
+	# behaviour.
+	limit_access = Column(Boolean(), default=True, nullable=False)
+	access_group_id = Column(Integer(), ForeignKey('group.id', onupdate='CASCADE', ondelete='SET NULL'), nullable=True)
+	access_group = relationship('Group')
+
+	oauth2_clients = relationship('OAuth2Client', back_populates='service', cascade='all, delete-orphan')
+	api_clients = relationship('APIClient', back_populates='service', cascade='all, delete-orphan')
+
+	def has_access(self, user):
+		return not self.limit_access or self.access_group in user.groups
+
+# The user-visible services show on the service overview page are read from
+# the SERVICES config key. It is planned to gradually extend the Service model
+# in order to finally replace the config-defined services.
+
+def get_language_specific(data, field_name, default =''):
+	return data.get(field_name + '_' + get_locale().language, data.get(field_name, default))
 
 # pylint: disable=too-many-branches
 def get_services(user=None):
@@ -72,24 +100,3 @@ def get_services(user=None):
 			service['links'].append(link_data)
 		services.append(service)
 	return services
-
-def get_language_specific(data, field_name, default =''):
-	return data.get(field_name + '_' + get_locale().language, data.get(field_name, default))
-
-def services_visible():
-	return len(get_services(request.user)) > 0
-
-@bp.route("/")
-@register_navbar(lazy_gettext('Services'), icon='sitemap', blueprint=bp, visible=services_visible)
-def index():
-	services = get_services(request.user)
-	if not current_app.config['SERVICES']:
-		abort(404)
-
-	banner = current_app.config.get('SERVICES_BANNER')
-
-	# Set the banner to None if it is not public and no user is logged in
-	if not (current_app.config["SERVICES_BANNER_PUBLIC"] or request.user):
-		banner = None
-
-	return render_template('services/overview.html', user=request.user, services=services, banner=banner)

@@ -13,7 +13,8 @@ from uffd.role.models import Role, RoleGroup
 from uffd.signup.models import Signup
 from uffd.invite.models import Invite, InviteGrant, InviteSignup
 from uffd.session.models import DeviceLoginConfirmation
-from uffd.oauth2.models import OAuth2Grant, OAuth2Token, OAuth2DeviceLoginInitiation
+from uffd.service.models import Service
+from uffd.oauth2.models import OAuth2Client, OAuth2LogoutURI, OAuth2Grant, OAuth2Token, OAuth2DeviceLoginInitiation
 from uffd.selfservice.models import PasswordToken, MailToken
 
 def run_test(dburi, revision):
@@ -48,9 +49,12 @@ def run_test(dburi, revision):
 		invite.signups.append(InviteSignup(loginname='newuser', displayname='New User', mail='newuser@example.com', password='newpassword'))
 		invite.grants.append(InviteGrant(user=user))
 		db.session.add(Invite(creator=user, valid_until=datetime.datetime.now()))
-		db.session.add(OAuth2Grant(user=user, client_id='testclient', code='testcode', redirect_uri='http://example.com/callback', expires=datetime.datetime.now()))
-		db.session.add(OAuth2Token(user=user, client_id='testclient', token_type='Bearer', access_token='testcode', refresh_token='testcode', expires=datetime.datetime.now()))
-		db.session.add(OAuth2DeviceLoginInitiation(oauth2_client_id='testclient', confirmations=[DeviceLoginConfirmation(user=user)]))
+		service = Service(name='testservice', access_group=group)
+		oauth2_client = OAuth2Client(service=service, client_id='testclient', client_secret='testsecret', redirect_uris=['http://localhost:1234/callback'], logout_uris=[OAuth2LogoutURI(method='GET', uri='http://localhost:1234/callback')])
+		db.session.add_all([service, oauth2_client])
+		db.session.add(OAuth2Grant(user=user, client=oauth2_client, code='testcode', redirect_uri='http://example.com/callback', expires=datetime.datetime.now()))
+		db.session.add(OAuth2Token(user=user, client=oauth2_client, token_type='Bearer', access_token='testcode', refresh_token='testcode', expires=datetime.datetime.now()))
+		db.session.add(OAuth2DeviceLoginInitiation(client=oauth2_client, confirmations=[DeviceLoginConfirmation(user=user)]))
 		db.session.add(PasswordToken(user=user))
 		db.session.add(MailToken(user=user, newmail='test@example.com'))
 		db.session.commit()

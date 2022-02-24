@@ -87,9 +87,13 @@ class UffdTestCase(unittest.TestCase):
 		db.session.add(testadmin)
 		testmail = Mail(uid='test', receivers=['test1@example.com', 'test2@example.com'], destinations=['testuser@mail.example.com'])
 		db.session.add(testmail)
+		self.setUpDB()
 		db.session.commit()
 
 	def setUpApp(self):
+		pass
+
+	def setUpDB(self):
 		pass
 
 	def tearDown(self):

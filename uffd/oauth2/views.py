@@ -22,11 +22,8 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 	# before anything else. authenticate_client_id would be called instead of authenticate_client for non-confidential
 	# clients. However, we don't support those.
 	def validate_client_id(self, client_id, oauthreq, *args, **kwargs):
-		try:
-			oauthreq.client = OAuth2Client.from_id(client_id)
-			return True
-		except KeyError:
-			return False
+		oauthreq.client = OAuth2Client.query.filter_by(client_id=client_id).one_or_none()
+		return oauthreq.client is not None
 
 	def authenticate_client(self, oauthreq, *args, **kwargs):
 		authorization = oauthreq.extra_credentials.get('authorization')
@@ -41,11 +38,15 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 			oauthreq.client_secret = urllib.parse.unquote(authorization.password)
 		if oauthreq.client_secret is None:
 			return False
-		try:
-			oauthreq.client = OAuth2Client.from_id(oauthreq.client_id)
-		except KeyError:
+		oauthreq.client = OAuth2Client.query.filter_by(client_id=oauthreq.client_id).one_or_none()
+		if oauthreq.client is None:
 			return False
-		return secrets.compare_digest(oauthreq.client.client_secret, oauthreq.client_secret)
+		if not oauthreq.client.client_secret.verify(oauthreq.client_secret):
+			return False
+		if oauthreq.client.client_secret.needs_rehash:
+			oauthreq.client.client_secret = oauthreq.client_secret
+			db.session.commit()
+		return True
 
 	def get_default_redirect_uri(self, client_id, oauthreq, *args, **kwargs):
 		return oauthreq.client.default_redirect_uri
@@ -65,7 +66,7 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 		return set(scopes).issubset({'profile'})
 
 	def save_authorization_code(self, client_id, code, oauthreq, *args, **kwargs):
-		grant = OAuth2Grant(user=oauthreq.user, client_id=client_id, code=code['code'],
+		grant = OAuth2Grant(user=oauthreq.user, client=oauthreq.client, code=code['code'],
 		                    redirect_uri=oauthreq.redirect_uri, scopes=oauthreq.scopes)
 		db.session.add(grant)
 		db.session.commit()
@@ -80,7 +81,7 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 			return False
 		grant_id, grant_code = code.split('-', 2)
 		oauthreq.grant = OAuth2Grant.query.get(grant_id)
-		if not oauthreq.grant or oauthreq.grant.client_id != client_id:
+		if not oauthreq.grant or oauthreq.grant.client != client:
 			return False
 		if not secrets.compare_digest(oauthreq.grant.code, grant_code):
 			return False
@@ -91,13 +92,13 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 		return True
 
 	def invalidate_authorization_code(self, client_id, code, oauthreq, *args, **kwargs):
-		OAuth2Grant.query.filter_by(client_id=client_id, code=code).delete()
+		OAuth2Grant.query.filter_by(client=oauthreq.client, code=code).delete()
 		db.session.commit()
 
 	def save_bearer_token(self, token_data, oauthreq, *args, **kwargs):
 		tok = OAuth2Token(
 			user=oauthreq.user,
-			client_id=oauthreq.client.client_id,
+			client=oauthreq.client,
 			token_type=token_data['token_type'],
 			access_token=token_data['access_token'],
 			refresh_token=token_data['refresh_token'],
@@ -138,7 +139,7 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 		oauthreq.user = tok.user
 		oauthreq.scopes = scopes
 		oauthreq.client = tok.client
-		oauthreq.client_id = tok.client_id
+		oauthreq.client_id = oauthreq.client.client_id
 		return True
 
 	# get_original_scopes/validate_refresh_token are only used for refreshing tokens. We don't implement the refresh endpoint.
@@ -157,7 +158,7 @@ def handle_oauth2error(error):
 @bp.route('/authorize', methods=['GET', 'POST'])
 def authorize():
 	scopes, credentials = server.validate_authorization_request(request.url, request.method, request.form, request.headers)
-	client = OAuth2Client.from_id(credentials['client_id'])
+	client = OAuth2Client.query.filter_by(client_id=credentials['client_id']).one()
 
 	if request.user:
 		credentials['user'] = request.user
@@ -168,7 +169,7 @@ def authorize():
 			flash(_('We received too many requests from your ip address/network! Please wait at least %(delay)s.', delay=format_delay(host_delay)))
 			return redirect(url_for('session.login', ref=request.full_path, devicelogin=True))
 		host_ratelimit.log()
-		initiation = OAuth2DeviceLoginInitiation(oauth2_client_id=client.client_id)
+		initiation = OAuth2DeviceLoginInitiation(client=client)
 		db.session.add(initiation)
 		try:
 			db.session.commit()
@@ -180,7 +181,7 @@ def authorize():
 		return redirect(url_for('session.devicelogin', ref=request.full_path))
 	elif 'devicelogin_id' in session and 'devicelogin_secret' in session and 'devicelogin_confirmation' in session:
 		initiation = OAuth2DeviceLoginInitiation.query.filter_by(id=session['devicelogin_id'], secret=session['devicelogin_secret'],
-		                                                         oauth2_client_id=client.client_id).one_or_none()
+		                                                         client=client).one_or_none()
 		confirmation = DeviceLoginConfirmation.query.get(session['devicelogin_confirmation'])
 		del session['devicelogin_id']
 		del session['devicelogin_secret']
@@ -192,14 +193,14 @@ def authorize():
 		db.session.delete(initiation)
 		db.session.commit()
 	else:
-		flash(client.login_message)
+		flash(_('You need to login to access this service'))
 		return redirect(url_for('session.login', ref=request.full_path, devicelogin=True))
 
 	# Here we would normally ask the user, if he wants to give the requesting
 	# service access to his data. Since we only have trusted services (the
 	# clients defined in the server config), we don't ask for consent.
 	if not client.access_allowed(credentials['user']):
-		abort(403, description=_("You don't have the permission to access the service <b>%(service_name)s</b>.", service_name=client.client_id))
+		abort(403, description=_("You don't have the permission to access the service <b>%(service_name)s</b>.", service_name=client.service.name))
 	session['oauth2-clients'] = session.get('oauth2-clients', [])
 	if client.client_id not in session['oauth2-clients']:
 		session['oauth2-clients'].append(client.client_id)
@@ -248,5 +249,5 @@ def logout():
 	if not request.values.get('client_ids'):
 		return secure_local_redirect(request.values.get('ref', '/'))
 	client_ids = request.values['client_ids'].split(',')
-	clients = [OAuth2Client.from_id(client_id) for client_id in client_ids]
+	clients = [OAuth2Client.query.filter_by(name=client_id).one() for client_id in client_ids]
 	return render_template('oauth2/logout.html', clients=clients)

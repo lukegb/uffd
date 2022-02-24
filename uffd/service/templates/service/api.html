@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="row">
+	<form action="{{ url_for('service.api_submit', service_id=service.id, id=client.id) }}" method="POST" class="form col-12 px-0">
+
+		<div class="form-group col">
+			<p class="text-right">
+				<a href="{{ url_for('service.show', id=service.id) }}" class="btn btn-secondary">{{ _('Cancel') }}</a>
+				{% if client.id %}
+				<a class="btn btn-danger" href="{{ url_for('service.api_delete', service_id=service.id, id=client.id) }}" onClick='return confirm({{_("Are you sure?")|tojson}});'>
+					<i class="fa fa-trash" aria-hidden="true"></i> {{_('Delete')}}
+				</a>
+				{% endif %}
+				<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> {{ _('Save') }}</button>
+			</p>
+		</div>
+
+		<div class="form-group col">
+			<label for="client-auth-username">{{ _('Authentication Username') }}</label>
+			<input type="text" class="form-control" id="client-auth-username" name="auth_username" value="{{ client.auth_username or '' }}" required>
+		</div>
+
+		<div class="form-group col">
+			<label for="client-auth-password">{{ _('Authentication Password') }}</label>
+			{% if client.id %}
+			<input type="password" class="form-control" id="client-auth-password" name="auth_password" placeholder="●●●●●●●●">
+			{% else %}
+			<input type="password" class="form-control" id="client-auth-password" name="auth_password" required>
+			{% endif %}
+		</div>
+
+		<div class="form-group col">
+			<h6>{{ _('Permissions') }}</h6>
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" id="client-perm-users" name="perm_users" value="1" aria-label="enabled" {{ 'checked' if client.perm_users }}>
+				<label class="form-check-label" for="client-perm-users"><b>users</b>: {{_('Access user and group data')}}</label>
+			</div>
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" id="client-perm-checkpassword" name="perm_checkpassword" value="1" aria-label="enabled" {{ 'checked' if client.perm_checkpassword }}>
+				<label class="form-check-label" for="client-perm-checkpassword"><b>checkpassword</b>: {{_('Verify user passwords')}}</label>
+			</div>
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" id="client-perm-mail-aliases" name="perm_mail_aliases" value="1" aria-label="enabled" {{ 'checked' if client.perm_mail_aliases }}>
+				<label class="form-check-label" for="client-perm-mail-aliases"><b>mail_aliases</b>: {{_('Access mail aliases')}}</label>
+			</div>
+		</div>
+
+	</form>
+</div>
+{% endblock %}

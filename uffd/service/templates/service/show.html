@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<div class="row">
+
+	<form action="{{ url_for('service.edit_submit', id=service.id) }}" method="POST" class="form col-12 px-0">
+		<div class="form-group col">
+			<p class="text-right">
+				<a href="{{ url_for('service.index') }}" class="btn btn-secondary">{{ _('Cancel') }}</a>
+				{% if service.id %}
+				<a class="btn btn-danger" href="{{ url_for('service.delete', id=service.id) }}" onClick='return confirm({{_("Are you sure?")|tojson}});'>
+					<i class="fa fa-trash" aria-hidden="true"></i> {{_('Delete')}}
+				</a>
+				{% endif %}
+				<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> {{ _('Save') }}</button>
+			</p>
+		</div>
+		<div class="form-group col">
+			<label for="service-name">{{ _('Name') }}</label>
+			<input type="text" class="form-control" id="service-name" name="name" value="{{ service.name or '' }}" required>
+		</div>
+		<div class="form-group col">
+			<label for="moderator-group">{{ _('Access Restriction') }}</label>
+			<select class="form-control" id="access-group" name="access-group">
+				<option value="" class="text-muted">{{ _('No user has access') }}</option>
+				<option value="all" class="text-muted" {{ 'selected' if not service.limit_access }}>{{ _('All users have access (legacy)') }}</option>
+				{% for group in all_groups %}
+				<option value="{{ group.id }}" {{ 'selected' if group == service.access_group and service.limit_access }}>{{ _('Members of group "%(group_name)s" have access', group_name=group.name) }}</option>
+				{% endfor %}
+			</select>
+		</div>
+	</form>
+
+	{% if service.id %}
+	<div class="col-12">
+		<hr>
+		<h5>OAuth2 Clients</h5>
+		<p class="text-right">
+			<a class="btn btn-primary" href="{{ url_for('service.oauth2_show', service_id=service.id) }}">
+				<i class="fa fa-plus" aria-hidden="true"></i> {{_("New")}}
+			</a>
+		</p>
+		<table class="table table-striped table-sm">
+			<thead>
+				<tr>
+					<th scope="col">{{ _('Client ID') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for client in service.oauth2_clients|sort(attribute='client_id') %}
+				<tr>
+					<td>
+						<a href="{{ url_for("service.oauth2_show", service_id=service.id, db_id=client.db_id) }}">
+							{{ client.client_id }}
+						</a>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+
+	<div class="col-12">
+		<hr>
+		<h5>API Clients</h5>
+		<p class="text-right">
+			<a class="btn btn-primary" href="{{ url_for('service.api_show', service_id=service.id) }}">
+				<i class="fa fa-plus" aria-hidden="true"></i> {{_("New")}}
+			</a>
+		</p>
+		<table class="table table-striped table-sm">
+			<thead>
+				<tr>
+					<th scope="col">{{ _('Name') }}</th>
+					<th scope="col">{{ _('Permissions') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for client in service.api_clients|sort(attribute='auth_username') %}
+				<tr>
+					<td>
+						<a href="{{ url_for("service.api_show", service_id=service.id, id=client.id) }}">
+							{{ client.auth_username }}
+						</a>
+					</td>
+					<td>
+						{% for perm in ['users', 'checkpassword', 'mail_aliases'] if client.has_permission(perm) %}
+						{{ perm }}{{ ',' if not loop.last }}
+						{% endfor %}
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	{% endif %}
+
+</div>
+
+{% endblock %}

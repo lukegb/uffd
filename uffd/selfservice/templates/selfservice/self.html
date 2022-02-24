@@ -86,7 +86,7 @@
 		<h5>{{_("Roles")}}</h5>
 		<p>{{_("Aside from a set of base permissions, your roles determine the permissions of your account.")}}</p>
 		{% if config['SERVICES'] %}
-		<p>{{_("See <a href=\"%(services_url)s\">Services</a> for an overview of your current permissions.", services_url=url_for('services.index'))}}</p>
+		<p>{{_("See <a href=\"%(services_url)s\">Services</a> for an overview of your current permissions.", services_url=url_for('service.overview'))}}</p>
 		{% endif %}
 	</div>
 	<div class="col-12 col-md-7">

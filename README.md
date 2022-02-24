@@ -98,6 +98,17 @@ Upgrading will not perform any write access to the LDAP server.
 
 If the config option `ACL_SELFSERVICE_GROUP` is set but not `ACL_ACCESS_GROUP`, make sure to set `ACL_ACCESS_GROUP` to the same value as `ACL_SELFSERVICE_GROUP`,
 
+OAuth2 and API client definitions moved from the config (`OAUTH2_CLIENTS` and `API_CLIENTS_2`) to the database.
+The database migration automatically imports clients from the config.
+After upgrading the config options should be removed.
+
+Note that the `login_message` option is no longer supported for OAuth2 clients.
+The `required_group` is only correctly imported if it is set to a single group name (or absent).
+
+Also note that uffd can group OAuth2 and API clients of a service together.
+Set the `service_name` key in `OAUTH2_CLIENTS` and `API_CLIENTS_2` items to the same value to group them together.
+Without this key the import creates individual service objects for each client.
+
 ## Python Coding Style Conventions
 
 PEP 8 without double new lines, tabs instead of spaces and a max line length of 160 characters.

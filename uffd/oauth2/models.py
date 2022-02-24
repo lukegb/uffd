@@ -1,47 +1,61 @@
 import datetime
 
-from flask import current_app
-from flask_babel import get_locale, gettext as _
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.associationproxy import association_proxy
 
 from uffd.database import db, CommaSeparatedList
 from uffd.tasks import cleanup_task
+from uffd.password_hash import PasswordHashAttribute, HighEntropyPasswordHash
 from uffd.session.models import DeviceLoginInitiation, DeviceLoginType
 
-class OAuth2Client:
-	def __init__(self, client_id, client_secret, redirect_uris, required_group=None, logout_urls=None, **kwargs):
-		self.client_id = client_id
-		self.client_secret = client_secret
-		# We only support the Authorization Code Flow for confidential (server-side) clients
-		self.client_type = 'confidential'
-		self.redirect_uris = redirect_uris
-		self.default_scopes = ['profile']
-		self.required_group = required_group
-		self.logout_urls = []
-		for url in (logout_urls or []):
-			if isinstance(url, str):
-				self.logout_urls.append(['GET', url])
-			else:
-				self.logout_urls.append(url)
-		self.kwargs = kwargs
+class OAuth2Client(db.Model):
+	__tablename__ = 'oauth2client'
+	# Inconsistently named "db_id" instead of "id" because of the naming conflict
+	# with "client_id" in the OAuth2 standard
+	db_id = Column(Integer, primary_key=True, autoincrement=True)
+
+	service_id = Column(Integer, ForeignKey('service.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	service = relationship('Service', back_populates='oauth2_clients')
+
+	client_id = Column(String(40), unique=True, nullable=False)
+	_client_secret = Column('client_secret', Text(), nullable=False)
+	client_secret = PasswordHashAttribute('_client_secret', HighEntropyPasswordHash)
+	_redirect_uris = relationship('OAuth2RedirectURI', cascade='all, delete-orphan')
+	redirect_uris = association_proxy('_redirect_uris', 'uri')
+	logout_uris = relationship('OAuth2LogoutURI', cascade='all, delete-orphan')
 
 	@property
-	def login_message(self):
-		return self.kwargs.get('login_message_' + get_locale().language,
-		                       self.kwargs.pop('login_message', _('You need to login to access this service')))
+	def client_type(self):
+		return 'confidential'
 
-	@classmethod
-	def from_id(cls, client_id):
-		return OAuth2Client(client_id, **current_app.config['OAUTH2_CLIENTS'][client_id])
+	@property
+	def default_scopes(self):
+		return ['profile']
 
 	@property
 	def default_redirect_uri(self):
 		return self.redirect_uris[0]
 
 	def access_allowed(self, user):
-		return user.has_permission(self.required_group)
+		return self.service.has_access(user)
+
+class OAuth2RedirectURI(db.Model):
+	__tablename__ = 'oauth2redirect_uri'
+	id = Column(Integer, primary_key=True, autoincrement=True)
+	client_db_id = Column(Integer, ForeignKey('oauth2client.db_id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	uri = Column(String(255), nullable=False)
+
+	def __init__(self, uri):
+		self.uri = uri
+
+class OAuth2LogoutURI(db.Model):
+	__tablename__ = 'oauth2logout_uri'
+	id = Column(Integer, primary_key=True, autoincrement=True)
+	client_db_id = Column(Integer, ForeignKey('oauth2client.db_id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	method = Column(String(40), nullable=False, default='GET')
+	uri = Column(String(255), nullable=False)
 
 @cleanup_task.delete_by_attribute('expired')
 class OAuth2Grant(db.Model):
@@ -51,15 +65,8 @@ class OAuth2Grant(db.Model):
 	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	user = relationship('User')
 
-	client_id = Column(String(40), nullable=False)
-
-	@property
-	def client(self):
-		return OAuth2Client.from_id(self.client_id)
-
-	@client.setter
-	def client(self, newclient):
-		self.client_id = newclient.client_id
+	client_db_id = Column(Integer, ForeignKey('oauth2client.db_id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	client = relationship('OAuth2Client')
 
 	code = Column(String(255), index=True, nullable=False)
 	redirect_uri = Column(String(255), nullable=False)
@@ -80,15 +87,8 @@ class OAuth2Token(db.Model):
 	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	user = relationship('User')
 
-	client_id = Column(String(40), nullable=False)
-
-	@property
-	def client(self):
-		return OAuth2Client.from_id(self.client_id)
-
-	@client.setter
-	def client(self, newclient):
-		self.client_id = newclient.client_id
+	client_db_id = Column(Integer, ForeignKey('oauth2client.db_id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	client = relationship('OAuth2Client')
 
 	# currently only bearer is supported
 	token_type = Column(String(40), nullable=False)
@@ -109,12 +109,9 @@ class OAuth2DeviceLoginInitiation(DeviceLoginInitiation):
 	__mapper_args__ = {
 		'polymorphic_identity': DeviceLoginType.OAUTH2
 	}
-	oauth2_client_id = Column(String(40))
-
-	@property
-	def oauth2_client(self):
-		return OAuth2Client.from_id(self.oauth2_client_id)
+	client_db_id = Column('oauth2_client_db_id', Integer, ForeignKey('oauth2client.db_id', onupdate='CASCADE', ondelete='CASCADE'))
+	client = relationship('OAuth2Client')
 
 	@property
 	def description(self):
-		return self.oauth2_client.client_id
+		return self.client.service.name

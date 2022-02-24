@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-02-15 23:23+0100\n"
+"POT-Creation-Date: 2022-02-18 04:41+0100\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -97,6 +97,9 @@ msgstr "Mailversand fehlgeschlagen"
 
 #: uffd/invite/templates/invite/list.html:6
 #: uffd/mail/templates/mail/list.html:8 uffd/role/templates/role/list.html:8
+#: uffd/service/templates/service/index.html:8
+#: uffd/service/templates/service/show.html:41
+#: uffd/service/templates/service/show.html:69
 #: uffd/user/templates/group/list.html:8 uffd/user/templates/user/list.html:8
 msgid "New"
 msgstr "Neu"
@@ -110,6 +113,8 @@ msgid "Created by"
 msgstr "Erstellt durch"
 
 #: uffd/invite/templates/invite/list.html:14
+#: uffd/service/templates/service/api.html:34
+#: uffd/service/templates/service/show.html:76
 msgid "Permissions"
 msgstr "Berechtigungen"
 
@@ -269,6 +274,9 @@ msgstr "Enthaltene Rollen"
 #: uffd/rolemod/templates/rolemod/list.html:9
 #: uffd/rolemod/templates/rolemod/show.html:44
 #: uffd/selfservice/templates/selfservice/self.html:97
+#: uffd/service/templates/service/index.html:14
+#: uffd/service/templates/service/show.html:20
+#: uffd/service/templates/service/show.html:75
 #: uffd/user/templates/group/list.html:15
 #: uffd/user/templates/group/show.html:26
 #: uffd/user/templates/user/show.html:106
@@ -296,6 +304,9 @@ msgstr "Link erstellen"
 #: uffd/mail/templates/mail/show.html:28 uffd/mfa/templates/mfa/auth.html:33
 #: uffd/role/templates/role/show.html:14
 #: uffd/rolemod/templates/rolemod/show.html:9
+#: uffd/service/templates/service/api.html:9
+#: uffd/service/templates/service/oauth2.html:9
+#: uffd/service/templates/service/show.html:10
 #: uffd/session/templates/session/deviceauth.html:39
 #: uffd/session/templates/session/deviceauth.html:49
 #: uffd/session/templates/session/devicelogin.html:29
@@ -354,16 +365,16 @@ msgstr "Anmelden und die Rollen zu deinem Account hinzufügen"
 msgid "Forwardings"
 msgstr "Weiterleitungen"
 
-#: uffd/mail/views.py:46
+#: uffd/mail/views.py:47
 #, python-format
 msgid "Invalid receive address: %(mail_address)s"
 msgstr "Ungültige Empfangsadresse: %(mail_address)s"
 
-#: uffd/mail/views.py:50
+#: uffd/mail/views.py:51
 msgid "Mail mapping updated."
 msgstr "Mailweiterleitung geändert."
 
-#: uffd/mail/views.py:59
+#: uffd/mail/views.py:60
 msgid "Deleted mail mapping."
 msgstr "Mailweiterleitung gelöscht."
 
@@ -389,6 +400,9 @@ msgstr "Eine Adresse pro Zeile"
 
 #: uffd/mail/templates/mail/show.html:27 uffd/role/templates/role/show.html:13
 #: uffd/rolemod/templates/rolemod/show.html:8
+#: uffd/service/templates/service/api.html:15
+#: uffd/service/templates/service/oauth2.html:15
+#: uffd/service/templates/service/show.html:16
 #: uffd/user/templates/group/show.html:8 uffd/user/templates/user/show.html:7
 msgid "Save"
 msgstr "Speichern"
@@ -396,6 +410,9 @@ msgstr "Speichern"
 #: uffd/mail/templates/mail/show.html:30 uffd/mail/templates/mail/show.html:32
 #: uffd/mfa/templates/mfa/setup.html:117 uffd/mfa/templates/mfa/setup.html:179
 #: uffd/role/templates/role/show.html:21 uffd/role/templates/role/show.html:24
+#: uffd/service/templates/service/api.html:12
+#: uffd/service/templates/service/oauth2.html:12
+#: uffd/service/templates/service/show.html:13
 #: uffd/user/templates/group/show.html:11
 #: uffd/user/templates/group/show.html:13 uffd/user/templates/user/show.html:10
 #: uffd/user/templates/user/show.html:12
@@ -721,10 +738,6 @@ msgstr "Sekunden"
 msgid "Verify and complete setup"
 msgstr "Verifiziere und beende das Setup"
 
-#: uffd/oauth2/models.py:33
-msgid "You need to login to access this service"
-msgstr "Du musst dich anmelden, um auf diesen Dienst zugreifen zu können"
-
 #: uffd/oauth2/views.py:169 uffd/selfservice/views.py:71
 #: uffd/session/views.py:73
 #, python-format
@@ -742,6 +755,10 @@ msgstr "Geräte-Login ist gerade nicht verfügbar. Versuche es später nochmal!"
 #: uffd/oauth2/views.py:190
 msgid "Device login failed"
 msgstr "Gerätelogin fehlgeschlagen"
+
+#: uffd/oauth2/views.py:196
+msgid "You need to login to access this service"
+msgstr "Du musst dich anmelden, um auf diesen Dienst zugreifen zu können"
 
 #: uffd/oauth2/views.py:203
 #, python-format
@@ -830,6 +847,9 @@ msgstr "Als Default setzen"
 
 #: uffd/role/templates/role/show.html:19 uffd/role/templates/role/show.html:21
 #: uffd/selfservice/templates/selfservice/self.html:112
+#: uffd/service/templates/service/api.html:11
+#: uffd/service/templates/service/oauth2.html:11
+#: uffd/service/templates/service/show.html:12
 #: uffd/user/templates/group/show.html:11 uffd/user/templates/user/show.html:10
 #: uffd/user/templates/user/show.html:94
 msgid "Are you sure?"
@@ -1175,11 +1195,58 @@ msgstr "Passwort zurücksetzen"
 msgid "Set password"
 msgstr "Passwort setzen"
 
-#: uffd/services/views.py:83
+#: uffd/service/views.py:22
 msgid "Services"
 msgstr "Dienste"
 
-#: uffd/services/templates/services/overview.html:8
+#: uffd/service/templates/service/api.html:20
+msgid "Authentication Username"
+msgstr "Authentifikations-Name"
+
+#: uffd/service/templates/service/api.html:25
+msgid "Authentication Password"
+msgstr "Authentifikations-Passwort"
+
+#: uffd/service/templates/service/api.html:37
+msgid "Access user and group data"
+msgstr "Zugriff auf Account- und Gruppen-Daten"
+
+#: uffd/service/templates/service/api.html:41
+msgid "Verify user passwords"
+msgstr "Passwörter von Nutzeraccounts verifizieren"
+
+#: uffd/service/templates/service/api.html:45
+msgid "Access mail aliases"
+msgstr "Zugriff auf Mail-Weiterleitungen"
+
+#: uffd/service/templates/service/oauth2.html:20
+#: uffd/service/templates/service/show.html:47
+msgid "Client ID"
+msgstr "Client-ID"
+
+#: uffd/service/templates/service/oauth2.html:25
+msgid "Client Secret"
+msgstr "Client-Secret"
+
+#: uffd/service/templates/service/oauth2.html:34
+msgid "Redirect URIs"
+msgstr "Redirect-URIs"
+
+#: uffd/service/templates/service/oauth2.html:37
+msgid "One URI per line"
+msgstr "Eine URI pro Zeile"
+
+#: uffd/service/templates/service/oauth2.html:42
+msgid "Logout URIs"
+msgstr "Abmelde-URIs"
+
+#: uffd/service/templates/service/oauth2.html:49
+msgid "One URI per line, prefixed with space-separated method (GET/POST)"
+msgstr ""
+"Eine URI pro Zeile, vorangestellt die mit Leerzeichen getrennte HTTP-"
+"Methode (GET/POST)"
+
+#: uffd/service/templates/service/overview.html:8
 msgid ""
 "Some services may not be publicly listed! Log in to see all services you "
 "have access to."
@@ -1187,14 +1254,35 @@ msgstr ""
 "Einige Dienste sind eventuell nicht öffentlich aufgelistet! Melde dich an"
 " um alle Dienste zu sehen, auf die du Zugriff hast."
 
-#: uffd/services/templates/services/overview.html:44
+#: uffd/service/templates/service/overview.html:44
 msgid "No access"
 msgstr "Kein Zugriff"
 
-#: uffd/services/templates/services/overview.html:78
+#: uffd/service/templates/service/overview.html:64
+msgid "Manage OAuth2 and API clients"
+msgstr "OAuth2- und API-Clients verwalten"
+
+#: uffd/service/templates/service/overview.html:84
 #: uffd/user/templates/user/list.html:58 uffd/user/templates/user/list.html:79
 msgid "Close"
 msgstr "Schließen"
+
+#: uffd/service/templates/service/show.html:24
+msgid "Access Restriction"
+msgstr "Zugriffsbeschränkungen"
+
+#: uffd/service/templates/service/show.html:26
+msgid "No user has access"
+msgstr "Kein Account hat Zugriff"
+
+#: uffd/service/templates/service/show.html:27
+msgid "All users have access (legacy)"
+msgstr "Alle Account haben Zugriff (veraltet)"
+
+#: uffd/service/templates/service/show.html:29
+#, python-format
+msgid "Members of group \"%(group_name)s\" have access"
+msgstr "Mitglieder der Gruppe \"%(group_name)s\" haben Zugriff"
 
 #: uffd/session/views.py:71
 #, python-format
@@ -1445,7 +1533,7 @@ msgstr "Ändern"
 msgid "About uffd"
 msgstr "Über uffd"
 
-#: uffd/user/models.py:48
+#: uffd/user/models.py:31
 #, python-format
 msgid ""
 "At least %(minlen)d and at most %(maxlen)d characters. Only letters, "

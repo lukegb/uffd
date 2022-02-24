@@ -7,46 +7,18 @@ from flask import url_for, session
 from uffd import user
 
 from uffd.user.models import User
+from uffd.password_hash import PlaintextPasswordHash
 from uffd.session.models import DeviceLoginConfirmation
+from uffd.service.models import Service
 from uffd.oauth2.models import OAuth2Client, OAuth2DeviceLoginInitiation
 from uffd import create_app, db
 
 from utils import dump, UffdTestCase
 
-
-class TestOAuth2Client(UffdTestCase):
-	def setUpApp(self):
-		self.app.config['OAUTH2_CLIENTS'] = {
-			'test': {'client_secret': 'testsecret', 'redirect_uris': ['http://localhost:5009/callback', 'http://localhost:5009/callback2']},
-			'test1': {'client_secret': 'testsecret1', 'redirect_uris': ['http://localhost:5008/callback'], 'required_group': 'users'},
-		}
-
-	def test_from_id(self):
-		client = OAuth2Client.from_id('test')
-		self.assertEqual(client.client_id, 'test')
-		self.assertEqual(client.client_secret, 'testsecret')
-		self.assertEqual(client.redirect_uris, ['http://localhost:5009/callback', 'http://localhost:5009/callback2'])
-		self.assertEqual(client.default_redirect_uri, 'http://localhost:5009/callback')
-		self.assertEqual(client.default_scopes, ['profile'])
-		self.assertEqual(client.client_type, 'confidential')
-		client = OAuth2Client.from_id('test1')
-		self.assertEqual(client.client_id, 'test1')
-		self.assertEqual(client.required_group, 'users')
-
-	def test_access_allowed(self):
-		user = self.get_user() # has 'users' and 'uffd_access' group
-		admin = self.get_admin() # has 'users', 'uffd_access' and 'uffd_admin' group
-		client = OAuth2Client('test', '', [''], ['uffd_admin', ['users', 'notagroup']])
-		self.assertFalse(client.access_allowed(user))
-		self.assertTrue(client.access_allowed(admin))
-		# More required_group values are tested by TestUserModel.test_has_permission
-
 class TestViews(UffdTestCase):
-	def setUpApp(self):
-		self.app.config['OAUTH2_CLIENTS'] = {
-			'test': {'client_secret': 'testsecret', 'redirect_uris': ['http://localhost:5009/callback', 'http://localhost:5009/callback2']},
-			'test1': {'client_secret': 'testsecret1', 'redirect_uris': ['http://localhost:5008/callback'], 'required_group': 'uffd_admin'},
-		}
+	def setUpDB(self):
+		db.session.add(OAuth2Client(service=Service(name='test', limit_access=False), client_id='test', client_secret='testsecret', redirect_uris=['http://localhost:5009/callback', 'http://localhost:5009/callback2']))
+		db.session.add(OAuth2Client(service=Service(name='test1', access_group=self.get_admin_group()), client_id='test1', client_secret='testsecret1', redirect_uris=['http://localhost:5008/callback']))
 
 	def assert_authorization(self, r):
 		while True:
@@ -79,6 +51,18 @@ class TestViews(UffdTestCase):
 		self.login_as('user')
 		r = self.client.get(path=url_for('oauth2.authorize', response_type='code', client_id='test', state='teststate', redirect_uri='http://localhost:5009/callback', scope='profile'), follow_redirects=False)
 		self.assert_authorization(r)
+
+	def test_authorization_client_secret_rehash(self):
+		OAuth2Client.query.delete()
+		db.session.add(OAuth2Client(service=Service(name='rehash_test', limit_access=False), client_id='test', client_secret=PlaintextPasswordHash.from_password('testsecret'), redirect_uris=['http://localhost:5009/callback', 'http://localhost:5009/callback2']))
+		db.session.commit()
+		self.assertIsInstance(OAuth2Client.query.filter_by(client_id='test').one().client_secret, PlaintextPasswordHash)
+		self.login_as('user')
+		r = self.client.get(path=url_for('oauth2.authorize', response_type='code', client_id='test', state='teststate', redirect_uri='http://localhost:5009/callback', scope='profile'), follow_redirects=False)
+		self.assert_authorization(r)
+		oauth2_client = OAuth2Client.query.filter_by(client_id='test').one()
+		self.assertIsInstance(oauth2_client.client_secret, OAuth2Client.client_secret.method_cls)
+		self.assertTrue(oauth2_client.client_secret.verify('testsecret'))
 
 	def test_authorization_without_redirect_uri(self):
 		self.login_as('user')
@@ -133,12 +117,12 @@ class TestViews(UffdTestCase):
 		initiation = OAuth2DeviceLoginInitiation.query.filter_by(id=session['devicelogin_id'], secret=session['devicelogin_secret']).one()
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(initiation.expired)
-		self.assertEqual(initiation.oauth2_client_id, 'test')
+		self.assertEqual(initiation.client.client_id, 'test')
 		self.assertIsNotNone(initiation.description)
 
 	def test_authorization_devicelogin_auth(self):
 		with self.client.session_transaction() as _session:
-			initiation = OAuth2DeviceLoginInitiation(oauth2_client_id='test')
+			initiation = OAuth2DeviceLoginInitiation(client=OAuth2Client.query.filter_by(client_id='test').one())
 			db.session.add(initiation)
 			confirmation = DeviceLoginConfirmation(initiation=initiation, user=self.get_user())
 			db.session.add(confirmation)

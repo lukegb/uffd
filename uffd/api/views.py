@@ -1,30 +1,34 @@
 import functools
-import secrets
 
-from flask import Blueprint, jsonify, current_app, request, abort
+from flask import Blueprint, jsonify, request, abort
 
 from uffd.user.models import User, Group
 from uffd.mail.models import Mail, MailReceiveAddress, MailDestinationAddress
+from uffd.api.models import APIClient
 from uffd.session.views import login_get_user, login_ratelimit
 from uffd.database import db
 
 bp = Blueprint('api', __name__, template_folder='templates', url_prefix='/api/v1/')
 
-def apikey_required(scope=None):
+def apikey_required(permission=None):
 	# pylint: disable=too-many-return-statements
+	if permission is not None:
+		assert APIClient.permission_exists(permission)
 	def wrapper(func):
 		@functools.wraps(func)
 		def decorator(*args, **kwargs):
-			if request.authorization and request.authorization.password:
-				if request.authorization.username not in current_app.config['API_CLIENTS_2']:
-					return 'Unauthorized', 401, {'WWW-Authenticate': ['Basic realm="api"']}
-				client = current_app.config['API_CLIENTS_2'][request.authorization.username]
-				if not secrets.compare_digest(request.authorization.password, client['client_secret']):
-					return 'Unauthorized', 401, {'WWW-Authenticate': ['Basic realm="api"']}
-				if scope is not None and scope not in client.get('scopes', []):
-					return 'Forbidden', 403
-			else:
+			if not request.authorization or not request.authorization.password:
 				return 'Unauthorized', 401, {'WWW-Authenticate': ['Basic realm="api"']}
+			client = APIClient.query.filter_by(auth_username=request.authorization.username).first()
+			if not client:
+				return 'Unauthorized', 401, {'WWW-Authenticate': ['Basic realm="api"']}
+			if not client.auth_password.verify(request.authorization.password):
+				return 'Unauthorized', 401, {'WWW-Authenticate': ['Basic realm="api"']}
+			if client.auth_password.needs_rehash:
+				client.auth_password = request.authorization.password
+				db.session.commit()
+			if permission is not None and not client.has_permission(permission):
+				return 'Forbidden', 403
 			return func(*args, **kwargs)
 		return decorator
 	return wrapper
@@ -34,7 +38,7 @@ def generate_group_dict(group):
 	        'members': [user.loginname for user in group.members]}
 
 @bp.route('/getgroups', methods=['GET', 'POST'])
-@apikey_required('getusers')
+@apikey_required('users')
 def getgroups():
 	if len(request.values) > 1:
 		abort(400)
@@ -60,7 +64,7 @@ def generate_user_dict(user, all_groups=None):
 	        'groups': [group.name for group in all_groups if user in group.members]}
 
 @bp.route('/getusers', methods=['GET', 'POST'])
-@apikey_required('getusers')
+@apikey_required('users')
 def getusers():
 	if len(request.values) > 1:
 		abort(400)
@@ -108,7 +112,7 @@ def generate_mail_dict(mail):
 	        'destination_addresses': list(mail.destinations)}
 
 @bp.route('/getmails', methods=['GET', 'POST'])
-@apikey_required('getmails')
+@apikey_required('mail_aliases')
 def getmails():
 	if len(request.values) > 1:
 		abort(400)

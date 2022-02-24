@@ -8,7 +8,8 @@ from uffd import user
 
 from uffd.session.views import login_required
 from uffd.session.models import DeviceLoginConfirmation
-from uffd.oauth2.models import OAuth2DeviceLoginInitiation
+from uffd.service.models import Service
+from uffd.oauth2.models import OAuth2Client, OAuth2DeviceLoginInitiation
 from uffd.user.models import User
 from uffd.password_hash import PlaintextPasswordHash
 from uffd import create_app, db
@@ -161,10 +162,8 @@ class TestSession(UffdTestCase):
 		self.assertIsNone(request.user)
 
 	def test_deviceauth(self):
-		self.app.config['OAUTH2_CLIENTS'] = {
-			'test': {'client_secret': 'testsecret', 'redirect_uris': ['http://localhost:5009/callback', 'http://localhost:5009/callback2']},
-		}
-		initiation = OAuth2DeviceLoginInitiation(oauth2_client_id='test')
+		oauth2_client = OAuth2Client(service=Service(name='test', limit_access=False), client_id='test', client_secret='testsecret', redirect_uris=['http://localhost:5009/callback', 'http://localhost:5009/callback2'])
+		initiation = OAuth2DeviceLoginInitiation(client=oauth2_client)
 		db.session.add(initiation)
 		db.session.commit()
 		code = initiation.code

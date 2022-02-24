@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="row">
+	<form action="{{ url_for('service.oauth2_submit', service_id=service.id, db_id=client.db_id) }}" method="POST" class="form col-12 px-0">
+
+		<div class="form-group col">
+			<p class="text-right">
+				<a href="{{ url_for('service.show', id=service.id) }}" class="btn btn-secondary">{{ _('Cancel') }}</a>
+				{% if client.db_id %}
+				<a class="btn btn-danger" href="{{ url_for('service.oauth2_delete', service_id=service.id, db_id=client.db_id) }}" onClick='return confirm({{_("Are you sure?")|tojson}});'>
+					<i class="fa fa-trash" aria-hidden="true"></i> {{_('Delete')}}
+				</a>
+				{% endif %}
+				<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> {{ _('Save') }}</button>
+			</p>
+		</div>
+
+		<div class="form-group col">
+			<label for="client-client-id">{{ _('Client ID') }}</label>
+			<input type="text" class="form-control" id="client-client-id" name="client_id" value="{{ client.client_id or '' }}" required>
+		</div>
+
+		<div class="form-group col">
+			<label for="client-client-secret">{{ _('Client Secret') }}</label>
+			{% if client.db_id %}
+			<input type="password" class="form-control" id="client-client-secret" name="client_secret" placeholder="●●●●●●●●">
+			{% else %}
+			<input type="password" class="form-control" id="client-client-secret" name="client_secret" required>
+			{% endif %}
+		</div>
+
+		<div class="form-group col">
+			<label for="client-redirect-uris">{{ _('Redirect URIs') }}</label>
+			<textarea rows="3" class="form-control" id="client-redirect-uris" name="redirect_uris">{{ client.redirect_uris|join('\n') }}</textarea>
+			<small class="form-text text-muted">
+				{{ _('One URI per line') }}
+			</small>
+		</div>
+
+		<div class="form-group col">
+			<label for="client-logout-uris">{{ _('Logout URIs') }}</label>
+			<textarea rows="3" class="form-control" id="client-logout-uris" name="logout_uris" placeholder="GET https://example.com/logout">
+{%- for logout_uri in client.logout_uris %}
+{{ logout_uri.method }} {{ logout_uri.uri }}
+{%- endfor %}
+</textarea>
+			<small class="form-text text-muted">
+				{{ _('One URI per line, prefixed with space-separated method (GET/POST)') }}
+			</small>
+		</div>
+
+	</form>
+</div>
+{% endblock %}
