@@ -60,7 +60,7 @@
 {% endmacro %}
 
 {% if request.user and request.user.is_in_group(config['ACL_ADMIN_GROUP']) %}
-<div class="text-right">
+<div class="text-right mt-2">
 	<a href="{{ url_for('service.index') }}" class="btn btn-primary">{{ _('Manage OAuth2 and API clients') }}</a>
 </div>
 {% endif %}
