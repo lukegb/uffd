@@ -23,6 +23,8 @@ def encode_filter(filter_params):
 	return '(&%s)'%(''.join(['(%s=%s)'%(attr, escape_filter_chars(value)) for attr, value in filter_params]))
 
 def get_ldap_conn():
+	if 'LDAP_SERVICE_URL' in current_app.config and not current_app.config.get('UPGRADE_V1_TO_V2'):
+		raise Exception('Refusing to run v1 to v2 migrations: UPGRADE_V1_TO_V2 not set. Make sure to read upgrade instructions first!')
 	critical = True
 	if 'LDAP_SERVICE_URL' not in current_app.config:
 		critical = False

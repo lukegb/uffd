@@ -2,3 +2,5 @@ uwsgi.ini /etc/uffd/
 nginx.include.conf /etc/uffd/
 debian/contrib/uffd.cfg /etc/uffd/
 debian/contrib/uffd-admin /usr/bin/
+README.md /usr/share/doc/uffd/
+UPGRADE.md /usr/share/doc/uffd/

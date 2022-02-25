@@ -41,13 +41,12 @@ export FLASK_APP=uffd
 flask group create 'uffd_access' --description 'Access to Single-Sign-On and Selfservice'
 flask group create 'uffd_admin' --description 'Admin access to uffd'
 flask role create 'base' --default --add-group 'uffd_access'
-flask role create 'admin' --default --add-group 'uffd_admin'
+flask role create 'admin' --add-group 'uffd_admin'
 flask user create 'testuser' --password 'userpassword' --mail 'test@example.com' --displayname 'Test User'
 flask user create 'testadmin' --password 'adminpassword' --mail 'admin@example.com' --displayname 'Test Admin' --add-role 'admin'
 ```
 
-Afterwards you can login as a normal user with "testuser" and "userpassword", or as an admin with "testad
-min" and "adminpassword".
+Afterwards you can login as a normal user with "testuser" and "userpassword", or as an admin with "testadmin" and "adminpassword".
 
 ## Deployment
 
@@ -71,43 +70,6 @@ Afterwards run `apt update && apt install uffd` to install the package.
 The Debian package uses uwsgi to run uffd and ships an `uffd-admin` to execute flask commands in the correct context.
 If you upgrade, make sure to run `flask db upgrade` after every update! The Debian package takes care of this by itself using uwsgi pre start hooks.
 For an example uwsgi config, see our [uswgi.ini](uwsgi.ini). You might find our [nginx include file](nginx.include.conf) helpful to setup a web server in front of uwsgi.
-
-## Migration from version 1
-
-If a custom config file name was set with `CONFIG_FILENAME`, this must be replaced with `CONFIG_PATH`.
-The new variable must be set to a full path instead of a filename relative to the application's instance directory.
-
-Prior to version 2 uffd stored users, groups and mail aliases in an LDAP server.
-To migrate from version 1 to a later version, make sure to keep the v1 config file as it is with all LDAP settings.
-Running the database migrations with `flask db upgrade` automatically imports all users, groups and mail forwardings from LDAP to the database.
-Note that all LDAP attributes must be readable, including the password field.
-Make sure to have a working backup of the database before running the database upgrade!
-Downgrading is not supported.
-
-After running the migrations you can remove all `LDAP_*`-prefixed settings from the config file except the following ones that are renamed:
-
-* `LDAP_USER_GID` -> `USER_GID`
-* `LDAP_USER_MIN_UID` -> `USER_MIN_UID`
-* `LDAP_USER_MAX_UID` -> `USER_MAX_UID`
-* `LDAP_USER_SERVICE_MIN_UID` -> `USER_SERVICE_MIN_UID`
-* `LDAP_USER_SERVICE_MAX_UID` -> `USER_SERVICE_MAX_UID`
-* `LDAP_GROUP_MIN_GID` -> `GROUP_MIN_GID`
-* `LDAP_GROUP_MAX_GID` -> `GROUP_MAX_GID`
-
-Upgrading will not perform any write access to the LDAP server.
-
-If the config option `ACL_SELFSERVICE_GROUP` is set but not `ACL_ACCESS_GROUP`, make sure to set `ACL_ACCESS_GROUP` to the same value as `ACL_SELFSERVICE_GROUP`,
-
-OAuth2 and API client definitions moved from the config (`OAUTH2_CLIENTS` and `API_CLIENTS_2`) to the database.
-The database migration automatically imports clients from the config.
-After upgrading the config options should be removed.
-
-Note that the `login_message` option is no longer supported for OAuth2 clients.
-The `required_group` is only correctly imported if it is set to a single group name (or absent).
-
-Also note that uffd can group OAuth2 and API clients of a service together.
-Set the `service_name` key in `OAUTH2_CLIENTS` and `API_CLIENTS_2` items to the same value to group them together.
-Without this key the import creates individual service objects for each client.
 
 ## Python Coding Style Conventions
 
