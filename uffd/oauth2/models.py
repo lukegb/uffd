@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
@@ -40,6 +41,10 @@ class OAuth2Client(db.Model):
 
 	def access_allowed(self, user):
 		return self.service.has_access(user)
+
+	@property
+	def logout_uris_json(self):
+		return json.dumps([[item.method, item.uri] for item in self.logout_uris])
 
 class OAuth2RedirectURI(db.Model):
 	__tablename__ = 'oauth2redirect_uri'

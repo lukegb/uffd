@@ -19,12 +19,9 @@ down_revision = '09d2edcaf0cc'
 branch_labels = None
 depends_on = None
 
-def hash_ssha512(password):
-	salt = secrets.token_bytes(8)
-	ctx = hashlib.new('sha512')
-	ctx.update(password.encode())
-	ctx.update(salt)
-	return '{ssha512}' + base64.b64encode(ctx.digest() + salt).decode()
+def hash_sha512(password):
+	ctx = hashlib.new('sha512', password.encode())
+	return '{sha512}' + base64.b64encode(ctx.digest()).decode()
 
 def upgrade():
 	used_service_names = set()
@@ -129,7 +126,7 @@ def upgrade():
 		sa.UniqueConstraint('auth_username', name=op.f('uq_api_client_auth_username'))
 	)
 	for service_name, auth_username, auth_password, perm_users, perm_checkpassword, perm_mail_aliases in api_clients:
-		op.execute(api_client_table.insert().values(service_id=sa.select([service_table.c.id]).where(service_table.c.name==service_name).as_scalar(), auth_username=auth_username, auth_password=hash_ssha512(auth_password), perm_users=perm_users, perm_checkpassword=perm_checkpassword, perm_mail_aliases=perm_mail_aliases))
+		op.execute(api_client_table.insert().values(service_id=sa.select([service_table.c.id]).where(service_table.c.name==service_name).as_scalar(), auth_username=auth_username, auth_password=hash_sha512(auth_password), perm_users=perm_users, perm_checkpassword=perm_checkpassword, perm_mail_aliases=perm_mail_aliases))
 
 	oauth2client_table = op.create_table('oauth2client',
 		sa.Column('db_id', sa.Integer(), autoincrement=True, nullable=False),
@@ -156,7 +153,7 @@ def upgrade():
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_oauth2redirect_uri'))
 	)
 	for service_name, client_id, client_secret, redirect_uris, logout_uris in oauth2_clients:
-		op.execute(oauth2client_table.insert().values(service_id=sa.select([service_table.c.id]).where(service_table.c.name==service_name).as_scalar(), client_id=client_id, client_secret=hash_ssha512(client_secret)))
+		op.execute(oauth2client_table.insert().values(service_id=sa.select([service_table.c.id]).where(service_table.c.name==service_name).as_scalar(), client_id=client_id, client_secret=hash_sha512(client_secret)))
 		for method, uri, in logout_uris:
 			op.execute(oauth2logout_uri_table.insert().values(client_db_id=sa.select([oauth2client_table.c.db_id]).where(oauth2client_table.c.client_id==client_id).as_scalar(), method=method, uri=uri))
 		for uri in redirect_uris:

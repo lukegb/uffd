@@ -249,5 +249,5 @@ def logout():
 	if not request.values.get('client_ids'):
 		return secure_local_redirect(request.values.get('ref', '/'))
 	client_ids = request.values['client_ids'].split(',')
-	clients = [OAuth2Client.query.filter_by(name=client_id).one() for client_id in client_ids]
+	clients = [OAuth2Client.query.filter_by(client_id=client_id).one() for client_id in client_ids]
 	return render_template('oauth2/logout.html', clients=clients)

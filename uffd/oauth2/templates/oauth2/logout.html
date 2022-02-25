@@ -11,9 +11,9 @@
 	</noscript>
 	<p>{{_('While you successfully logged out of the Single-Sign-On service, you may still be logged in on these services:')}}</p>
 	<ul>
-	{% for client in clients if client.logout_urls %}
-		<li class="client" data-urls='{{ client.logout_urls|tojson }}'>
-			{{ client.client_id }}
+	{% for client in clients if client.logout_uris %}
+		<li class="client" data-urls='{{ client.logout_uris_json }}'>
+			{{ client.service.name }}
 			<span class="status-active spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
 			<i class="status-success fas fa-check d-none"></i>
 			<i class="status-failed fas fa-exclamation d-none"></i>
@@ -53,7 +53,6 @@ function logout_services() {
 			});
 		});
 		p = p.then(function () {
-			console.log('done', elem);
 			elem.find('.status-active').addClass('d-none');
 			elem.find('.status-success').removeClass('d-none');
 			elem.removeClass('client');
@@ -61,13 +60,11 @@ function logout_services() {
 		.catch(function (err) {
 			elem.find('.status-active').addClass('d-none');
 			elem.find('.status-failed').removeClass('d-none');
-			console.log(err);
 			throw err;
 		});
 		all_promises.push(p);
 	});
 	Promise.allSettled(all_promises).then(function (results) {
-		console.log(results);
 		for (result of results) {
 			if (result.status == 'rejected')
 				throw result.reason;
