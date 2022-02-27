@@ -42,7 +42,7 @@
 			<label for="client-logout-uris">{{ _('Logout URIs') }}</label>
 			<textarea rows="3" class="form-control" id="client-logout-uris" name="logout_uris" placeholder="GET https://example.com/logout">
 {%- for logout_uri in client.logout_uris %}
-{{ logout_uri.method }} {{ logout_uri.uri }}
+{{ logout_uri.method }} {{ logout_uri.uri }}{{ '\n' if not loop.last }}
 {%- endfor %}
 </textarea>
 			<small class="form-text text-muted">
