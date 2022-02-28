@@ -22,7 +22,7 @@ def dump(basename, resp):
 
 def db_flush():
 	db.session.rollback()
-	db.session = db.create_scoped_session()
+	db.session.expire_all()
 
 class UffdTestCase(unittest.TestCase):
 	def get_user(self):

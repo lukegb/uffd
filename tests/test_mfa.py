@@ -45,12 +45,14 @@ class TestMfaMethodModels(UffdTestCase):
 		method = RecoveryCodeMethod(user=self.get_user())
 		db.session.add(method)
 		db.session.commit()
-		db.session = db.create_scoped_session() # Ensure the next query does not return the cached method object
-		_method = RecoveryCodeMethod.query.get(method.id)
-		self.assertFalse(hasattr(_method, 'code'))
-		self.assertFalse(_method.verify(''))
-		self.assertFalse(_method.verify('A'*8))
-		self.assertTrue(_method.verify(method.code))
+		method_id = method.id
+		method_code = method.code
+		db.session.expunge(method)
+		method = RecoveryCodeMethod.query.get(method_id)
+		self.assertFalse(hasattr(method, 'code'))
+		self.assertFalse(method.verify(''))
+		self.assertFalse(method.verify('A'*8))
+		self.assertTrue(method.verify(method_code))
 
 	def test_totp_method_attributes(self):
 		method = TOTPMethod(user=self.get_user(), name='testname')
@@ -68,9 +70,10 @@ class TestMfaMethodModels(UffdTestCase):
 		self.assertEqual(_method.key_uri, key_uri)
 		db.session.add(method)
 		db.session.commit()
-		db.session = db.create_scoped_session() # Ensure the next query does not return the cached method object
+		_method_id = _method.id
+		db.session.expunge(_method)
 		# Restore method from db
-		_method = TOTPMethod.query.get(method.id)
+		_method = TOTPMethod.query.get(_method_id)
 		self.assertEqual(_method.name, 'testname')
 		self.assertEqual(_method.raw_key, raw_key)
 		self.assertEqual(_method.issuer, issuer)
@@ -91,10 +94,12 @@ class TestMfaMethodModels(UffdTestCase):
 		self.assertEqual(method.name, 'testname')
 		db.session.add(method)
 		db.session.commit()
-		db.session = db.create_scoped_session() # Ensure the next query does not return the cached method object
-		_method = WebauthnMethod.query.get(method.id)
+		method_id = method.id
+		method_cred = method.cred
+		db.session.expunge(method)
+		_method = WebauthnMethod.query.get(method_id)
 		self.assertEqual(_method.name, 'testname')
-		self.assertEqual(bytes(method.cred), bytes(_method.cred))
+		self.assertEqual(bytes(method_cred), bytes(_method.cred))
 		self.assertEqual(data.credential_id, _method.cred.credential_id)
 		self.assertEqual(data.public_key, _method.cred.public_key)
 		# We only test (de-)serialization here, as everything else is currently implemented in the views

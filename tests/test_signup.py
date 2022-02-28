@@ -19,7 +19,7 @@ def refetch_signup(signup):
 	db.session.add(signup)
 	db.session.commit()
 	id = signup.id
-	db_flush()
+	db.session.expunge(signup)
 	return Signup.query.get(id)
 
 # We assume in all tests that Signup.validate and Signup.password.verify do
