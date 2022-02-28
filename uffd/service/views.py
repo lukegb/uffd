@@ -1,3 +1,5 @@
+import functools
+
 from flask import Blueprint, render_template, request, url_for, redirect, current_app, abort
 from flask_babel import lazy_gettext
 
@@ -12,32 +14,40 @@ from uffd.database import db
 
 bp = Blueprint('service', __name__, template_folder='templates')
 
-def service_admin_acl():
+def admin_acl():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
 
-def service_overview_acl():
-	return len(get_services(request.user)) > 0 or service_admin_acl()
+def overview_login_maybe_required(func):
+	@functools.wraps(func)
+	def decorator(*args, **kwargs):
+		if not current_app.config['SERVICES']:
+			return login_required(admin_acl)(func)(*args, **kwargs)
+		if not current_app.config['SERVICES_PUBLIC']:
+			return login_required()(func)(*args, **kwargs)
+		return func(*args, **kwargs)
+	return decorator
+
+def overview_navbar_visible():
+	return get_services(request.user) != [] or admin_acl()
 
 @bp.route('/services/')
-@register_navbar(lazy_gettext('Services'), icon='sitemap', blueprint=bp, visible=service_overview_acl)
+@register_navbar(lazy_gettext('Services'), icon='sitemap', blueprint=bp, visible=overview_navbar_visible)
+@overview_login_maybe_required
 def overview():
 	services = get_services(request.user)
-	if not service_overview_acl():
-		abort(404)
-	banner = current_app.config.get('SERVICES_BANNER')
-	# Set the banner to None if it is not public and no user is logged in
-	if not (current_app.config['SERVICES_BANNER_PUBLIC'] or request.user):
-		banner = None
-	return render_template('service/overview.html', user=request.user, services=services, banner=banner)
+	banner = ''
+	if request.user or current_app.config['SERVICES_BANNER_PUBLIC']:
+		banner = current_app.config['SERVICES_BANNER']
+	return render_template('service/overview.html', services=services, banner=banner)
 
 @bp.route('/service/admin')
-@login_required(service_admin_acl)
+@login_required(admin_acl)
 def index():
 	return render_template('service/index.html', services=Service.query.all())
 
 @bp.route('/service/new')
 @bp.route('/service/<int:id>')
-@login_required(service_admin_acl)
+@login_required(admin_acl)
 def show(id=None):
 	service = Service() if id is None else Service.query.get_or_404(id)
 	all_groups = Group.query.all()
@@ -46,7 +56,7 @@ def show(id=None):
 @bp.route('/service/new', methods=['POST'])
 @bp.route('/service/<int:id>', methods=['POST'])
 @csrf_protect(blueprint=bp)
-@login_required(service_admin_acl)
+@login_required(admin_acl)
 def edit_submit(id=None):
 	if id is None:
 		service = Service()
@@ -68,7 +78,7 @@ def edit_submit(id=None):
 
 @bp.route('/service/<int:id>/delete')
 @csrf_protect(blueprint=bp)
-@login_required(service_admin_acl)
+@login_required(admin_acl)
 def delete(id):
 	service = Service.query.get_or_404(id)
 	db.session.delete(service)
@@ -77,7 +87,7 @@ def delete(id):
 
 @bp.route('/service/<int:service_id>/oauth2/new')
 @bp.route('/service/<int:service_id>/oauth2/<int:db_id>')
-@login_required(service_admin_acl)
+@login_required(admin_acl)
 def oauth2_show(service_id, db_id=None):
 	service = Service.query.get_or_404(service_id)
 	client = OAuth2Client() if db_id is None else OAuth2Client.query.filter_by(service_id=service_id, db_id=db_id).first_or_404()
@@ -86,7 +96,7 @@ def oauth2_show(service_id, db_id=None):
 @bp.route('/service/<int:service_id>/oauth2/new', methods=['POST'])
 @bp.route('/service/<int:service_id>/oauth2/<int:db_id>', methods=['POST'])
 @csrf_protect(blueprint=bp)
-@login_required(service_admin_acl)
+@login_required(admin_acl)
 def oauth2_submit(service_id, db_id=None):
 	service = Service.query.get_or_404(service_id)
 	if db_id is None:
@@ -112,7 +122,7 @@ def oauth2_submit(service_id, db_id=None):
 
 @bp.route('/service/<int:service_id>/oauth2/<int:db_id>/delete')
 @csrf_protect(blueprint=bp)
-@login_required(service_admin_acl)
+@login_required(admin_acl)
 def oauth2_delete(service_id, db_id=None):
 	service = Service.query.get_or_404(service_id)
 	client = OAuth2Client.query.filter_by(service_id=service_id, db_id=db_id).first_or_404()
@@ -122,7 +132,7 @@ def oauth2_delete(service_id, db_id=None):
 
 @bp.route('/service/<int:service_id>/api/new')
 @bp.route('/service/<int:service_id>/api/<int:id>')
-@login_required(service_admin_acl)
+@login_required(admin_acl)
 def api_show(service_id, id=None):
 	service = Service.query.get_or_404(service_id)
 	client = APIClient() if id is None else APIClient.query.filter_by(service_id=service_id, id=id).first_or_404()
@@ -131,7 +141,7 @@ def api_show(service_id, id=None):
 @bp.route('/service/<int:service_id>/api/new', methods=['POST'])
 @bp.route('/service/<int:service_id>/api/<int:id>', methods=['POST'])
 @csrf_protect(blueprint=bp)
-@login_required(service_admin_acl)
+@login_required(admin_acl)
 def api_submit(service_id, id=None):
 	service = Service.query.get_or_404(service_id)
 	if id is None:
@@ -152,7 +162,7 @@ def api_submit(service_id, id=None):
 
 @bp.route('/service/<int:service_id>/api/<int:id>/delete')
 @csrf_protect(blueprint=bp)
-@login_required(service_admin_acl)
+@login_required(admin_acl)
 def api_delete(service_id, id=None):
 	service = Service.query.get_or_404(service_id)
 	client = APIClient.query.filter_by(service_id=service_id, id=id).first_or_404()

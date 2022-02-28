@@ -44,6 +44,9 @@ class UffdTestCase(unittest.TestCase):
 		return Mail.query.filter_by(uid='test').one_or_none()
 
 	def login_as(self, user, ref=None):
+		# It is currently not possible to login while already logged in as another
+		# user, so make sure that we are not logged in first
+		self.client.get(path=url_for('session.logout'), follow_redirects=True)
 		loginname = None
 		password = None
 		if user == 'user':
