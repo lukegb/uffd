@@ -1077,7 +1077,7 @@ msgstr ""
 "die „Passwort vergessen“ genutzt."
 
 #: uffd/selfservice/templates/selfservice/self.html:16
-msgid "Changes may take serveral minutes to be visible in all services."
+msgid "Changes may take several minutes to be visible in all services."
 msgstr "Änderungen sind erst nach einigen Minuten in allen Diensten sichtbar."
 
 #: uffd/selfservice/templates/selfservice/self.html:25
