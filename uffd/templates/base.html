@@ -4,7 +4,7 @@
 		{% block head %}
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-		<title>{% block title %}uffd{% endblock %}</title>
+		<title>{% block title %}{{ config['SITE_TITLE'] }}{% endblock %}</title>
 
 		<link href="{{ url_for('static', filename="bootstrap/bootstrap.min.css") }}" rel="stylesheet">
 		<link href="{{ url_for('static', filename="fa/css/all.css") }}" rel="stylesheet">
@@ -35,7 +35,7 @@
 		{%- endmacro %}
 
 		<nav class="navbar navbar-expand-md navbar-dark bg-dark static-top" >
-			<a class="navbar-brand" href="{{ url_for('index') }}">uffd</a>
+			<a class="navbar-brand" href="{{ url_for('index') }}">{{ config['SITE_TITLE'] }}</a>
 			{% if getnavbar() or request.user or config['LANGUAGES']|length > 1 %}
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#baseNavbar" aria-controls="baseNavbar" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
