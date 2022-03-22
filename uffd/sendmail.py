@@ -24,7 +24,8 @@ def sendmail(addr, subject, template_name, **kwargs):
 		server = smtplib.SMTP(host=current_app.config['MAIL_SERVER'], port=current_app.config['MAIL_PORT'])
 		if current_app.config['MAIL_USE_STARTTLS']:
 			server.starttls()
-		server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
+		if current_app.config['MAIL_USERNAME']:
+			server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
 		server.send_message(msg)
 		server.quit()
 		if current_app.debug:
