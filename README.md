@@ -93,7 +93,7 @@ The services need to be setup to use the following URLs with the Authorization C
 * `/oauth2/token`: token request endpoint
 * `/oauth2/userinfo`: endpoint that provides information about the current user
 
-The userinfo endpoint returns json data with the following structure:
+The only OAuth2 scope supported is `profile`. The userinfo endpoint returns json data with the following structure:
 
 ```
 {
