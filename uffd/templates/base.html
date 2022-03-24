@@ -36,7 +36,7 @@
 
 		<nav class="navbar navbar-expand-md navbar-dark bg-dark static-top" >
 			<a class="navbar-brand" href="{{ url_for('index') }}">{{ config['SITE_TITLE'] }}</a>
-			{% if getnavbar() or request.user or config['LANGUAGES']|length > 1 %}
+			{% if getnavbar() or request.user or request.endpoint != 'session.login' or config['LANGUAGES']|length > 1 %}
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#baseNavbar" aria-controls="baseNavbar" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
 			</button>
@@ -69,7 +69,7 @@
 				</ul>
 				{% endif %}
 
-				{% if request.user or config['LANGUAGES']|length > 1 %}
+				{% if request.user or request.endpoint != 'session.login' or config['LANGUAGES']|length > 1 %}
 				<ul class="navbar-nav ml-auto">
 					{% if config['LANGUAGES']|length > 1 %}
 					<li class="nav-item">
@@ -97,6 +97,13 @@
 						<a class="nav-link" href="{{ url_for("session.logout") }}">
 							<span aria-hidden="true" class="fa fa-sign-out-alt"></span>
 							{{_("Logout")}}
+						</a>
+					</li>
+					{% elif request.endpoint != 'session.login' %}
+					<li class="nav-item">
+						<a class="nav-link" href="{{ url_for("session.login", ref=request.full_path) }}">
+							<span aria-hidden="true" class="fa fa-sign-in-alt"></span>
+							{{ _("Login") }}
 						</a>
 					</li>
 					{% endif %}

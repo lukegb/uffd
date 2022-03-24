@@ -1420,7 +1420,7 @@ msgid "Forgot Password?"
 msgstr "Passwort vergessen?"
 
 #: uffd/signup/views.py:23
-msgid "Singup not enabled"
+msgid "Signup not enabled"
 msgstr "Account-Registrierung ist deaktiviert"
 
 #: uffd/signup/views.py:81 uffd/signup/views.py:89

@@ -68,7 +68,11 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 	register_template_helper(app)
 
 	# Sort the navbar positions by their blueprint names (from the left)
-	positions = ["selfservice", "service", "rolemod", "invite", "user", "group", "role", "mail"]
+	if app.config['DEFAULT_PAGE_SERVICES']:
+		positions = ["service", "selfservice"]
+	else:
+		positions = ["selfservice", "service"]
+	positions += ["rolemod", "invite", "user", "group", "role", "mail"]
 	setup_navbar(app, positions)
 
 	# We never want to fail here, but at a file access that doesn't work.
@@ -100,6 +104,8 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 
 	@app.route("/")
 	def index(): #pylint: disable=unused-variable
+		if app.config['DEFAULT_PAGE_SERVICES']:
+			return redirect(url_for('service.overview'))
 		return redirect(url_for('selfservice.index'))
 
 	@app.route('/lang', methods=['POST'])

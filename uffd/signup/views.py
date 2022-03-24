@@ -20,7 +20,7 @@ def signup_enabled(func):
 	@functools.wraps(func)
 	def decorator(*args, **kwargs):
 		if not current_app.config['SELF_SIGNUP']:
-			flash(_('Singup not enabled'))
+			flash(_('Signup not enabled'))
 			return redirect(url_for('index'))
 		return func(*args, **kwargs)
 	return decorator
@@ -104,4 +104,4 @@ def signup_confirm_submit(signup_id, token):
 	db.session.commit()
 	set_session(user, skip_mfa=True)
 	flash(_('Your account was successfully created'))
-	return redirect(url_for('selfservice.index'))
+	return redirect(url_for('index'))

@@ -5,7 +5,18 @@
 {% set iconstyle = 'style="width: 1.8em;"'|safe %}
 
 {% if not request.user %}
-<div class="alert alert-warning" role="alert">{{_("Some services may not be publicly listed! Log in to see all services you have access to.")}}</div>
+<div class="alert alert-warning" role="alert">
+    <div class="row">
+        <div class="col-12 col-md-9 col-lg-10 col-xl-10">
+            {{ _("Some services may not be publicly listed! Log in to see all services you have access to.") }}
+        </div>
+        <div class="col-12 col-md-3 col-lg-2 col-xl-2 text-center text-md-right text-lg-right text-xl-right">
+            <a class="btn btn-primary" href="{{ url_for("session.login", ref=request.full_path) }}">
+                <i class="fa fa-sign-in-alt" aria-hidden="true"></i> {{ _("Login") }}
+            </a>
+        </div>
+    </div>
+</div>
 {% endif %}
 
 {% if banner %}
