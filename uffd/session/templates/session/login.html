@@ -5,6 +5,9 @@
 	<div class="col-12">
 		<h2 class="text-center">{{_("Login")}}</h2>
 	</div>
+	{% if config['LOGIN_BANNER'] %}
+		<p>{{ config['LOGIN_BANNER'] }}</p>
+	{% endif %}
 	<div class="form-group col-12">
 		<label for="user-loginname">{{_("Login Name")}}</label>
 		<input type="text" class="form-control" id="user-loginname" name="loginname" required="required" tabindex = "1" autofocus>
