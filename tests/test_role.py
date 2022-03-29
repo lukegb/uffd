@@ -398,6 +398,18 @@ class TestRoleCLI(UffdTestCase):
 			self.assertEqual(role.is_default, True)
 			self.assertEqual(set(self.get_user().groups), {self.get_access_group()})
 
+	# Regression test for https://git.cccv.de/uffd/uffd/-/issues/156
+	def test_update_without_description(self):
+		with self.app.test_request_context():
+			role = Role.query.filter_by(name='test').first()
+			role.description = 'Test description'
+			db.session.commit()
+		result = self.app.test_cli_runner().invoke(args=['role', 'update', 'test', '--clear-groups'])
+		self.assertEqual(result.exit_code, 0)
+		with self.app.test_request_context():
+			role = Role.query.filter_by(name='test').first()
+			self.assertEqual(role.description, 'Test description')
+
 	def test_delete(self):
 		with self.app.test_request_context():
 			self.assertIsNotNone(Role.query.filter_by(name='test').first())

@@ -101,7 +101,7 @@ def create(name, description, default, moderator_group, add_group, add_role):
 
 @role_cli.command(help='Update role attributes')
 @click.argument('name')
-@click.option('--description', default='', help='Set description text.')
+@click.option('--description', help='Set description text.')
 @click.option('--default/--no-default', default=None, help='Mark role as default or not. Non-service users are auto-added to default roles.')
 @click.option('--moderator-group', metavar='GROUP_NAME', help='Set moderator group.')
 @click.option('--no-moderator-group', is_flag=True, flag_value=True, default=False, help='Clear moderator group setting.')

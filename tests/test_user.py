@@ -715,6 +715,13 @@ class TestGroupCLI(UffdTestCase):
 			group = Group.query.filter_by(name='users').first()
 			self.assertEqual(group.description, 'New description')
 
+	def test_update_without_description(self):
+		result = self.app.test_cli_runner().invoke(args=['group', 'update', 'users']) # Should not change anything
+		self.assertEqual(result.exit_code, 0)
+		with self.app.test_request_context():
+			group = Group.query.filter_by(name='users').first()
+			self.assertEqual(group.description, 'Base group for all users')
+
 	def test_delete(self):
 		with self.app.test_request_context():
 			self.assertIsNotNone(Group.query.filter_by(name='users').first())

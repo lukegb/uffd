@@ -48,7 +48,7 @@ def create(name, description):
 
 @group_cli.command(help='Update group attributes')
 @click.argument('name')
-@click.option('--description', default='', help='Set description text.')
+@click.option('--description', help='Set description text.')
 def update(name, description):
 	with current_app.test_request_context():
 		group = Group.query.filter_by(name=name).one_or_none()
