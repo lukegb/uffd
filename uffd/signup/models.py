@@ -1,5 +1,6 @@
 import datetime
 
+from flask_babel import gettext as _
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -73,18 +74,18 @@ class Signup(db.Model):
 		          is False and `errmsg` contains a string describing why. Otherwise
 		          `valid` is True.'''
 		if self.completed or self.expired:
-			return False, 'Invalid signup request'
+			return False, _('Invalid signup request')
 		if not User().set_loginname(self.loginname):
-			return False, 'Login name is invalid'
+			return False, _('Login name is invalid')
 		if not User().set_displayname(self.displayname):
-			return False, 'Display name is invalid'
+			return False, _('Display name is invalid')
 		if not User().set_mail(self.mail):
-			return False, 'Mail address is invalid'
+			return False, _('Mail address is invalid')
 		if not self.password:
-			return False, 'Invalid password'
+			return False, _('Invalid password')
 		if User.query.filter_by(loginname=self.loginname).all():
-			return False, 'A user with this login name already exists'
-		return True, 'Valid'
+			return False, _('A user with this login name already exists')
+		return True, _('Valid')
 
 	def finish(self, password):
 		'''Complete the signup procedure and return the new user
@@ -98,11 +99,11 @@ class Signup(db.Model):
 		          `errmsg` contains a string describing why. Otherwise `user` is a
 		          User object.'''
 		if self.completed or self.expired:
-			return None, 'Invalid signup request'
+			return None, _('Invalid signup request')
 		if not self.password.verify(password):
-			return None, 'Wrong password'
+			return None, _('Wrong password')
 		if User.query.filter_by(loginname=self.loginname).all():
-			return None, 'A user with this login name already exists'
+			return None, _('A user with this login name already exists')
 		user = User(loginname=self.loginname, displayname=self.displayname, mail=self.mail, password=self.password)
 		db.session.add(user)
 		user.update_groups() # pylint: disable=no-member
@@ -111,4 +112,4 @@ class Signup(db.Model):
 		self.displayname = None
 		self.mail = None
 		self.password = None
-		return user, 'Success'
+		return user, _('Success')

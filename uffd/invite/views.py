@@ -192,6 +192,6 @@ def signup_submit(invite_id, token):
 	db.session.commit()
 	sent = sendmail(signup.mail, 'Confirm your mail address', 'signup/mail.txt', signup=signup)
 	if not sent:
-		return render_template('signup/start.html', error=_('Cound not send mail'))
+		return render_template('signup/start.html', error=_('Could not send mail'))
 	signup_ratelimit.log(request.form['mail'])
 	return render_template('signup/submitted.html', signup=signup)

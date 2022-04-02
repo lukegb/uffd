@@ -1,5 +1,6 @@
 import datetime
 
+from flask_babel import gettext as _
 from flask import current_app
 from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
@@ -77,16 +78,16 @@ class InviteGrant(db.Model):
 
 	def apply(self):
 		if not self.invite.active:
-			return False, 'Invite link is invalid'
+			return False, _('Invite link is invalid')
 		if not self.invite.roles:
-			return False, 'Invite link does not grant any roles'
+			return False, _('Invite link does not grant any roles')
 		if set(self.invite.roles).issubset(self.user.roles):
-			return False, 'Invite link does not grant any new roles'
+			return False, _('Invite link does not grant any new roles')
 		for role in self.invite.roles:
 			self.user.roles.append(role)
 		self.user.update_groups()
 		self.invite.used = True
-		return True, 'Success'
+		return True, _('Success')
 
 class InviteSignup(Signup):
 	__tablename__ = 'invite_signup'
@@ -100,12 +101,12 @@ class InviteSignup(Signup):
 
 	def validate(self):
 		if not self.invite.active or not self.invite.allow_signup:
-			return False, 'Invite link is invalid'
+			return False, _('Invite link is invalid')
 		return super().validate()
 
 	def finish(self, password):
 		if not self.invite.active or not self.invite.allow_signup:
-			return None, 'Invite link is invalid'
+			return None, _('Invite link is invalid')
 		user, msg = super().finish(password)
 		if user is not None:
 			for role in self.invite.roles:

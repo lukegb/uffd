@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-02-18 04:41+0100\n"
+"POT-Creation-Date: 2022-03-20 13:07+0100\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -43,6 +43,22 @@ msgstr "eine Stunde"
 #, python-format
 msgid "%(hours)d hours"
 msgstr "%(hours)d Stunden"
+
+#: uffd/invite/models.py:81 uffd/invite/models.py:104 uffd/invite/models.py:109
+msgid "Invite link is invalid"
+msgstr "Einladungslink ist ungültig"
+
+#: uffd/invite/models.py:83
+msgid "Invite link does not grant any roles"
+msgstr "Einladungslink weist keine Rollen zu"
+
+#: uffd/invite/models.py:85
+msgid "Invite link does not grant any new roles"
+msgstr "Einladungslink weist keine neuen Rollen zu"
+
+#: uffd/invite/models.py:90 uffd/signup/models.py:115
+msgid "Success"
+msgstr "Erfolgreich"
 
 #: uffd/invite/views.py:46
 msgid "Invites"
@@ -92,7 +108,7 @@ msgid "Too many requests! Please wait %(delay)s."
 msgstr "Zu viele Anfragen! Bitte warte %(delay)s."
 
 #: uffd/invite/views.py:195 uffd/signup/views.py:72
-msgid "Cound not send mail"
+msgid "Could not send mail"
 msgstr "Mailversand fehlgeschlagen"
 
 #: uffd/invite/templates/invite/list.html:6
@@ -801,11 +817,11 @@ msgstr "Abmeldung bei allen Diensten ..."
 msgid "Skip this and continue"
 msgstr "Automatisches Abmelden überspringen"
 
-#: uffd/oauth2/templates/oauth2/logout.html:75
+#: uffd/oauth2/templates/oauth2/logout.html:72
 msgid "Done, redirecting ..."
 msgstr "Abgeschlossen, leite weiter ..."
 
-#: uffd/oauth2/templates/oauth2/logout.html:79
+#: uffd/oauth2/templates/oauth2/logout.html:76
 msgid "Log out failed on some services. Retry?"
 msgstr ""
 "Automatisches Abmelden bei einigen Diensten fehlgeschlagen. Nochmal "
@@ -969,7 +985,7 @@ msgstr "Wir haben dir eine E-Mail gesendet, bitte prüfe deine E-Mail-Adresse."
 msgid "Password changed"
 msgstr "Passwort geändert"
 
-#: uffd/selfservice/views.py:54
+#: uffd/selfservice/views.py:54 uffd/signup/models.py:85
 msgid "Invalid password"
 msgstr "Passwort ungültig"
 
@@ -1195,7 +1211,7 @@ msgstr "Passwort zurücksetzen"
 msgid "Set password"
 msgstr "Passwort setzen"
 
-#: uffd/service/views.py:22
+#: uffd/service/views.py:34
 msgid "Services"
 msgstr "Dienste"
 
@@ -1419,6 +1435,34 @@ msgstr "Registrieren"
 msgid "Forgot Password?"
 msgstr "Passwort vergessen?"
 
+#: uffd/signup/models.py:77 uffd/signup/models.py:102
+msgid "Invalid signup request"
+msgstr "Ungültiger Account-Registrierungs-Link"
+
+#: uffd/signup/models.py:79
+msgid "Login name is invalid"
+msgstr "Anmeldename ist ungültig"
+
+#: uffd/signup/models.py:81
+msgid "Display name is invalid"
+msgstr "Anzeigename ist ungültig"
+
+#: uffd/signup/models.py:83
+msgid "Mail address is invalid"
+msgstr "E-Mail-Adresse nicht valide"
+
+#: uffd/signup/models.py:87 uffd/signup/models.py:106
+msgid "A user with this login name already exists"
+msgstr "Ein Account mit diesem Anmeldenamen existiert bereits"
+
+#: uffd/signup/models.py:88
+msgid "Valid"
+msgstr "Gültig"
+
+#: uffd/signup/models.py:104 uffd/signup/views.py:100
+msgid "Wrong password"
+msgstr "Falsches Passwort"
+
 #: uffd/signup/views.py:23
 msgid "Signup not enabled"
 msgstr "Account-Registrierung ist deaktiviert"
@@ -1431,10 +1475,6 @@ msgstr "Ungültiger Account-Registrierungs-Link"
 #, python-format
 msgid "Too many failed attempts! Please wait %(delay)s."
 msgstr "Zu viele fehlgeschlagene Versuche! Bitte warte mindestens %(delay)s."
-
-#: uffd/signup/views.py:100
-msgid "Wrong password"
-msgstr "Falsches Passwort"
 
 #: uffd/signup/views.py:106
 msgid "Your account was successfully created"
