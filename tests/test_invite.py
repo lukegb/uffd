@@ -367,7 +367,7 @@ class TestInviteAdminViews(UffdTestCase):
 		r = self.client.get(path=url_for('invite.new'), follow_redirects=True)
 		dump('invite_new', r)
 		self.assertEqual(r.status_code, 200)
-		valid_until = (datetime.datetime.now() + datetime.timedelta(seconds=60)).isoformat()
+		valid_until = (datetime.datetime.now() + datetime.timedelta(seconds=60)).isoformat(timespec='minutes')
 		self.assertListEqual(Invite.query.all(), [])
 		r = self.client.post(path=url_for('invite.new_submit'),
 			data={'single-use': '1', 'valid-until': valid_until,
@@ -387,7 +387,7 @@ class TestInviteAdminViews(UffdTestCase):
 		db.session.add(role)
 		db.session.commit()
 		role_id = role.id
-		valid_until = (datetime.datetime.now() + datetime.timedelta(seconds=60)).isoformat()
+		valid_until = (datetime.datetime.now() + datetime.timedelta(seconds=60)).isoformat(timespec='minutes')
 		r = self.client.post(path=url_for('invite.new_submit'),
 			data={'single-use': '1', 'valid-until': valid_until,
 			      'allow-signup': '1', 'role-%d'%role_id: '1'}, follow_redirects=True)
@@ -397,7 +397,7 @@ class TestInviteAdminViews(UffdTestCase):
 	def test_new_empty(self):
 		current_app.config['ACL_SIGNUP_GROUP'] = 'uffd_access'
 		self.login_as('user')
-		valid_until = (datetime.datetime.now() + datetime.timedelta(seconds=60)).isoformat()
+		valid_until = (datetime.datetime.now() + datetime.timedelta(seconds=60)).isoformat(timespec='minutes')
 		r = self.client.post(path=url_for('invite.new_submit'),
 			data={'single-use': '1', 'valid-until': valid_until,
 			      'allow-signup': '0'}, follow_redirects=True)

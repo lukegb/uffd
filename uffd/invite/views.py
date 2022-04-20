@@ -73,13 +73,13 @@ def new_submit():
 			invite.roles.append(Role.query.get(key[5:]))
 	if invite.valid_until > datetime.datetime.now() + datetime.timedelta(days=current_app.config['INVITE_MAX_VALID_DAYS']):
 		flash(_('The "Expires After" date is too far in the future'))
-		return redirect(url_for('invite.new'))
+		return new()
 	if not invite.permitted:
 		flash(_('You are not allowed to create invite links with these permissions'))
-		return redirect(url_for('invite.new'))
+		return new()
 	if not invite.allow_signup and not invite.roles:
 		flash(_('Invite link must either allow signup or grant at least one role'))
-		return redirect(url_for('invite.new'))
+		return new()
 	db.session.add(invite)
 	db.session.commit()
 	return redirect(url_for('invite.index'))

@@ -5,21 +5,21 @@
 	<div class="form-group">
 		<label for="single-use">{{_('Link Type')}}</label>
 		<select class="form-control" id="single-use" name="single-use">
-			<option value="1">{{_('Valid for a single successful use')}}</option>
-			<option value="0">{{_('Multi-use')}}</option>
+			<option value="1" {{ 'selected' if request.values.get('single-use', '1') == '1' }}>{{_('Valid for a single successful use')}}</option>
+			<option value="0" {{ 'selected' if request.values.get('single-use', '1') == '0' }}>{{_('Multi-use')}}</option>
 		</select>
 	</div>
 	<div class="form-group">
 		<label for="valid-until">{{_('Valid Until')}}</label>
-		<input class="form-control" type="datetime-local" id="valid-until" name="valid-until" value="{{ (datetime.now() + timedelta(hours=36)).replace(hour=23, minute=59, second=59, microsecond=0).isoformat(timespec='minutes') }}">
+		<input class="form-control" type="datetime-local" id="valid-until" name="valid-until" value="{{ request.values.get('valid-until') or (datetime.now() + timedelta(hours=36)).replace(hour=23, minute=59).isoformat(timespec='minutes') }}" min="{{ datetime.now().isoformat(timespec='minutes') }}" max="{{ (datetime.now() + timedelta(days=config['INVITE_MAX_VALID_DAYS'])).isoformat(timespec='minutes') }}">
 		<small class="text-muted">{{_('Must be within the next %(max_valid_days)d days', max_valid_days=config['INVITE_MAX_VALID_DAYS'])}}</small>
 	</div>
 	{% if allow_signup %}
 	<div class="form-group">
 		<label for="allow-signup">{{_('Account Registration')}}</label>
 		<select class="form-control" id="allow-signup" name="allow-signup">
-			<option value="1">{{_('Link allows account registration')}}</option>
-			<option value="0">{{_('No account registration allowed')}}</option>
+			<option value="1" {{ 'selected' if request.values.get('allow-signup', '1') == '1' }}>{{_('Link allows account registration')}}</option>
+			<option value="0" {{ 'selected' if request.values.get('allow-signup', '1') == '0' }}>{{_('No account registration allowed')}}</option>
 		</select>
 	</div>
 	{% else %}
