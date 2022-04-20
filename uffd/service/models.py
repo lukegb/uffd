@@ -23,6 +23,8 @@ class Service(db.Model):
 	oauth2_clients = relationship('OAuth2Client', back_populates='service', cascade='all, delete-orphan')
 	api_clients = relationship('APIClient', back_populates='service', cascade='all, delete-orphan')
 
+	use_remailer = Column(Boolean(), default=False, nullable=False)
+
 	def has_access(self, user):
 		return not self.limit_access or self.access_group in user.groups
 

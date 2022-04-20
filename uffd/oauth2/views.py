@@ -234,7 +234,7 @@ def userinfo():
 		id=user.unix_uid,
 		name=user.displayname,
 		nickname=user.loginname,
-		email=user.mail,
+		email=user.get_service_mail(request.oauth.client.service),
 		groups=[group.name for group in user.groups]
 	)
 

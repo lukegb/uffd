@@ -17,6 +17,7 @@ Please note that we refer to Debian packages here and **not** pip packages.
 - python3-oauthlib
 - python3-flask-babel
 - python3-argon2
+- python3-itsdangerous (also a dependency of python3-flask)
 - python3-mysqldb or python3-pymysql for MySQL/MariaDB support
 
 Some of the dependencies (especially fido2) changed their API in recent versions, so make sure to install the versions from Debian Buster or Bullseye.

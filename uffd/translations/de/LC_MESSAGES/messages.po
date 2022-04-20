@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-03-20 13:07+0100\n"
+"POT-Creation-Date: 2022-04-21 14:17+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -114,8 +114,8 @@ msgstr "Mailversand fehlgeschlagen"
 #: uffd/invite/templates/invite/list.html:6
 #: uffd/mail/templates/mail/list.html:8 uffd/role/templates/role/list.html:8
 #: uffd/service/templates/service/index.html:8
-#: uffd/service/templates/service/show.html:41
-#: uffd/service/templates/service/show.html:69
+#: uffd/service/templates/service/show.html:50
+#: uffd/service/templates/service/show.html:78
 #: uffd/user/templates/group/list.html:8 uffd/user/templates/user/list.html:8
 msgid "New"
 msgstr "Neu"
@@ -130,7 +130,7 @@ msgstr "Erstellt durch"
 
 #: uffd/invite/templates/invite/list.html:14
 #: uffd/service/templates/service/api.html:34
-#: uffd/service/templates/service/show.html:76
+#: uffd/service/templates/service/show.html:85
 msgid "Permissions"
 msgstr "Berechtigungen"
 
@@ -292,7 +292,7 @@ msgstr "Enthaltene Rollen"
 #: uffd/selfservice/templates/selfservice/self.html:97
 #: uffd/service/templates/service/index.html:14
 #: uffd/service/templates/service/show.html:20
-#: uffd/service/templates/service/show.html:75
+#: uffd/service/templates/service/show.html:84
 #: uffd/user/templates/group/list.html:15
 #: uffd/user/templates/group/show.html:26
 #: uffd/user/templates/user/show.html:106
@@ -1054,7 +1054,7 @@ msgstr "Passwort vergessen"
 
 #: uffd/selfservice/templates/selfservice/forgot_password.html:9
 #: uffd/selfservice/templates/selfservice/self.html:21
-#: uffd/session/templates/session/login.html:9
+#: uffd/session/templates/session/login.html:12
 #: uffd/signup/templates/signup/start.html:14
 #: uffd/user/templates/user/list.html:18 uffd/user/templates/user/show.html:47
 msgid "Login Name"
@@ -1118,7 +1118,7 @@ msgid "Update Profile"
 msgstr "Änderungen speichern"
 
 #: uffd/selfservice/templates/selfservice/self.html:44
-#: uffd/session/templates/session/login.html:13
+#: uffd/session/templates/session/login.html:16
 #: uffd/signup/templates/signup/start.html:41
 #: uffd/user/templates/user/show.html:76
 msgid "Password"
@@ -1235,8 +1235,17 @@ msgstr "Passwörter von Nutzeraccounts verifizieren"
 msgid "Access mail aliases"
 msgstr "Zugriff auf Mail-Weiterleitungen"
 
+#: uffd/service/templates/service/api.html:49
+msgid "Resolve remailer addresses"
+msgstr "Auflösen von Remailer-Adressen"
+
+#: uffd/service/templates/service/api.html:51
+#: uffd/service/templates/service/show.html:38
+msgid "This option has no effect: Remailer config options are unset"
+msgstr "Diese Option hat keine Auswirkung: Remailer ist nicht konfiguriert"
+
 #: uffd/service/templates/service/oauth2.html:20
-#: uffd/service/templates/service/show.html:47
+#: uffd/service/templates/service/show.html:56
 msgid "Client ID"
 msgstr "Client-ID"
 
@@ -1262,7 +1271,7 @@ msgstr ""
 "Eine URI pro Zeile, vorangestellt die mit Leerzeichen getrennte HTTP-"
 "Methode (GET/POST)"
 
-#: uffd/service/templates/service/overview.html:8
+#: uffd/service/templates/service/overview.html:11
 msgid ""
 "Some services may not be publicly listed! Log in to see all services you "
 "have access to."
@@ -1270,15 +1279,21 @@ msgstr ""
 "Einige Dienste sind eventuell nicht öffentlich aufgelistet! Melde dich an"
 " um alle Dienste zu sehen, auf die du Zugriff hast."
 
-#: uffd/service/templates/service/overview.html:44
+#: uffd/service/templates/service/overview.html:15
+#: uffd/session/templates/session/login.html:6
+#: uffd/session/templates/session/login.html:20 uffd/templates/base.html:106
+msgid "Login"
+msgstr "Anmelden"
+
+#: uffd/service/templates/service/overview.html:55
 msgid "No access"
 msgstr "Kein Zugriff"
 
-#: uffd/service/templates/service/overview.html:64
+#: uffd/service/templates/service/overview.html:75
 msgid "Manage OAuth2 and API clients"
 msgstr "OAuth2- und API-Clients verwalten"
 
-#: uffd/service/templates/service/overview.html:84
+#: uffd/service/templates/service/overview.html:95
 #: uffd/user/templates/user/list.html:58 uffd/user/templates/user/list.html:79
 msgid "Close"
 msgstr "Schließen"
@@ -1299,6 +1314,10 @@ msgstr "Alle Account haben Zugriff (veraltet)"
 #, python-format
 msgid "Members of group \"%(group_name)s\" have access"
 msgstr "Mitglieder der Gruppe \"%(group_name)s\" haben Zugriff"
+
+#: uffd/service/templates/service/show.html:36
+msgid "Hide mail addresses with remailer"
+msgstr "Verstecke Mailadressen mit dem Remailer"
 
 #: uffd/session/views.py:71
 #, python-format
@@ -1414,24 +1433,19 @@ msgstr ""
 "auf dem anderen Gerät und gib dort den obenstehenden Startcode ein. Geben"
 " anschließend den Bestätigungscode hier ein."
 
-#: uffd/session/templates/session/login.html:6
-#: uffd/session/templates/session/login.html:17
-msgid "Login"
-msgstr "Anmelden"
-
-#: uffd/session/templates/session/login.html:20
+#: uffd/session/templates/session/login.html:23
 msgid "- or -"
 msgstr "- oder -"
 
-#: uffd/session/templates/session/login.html:22
+#: uffd/session/templates/session/login.html:25
 msgid "Login with another device"
 msgstr "Über anderes Gerät anmelden"
 
-#: uffd/session/templates/session/login.html:27
+#: uffd/session/templates/session/login.html:30
 msgid "Register"
 msgstr "Registrieren"
 
-#: uffd/session/templates/session/login.html:29
+#: uffd/session/templates/session/login.html:32
 msgid "Forgot Password?"
 msgstr "Passwort vergessen?"
 
@@ -1569,7 +1583,7 @@ msgstr "Du bist nicht berechtigt, auf diese Seite zuzugreifen."
 msgid "Change"
 msgstr "Ändern"
 
-#: uffd/templates/base.html:135
+#: uffd/templates/base.html:142
 msgid "About uffd"
 msgstr "Über uffd"
 

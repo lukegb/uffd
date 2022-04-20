@@ -12,11 +12,12 @@ from uffd.session import login_required
 from uffd.role.models import Role
 from uffd.database import db
 
-from .models import User
+from .models import User, remailer
 
 bp = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/')
 
 bp.add_app_template_global(User, 'User')
+bp.add_app_template_global(remailer, 'remailer')
 
 def user_acl_check():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])

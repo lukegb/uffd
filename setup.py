@@ -41,6 +41,7 @@ setup(
 		'Flask-Babel==0.11.2',
 		'alembic==1.0.0',
 		'argon2-cffi==18.3.0',
+		'itsdangerous==0.24',
 
 		# The main dependencies on their own lead to version collisions and pip is
 		# not very good at resolving them, so we pin the versions from Debian Buster
@@ -52,7 +53,6 @@ setup(
 		'click==7.0',
 		'cryptography==2.6.1',
 		'idna==2.6',
-		'itsdangerous==0.24',
 		'Jinja2==2.10',
 		'MarkupSafe==1.1.0',
 		'oauthlib==2.1.0',

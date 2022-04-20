@@ -73,6 +73,7 @@ def edit_submit(id=None):
 	else:
 		service.limit_access = True
 		service.access_group = Group.query.get(request.form['access-group'])
+	service.use_remailer = request.form.get('use_remailer') == '1'
 	db.session.commit()
 	return redirect(url_for('service.show', id=service.id))
 
@@ -157,6 +158,7 @@ def api_submit(service_id, id=None):
 	client.perm_users = request.form.get('perm_users') == '1'
 	client.perm_checkpassword = request.form.get('perm_checkpassword') == '1'
 	client.perm_mail_aliases = request.form.get('perm_mail_aliases') == '1'
+	client.perm_remailer = request.form.get('perm_remailer') == '1'
 	db.session.commit()
 	return redirect(url_for('service.show', id=service.id))
 

@@ -5,7 +5,7 @@ from flask import url_for
 from uffd.api.views import apikey_required
 from uffd.api.models import APIClient
 from uffd.service.models import Service
-from uffd.user.models import User
+from uffd.user.models import User, remailer
 from uffd.password_hash import PlaintextPasswordHash
 from uffd.database import db
 from utils import UffdTestCase, db_flush
@@ -140,6 +140,19 @@ class TestAPIGetusers(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.json, [])
 
+	def test_with_remailer(self):
+		service = Service.query.filter_by(name='test').one()
+		service.use_remailer = True
+		db.session.commit()
+		user = self.get_user()
+		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
+		r = self.client.get(path=url_for('api.getusers', id=10000), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		service = Service.query.filter_by(name='test').one()
+		self.assertEqual(self.fix_result(r.json), [
+			{'displayname': 'Test User', 'email': remailer.build_address(user, service), 'id': 10000, 'loginname': 'testuser', 'groups': ['uffd_access', 'users']},
+		])
+
 	def test_loginname(self):
 		r = self.client.get(path=url_for('api.getusers', loginname='testuser'), headers=[basic_auth('test', 'test')], follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
@@ -157,6 +170,19 @@ class TestAPIGetusers(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(self.fix_result(r.json), [
 			{'displayname': 'Test Admin', 'email': 'admin@example.com', 'id': 10001, 'loginname': 'testadmin', 'groups': ['uffd_access', 'uffd_admin', 'users']}
+		])
+
+	def test_email_with_remailer(self):
+		service = Service.query.filter_by(name='test').one()
+		service.use_remailer = True
+		db.session.commit()
+		user = self.get_admin()
+		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
+		r = self.client.get(path=url_for('api.getusers', email=remailer.build_address(user, service)), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		service = Service.query.filter_by(name='test').one()
+		self.assertEqual(self.fix_result(r.json), [
+			{'displayname': 'Test Admin', 'email': remailer.build_address(user, service), 'id': 10001, 'loginname': 'testadmin', 'groups': ['uffd_access', 'uffd_admin', 'users']}
 		])
 
 	def test_email_empty(self):
@@ -231,3 +257,28 @@ class TestAPIGetgroups(UffdTestCase):
 		r = self.client.get(path=url_for('api.getgroups', member='notauser'), headers=[basic_auth('test', 'test')], follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.json, [])
+
+class TestAPIRemailerResolve(UffdTestCase):
+	def setUpDB(self):
+		db.session.add(APIClient(service=Service(name='test'), auth_username='test', auth_password='test', perm_remailer=True))
+		db.session.add(Service(name='service1'))
+		db.session.add(Service(name='service2', use_remailer=True))
+
+	def test(self):
+		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
+		service = Service.query.filter_by(name='service2').one()
+		user = self.get_user()
+		r = self.client.get(path=url_for('api.resolve_remailer', orig_address=remailer.build_address(user, service)), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, {'address': user.mail})
+		r = self.client.get(path=url_for('api.resolve_remailer', orig_address='foo@bar'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, {'address': None})
+
+	def test_invalid(self):
+		r = self.client.get(path=url_for('api.resolve_remailer', orig_address=['foo', 'bar']), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 400)
+		r = self.client.get(path=url_for('api.resolve_remailer'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 400)
+		r = self.client.get(path=url_for('api.resolve_remailer', foo='bar'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 400)

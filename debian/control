@@ -26,6 +26,7 @@ Depends:
  python3-oauthlib,
  python3-flask-babel,
  python3-argon2,
+ python3-itsdangerous,
  uwsgi,
  uwsgi-plugin-python3,
 Recommends:

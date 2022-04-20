@@ -2,7 +2,7 @@ import functools
 
 from flask import Blueprint, jsonify, request, abort
 
-from uffd.user.models import User, Group
+from uffd.user.models import User, remailer, Group
 from uffd.mail.models import Mail, MailReceiveAddress, MailDestinationAddress
 from uffd.api.models import APIClient
 from uffd.session.views import login_get_user, login_ratelimit
@@ -29,6 +29,7 @@ def apikey_required(permission=None):
 				db.session.commit()
 			if permission is not None and not client.has_permission(permission):
 				return 'Forbidden', 403
+			request.api_client = client
 			return func(*args, **kwargs)
 		return decorator
 	return wrapper
@@ -67,7 +68,7 @@ def generate_user_dict(user):
 	return {
 		'id': user.unix_uid,
 		'loginname': user.loginname,
-		'email': user.mail,
+		'email': user.get_service_mail(request.api_client.service),
 		'displayname': user.displayname,
 		'groups': [group.name for group in user.groups]
 	}
@@ -87,7 +88,7 @@ def getusers():
 	elif key == 'loginname' and len(values) == 1:
 		query = query.filter(User.loginname == values[0])
 	elif key == 'email' and len(values) == 1:
-		query = query.filter(User.mail == values[0])
+		query = query.filter(User.filter_by_service_mail(request.api_client.service, values[0]))
 	elif key == 'group' and len(values) == 1:
 		query = query.join(User.groups).filter(Group.name == values[0])
 	else:
@@ -141,3 +142,16 @@ def getmails():
 	else:
 		abort(400)
 	return jsonify([generate_mail_dict(mail) for mail in mails])
+
+@bp.route('/resolve-remailer', methods=['GET', 'POST'])
+@apikey_required('remailer')
+def resolve_remailer():
+	if list(request.values.keys()) != ['orig_address']:
+		abort(400)
+	values = request.values.getlist('orig_address')
+	if len(values) != 1:
+		abort(400)
+	remailer_address = remailer.parse_address(values[0])
+	if not remailer_address:
+		return jsonify(address=None)
+	return jsonify(address=remailer_address.user.mail)

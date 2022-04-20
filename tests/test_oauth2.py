@@ -6,7 +6,7 @@ from flask import url_for, session
 # These imports are required, because otherwise we get circular imports?!
 from uffd import user
 
-from uffd.user.models import User
+from uffd.user.models import User, remailer
 from uffd.password_hash import PlaintextPasswordHash
 from uffd.session.models import DeviceLoginConfirmation
 from uffd.service.models import Service
@@ -20,7 +20,7 @@ class TestViews(UffdTestCase):
 		db.session.add(OAuth2Client(service=Service(name='test', limit_access=False), client_id='test', client_secret='testsecret', redirect_uris=['http://localhost:5009/callback', 'http://localhost:5009/callback2']))
 		db.session.add(OAuth2Client(service=Service(name='test1', access_group=self.get_admin_group()), client_id='test1', client_secret='testsecret1', redirect_uris=['http://localhost:5008/callback']))
 
-	def assert_authorization(self, r):
+	def assert_authorization(self, r, mail=None):
 		while True:
 			if r.status_code != 302 or r.location.startswith('http://localhost:5009/callback'):
 				break
@@ -44,13 +44,23 @@ class TestViews(UffdTestCase):
 		self.assertEqual(r.json['id'], user.unix_uid)
 		self.assertEqual(r.json['name'], user.displayname)
 		self.assertEqual(r.json['nickname'], user.loginname)
-		self.assertEqual(r.json['email'], user.mail)
+		self.assertEqual(r.json['email'], mail or user.mail)
 		self.assertTrue(r.json.get('groups'))
 
 	def test_authorization(self):
 		self.login_as('user')
 		r = self.client.get(path=url_for('oauth2.authorize', response_type='code', client_id='test', state='teststate', redirect_uri='http://localhost:5009/callback', scope='profile'), follow_redirects=False)
 		self.assert_authorization(r)
+
+	def test_authorization_with_remailer(self):
+		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
+		service = Service.query.filter_by(name='test').one()
+		service.use_remailer = True
+		db.session.commit()
+		self.login_as('user')
+		r = self.client.get(path=url_for('oauth2.authorize', response_type='code', client_id='test', state='teststate', redirect_uri='http://localhost:5009/callback', scope='profile'), follow_redirects=False)
+		service = Service.query.filter_by(name='test').one()
+		self.assert_authorization(r, mail=remailer.build_address(self.get_user(), service))
 
 	def test_authorization_client_secret_rehash(self):
 		OAuth2Client.query.delete()
