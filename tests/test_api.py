@@ -109,3 +109,125 @@ class TestAPICheckPassword(UffdTestCase):
 		r = self.client.post(path=url_for('api.checkpassword'), data={'loginname': 'testuser', 'password': 'wrongpassword'}, headers=[basic_auth('test', 'test')])
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.json, None)
+
+class TestAPIGetusers(UffdTestCase):
+	def setUpDB(self):
+		db.session.add(APIClient(service=Service(name='test'), auth_username='test', auth_password='test', perm_users=True))
+
+	def fix_result(self, result):
+		result.sort(key=lambda user: user['id'])
+		for user in result:
+			user['groups'].sort()
+		return result
+
+	def test_all(self):
+		r = self.client.get(path=url_for('api.getusers'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'displayname': 'Test User', 'email': 'test@example.com', 'id': 10000, 'loginname': 'testuser', 'groups': ['uffd_access', 'users']},
+			{'displayname': 'Test Admin', 'email': 'admin@example.com', 'id': 10001, 'loginname': 'testadmin', 'groups': ['uffd_access', 'uffd_admin', 'users']}
+		])
+
+	def test_id(self):
+		r = self.client.get(path=url_for('api.getusers', id=10000), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'displayname': 'Test User', 'email': 'test@example.com', 'id': 10000, 'loginname': 'testuser', 'groups': ['uffd_access', 'users']},
+		])
+
+	def test_id_empty(self):
+		r = self.client.get(path=url_for('api.getusers', id=0), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, [])
+
+	def test_loginname(self):
+		r = self.client.get(path=url_for('api.getusers', loginname='testuser'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'displayname': 'Test User', 'email': 'test@example.com', 'id': 10000, 'loginname': 'testuser', 'groups': ['uffd_access', 'users']},
+		])
+
+	def test_loginname_empty(self):
+		r = self.client.get(path=url_for('api.getusers', loginname='notauser'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, [])
+
+	def test_email(self):
+		r = self.client.get(path=url_for('api.getusers', email='admin@example.com'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'displayname': 'Test Admin', 'email': 'admin@example.com', 'id': 10001, 'loginname': 'testadmin', 'groups': ['uffd_access', 'uffd_admin', 'users']}
+		])
+
+	def test_email_empty(self):
+		r = self.client.get(path=url_for('api.getusers', email='foo@bar'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, [])
+
+	def test_group(self):
+		r = self.client.get(path=url_for('api.getusers', group='uffd_admin'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'displayname': 'Test Admin', 'email': 'admin@example.com', 'id': 10001, 'loginname': 'testadmin', 'groups': ['uffd_access', 'uffd_admin', 'users']}
+		])
+
+	def test_group_empty(self):
+		r = self.client.get(path=url_for('api.getusers', group='notagroup'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, [])
+
+class TestAPIGetgroups(UffdTestCase):
+	def setUpDB(self):
+		db.session.add(APIClient(service=Service(name='test'), auth_username='test', auth_password='test', perm_users=True))
+
+	def fix_result(self, result):
+		result.sort(key=lambda group: group['id'])
+		for group in result:
+			group['members'].sort()
+		return result
+
+	def test_all(self):
+		r = self.client.get(path=url_for('api.getgroups'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'id': 20001, 'members': ['testadmin', 'testuser'], 'name': 'users'},
+			{'id': 20002, 'members': ['testadmin', 'testuser'], 'name': 'uffd_access'},
+			{'id': 20003, 'members': ['testadmin'], 'name': 'uffd_admin'}
+		])
+
+	def test_id(self):
+		r = self.client.get(path=url_for('api.getgroups', id=20002), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'id': 20002, 'members': ['testadmin', 'testuser'], 'name': 'uffd_access'},
+		])
+
+	def test_id_empty(self):
+		r = self.client.get(path=url_for('api.getgroups', id=0), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, [])
+
+	def test_name(self):
+		r = self.client.get(path=url_for('api.getgroups', name='uffd_admin'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'id': 20003, 'members': ['testadmin'], 'name': 'uffd_admin'}
+		])
+
+	def test_name_empty(self):
+		r = self.client.get(path=url_for('api.getgroups', name='notagroup'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, [])
+
+	def test_member(self):
+		r = self.client.get(path=url_for('api.getgroups', member='testuser'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'id': 20001, 'members': ['testadmin', 'testuser'], 'name': 'users'},
+			{'id': 20002, 'members': ['testadmin', 'testuser'], 'name': 'uffd_access'},
+		])
+
+	def test_member_empty(self):
+		r = self.client.get(path=url_for('api.getgroups', member='notauser'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, [])

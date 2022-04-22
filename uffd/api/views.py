@@ -34,8 +34,11 @@ def apikey_required(permission=None):
 	return wrapper
 
 def generate_group_dict(group):
-	return {'id': group.unix_gid, 'name': group.name,
-	        'members': [user.loginname for user in group.members]}
+	return {
+		'id': group.unix_gid,
+		'name': group.name,
+		'members': [user.loginname for user in group.members]
+	}
 
 @bp.route('/getgroups', methods=['GET', 'POST'])
 @apikey_required('users')
@@ -44,24 +47,30 @@ def getgroups():
 		abort(400)
 	key = (list(request.values.keys()) or [None])[0]
 	values = request.values.getlist(key)
+	query = Group.query
 	if key is None:
-		groups = Group.query.all()
+		pass
 	elif key == 'id' and len(values) == 1:
-		groups = Group.query.filter_by(unix_gid=values[0]).all()
+		query = query.filter(Group.unix_gid == values[0])
 	elif key == 'name' and len(values) == 1:
-		groups = Group.query.filter_by(name=values[0]).all()
+		query = query.filter(Group.name == values[0])
 	elif key == 'member' and len(values) == 1:
-		user = User.query.filter_by(loginname=values[0]).one_or_none()
-		groups = [] if user is None else user.groups
+		query = query.join(Group.members).filter(User.loginname == values[0])
 	else:
 		abort(400)
-	return jsonify([generate_group_dict(group) for group in groups])
+	# Single-result queries perform better without joinedload
+	if key is None or key == 'member':
+		query = query.options(db.joinedload(Group.members))
+	return jsonify([generate_group_dict(group) for group in query])
 
-def generate_user_dict(user, all_groups=None):
-	if all_groups is None:
-		all_groups = user.groups
-	return {'id': user.unix_uid, 'loginname': user.loginname, 'email': user.mail, 'displayname': user.displayname,
-	        'groups': [group.name for group in all_groups if user in group.members]}
+def generate_user_dict(user):
+	return {
+		'id': user.unix_uid,
+		'loginname': user.loginname,
+		'email': user.mail,
+		'displayname': user.displayname,
+		'groups': [group.name for group in user.groups]
+	}
 
 @bp.route('/getusers', methods=['GET', 'POST'])
 @apikey_required('users')
@@ -70,23 +79,23 @@ def getusers():
 		abort(400)
 	key = (list(request.values.keys()) or [None])[0]
 	values = request.values.getlist(key)
+	query = User.query
 	if key is None:
-		users = User.query.all()
+		pass
 	elif key == 'id' and len(values) == 1:
-		users = User.query.filter_by(unix_uid=values[0]).all()
+		query = query.filter(User.unix_uid == values[0])
 	elif key == 'loginname' and len(values) == 1:
-		users = User.query.filter_by(loginname=values[0]).all()
+		query = query.filter(User.loginname == values[0])
 	elif key == 'email' and len(values) == 1:
-		users = User.query.filter_by(mail=values[0]).all()
+		query = query.filter(User.mail == values[0])
 	elif key == 'group' and len(values) == 1:
-		group = Group.query.filter_by(name=values[0]).one_or_none()
-		users = [] if group is None else group.members
+		query = query.join(User.groups).filter(Group.name == values[0])
 	else:
 		abort(400)
-	all_groups = None
-	if len(users) > 1:
-		all_groups = Group.query.all()
-	return jsonify([generate_user_dict(user, all_groups) for user in users])
+	# Single-result queries perform better without joinedload
+	if key is None or key == 'group':
+		query = query.options(db.joinedload(User.groups))
+	return jsonify([generate_user_dict(user) for user in query])
 
 @bp.route('/checkpassword', methods=['POST'])
 @apikey_required('checkpassword')
@@ -108,8 +117,11 @@ def checkpassword():
 	return jsonify(generate_user_dict(user))
 
 def generate_mail_dict(mail):
-	return {'name': mail.uid, 'receive_addresses': list(mail.receivers),
-	        'destination_addresses': list(mail.destinations)}
+	return {
+		'name': mail.uid,
+		'receive_addresses': list(mail.receivers),
+		'destination_addresses': list(mail.destinations)
+	}
 
 @bp.route('/getmails', methods=['GET', 'POST'])
 @apikey_required('mail_aliases')
