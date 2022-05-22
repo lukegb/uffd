@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-04-21 14:17+0200\n"
+"POT-Creation-Date: 2022-05-22 16:42+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -153,6 +153,10 @@ msgstr "Link als QR-Code anzeigen"
 #: uffd/invite/templates/invite/list.html:40
 msgid "Signup"
 msgstr "Account-Registrierung"
+
+#: uffd/invite/templates/invite/list.html:44
+msgid "user signups"
+msgstr "Account-Registrierungen"
 
 #: uffd/invite/templates/invite/list.html:49
 #: uffd/user/templates/user/show.html:91
@@ -1285,6 +1289,11 @@ msgstr ""
 msgid "Login"
 msgstr "Anmelden"
 
+#: uffd/service/templates/service/overview.html:36
+#, python-format
+msgid "Logo for %(service_title)s"
+msgstr "Logo für %(service_title)s"
+
 #: uffd/service/templates/service/overview.html:55
 msgid "No access"
 msgstr "Kein Zugriff"
@@ -1587,7 +1596,7 @@ msgstr "Ändern"
 msgid "About uffd"
 msgstr "Über uffd"
 
-#: uffd/user/models.py:31
+#: uffd/user/models.py:32
 #, python-format
 msgid ""
 "At least %(minlen)d and at most %(maxlen)d characters. Only letters, "
@@ -1622,41 +1631,41 @@ msgstr "Gruppe aktualisiert"
 msgid "Deleted group"
 msgstr "Gruppe gelöscht"
 
-#: uffd/user/views_user.py:30
+#: uffd/user/views_user.py:31
 msgid "Users"
 msgstr "Accounts"
 
-#: uffd/user/views_user.py:50
+#: uffd/user/views_user.py:51
 msgid "Login name does not meet requirements"
 msgstr "Anmeldename entspricht nicht den Anforderungen"
 
-#: uffd/user/views_user.py:55
+#: uffd/user/views_user.py:56
 msgid "Mail is invalid"
 msgstr "E-Mail-Adresse nicht valide"
 
-#: uffd/user/views_user.py:59
+#: uffd/user/views_user.py:60
 msgid "Display name does not meet requirements"
 msgstr "Anzeigename entspricht nicht den Anforderungen"
 
-#: uffd/user/views_user.py:64
+#: uffd/user/views_user.py:65
 msgid "Password is invalid"
 msgstr "Passwort ist ungültig"
 
-#: uffd/user/views_user.py:77
+#: uffd/user/views_user.py:78
 msgid "Service user created"
 msgstr "Service-Account erstellt"
 
-#: uffd/user/views_user.py:80
+#: uffd/user/views_user.py:81
 msgid "User created. We sent the user a password reset link by mail"
 msgstr ""
 "Account erstellt. E-Mail mit einem Link zum Setzen des Passworts wurde "
 "versendet."
 
-#: uffd/user/views_user.py:82
+#: uffd/user/views_user.py:83
 msgid "User updated"
 msgstr "Account aktualisiert"
 
-#: uffd/user/views_user.py:92
+#: uffd/user/views_user.py:93
 msgid "Deleted user"
 msgstr "Account gelöscht"
 
@@ -1738,11 +1747,11 @@ msgstr "E-Mail-Adresse"
 
 #: uffd/user/templates/user/show.html:72
 msgid ""
-"Do a sanity check here. A user can take over another account if both have"
-" the same mail address set."
+"Check that the address is unique. A user can take over another account if"
+" both have the same mail address set."
 msgstr ""
-"Überprüfe, ob die E-Mail-Adresse plausibel ist! Ein Account kann einen "
-"anderen Account übernehmen, wenn beide die selbe E-Mail-Adresse "
+"Überprüfe, ob die E-Mail-Adresse noch unbenutzt ist! Ein Account kann "
+"einen anderen Account übernehmen, wenn beide die selbe E-Mail-Adresse "
 "verwenden."
 
 #: uffd/user/templates/user/show.html:80

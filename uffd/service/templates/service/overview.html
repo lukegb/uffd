@@ -33,7 +33,7 @@
       <div class="card-body">
 				{% if service.logo_url %}
 					{% if service.url and service.has_access %}<a href="{{ service.url }}" class="text-reset">{% endif %}
-						<img alt="Logo for {{ service.title }}" src="{{ service.logo_url }}" style="width: 100%; height: 10em; object-fit: contain; {{ 'filter: grayscale(100%);' if not service.has_access }}">
+						<img alt="{{ _("Logo for %(service_title)s", service_title=service.title) }}" src="{{ service.logo_url }}" style="width: 100%; height: 10em; object-fit: contain; {{ 'filter: grayscale(100%);' if not service.has_access }}">
 					{% if service.url and service.has_access %}</a>{% endif %}
 				{% endif %}
         <h5 class="card-title">
