@@ -5,9 +5,6 @@
 	<div class="col-12">
 		<h2 class="text-center">{{_('Complete Registration')}}</h2>
 	</div>
-	{% if error %}
-	<div class="alert alert-danger" role="alert">{{ error }}</div>
-	{% endif %}
 	<div class="form-group col-12">
 		<label for="user-password1">{{_('Please enter your password to complete the account registration')}}</label>
 		<input type="password" class="form-control" id="user-password1" name="password" required="required">

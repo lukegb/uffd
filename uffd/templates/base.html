@@ -117,9 +117,9 @@
 		{% block main %}
 		<main role="main" class="container mt-3">
 			<div class="row">
-				{% for message in get_flashed_messages() %}
+				{% for category, message in get_flashed_messages(with_categories=true) %}
 				<div class="col-12">
-					<div class="alert alert-primary" role="alert">{{ message }}</div>
+					<div class="alert alert-{{ 'danger' if category == 'error' else 'warning' if category == 'warning' else 'primary' }}" role="alert">{{ message }}</div>
 				</div>
 				{% endfor %}
 			</div>

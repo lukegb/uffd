@@ -172,14 +172,17 @@ def signup_submit(invite_id, token):
 	if not invite or not secrets.compare_digest(invite.token, token):
 		abort(404)
 	if request.form['password1'] != request.form['password2']:
-		return render_template('signup/start.html', error=_('Passwords do not match'))
+		flash(_('Passwords do not match'), 'error')
+		return render_template('signup/start.html')
 	signup_delay = signup_ratelimit.get_delay(request.form['mail'])
 	host_delay = host_ratelimit.get_delay()
 	if signup_delay and signup_delay > host_delay:
-		return render_template('signup/start.html', error=_('Too many signup requests with this mail address! Please wait %(delay)s.',
-		                                                    delay=format_delay(signup_delay)))
+		flash(_('Too many signup requests with this mail address! Please wait %(delay)s.',
+		        delay=format_delay(signup_delay)), 'error')
+		return render_template('signup/start.html')
 	if host_delay:
-		return render_template('signup/start.html', error=_('Too many requests! Please wait %(delay)s.', delay=format_delay(host_delay)))
+		flash(_('Too many requests! Please wait %(delay)s.', delay=format_delay(host_delay)), 'error')
+		return render_template('signup/start.html')
 	host_ratelimit.log()
 	signup = InviteSignup(invite=invite, loginname=request.form['loginname'],
 	                      displayname=request.form['displayname'],
@@ -187,11 +190,13 @@ def signup_submit(invite_id, token):
 	                      password=request.form['password1'])
 	valid, msg = signup.validate()
 	if not valid:
-		return render_template('signup/start.html', error=msg)
+		flash(msg, 'error')
+		return render_template('signup/start.html')
 	db.session.add(signup)
 	db.session.commit()
 	sent = sendmail(signup.mail, 'Confirm your mail address', 'signup/mail.txt', signup=signup)
 	if not sent:
-		return render_template('signup/start.html', error=_('Could not send mail'))
+		flash(_('Could not send mail'), 'error')
+		return render_template('signup/start.html')
 	signup_ratelimit.log(request.form['mail'])
 	return render_template('signup/submitted.html', signup=signup)

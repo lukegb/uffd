@@ -46,14 +46,17 @@ def signup_check():
 @signup_enabled
 def signup_submit():
 	if request.form['password1'] != request.form['password2']:
-		return render_template('signup/start.html', error=_('Passwords do not match'))
+		flash(_('Passwords do not match'), 'error')
+		return render_template('signup/start.html')
 	signup_delay = signup_ratelimit.get_delay(request.form['mail'])
 	host_delay = host_ratelimit.get_delay()
 	if signup_delay and signup_delay > host_delay:
-		return render_template('signup/start.html', error=_('Too many signup requests with this mail address! Please wait %(delay)s.',
-		                                                    delay=format_delay(signup_delay)))
+		flash(_('Too many signup requests with this mail address! Please wait %(delay)s.',
+		        delay=format_delay(signup_delay)), 'error')
+		return render_template('signup/start.html')
 	if host_delay:
-		return render_template('signup/start.html', error=_('Too many requests! Please wait %(delay)s.', delay=format_delay(host_delay)))
+		flash(_('Too many requests! Please wait %(delay)s.', delay=format_delay(host_delay)), 'error')
+		return render_template('signup/start.html')
 	host_ratelimit.log()
 	signup = Signup(loginname=request.form['loginname'],
 	                displayname=request.form['displayname'],
@@ -64,12 +67,14 @@ def signup_submit():
 	signup.set_password(request.form['password1'])
 	valid, msg = signup.validate()
 	if not valid:
-		return render_template('signup/start.html', error=msg)
+		flash(msg, 'error')
+		return render_template('signup/start.html')
 	db.session.add(signup)
 	db.session.commit()
 	sent = sendmail(signup.mail, 'Confirm your mail address', 'signup/mail.txt', signup=signup)
 	if not sent:
-		return render_template('signup/start.html', error=_('Could not send mail'))
+		flash(_('Could not send mail'), 'error')
+		return render_template('signup/start.html')
 	signup_ratelimit.log(request.form['mail'])
 	return render_template('signup/submitted.html', signup=signup)
 
@@ -91,16 +96,19 @@ def signup_confirm_submit(signup_id, token):
 	confirm_delay = confirm_ratelimit.get_delay(token)
 	host_delay = host_ratelimit.get_delay()
 	if confirm_delay and confirm_delay > host_delay:
-		return render_template('signup/confirm.html', signup=signup, error=_('Too many failed attempts! Please wait %(delay)s.', delay=format_delay(confirm_delay)))
+		flash(_('Too many failed attempts! Please wait %(delay)s.', delay=format_delay(confirm_delay)), 'error')
+		return render_template('signup/confirm.html', signup=signup)
 	if host_delay:
-		return render_template('signup/confirm.html', signup=signup, error=_('Too many requests! Please wait %(delay)s.', delay=format_delay(host_delay)))
+		return render_template('signup/confirm.html', signup=signup)
 	if not signup.password.verify(request.form['password']):
 		host_ratelimit.log()
 		confirm_ratelimit.log(token)
-		return render_template('signup/confirm.html', signup=signup, error=_('Wrong password'))
+		flash(_('Wrong password'), 'error')
+		return render_template('signup/confirm.html', signup=signup)
 	user, msg = signup.finish(request.form['password'])
 	if user is None:
-		return render_template('signup/confirm.html', signup=signup, error=msg)
+		flash(msg, 'error')
+		return render_template('signup/confirm.html', signup=signup)
 	db.session.commit()
 	set_session(user, skip_mfa=True)
 	flash(_('Your account was successfully created'))
