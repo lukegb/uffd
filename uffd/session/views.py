@@ -49,6 +49,7 @@ def logout():
 
 def set_session(user, skip_mfa=False):
 	session.clear()
+	session.permanent = True
 	session['user_id'] = user.id
 	session['logintime'] = datetime.datetime.now().timestamp()
 	session['_csrf_token'] = secrets.token_hex(128)
