@@ -110,7 +110,7 @@ def oauth2_submit(service_id, db_id=None):
 		client.client_secret = request.form['client_secret']
 	if not client.client_secret:
 		abort(400)
-	client.redirect_uris = request.form['redirect_uris'].strip().split('\n')
+	client.redirect_uris = [x.strip() for x in request.form['redirect_uris'].split('\n') if x.strip()]
 	client.logout_uris = []
 	for line in request.form['logout_uris'].split('\n'):
 		line = line.strip()
