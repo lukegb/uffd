@@ -151,7 +151,6 @@ html5validator:
   script:
   - ./update_translations.sh $TRANSLATION_LANGUAGE
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
-
 trans_de:
   extends: .trans
   variables:
@@ -173,11 +172,16 @@ test:package:pip:bullseye:
   dependencies:
   - build:pip
 
+# Since we want to test if the package installs correctly on a fresh Debian
+# install (has correct dependencies, etc.), we don't use uffd/docker-images
+# here
 test:package:apt:buster:
-  image: registry.git.cccv.de/uffd/docker-images/buster
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/debian:buster
   stage: test
+  before_script: []
   script:
-  - apt -y install ./*.deb
+  - apt -y update
+  - apt -y install curl ./*.deb
   - service uwsgi start uffd || ( service uwsgi status uffd ; sleep 15; cat /var/log/uwsgi/app/uffd.log; )
   - echo "server { listen 127.0.0.1:5000 default_server;  include /etc/uffd/nginx.include.conf; }" > /etc/nginx/sites-enabled/uffd.ini
   - service nginx start || ( service nginx status; nginx -t; exit 1; )
@@ -187,10 +191,12 @@ test:package:apt:buster:
   - build:apt
 
 test:package:apt:bullseye:
-  image: registry.git.cccv.de/uffd/docker-images/bullseye
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/debian:bullseye
   stage: test
+  before_script: []
   script:
-  - apt -y install ./*.deb
+  - apt -y update
+  - apt -y install curl ./*.deb
   - service uwsgi start uffd || ( service uwsgi status uffd ; sleep 15; cat /var/log/uwsgi/app/uffd.log; )
   - echo "server { listen 127.0.0.1:5000 default_server;  include /etc/uffd/nginx.include.conf; }" > /etc/nginx/sites-enabled/uffd.ini
   - service nginx start || ( service nginx status; nginx -t; exit 1; )
