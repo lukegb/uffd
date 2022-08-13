@@ -27,7 +27,22 @@ def run_test(dburi, revision):
 		'SELF_SIGNUP': True,
 		'ENABLE_INVITE': True,
 		'ENABLE_PASSWORDRESET': True,
-		'LDAP_SERVICE_MOCK': True
+		'LDAP_SERVICE_MOCK': True,
+		'OAUTH2_CLIENTS': {
+				'test': {
+					'service_name': 'test',
+					'client_secret': 'testsecret',
+					'redirect_uris': ['http://localhost:5004/oauthproxy/callback'],
+					'logout_urls': ['http://localhost:5004/oauthproxy/logout']
+				}
+		},
+		'API_CLIENTS_2': {
+			'test': {
+				'service_name': 'test',
+				'client_secret': 'testsecret',
+				'scopes': ['checkpassword', 'getusers', 'getmails']
+			},
+		},
 	}
 	app = create_app(config)
 	with app.test_request_context():
