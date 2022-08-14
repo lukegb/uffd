@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-05-22 16:42+0200\n"
+"POT-Creation-Date: 2022-08-14 13:15+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.8.0\n"
 
 #: uffd/ratelimit.py:76
 msgid "a few seconds"
@@ -56,7 +56,8 @@ msgstr "Einladungslink weist keine Rollen zu"
 msgid "Invite link does not grant any new roles"
 msgstr "Einladungslink weist keine neuen Rollen zu"
 
-#: uffd/invite/models.py:90 uffd/signup/models.py:115
+#: uffd/invite/models.py:90 uffd/mfa/templates/mfa/setup.html:225
+#: uffd/signup/models.py:115
 msgid "Success"
 msgstr "Erfolgreich"
 
@@ -95,19 +96,19 @@ msgstr "Einladungslink erlaubt keine Account-Registrierung"
 msgid "Passwords do not match"
 msgstr "Die Passwörter stimmen nicht überein"
 
-#: uffd/invite/views.py:180 uffd/signup/views.py:54
+#: uffd/invite/views.py:181 uffd/signup/views.py:55
 #, python-format
 msgid "Too many signup requests with this mail address! Please wait %(delay)s."
 msgstr ""
 "Zu viele Account-Registrierungen mit dieser E-Mail-Adresse! Bitte warte "
 "%(delay)s."
 
-#: uffd/invite/views.py:182 uffd/signup/views.py:56 uffd/signup/views.py:96
+#: uffd/invite/views.py:184 uffd/signup/views.py:58
 #, python-format
 msgid "Too many requests! Please wait %(delay)s."
 msgstr "Zu viele Anfragen! Bitte warte %(delay)s."
 
-#: uffd/invite/views.py:195 uffd/signup/views.py:72
+#: uffd/invite/views.py:199 uffd/signup/views.py:76
 msgid "Could not send mail"
 msgstr "Mailversand fehlgeschlagen"
 
@@ -451,7 +452,7 @@ msgstr "Generiere zuerst die Wiederherstellungscodes!"
 msgid "Code is invalid"
 msgstr "Wiederherstellungscode ist ungültig"
 
-#: uffd/mfa/views.py:123
+#: uffd/mfa/views.py:107
 #, python-format
 msgid ""
 "2FA WebAuthn support disabled because import of the fido2 module failed "
@@ -460,16 +461,16 @@ msgstr ""
 "2FA WebAuthn Unterstützung deaktiviert, da das fido2 Modul nicht geladen "
 "werden konnte (%s)"
 
-#: uffd/mfa/views.py:232
+#: uffd/mfa/views.py:216
 #, python-format
 msgid "We received too many invalid attempts! Please wait at least %s."
 msgstr "Wir haben zu viele fehlgeschlagene Versuche! Bitte warte mindestens %s."
 
-#: uffd/mfa/views.py:246
+#: uffd/mfa/views.py:230
 msgid "You have exhausted your recovery codes. Please generate new ones now!"
 msgstr "Du hast keine Wiederherstellungscode mehr. Bitte generiere diese jetzt!"
 
-#: uffd/mfa/views.py:249
+#: uffd/mfa/views.py:233
 msgid ""
 "You only have a few recovery codes remaining. Make sure to generate new "
 "ones before they run out."
@@ -477,7 +478,7 @@ msgstr ""
 "Du hast nur noch wenige Wiederherstellungscodes übrig. Bitte generiere "
 "diese erneut bevor keine mehr übrig sind."
 
-#: uffd/mfa/views.py:253
+#: uffd/mfa/views.py:237
 msgid "Two-factor authentication failed"
 msgstr "Zwei-Faktor-Authentifizierung fehlgeschlagen"
 
@@ -499,7 +500,7 @@ msgstr ""
 
 #: uffd/mfa/templates/mfa/auth.html:21
 msgid "Authenticate with U2F/FIDO2 device"
-msgstr "Authentifiziere dich mit einem U2F/FIDO2 Gerät"
+msgstr "Authentifiziere dich mit einem U2F/FIDO2-Gerät"
 
 #: uffd/mfa/templates/mfa/auth.html:24
 msgid "or"
@@ -512,6 +513,67 @@ msgstr "Code aus deiner Authentifikator-App oder Wiederherstellungscode"
 #: uffd/mfa/templates/mfa/auth.html:30
 msgid "Verify"
 msgstr "Verifizieren"
+
+#: uffd/mfa/templates/mfa/auth.html:43 uffd/mfa/templates/mfa/setup.html:199
+msgid "Contacting server"
+msgstr "Verbinde mit Server"
+
+#: uffd/mfa/templates/mfa/auth.html:52 uffd/mfa/templates/mfa/auth.html:80
+msgid "Session timed out"
+msgstr "Sitzung abgelaufen"
+
+#: uffd/mfa/templates/mfa/auth.html:54
+msgid "You have not registered any U2F/FIDO2 devices for your account"
+msgstr "Es sind keine U2F/FIDO2-Geräte für deinen Account registriert"
+
+#: uffd/mfa/templates/mfa/auth.html:56 uffd/mfa/templates/mfa/setup.html:208
+msgid "Server error"
+msgstr "Serverfehler"
+
+#: uffd/mfa/templates/mfa/auth.html:59 uffd/mfa/templates/mfa/setup.html:210
+msgid "Waiting for device"
+msgstr "Warte auf Gerät"
+
+#: uffd/mfa/templates/mfa/auth.html:62
+msgid "Verifing response"
+msgstr "Überprüfe Antwort"
+
+#: uffd/mfa/templates/mfa/auth.html:76
+msgid "Success, redirecting"
+msgstr "Erfolg, leite weiter"
+
+#: uffd/mfa/templates/mfa/auth.html:82 uffd/mfa/templates/mfa/setup.html:228
+msgid "Invalid response from device"
+msgstr "Ungültige Antwort von Gerät"
+
+#: uffd/mfa/templates/mfa/auth.html:88
+msgid "Authentication timed out, was aborted or not allowed"
+msgstr "Authentifikation abgelaufen, abgebrochen oder nicht erlaubt"
+
+#: uffd/mfa/templates/mfa/auth.html:90
+msgid "Device is not registered for your account"
+msgstr "Gerät ist nicht für deinen Account registriert"
+
+#: uffd/mfa/templates/mfa/auth.html:92
+msgid "Authentication was aborted"
+msgstr "Authentifikation abgebrochen"
+
+#: uffd/mfa/templates/mfa/auth.html:94 uffd/mfa/templates/mfa/setup.html:240
+#: uffd/mfa/templates/mfa/setup.html:264
+msgid "U2F and FIDO2 devices are not supported by your browser"
+msgstr "U2F- und FIDO2-Geräte werden vom Webbrowser nicht unterstüzt"
+
+#: uffd/mfa/templates/mfa/auth.html:97 uffd/mfa/templates/mfa/setup.html:243
+msgid "Could not connect to server"
+msgstr "Verbindung zum Server fehlgeschlagen"
+
+#: uffd/mfa/templates/mfa/auth.html:103
+msgid "Authentication failed "
+msgstr "Authentifikation fehlgeschlagen"
+
+#: uffd/mfa/templates/mfa/auth.html:106
+msgid "Retry authenticate with U2F/FIDO2 device"
+msgstr "Authentifikation mit U2F/FIDO2-Gerät nochmal versuchen"
 
 #: uffd/mfa/templates/mfa/disable.html:6
 msgid ""
@@ -671,6 +733,30 @@ msgstr "Neues Gerät hinzufügen"
 msgid "No U2F/FIDO2 devices registered yet"
 msgstr "Bisher kein U2F/FIDO2 Gerät registriert"
 
+#: uffd/mfa/templates/mfa/setup.html:207
+msgid "You need to generate recovery codes first"
+msgstr "Du musst erst Wiederherstellungscodes generieren"
+
+#: uffd/mfa/templates/mfa/setup.html:234
+msgid "Registration timed out, was aborted or not allowed"
+msgstr "Registrierung abgelaufen, abgebrochen oder nicht erlaubt"
+
+#: uffd/mfa/templates/mfa/setup.html:236
+msgid "Device already registered"
+msgstr "Gerät bereits registriert"
+
+#: uffd/mfa/templates/mfa/setup.html:238
+msgid "Registration was aborted"
+msgstr "Registrierung abgebrochen"
+
+#: uffd/mfa/templates/mfa/setup.html:249
+msgid "Registration failed"
+msgstr "Registrierung fehlgeschlagen"
+
+#: uffd/mfa/templates/mfa/setup.html:252
+msgid "Retry registration"
+msgstr "Registrierung nochmal versuchen"
+
 #: uffd/mfa/templates/mfa/setup_recovery.html:8
 msgid ""
 "Recovery codes allow you to login when you lose access to your "
@@ -690,6 +776,12 @@ msgstr ""
 "Dies sind deine Wiederherstellungscodes. Speichere sie an einem sicheren "
 "Ort, sonst könntest du den Zugriff auf dein Konto verlieren. Alle "
 "vorherigen Wiederherstellungscodes sind nun ungültig."
+
+#: uffd/mfa/templates/mfa/setup_recovery.html:26
+#: uffd/session/templates/session/deviceauth.html:36
+#: uffd/session/templates/session/devicelogin.html:25
+msgid "Continue"
+msgstr "Weiter"
 
 #: uffd/mfa/templates/mfa/setup_recovery.html:28
 msgid "Download codes"
@@ -718,9 +810,9 @@ msgid ""
 "\t\t\tapp:"
 msgstr ""
 "Falls du ein Mobilgerät verwendest und den Code nicht scannen kannst, "
-"kannst du drauf klick und direkt in der Authentifikator-App öffnen. Wenn "
-"das nicht funktioniert, gib die folgenden Angaben manuell in die "
-"Authentifikator-App ein:"
+"kannst du drauf klicken um ihn damit direkt in der Authentifikator-App zu"
+" öffnen. Wenn das nicht funktioniert, gib die folgenden Angaben manuell "
+"in die Authentifikator-App ein:"
 
 #: uffd/mfa/templates/mfa/setup_totp.html:23
 msgid "Issuer"
@@ -754,12 +846,16 @@ msgstr "Intervall/Dauer"
 msgid "seconds"
 msgstr "Sekunden"
 
+#: uffd/mfa/templates/mfa/setup_totp.html:37
+msgid "Code"
+msgstr "Code"
+
 #: uffd/mfa/templates/mfa/setup_totp.html:38
 msgid "Verify and complete setup"
 msgstr "Verifiziere und beende das Setup"
 
 #: uffd/oauth2/views.py:169 uffd/selfservice/views.py:71
-#: uffd/session/views.py:73
+#: uffd/session/views.py:74
 #, python-format
 msgid ""
 "We received too many requests from your ip address/network! Please wait "
@@ -1059,7 +1155,7 @@ msgstr "Passwort vergessen"
 #: uffd/selfservice/templates/selfservice/forgot_password.html:9
 #: uffd/selfservice/templates/selfservice/self.html:21
 #: uffd/session/templates/session/login.html:12
-#: uffd/signup/templates/signup/start.html:14
+#: uffd/signup/templates/signup/start.html:9
 #: uffd/user/templates/user/list.html:18 uffd/user/templates/user/show.html:47
 msgid "Login Name"
 msgstr "Anmeldename"
@@ -1101,13 +1197,13 @@ msgid "Changes may take several minutes to be visible in all services."
 msgstr "Änderungen sind erst nach einigen Minuten in allen Diensten sichtbar."
 
 #: uffd/selfservice/templates/selfservice/self.html:25
-#: uffd/signup/templates/signup/start.html:27
+#: uffd/signup/templates/signup/start.html:22
 #: uffd/user/templates/user/list.html:19 uffd/user/templates/user/show.html:62
 msgid "Display Name"
 msgstr "Anzeigename"
 
 #: uffd/selfservice/templates/selfservice/self.html:29
-#: uffd/signup/templates/signup/start.html:34
+#: uffd/signup/templates/signup/start.html:29
 msgid "E-Mail Address"
 msgstr "E-Mail-Adresse"
 
@@ -1123,7 +1219,7 @@ msgstr "Änderungen speichern"
 
 #: uffd/selfservice/templates/selfservice/self.html:44
 #: uffd/session/templates/session/login.html:16
-#: uffd/signup/templates/signup/start.html:41
+#: uffd/signup/templates/signup/start.html:36
 #: uffd/user/templates/user/show.html:76
 msgid "Password"
 msgstr "Passwort"
@@ -1146,7 +1242,7 @@ msgstr "Neues Passwort"
 
 #: uffd/selfservice/templates/selfservice/self.html:56
 #: uffd/selfservice/templates/selfservice/set_password.html:16
-#: uffd/signup/templates/signup/start.html:48
+#: uffd/signup/templates/signup/start.html:43
 msgid "Repeat Password"
 msgstr "Passwort wiederholen"
 
@@ -1328,7 +1424,7 @@ msgstr "Mitglieder der Gruppe \"%(group_name)s\" haben Zugriff"
 msgid "Hide mail addresses with remailer"
 msgstr "Verstecke Mailadressen mit dem Remailer"
 
-#: uffd/session/views.py:71
+#: uffd/session/views.py:72
 #, python-format
 msgid ""
 "We received too many invalid login attempts for this user! Please wait at"
@@ -1337,27 +1433,27 @@ msgstr ""
 "Wir haben zu viele fehlgeschlagene Anmeldeversuche für diesen Account "
 "erhalten! Bitte warte mindestens %(delay)s."
 
-#: uffd/session/views.py:79
+#: uffd/session/views.py:80
 msgid "Login name or password is wrong"
 msgstr "Der Anmeldename oder das Passwort ist falsch"
 
-#: uffd/session/views.py:85
+#: uffd/session/views.py:86
 msgid "You do not have access to this service"
 msgstr "Du hast keinen Zugriff auf diesen Service"
 
-#: uffd/session/views.py:97 uffd/session/views.py:108
+#: uffd/session/views.py:98 uffd/session/views.py:109
 msgid "You need to login first"
 msgstr "Du musst dich erst anmelden"
 
-#: uffd/session/views.py:129 uffd/session/views.py:139
+#: uffd/session/views.py:130 uffd/session/views.py:140
 msgid "Initiation code is no longer valid"
 msgstr "Startcode ist nicht mehr gültig"
 
-#: uffd/session/views.py:143
+#: uffd/session/views.py:144
 msgid "Invalid confirmation code"
 msgstr "Ungültiger Bestätigungscode"
 
-#: uffd/session/views.py:155 uffd/session/views.py:166
+#: uffd/session/views.py:156 uffd/session/views.py:167
 msgid "Invalid initiation code"
 msgstr "Ungültiger Startcode"
 
@@ -1391,11 +1487,6 @@ msgstr ""
 "Beginne die Anmeldung an einem Dienst auf dem anderen Gerät und wähle "
 "\"Gerätelogin\" auf der Anmeldeseite aus. Gib den angezeigten Startcode "
 "oben ein."
-
-#: uffd/session/templates/session/deviceauth.html:36
-#: uffd/session/templates/session/devicelogin.html:25
-msgid "Continue"
-msgstr "Weiter"
 
 #: uffd/session/templates/session/deviceauth.html:43
 #, python-format
@@ -1482,7 +1573,7 @@ msgstr "Ein Account mit diesem Anmeldenamen existiert bereits"
 msgid "Valid"
 msgstr "Gültig"
 
-#: uffd/signup/models.py:104 uffd/signup/views.py:100
+#: uffd/signup/models.py:104 uffd/signup/views.py:106
 msgid "Wrong password"
 msgstr "Falsches Passwort"
 
@@ -1490,16 +1581,16 @@ msgstr "Falsches Passwort"
 msgid "Signup not enabled"
 msgstr "Account-Registrierung ist deaktiviert"
 
-#: uffd/signup/views.py:81 uffd/signup/views.py:89
+#: uffd/signup/views.py:86 uffd/signup/views.py:94
 msgid "Invalid signup link"
 msgstr "Ungültiger Account-Registrierungs-Link"
 
-#: uffd/signup/views.py:94
+#: uffd/signup/views.py:99
 #, python-format
 msgid "Too many failed attempts! Please wait %(delay)s."
 msgstr "Zu viele fehlgeschlagene Versuche! Bitte warte mindestens %(delay)s."
 
-#: uffd/signup/views.py:106
+#: uffd/signup/views.py:114
 msgid "Your account was successfully created"
 msgstr "Account erfolgreich erstellt"
 
@@ -1507,19 +1598,19 @@ msgstr "Account erfolgreich erstellt"
 msgid "Complete Registration"
 msgstr "Account-Registrierung abschließen"
 
-#: uffd/signup/templates/signup/confirm.html:12
+#: uffd/signup/templates/signup/confirm.html:9
 msgid "Please enter your password to complete the account registration"
 msgstr "Bitte gib dein Passwort ein, um die Account-Registrierung abzuschließen"
 
-#: uffd/signup/templates/signup/confirm.html:16
+#: uffd/signup/templates/signup/confirm.html:13
 msgid "Complete Account Registration"
 msgstr "Account-Registrierung abschließen"
 
-#: uffd/signup/templates/signup/start.html:18
+#: uffd/signup/templates/signup/start.html:13
 msgid "Check"
 msgstr "Überprüfen"
 
-#: uffd/signup/templates/signup/start.html:23
+#: uffd/signup/templates/signup/start.html:18
 #: uffd/user/templates/group/show.html:29
 msgid ""
 "At least one and at most 32 lower-case characters, digits, dashes (\"-\")"
@@ -1528,11 +1619,11 @@ msgstr ""
 "1 bis 32 Kleinbuchstaben, Zahlen, Binde- (\"-\") und Unterstriche "
 "(\"_\"). <b>Kann später nicht geändert werden!</b>"
 
-#: uffd/signup/templates/signup/start.html:30
+#: uffd/signup/templates/signup/start.html:25
 msgid "At least one and at most 128 characters, no other special requirements."
 msgstr "Mindestens 1 und maximal 128 Zeichen, keine weiteren Einschränkungen."
 
-#: uffd/signup/templates/signup/start.html:37
+#: uffd/signup/templates/signup/start.html:32
 msgid ""
 "We will send a confirmation mail to this address that you need to "
 "complete the registration."
@@ -1540,19 +1631,19 @@ msgstr ""
 "Wir werden eine Bestätigungsmail an diese Adresse senden. Du benötigst "
 "sie, um die Account-Registrierung abzuschließen."
 
-#: uffd/signup/templates/signup/start.html:52
+#: uffd/signup/templates/signup/start.html:47
 msgid "Create Account"
 msgstr "Account registrieren"
 
-#: uffd/signup/templates/signup/start.html:79
+#: uffd/signup/templates/signup/start.html:74
 msgid "The name is already taken"
 msgstr "Dieser Name wird bereits verwendet"
 
-#: uffd/signup/templates/signup/start.html:82
+#: uffd/signup/templates/signup/start.html:77
 msgid "Too many requests! Please wait a bit before trying again!"
 msgstr "Zu viele Anfragen! Bitte warte etwas, bevor du es erneut versuchst!"
 
-#: uffd/signup/templates/signup/start.html:85
+#: uffd/signup/templates/signup/start.html:80
 msgid "The name is invalid"
 msgstr "Name ungültig"
 

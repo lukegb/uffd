@@ -196,7 +196,7 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 $('#webauthn-form').on('submit', function(e) {
 	$('#webauthn-alert').addClass('d-none');
 	$('#webauthn-spinner').removeClass('d-none');
-	$('#webauthn-btn-text').text('Contacting server');
+	$('#webauthn-btn-text').text({{ _('Contacting server')|tojson }});
 	$('#webauthn-btn').prop('disabled', true);
 	fetch({{ url_for('mfa.setup_webauthn_begin')|tojson }}, {
 		method: 'POST',
@@ -204,10 +204,10 @@ $('#webauthn-form').on('submit', function(e) {
 		if (response.ok)
 			return response.arrayBuffer();
 		if (response.status == 403)
-			throw new Error('You need to generate recovery codes first');
-		throw new Error('Server error');
+			throw new Error({{ _('You need to generate recovery codes first')|tojson }});
+		throw new Error({{ _('Server error')|tojson }});
 	}).then(CBOR.decode).then(function(options) {
-		$('#webauthn-btn-text').text('Waiting for response from your device');
+		$('#webauthn-btn-text').text({{ _('Waiting for device')|tojson }});
 		return navigator.credentials.create(options);
 	}).then(function(attestation) {
 		return fetch({{ url_for('mfa.setup_webauthn_complete')|tojson }}, {
@@ -222,34 +222,34 @@ $('#webauthn-form').on('submit', function(e) {
 	}).then(function(response) {
 		if (response.ok) {
 			$('#webauthn-spinner').addClass('d-none');
-			$('#webauthn-btn-text').text('Success');
+			$('#webauthn-btn-text').text({{ _('Success')|tojson }});
 			window.location = {{ url_for('mfa.setup')|tojson }};
 		} else {
-			throw new Error('Response from authenticator rejected');
+			throw new Error({{ _('Invalid response from device')|tojson }});
 		}
 	}, function(err) {
 		console.log(err);
 		/* various webauthn errors */
 		if (err.name == 'NotAllowedError')
-			$('#webauthn-alert').text('Registration timed out, was aborted or not allowed');
+			$('#webauthn-alert').text({{ _('Registration timed out, was aborted or not allowed')|tojson }});
 		else if (err.name == 'InvalidStateError')
-			$('#webauthn-alert').text('You attempted to register a device that is already registered');
+			$('#webauthn-alert').text({{ _('Device already registered')|tojson }});
 		else if (err.name == 'AbortError')
-			$('#webauthn-alert').text('Registration was aborted');
+			$('#webauthn-alert').text({{ _('Registration was aborted')|tojson }});
 		else if (err.name == 'NotSupportedError')
-			$('#webauthn-alert').text('U2F and FIDO2 devices are not supported by your browser');
+			$('#webauthn-alert').text({{ _('U2F and FIDO2 devices are not supported by your browser')|tojson }});
 		/* errors from fetch() */
 		else if (err.name == 'TypeError')
-			$('#webauthn-alert').text('Could not connect to server');
+			$('#webauthn-alert').text({{ _('Could not connect to server')|tojson }});
 		/* our own errors */
 		else if (err.name == 'Error')
 			$('#webauthn-alert').text(err.message);
 		/* fallback */
 		else
-			$('#webauthn-alert').text('Registration failed ('+err+')');
+			$('#webauthn-alert').text({{ _('Registration failed')|tojson }}+' ('+err+')');
 		$('#webauthn-alert').removeClass('d-none');
 		$('#webauthn-spinner').addClass('d-none');
-		$('#webauthn-btn-text').text('Retry registration');
+		$('#webauthn-btn-text').text({{ _('Retry registration')|tojson }});
 		$('#webauthn-btn').prop('disabled', false);
 	});
 	return false;
@@ -261,7 +261,7 @@ if (typeof(PublicKeyCredential) != "undefined") {
 	$('#webauthn-name').prop('disabled', false);
 	{% endif %}
 } else {
-	$('#webauthn-alert').text('U2F and FIDO2 devices are not supported by your browser');
+	$('#webauthn-alert').text({{ _('U2F and FIDO2 devices are not supported by your browser')|tojson }});
 	$('#webauthn-alert').removeClass('d-none');
 }
 

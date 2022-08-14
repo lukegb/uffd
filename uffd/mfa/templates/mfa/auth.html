@@ -40,7 +40,7 @@
 function begin_webauthn() {
 	$('#webauthn-alert').addClass('d-none');
 	$('#webauthn-spinner').removeClass('d-none');
-	$('#webauthn-btn-text').text('Fetching credential data');
+	$('#webauthn-btn-text').text({{ _('Contacting server')|tojson }});
 	$('#webauthn-btn').prop('disabled', true);
 	fetch({{ url_for('mfa.auth_webauthn_begin')|tojson }}, {
 		method: 'POST',
@@ -49,17 +49,17 @@ function begin_webauthn() {
 			return response.arrayBuffer();
 		} else if (response.status == 403) {
 			window.location = {{ request.url|tojson }}; /* reload */
-			throw new Error('Session timed out');
+			throw new Error({{ _('Session timed out')|tojson }});
 		} else if (response.status == 404) {
-			throw new Error('You have not registered any U2F/FIDO2 devices for your account');
+			throw new Error({{ _('You have not registered any U2F/FIDO2 devices for your account')|tojson }});
 		} else {
-			throw new Error('Server error');
+			throw new Error({{ _('Server error')|tojson }});
 		}
 	}).then(CBOR.decode).then(function(options) {
-		$('#webauthn-btn-text').text('Waiting for response from your device');
+		$('#webauthn-btn-text').text({{ _('Waiting for device')|tojson }});
 		return navigator.credentials.get(options);
 	}).then(function(assertion) {
-		$('#webauthn-btn-text').text('Verifing response');
+		$('#webauthn-btn-text').text({{ _('Verifing response')|tojson }});
 		return fetch({{ url_for('mfa.auth_webauthn_complete')|tojson }}, {
 			method: 'POST',
 			headers: {'Content-Type': 'application/cbor'},
@@ -73,37 +73,37 @@ function begin_webauthn() {
 	}).then(function(response) {
 		if (response.ok) {
 			$('#webauthn-spinner').addClass('d-none');
-			$('#webauthn-btn-text').text('Success, redirecting');
+			$('#webauthn-btn-text').text({{ _('Success, redirecting')|tojson }});
 			window.location = {{ (ref or url_for('index'))|tojson }};
 		} else if (response.status == 403) {
 			window.location = {{ request.url|tojson }}; /* reload */
-			throw new Error('Session timed out');
+			throw new Error({{ _('Session timed out')|tojson }});
 		} else {
-			throw new Error('Response from authenticator rejected');
+			throw new Error({{ _('Invalid response from device')|tojson }});
 		}
 	}).catch(function(err) {
 		console.log(err);
 		/* various webauthn errors */
 		if (err.name == 'NotAllowedError')
-			$('#webauthn-alert').text('Authentication timed out, was aborted or not allowed');
+			$('#webauthn-alert').text({{ _('Authentication timed out, was aborted or not allowed')|tojson }});
 		else if (err.name == 'InvalidStateError')
-			$('#webauthn-alert').text('Device is not registered for your account');
+			$('#webauthn-alert').text({{ _('Device is not registered for your account')|tojson }});
 		else if (err.name == 'AbortError')
-			$('#webauthn-alert').text('Authentication was aborted');
+			$('#webauthn-alert').text({{ _('Authentication was aborted')|tojson }});
 		else if (err.name == 'NotSupportedError')
-			$('#webauthn-alert').text('U2F and FIDO2 devices are not supported by your browser');
+			$('#webauthn-alert').text({{ _('U2F and FIDO2 devices are not supported by your browser')|tojson }});
 		/* errors from fetch() */
 		else if (err.name == 'TypeError')
-			$('#webauthn-alert').text('Could not connect to server');
+			$('#webauthn-alert').text({{ _('Could not connect to server')|tojson }});
 		/* our own errors */
 		else if (err.name == 'Error')
 			$('#webauthn-alert').text(err.message);
 		/* fallback */
 		else
-			$('#webauthn-alert').text('Authentication failed ('+err+')');
+			$('#webauthn-alert').text({{ _('Authentication failed ')|tojson }}+'('+err+')');
 		$('#webauthn-alert').removeClass('d-none');
 		$('#webauthn-spinner').addClass('d-none');
-		$('#webauthn-btn-text').text('Try FIDO token again');
+		$('#webauthn-btn-text').text({{ _('Retry authenticate with U2F/FIDO2 device')|tojson }});
 		$('#webauthn-btn').prop('disabled', false);
 	});
 }
