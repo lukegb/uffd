@@ -141,7 +141,7 @@ class WebauthnMethod(MFAMethod):
 
 	@property
 	def cred(self):
-		from fido2.ctap2 import AttestedCredentialData #pylint: disable=import-outside-toplevel
+		from .fido2_compat import AttestedCredentialData #pylint: disable=import-outside-toplevel
 		return AttestedCredentialData(base64.b64decode(self._cred))
 
 	@cred.setter

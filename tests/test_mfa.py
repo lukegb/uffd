@@ -26,7 +26,7 @@ class TestMfaPrimitives(unittest.TestCase):
 
 def get_fido2_test_cred(self):
 	try:
-		from fido2.ctap2 import AttestedCredentialData
+		from uffd.mfa.fido2_compat import AttestedCredentialData
 	except ImportError:
 		self.skipTest('fido2 could not be imported')
 	# Example public key from webauthn spec 6.5.1.1
