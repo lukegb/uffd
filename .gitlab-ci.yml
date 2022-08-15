@@ -3,7 +3,6 @@ image: registry.git.cccv.de/uffd/docker-images/buster
 variables:
   DEBIAN_FRONTEND: noninteractive 
   GIT_SUBMODULE_STRATEGY: normal
-  PYTHONPATH: deps/ldapalchemy
   APT_API_URL: https://packages.cccv.de
   APT_REPO: uffd
   PYLINT_PIN: pylint~=2.10.0
@@ -62,9 +61,7 @@ linter:buster:
   stage: test
   script:
   - pip3 install $PYLINT_PIN pylint-gitlab pylint-flask-sqlalchemy # this force-updates jinja2 and some other packages!
-  - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabCodeClimateReporter uffd > codeclimate.json
-  - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabPagesHtmlReporter uffd > pylint.html
-  - python3 -m pylint --rcfile .pylintrc --output-format=text uffd
+  - python3 -m pylint --output-format=pylint_gitlab.GitlabCodeClimateReporter:codeclimate.json,pylint_gitlab.GitlabPagesHtmlReporter:pylint.html,colorized uffd
   artifacts:
     when: always
     paths:
@@ -77,9 +74,7 @@ linter:bullseye:
   stage: test
   script:
   - pip3 install $PYLINT_PIN pylint-gitlab pylint-flask-sqlalchemy # this force-updates jinja2 and some other packages!
-  - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabCodeClimateReporter uffd > codeclimate.json
-  - python3 -m pylint --exit-zero --rcfile .pylintrc --output-format=pylint_gitlab.GitlabPagesHtmlReporter uffd > pylint.html
-  - python3 -m pylint --rcfile .pylintrc --output-format=text uffd
+  - python3 -m pylint --output-format=pylint_gitlab.GitlabCodeClimateReporter:codeclimate.json,pylint_gitlab.GitlabPagesHtmlReporter:pylint.html,colorized uffd
   artifacts:
     when: always
     paths:
@@ -91,11 +86,11 @@ unittests:buster:
   image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
   script:
-  - service slapd start
-  - UNITTEST_OPENLDAP=1 python3-coverage run --include 'uffd/*.py' -m pytest --junitxml=report.xml || true
+  - python3-coverage run --include 'uffd/*.py' -m pytest --junitxml=report.xml || touch failed
   - python3-coverage report -m
   - python3-coverage html
   - python3-coverage xml
+  - test ! -e failed
   artifacts:
     when: always
     paths:
@@ -113,23 +108,11 @@ unittests:bullseye:
   image: registry.git.cccv.de/uffd/docker-images/bullseye
   stage: test
   script:
-  - service slapd start
-  - UNITTEST_OPENLDAP=1 python3-coverage run --include 'uffd/*.py' -m pytest --junitxml=report.xml || true
-  #- python3-coverage report -m
-  - python3-coverage html
-  #- python3-coverage xml
+  - python3 -m pytest --junitxml=report.xml
   artifacts:
     when: always
-    paths:
-    - htmlcov/index.html
-    - htmlcov
-    expose_as: 'Coverage Report'
     reports:
-      #coverage_report:
-      #  coverage_format: cobertura
-      #  path: coverage.xml
       junit: report.xml
-  #coverage: '/^TOTAL.*\s+(\d+\%)$/'
 
 html5validator:
   stage: test

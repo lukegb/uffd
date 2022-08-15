@@ -147,7 +147,7 @@ class TestSignupModel(UffdTestCase):
 		self.assert_finish_failure(signup, 'wrongpassword')
 		self.assert_finish_failure(refetch_signup(signup), 'wrongpassword')
 
-	def test_finish_ldaperror(self):
+	def test_finish_duplicate(self):
 		signup = Signup(loginname='testuser', displayname='New User', mail='test@example.com', password='notsecret')
 		self.assert_finish_failure(signup, 'notsecret')
 		self.assert_finish_failure(refetch_signup(signup), 'notsecret')

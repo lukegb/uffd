@@ -186,7 +186,7 @@ class TestRoleViews(UffdTestCase):
 		self.assertEqual(role.name, 'base1')
 		self.assertEqual(role.description, 'Base role description1')
 		self.assertSetEqual(set(role.groups), {self.get_access_group(), self.get_users_group()})
-		# TODO: verify that group memberships are updated (currently not possible with ldap mock!)
+		# TODO: verify that group memberships are updated
 
 	def test_create(self):
 		self.assertIsNone(Role.query.filter_by(name='base').first())

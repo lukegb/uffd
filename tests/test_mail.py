@@ -65,7 +65,7 @@ class TestMailViews(UffdTestCase):
 		self.assertEqual(sorted(m.receivers), ['foo@bar.com', 'test@bar.com'])
 		self.assertEqual(sorted(m.destinations), ['testadmin@mail.example.com', 'testuser@mail.example.com'])
 
-	@unittest.skip('We do not catch LDAP errors at the moment!') # TODO: Not sure if necessary
+	@unittest.skip('We do not catch DB errors at the moment!') # TODO
 	def test_create_error(self):
 		r = self.client.post(path=url_for('mail.update'),
 			data={'mail-uid': 'test', 'mail-receivers': 'foo@bar.com\ntest@bar.com',

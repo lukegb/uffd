@@ -84,7 +84,6 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 
 	@app.shell_context_processor
 	def push_request_context(): #pylint: disable=unused-variable
-		app.test_request_context().push() # LDAP ORM requires request context
 		return {'db': db} | {name: getattr(models, name) for name in models.__all__}
 
 	babel = Babel(app)
