@@ -4,13 +4,8 @@ import unittest
 from flask import url_for, session
 import sqlalchemy
 
-# These imports are required, because otherwise we get circular imports?!
-from uffd import user
-
-from uffd.user.models import User, remailer, RemailerAddress, Group
-from uffd.role.models import Role, RoleGroup
-from uffd.service.models import Service
 from uffd import create_app, db
+from uffd.models import User, remailer, RemailerAddress, Group, Role, RoleGroup, Service
 
 from utils import dump, UffdTestCase
 

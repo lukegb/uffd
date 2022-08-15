@@ -4,13 +4,9 @@ import unittest
 
 from flask import url_for, session
 
-# These imports are required, because otherwise we get circular imports?!
-from uffd import user
-
-from uffd.user.models import User, Group
-from uffd.role.models import flatten_recursive, Role, RoleGroup
-from uffd.mfa.models import TOTPMethod
 from uffd import create_app, db
+from uffd.models import User, Group, Role, RoleGroup, TOTPMethod
+from uffd.models.role import flatten_recursive
 
 from utils import dump, UffdTestCase
 

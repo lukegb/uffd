@@ -3,13 +3,8 @@ import unittest
 
 from flask import url_for, request
 
-# These imports are required, because otherwise we get circular imports?!
-from uffd import user
-
-from uffd.selfservice.models import MailToken, PasswordToken
-from uffd.user.models import User
-from uffd.role.models import Role, RoleGroup
 from uffd import create_app, db
+from uffd.models import MailToken, PasswordToken, User, Role, RoleGroup
 
 from utils import dump, UffdTestCase
 

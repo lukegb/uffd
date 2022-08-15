@@ -3,9 +3,6 @@ import unittest
 
 from flask import url_for
 
-# These imports are required, because otherwise we get circular imports?!
-from uffd import user
-
 from utils import dump, UffdTestCase
 
 class TestServices(UffdTestCase):

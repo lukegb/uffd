@@ -4,13 +4,9 @@ import time
 
 from flask import url_for, session, request
 
-# These imports are required, because otherwise we get circular imports?!
-from uffd import user
-
-from uffd.user.models import User
-from uffd.role.models import Role, RoleGroup
-from uffd.mfa.models import MFAMethod, MFAType, RecoveryCodeMethod, TOTPMethod, WebauthnMethod, _hotp
 from uffd import create_app, db
+from uffd.models import User, Role, RoleGroup, MFAMethod, MFAType, RecoveryCodeMethod, TOTPMethod, WebauthnMethod
+from uffd.models.mfa import _hotp
 
 from utils import dump, UffdTestCase, db_flush
 
@@ -26,7 +22,7 @@ class TestMfaPrimitives(unittest.TestCase):
 
 def get_fido2_test_cred(self):
 	try:
-		from uffd.mfa.fido2_compat import AttestedCredentialData
+		from uffd.fido2_compat import AttestedCredentialData
 	except ImportError:
 		self.skipTest('fido2 could not be imported')
 	# Example public key from webauthn spec 6.5.1.1

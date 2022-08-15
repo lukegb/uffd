@@ -2,12 +2,10 @@ import base64
 
 from flask import url_for
 
-from uffd.api.views import apikey_required
-from uffd.api.models import APIClient
-from uffd.service.models import Service
-from uffd.user.models import User, remailer
+from uffd.models import APIClient, Service, User, remailer
 from uffd.password_hash import PlaintextPasswordHash
 from uffd.database import db
+from uffd.views.api import apikey_required
 from utils import UffdTestCase, db_flush
 
 def basic_auth(username, password):

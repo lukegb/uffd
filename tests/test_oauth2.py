@@ -3,15 +3,9 @@ from urllib.parse import urlparse, parse_qs
 
 from flask import url_for, session
 
-# These imports are required, because otherwise we get circular imports?!
-from uffd import user
-
-from uffd.user.models import User, remailer
-from uffd.password_hash import PlaintextPasswordHash
-from uffd.session.models import DeviceLoginConfirmation
-from uffd.service.models import Service
-from uffd.oauth2.models import OAuth2Client, OAuth2DeviceLoginInitiation
 from uffd import create_app, db
+from uffd.password_hash import PlaintextPasswordHash
+from uffd.models import User, remailer, DeviceLoginConfirmation, Service, OAuth2Client, OAuth2DeviceLoginInitiation
 
 from utils import dump, UffdTestCase
 

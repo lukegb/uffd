@@ -4,11 +4,8 @@ import unittest
 
 from flask import url_for, session
 
-# These imports are required, because otherwise we get circular imports?!
-from uffd import user
-
-from uffd.mail.models import Mail
 from uffd import create_app, db
+from uffd.models import Mail
 
 from utils import dump, UffdTestCase, db_flush
 

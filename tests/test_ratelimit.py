@@ -2,7 +2,7 @@ import time
 
 from flask import Flask, Blueprint, session, url_for
 
-from uffd.ratelimit import get_addrkey, format_delay, Ratelimit, RatelimitEvent
+from uffd.models.ratelimit import get_addrkey, format_delay, Ratelimit, RatelimitEvent
 
 from utils import UffdTestCase
 

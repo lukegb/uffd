@@ -3,16 +3,10 @@ import unittest
 
 from flask import url_for, request
 
-# These imports are required, because otherwise we get circular imports?!
-from uffd import user
-
-from uffd.session.views import login_required
-from uffd.session.models import DeviceLoginConfirmation
-from uffd.service.models import Service
-from uffd.oauth2.models import OAuth2Client, OAuth2DeviceLoginInitiation
-from uffd.user.models import User
-from uffd.password_hash import PlaintextPasswordHash
 from uffd import create_app, db
+from uffd.password_hash import PlaintextPasswordHash
+from uffd.models import DeviceLoginConfirmation, Service, OAuth2Client, OAuth2DeviceLoginInitiation, User
+from uffd.views.session import login_required
 
 from utils import dump, UffdTestCase, db_flush
 

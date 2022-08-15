@@ -1,8 +1,7 @@
 from flask import url_for
 
-from uffd.user.models import User, Group
-from uffd.role.models import Role, RoleGroup
 from uffd.database import db
+from uffd.models import User, Group, Role, RoleGroup
 
 from utils import dump, UffdTestCase
 

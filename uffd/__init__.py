@@ -4,24 +4,14 @@ import sys
 
 from flask import Flask, redirect, url_for, request, render_template
 from flask_babel import Babel
-from werkzeug.routing import IntegerConverter
-from werkzeug.serving import make_ssl_devcert
-try:
-	from werkzeug.middleware.profiler import ProfilerMiddleware
-except ImportError:
-	from werkzeug.contrib.profiler import ProfilerMiddleware
-from werkzeug.exceptions import InternalServerError, Forbidden
+from werkzeug.exceptions import Forbidden
 from flask_migrate import Migrate
 
-from uffd.database import db, SQLAlchemyJSON, customize_db_engine
-from uffd.tasks import cleanup_task
-from uffd.template_helper import register_template_helper
-from uffd.navbar import setup_navbar
-from uffd.secure_redirect import secure_local_redirect
-from uffd import user, selfservice, role, mail, session, csrf, mfa, oauth2, service, signup, rolemod, invite, api
-from uffd.user.models import User, Group
-from uffd.role.models import Role, RoleGroup
-from uffd.mail.models import Mail
+from .database import db, SQLAlchemyJSON, customize_db_engine
+from .template_helper import register_template_helper
+from .navbar import setup_navbar
+from .csrf import bp as csrf_bp
+from . import models, views, commands
 
 def load_config_file(app, path, silent=False):
 	if not os.path.exists(path):
@@ -75,6 +65,11 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 	positions += ["rolemod", "invite", "user", "group", "role", "mail"]
 	setup_navbar(app, positions)
 
+	app.register_blueprint(csrf_bp)
+
+	views.init_app(app)
+	commands.init_app(app)
+
 	# We never want to fail here, but at a file access that doesn't work.
 	# We might only have read access to app.instance_path
 	try:
@@ -87,51 +82,10 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 	with app.app_context():
 		customize_db_engine(db.engine)
 
-	cleanup_task.init_app(app, db)
-
-	for module in [user, selfservice, role, mail, session, csrf, mfa, oauth2, service, rolemod, api, signup, invite]:
-		for bp in module.bp:
-			app.register_blueprint(bp)
-
 	@app.shell_context_processor
 	def push_request_context(): #pylint: disable=unused-variable
 		app.test_request_context().push() # LDAP ORM requires request context
-		return {'db': db, 'User': User, 'Group': Group, 'Role': Role, 'Mail': Mail}
-
-	@app.errorhandler(403)
-	def handle_403(error):
-		return render_template('403.html', description=error.description if error.description != Forbidden.description else None), 403
-
-	@app.route("/")
-	def index(): #pylint: disable=unused-variable
-		if app.config['DEFAULT_PAGE_SERVICES']:
-			return redirect(url_for('service.overview'))
-		return redirect(url_for('selfservice.index'))
-
-	@app.route('/lang', methods=['POST'])
-	def setlang(): #pylint: disable=unused-variable
-		resp = secure_local_redirect(request.values.get('ref', '/'))
-		if 'lang' in request.values:
-			resp.set_cookie('language', request.values['lang'])
-		return resp
-
-	@app.cli.command("gendevcert", help='Generates a self-signed TLS certificate for development')
-	def gendevcert(): #pylint: disable=unused-variable
-		if os.path.exists('devcert.crt') or os.path.exists('devcert.key'):
-			print('Refusing to overwrite existing "devcert.crt"/"devcert.key" file!')
-			return
-		make_ssl_devcert('devcert')
-		print('Certificate written to "devcert.crt", private key to "devcert.key".')
-		print('Run `flask run --cert devcert.crt --key devcert.key` to use it.')
-
-	@app.cli.command("profile", help='Runs app with profiler')
-	def profile(): #pylint: disable=unused-variable
-		# app.run() is silently ignored if executed from commands. We really want
-		# to do this, so we overwrite the check by overwriting the environment
-		# variable.
-		os.environ['FLASK_RUN_FROM_CLI'] = 'false'
-		app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
-		app.run(debug=True)
+		return {'db': db} | {name: getattr(models, name) for name in models.__all__}
 
 	babel = Babel(app)
 

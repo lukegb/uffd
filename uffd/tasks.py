@@ -1,14 +1,6 @@
 class CleanupTask:
-	def __init__(self, *init_args):
+	def __init__(self):
 		self.handlers = []
-		if init_args:
-			self.init_app(*init_args)
-
-	def init_app(self, app, db):
-		@app.cli.command('cleanup', help='Cleanup expired data')
-		def cleanup(): #pylint: disable=unused-variable
-			self.run()
-			db.session.commit()
 
 	def handler(self, func):
 		self.handlers.append(func)

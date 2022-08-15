@@ -2,7 +2,7 @@ import unittest
 
 from flask import Flask, Blueprint, session, url_for
 
-from uffd.csrf import csrf_bp, csrf_protect
+from uffd.csrf import bp as csrf_bp, csrf_protect
 
 uid_counter = 0
 

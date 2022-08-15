@@ -4,14 +4,9 @@ import time
 
 from flask import url_for, session, request
 
-# These imports are required, because otherwise we get circular imports?!
-from uffd import user
-
 from uffd import create_app, db
-from uffd.signup.models import Signup
-from uffd.user.models import User
-from uffd.role.models import Role, RoleGroup
-from uffd.session.views import login_get_user
+from uffd.models import Signup, User, Role, RoleGroup
+from uffd.views.session import login_get_user
 
 from utils import dump, UffdTestCase, db_flush
 

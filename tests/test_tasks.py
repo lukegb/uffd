@@ -12,7 +12,7 @@ class TestCleanupTask(unittest.TestCase):
 		app.debug = True
 		app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 		db = SQLAlchemy(app)
-		cleanup_task = CleanupTask(app, db)
+		cleanup_task = CleanupTask()
 
 		@cleanup_task.delete_by_attribute('delete_me')
 		class TestModel(db.Model):
@@ -30,7 +30,10 @@ class TestCleanupTask(unittest.TestCase):
 			db.session.expire_all()
 			self.assertEqual(TestModel.query.count(), 5)
 
-		app.test_cli_runner().invoke(args=['cleanup'])
+		with app.test_request_context():
+			cleanup_task.run()
+			db.session.commit()
+			db.session.expire_all()
 
 		with app.test_request_context():
 			self.assertEqual(TestModel.query.count(), 2)

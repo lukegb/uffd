@@ -7,15 +7,17 @@ import datetime
 import flask_migrate
 
 from uffd import create_app, db
-from uffd.user.models import User, Group
-from uffd.mfa.models import RecoveryCodeMethod, TOTPMethod, WebauthnMethod
-from uffd.role.models import Role, RoleGroup
-from uffd.signup.models import Signup
-from uffd.invite.models import Invite, InviteGrant, InviteSignup
-from uffd.session.models import DeviceLoginConfirmation
-from uffd.service.models import Service
-from uffd.oauth2.models import OAuth2Client, OAuth2LogoutURI, OAuth2Grant, OAuth2Token, OAuth2DeviceLoginInitiation
-from uffd.selfservice.models import PasswordToken, MailToken
+from uffd.models import (
+	User, Group,
+	RecoveryCodeMethod, TOTPMethod, WebauthnMethod,
+	Role, RoleGroup,
+	Signup,
+	Invite, InviteGrant, InviteSignup,
+	DeviceLoginConfirmation,
+	Service,
+	OAuth2Client, OAuth2LogoutURI, OAuth2Grant, OAuth2Token, OAuth2DeviceLoginInitiation,
+	PasswordToken, MailToken,
+)
 
 def run_test(dburi, revision):
 	config = {

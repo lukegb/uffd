@@ -6,8 +6,7 @@ import unittest
 from flask import request, url_for
 
 from uffd import create_app, db
-from uffd.user.models import User, Group
-from uffd.mail.models import Mail
+from uffd.models import User, Group, Mail
 
 def dump(basename, resp):
 	basename = basename.replace('.', '_').replace('/', '_')
