@@ -4,6 +4,7 @@ import sys
 
 from flask import Flask, redirect, url_for, request, render_template
 from flask_babel import Babel
+from babel.dates import LOCALTZ
 from werkzeug.exceptions import Forbidden
 from flask_migrate import Migrate
 
@@ -86,7 +87,21 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 	def push_request_context(): #pylint: disable=unused-variable
 		return {'db': db} | {name: getattr(models, name) for name in models.__all__}
 
-	babel = Babel(app)
+	# flask-babel requires pytz-style timezone objects, but in rare cases (e.g.
+	# non-IANA TZ values) LOCALTZ is stdlib-style (without normalize/localize)
+	if not hasattr(LOCALTZ, 'normalize'):
+		LOCALTZ.normalize = lambda dt: dt
+	if not hasattr(LOCALTZ, 'localize'):
+		LOCALTZ.localize = lambda dt: dt.replace(tzinfo=LOCALTZ)
+
+	class PatchedBabel(Babel):
+		@property
+		def default_timezone(self):
+			if self.app.config['BABEL_DEFAULT_TIMEZONE'] == 'LOCALTZ':
+				return LOCALTZ
+			return super().default_timezone
+
+	babel = PatchedBabel(app, default_timezone='LOCALTZ')
 
 	@babel.localeselector
 	def get_locale(): #pylint: disable=unused-variable

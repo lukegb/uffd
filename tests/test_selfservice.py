@@ -186,7 +186,7 @@ class TestSelfservice(UffdTestCase):
 		user = request.user
 		old_mail = user.mail
 		token = MailToken(user=user, newmail='newusermail@example.com',
-			created=(datetime.datetime.now() - datetime.timedelta(days=10)))
+			created=(datetime.datetime.utcnow() - datetime.timedelta(days=10)))
 		db.session.add(token)
 		db.session.commit()
 		r = self.client.get(path=url_for('selfservice.token_mail', token_id=token.id, token=token.token), follow_redirects=True)
@@ -288,7 +288,7 @@ class TestSelfservice(UffdTestCase):
 
 	def test_token_password_expired(self):
 		user = self.get_user()
-		token = PasswordToken(user=user, created=(datetime.datetime.now() - datetime.timedelta(days=10)))
+		token = PasswordToken(user=user, created=(datetime.datetime.utcnow() - datetime.timedelta(days=10)))
 		db.session.add(token)
 		db.session.commit()
 		self.assertTrue(token.expired)

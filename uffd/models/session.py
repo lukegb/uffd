@@ -80,7 +80,7 @@ class DeviceLoginInitiation(db.Model):
 	code1 = Column(String(32), unique=True, nullable=False, default=lambda: token_typeable(3))
 	secret = Column(String(128), nullable=False, default=lambda: secrets.token_hex(64))
 	confirmations = relationship('DeviceLoginConfirmation', back_populates='initiation', cascade='all, delete-orphan')
-	created = Column(DateTime, default=datetime.datetime.now, nullable=False)
+	created = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
 
 	__mapper_args__ = {
 		'polymorphic_on': type,
@@ -96,7 +96,7 @@ class DeviceLoginInitiation(db.Model):
 	def expired(self):
 		if self.created is None:
 			return False
-		return self.created < datetime.datetime.now() - datetime.timedelta(minutes=30)
+		return self.created < datetime.datetime.utcnow() - datetime.timedelta(minutes=30)
 
 	@property
 	def description(self):

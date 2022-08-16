@@ -2,7 +2,7 @@ import datetime
 import secrets
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify, abort
-from flask_babel import gettext as _, lazy_gettext
+from flask_babel import gettext as _, lazy_gettext, to_utc
 import sqlalchemy
 
 from uffd.csrf import csrf_protect
@@ -57,18 +57,21 @@ def new():
 		roles = Role.query.join(Role.moderator_group).join(Group.members).filter(User.id==request.user.id).all()
 	return render_template('invite/new.html', roles=roles, allow_signup=allow_signup)
 
+def parse_datetime_local_input(value):
+	return to_utc(datetime.datetime.fromisoformat(value))
+
 @bp.route('/new', methods=['POST'])
 @login_required(invite_acl_check)
 @csrf_protect(blueprint=bp)
 def new_submit():
 	invite = Invite(creator=request.user,
 	                single_use=(request.values['single-use'] == '1'),
-	                valid_until=datetime.datetime.fromisoformat(request.values['valid-until']),
+	                valid_until=parse_datetime_local_input(request.values['valid-until']),
 	                allow_signup=(request.values.get('allow-signup', '0') == '1'))
 	for key, value in request.values.items():
 		if key.startswith('role-') and value == '1':
 			invite.roles.append(Role.query.get(key[5:]))
-	if invite.valid_until > datetime.datetime.now() + datetime.timedelta(days=current_app.config['INVITE_MAX_VALID_DAYS']):
+	if invite.valid_until > datetime.datetime.utcnow() + datetime.timedelta(days=current_app.config['INVITE_MAX_VALID_DAYS']):
 		flash(_('The "Expires After" date is too far in the future'))
 		return new()
 	if not invite.permitted:

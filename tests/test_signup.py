@@ -61,7 +61,7 @@ class TestSignupModel(UffdTestCase):
 		# TODO: Find a better way to test this!
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
 		self.assertFalse(signup.expired)
-		signup.created = created=datetime.datetime.now() - datetime.timedelta(hours=49)
+		signup.created = created=datetime.datetime.utcnow() - datetime.timedelta(hours=49)
 		self.assertTrue(signup.expired)
 
 	def test_completed(self):
@@ -86,7 +86,7 @@ class TestSignupModel(UffdTestCase):
 
 	def test_validate_expired(self):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com',
-		                password='notsecret', created=datetime.datetime.now()-datetime.timedelta(hours=49))
+		                password='notsecret', created=datetime.datetime.utcnow()-datetime.timedelta(hours=49))
 		self.assert_validate_invalid(signup)
 		self.assert_validate_invalid(refetch_signup(signup))
 
@@ -132,7 +132,7 @@ class TestSignupModel(UffdTestCase):
 	def test_finish_expired(self):
 		# TODO: Find a better way to test this!
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com',
-		                password='notsecret', created=datetime.datetime.now()-datetime.timedelta(hours=49))
+		                password='notsecret', created=datetime.datetime.utcnow()-datetime.timedelta(hours=49))
 		self.assert_finish_failure(signup, 'notsecret')
 		self.assert_finish_failure(refetch_signup(signup), 'notsecret')
 
@@ -366,7 +366,7 @@ class TestSignupViews(UffdTestCase):
 
 	def test_confirm_expired(self):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
-		signup.created = datetime.datetime.now() - datetime.timedelta(hours=49)
+		signup.created = datetime.datetime.utcnow() - datetime.timedelta(hours=49)
 		signup = refetch_signup(signup)
 		r = self.client.get(path=url_for('signup.signup_confirm', signup_id=signup.id, token=signup.token), follow_redirects=True)
 		dump('test_signup_confirm_expired', r)

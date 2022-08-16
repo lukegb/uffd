@@ -31,7 +31,7 @@ def get_fido2_test_cred(self):
 class TestMfaMethodModels(UffdTestCase):
 	def test_common_attributes(self):
 		method = TOTPMethod(user=self.get_user(), name='testname')
-		self.assertTrue(method.created <= datetime.datetime.now())
+		self.assertTrue(method.created <= datetime.datetime.utcnow())
 		self.assertEqual(method.name, 'testname')
 		self.assertEqual(method.user.loginname, 'testuser')
 		method.user = self.get_admin()

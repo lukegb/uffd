@@ -31,7 +31,7 @@ class Signup(db.Model):
 	__tablename__ = 'signup'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
 	token = Column(String(128), default=token_urlfriendly, nullable=False)
-	created = Column(DateTime, default=datetime.datetime.now, nullable=False)
+	created = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
 	loginname = Column(Text)
 	displayname = Column(Text)
 	mail = Column(Text)
@@ -56,7 +56,7 @@ class Signup(db.Model):
 	def expired(self):
 		if self.created is None:
 			return False
-		return self.created < datetime.datetime.now() - datetime.timedelta(hours=48)
+		return self.created < datetime.datetime.utcnow() - datetime.timedelta(hours=48)
 
 	@hybrid_property
 	def completed(self):

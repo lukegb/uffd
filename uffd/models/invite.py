@@ -18,7 +18,7 @@ class Invite(db.Model):
 	__tablename__ = 'invite'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
 	token = Column(String(128), unique=True, nullable=False, default=token_urlfriendly)
-	created = Column(DateTime, default=datetime.datetime.now, nullable=False)
+	created = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
 	creator_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE'), nullable=True)
 	creator = relationship('User')
 	valid_until = Column(DateTime, nullable=False)
@@ -32,7 +32,7 @@ class Invite(db.Model):
 
 	@property
 	def expired(self):
-		return datetime.datetime.now().replace(second=0, microsecond=0) > self.valid_until
+		return datetime.datetime.utcnow().replace(second=0, microsecond=0) > self.valid_until
 
 	@property
 	def voided(self):

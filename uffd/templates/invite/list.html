@@ -56,9 +56,9 @@
 					{% elif not invite.active %}
 						{{_('Invalid')}}
 					{% elif invite.single_use %}
-						{{ _('Valid once, expires %(expiry_date)s', expiry_date=invite.valid_until.strftime('%Y-%m-%d')) }}
+						{{ _('Valid once, expires %(expiry_date)s', expiry_date=invite.valid_until|dateformat) }}
 					{% else %}
-						{{ _('Valid, expires %(expiry_date)s',expiry_date=invite.valid_until.strftime('%Y-%m-%d')) }}
+						{{ _('Valid, expires %(expiry_date)s', expiry_date=invite.valid_until|dateformat) }}
 					{% endif %}
 				</td>
 				<td class="text-right">
@@ -83,8 +83,8 @@
 			<div class="modal-body">
 				<ul class="list-unstyled">
 					<li><b>{{_('Type:')}}</b> {% if invite.single_use %}{{_('Single-use')}}{% else %}{{_('Multi-use')}}{% endif %}</li>
-					<li><b>{{_('Created:')}}</b> {{ invite.created.strftime('%Y-%m-%d %H:%M:%S') }}</li>
-					<li><b>{{_('Expires:')}}</b> {{ invite.valid_until.strftime('%Y-%m-%d %H:%M:%S') }}</li>
+					<li><b>{{_('Created:')}}</b> {{ invite.created|datetimeformat }}</li>
+					<li><b>{{_('Expires:')}}</b> {{ invite.valid_until|datetimeformat }}</li>
 					<li><b>{{_('Permissions:')}}</b>
 						<ul>
 							{% if invite.allow_signup %}

@@ -29,7 +29,7 @@ class MFAMethod(db.Model):
 	__tablename__ = 'mfa_method'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
 	type = Column(Enum(MFAType), nullable=False)
-	created = Column(DateTime(), nullable=False, default=datetime.datetime.now)
+	created = Column(DateTime(), nullable=False, default=datetime.datetime.utcnow)
 	name = Column(String(128))
 	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	user = relationship('User', backref=backref('mfa_methods', cascade='all, delete-orphan'))
@@ -41,7 +41,7 @@ class MFAMethod(db.Model):
 	def __init__(self, user, name=None):
 		self.user = user
 		self.name = name
-		self.created = datetime.datetime.now()
+		self.created = datetime.datetime.utcnow()
 
 class RecoveryCodeMethod(MFAMethod):
 	code_salt = Column('recovery_salt', String(64))

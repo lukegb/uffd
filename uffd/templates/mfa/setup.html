@@ -113,7 +113,7 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 				{% for method in request.user.mfa_totp_methods %}
 				<tr>
 					<td>{{ method.name }}</td>
-					<td>{{ method.created.strftime('%b %d, %Y') }}</td>
+					<td>{{ method.created|dateformat }}</td>
 					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_totp', id=method.id) }}">{{_("Delete")}}</a></td>
 				</tr>
 				{% endfor %}
@@ -175,7 +175,7 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 				{% for method in request.user.mfa_webauthn_methods %}
 				<tr>
 					<td>{{ method.name }}</td>
-					<td>{{ method.created.strftime('%b %d, %Y') }}</td>
+					<td>{{ method.created|dateformat }}</td>
 					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_webauthn', id=method.id) }}">{{_("Delete")}}</a></td>
 				</tr>
 				{% endfor %}

@@ -22,7 +22,7 @@ def set_request_user():
 		return
 	if 'logintime' not in session:
 		return
-	if datetime.datetime.now().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
+	if datetime.datetime.utcnow().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
 		return
 	user = User.query.get(session['user_id'])
 	if not user or not user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
@@ -49,7 +49,7 @@ def set_session(user, skip_mfa=False):
 	session.clear()
 	session.permanent = True
 	session['user_id'] = user.id
-	session['logintime'] = datetime.datetime.now().timestamp()
+	session['logintime'] = datetime.datetime.utcnow().timestamp()
 	session['_csrf_token'] = secrets.token_hex(128)
 	if skip_mfa:
 		session['user_mfa'] = True
