@@ -4,6 +4,9 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 
 from uffd.database import db
+from uffd.remailer import remailer
+from uffd.tasks import cleanup_task
+from .user import User
 
 class Service(db.Model):
 	__tablename__ = 'service'
@@ -25,8 +28,114 @@ class Service(db.Model):
 
 	use_remailer = Column(Boolean(), default=False, nullable=False)
 
-	def has_access(self, user):
-		return not self.limit_access or self.access_group in user.groups
+class ServiceUser(db.Model):
+	'''Service-related configuration and state for a user
+
+	ServiceUser objects are auto-created whenever a new User or Service is
+	created, so there one for for every (Service, User) pair.
+
+	Service- or User-related code should always use ServiceUser in queries
+	instead of User/Service.'''
+	__tablename__ = 'service_user'
+	__table_args__ = (
+		db.PrimaryKeyConstraint('service_id', 'user_id'),
+	)
+
+	service_id = Column(Integer(), ForeignKey('service.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	service = relationship('Service', viewonly=True)
+	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	user = relationship('User', viewonly=True)
+
+	@property
+	def has_access(self):
+		return not self.service.limit_access or self.service.access_group in self.user.groups
+
+	# Actual e-mail address that mails from the service are sent to
+	@property
+	def real_email(self):
+		return self.user.mail
+
+	@property
+	def remailer_email(self):
+		if not remailer.configured:
+			raise Exception('ServiceUser.remailer_email accessed with unconfigured remailer')
+		return remailer.build_address(self.service_id, self.user_id)
+
+	@classmethod
+	def get_by_remailer_email(cls, address):
+		if not remailer.configured:
+			return None
+		result = remailer.parse_address(address)
+		if result is None:
+			return None
+		# result is (service_id, user_id), i.e. our primary key
+		return cls.query.get(result)
+
+	# E-Mail address as seen by the service
+	@property
+	def email(self):
+		use_remailer = remailer.configured and self.service.use_remailer
+		if current_app.config['REMAILER_LIMIT_TO_USERS'] is not None:
+			use_remailer = use_remailer and self.user.loginname in current_app.config['REMAILER_LIMIT_TO_USERS']
+		if use_remailer:
+			return self.remailer_email
+		return self.real_email
+
+	@classmethod
+	def filter_query_by_email(cls, query, email):
+		'''Filter query of ServiceUser by ServiceUser.email'''
+		# pylint completely fails to understand SQLAlchemy's query functions
+		# pylint: disable=no-member,invalid-name
+		service_user = cls.get_by_remailer_email(email)
+		if service_user and service_user.email == email:
+			return query.filter(cls.user_id == service_user.user_id, cls.service_id == service_user.service_id)
+
+		AliasedUser = db.aliased(User)
+		AliasedService = db.aliased(Service)
+
+		query = query.join(cls.user.of_type(AliasedUser))
+		query = query.join(cls.service.of_type(AliasedService))
+
+		remailer_enabled_expr = AliasedService.use_remailer if remailer.configured else False
+		if current_app.config['REMAILER_LIMIT_TO_USERS'] is not None:
+			remailer_enabled_expr = db.and_(
+				remailer_enabled_expr,
+				AliasedUser.loginname.in_(current_app.config['REMAILER_LIMIT_TO_USERS']),
+			)
+		return query.filter(db.and_(db.not_(remailer_enabled_expr), AliasedUser.mail == email))
+
+@db.event.listens_for(db.Session, 'after_flush') # pylint: disable=no-member
+def create_service_users(session, flush_context): # pylint: disable=unused-argument
+	# pylint completely fails to understand SQLAlchemy's query functions
+	# pylint: disable=no-member
+	new_user_ids = [user.id for user in session.new if isinstance(user, User)]
+	new_service_ids = [service.id for service in session.new if isinstance(service, Service)]
+	if not new_user_ids and not new_service_ids:
+		return
+	db.session.execute(db.insert(ServiceUser).from_select(
+		['service_id', 'user_id'],
+		db.select([Service.id, User.id]).where(db.or_(
+			Service.id.in_(new_service_ids),
+			User.id.in_(new_user_ids),
+		))
+	))
+
+# On databases with write concurrency (i.e. everything but SQLite), the
+# after_flush handler above is racy. So in rare cases ServiceUser objects
+# might be missing.
+@cleanup_task.handler
+def create_missing_service_users():
+	# pylint completely fails to understand SQLAlchemy's query functions
+	# pylint: disable=no-member
+	db.session.execute(db.insert(ServiceUser).from_select(
+		['service_id', 'user_id'],
+		db.select([Service.id, User.id]).where(db.not_(
+			ServiceUser.query.filter(
+				ServiceUser.service_id == Service.id,
+				ServiceUser.user_id == User.id
+			).exists()
+		))
+	))
 
 # The user-visible services show on the service overview page are read from
 # the SERVICES config key. It is planned to gradually extend the Service model

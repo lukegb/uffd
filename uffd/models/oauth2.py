@@ -10,6 +10,7 @@ from uffd.database import db, CommaSeparatedList
 from uffd.tasks import cleanup_task
 from uffd.password_hash import PasswordHashAttribute, HighEntropyPasswordHash
 from .session import DeviceLoginInitiation, DeviceLoginType
+from .service import ServiceUser
 
 class OAuth2Client(db.Model):
 	__tablename__ = 'oauth2client'
@@ -40,7 +41,8 @@ class OAuth2Client(db.Model):
 		return self.redirect_uris[0]
 
 	def access_allowed(self, user):
-		return self.service.has_access(user)
+		service_user = ServiceUser.query.get((self.service_id, user.id))
+		return service_user and service_user.has_access
 
 	@property
 	def logout_uris_json(self):

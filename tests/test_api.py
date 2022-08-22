@@ -2,9 +2,10 @@ import base64
 
 from flask import url_for
 
-from uffd.models import APIClient, Service, User, remailer
 from uffd.password_hash import PlaintextPasswordHash
+from uffd.remailer import remailer
 from uffd.database import db
+from uffd.models import APIClient, Service, User
 from uffd.views.api import apikey_required
 from utils import UffdTestCase, db_flush
 
@@ -148,7 +149,7 @@ class TestAPIGetusers(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		service = Service.query.filter_by(name='test').one()
 		self.assertEqual(self.fix_result(r.json), [
-			{'displayname': 'Test User', 'email': remailer.build_address(user, service), 'id': 10000, 'loginname': 'testuser', 'groups': ['uffd_access', 'users']},
+			{'displayname': 'Test User', 'email': remailer.build_address(service.id, user.id), 'id': 10000, 'loginname': 'testuser', 'groups': ['uffd_access', 'users']},
 		])
 
 	def test_loginname(self):
@@ -176,11 +177,11 @@ class TestAPIGetusers(UffdTestCase):
 		db.session.commit()
 		user = self.get_admin()
 		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		r = self.client.get(path=url_for('api.getusers', email=remailer.build_address(user, service)), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		r = self.client.get(path=url_for('api.getusers', email=remailer.build_address(service.id, user.id)), headers=[basic_auth('test', 'test')], follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		service = Service.query.filter_by(name='test').one()
 		self.assertEqual(self.fix_result(r.json), [
-			{'displayname': 'Test Admin', 'email': remailer.build_address(user, service), 'id': 10001, 'loginname': 'testadmin', 'groups': ['uffd_access', 'uffd_admin', 'users']}
+			{'displayname': 'Test Admin', 'email': remailer.build_address(service.id, user.id), 'id': 10001, 'loginname': 'testadmin', 'groups': ['uffd_access', 'uffd_admin', 'users']}
 		])
 
 	def test_email_empty(self):
@@ -266,7 +267,7 @@ class TestAPIRemailerResolve(UffdTestCase):
 		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
 		service = Service.query.filter_by(name='service2').one()
 		user = self.get_user()
-		r = self.client.get(path=url_for('api.resolve_remailer', orig_address=remailer.build_address(user, service)), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		r = self.client.get(path=url_for('api.resolve_remailer', orig_address=remailer.build_address(service.id, user.id)), headers=[basic_auth('test', 'test')], follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.json, {'address': user.mail})
 		r = self.client.get(path=url_for('api.resolve_remailer', orig_address='foo@bar'), headers=[basic_auth('test', 'test')], follow_redirects=True)

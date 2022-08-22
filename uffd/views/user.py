@@ -7,8 +7,9 @@ from sqlalchemy.exc import IntegrityError
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
+from uffd.remailer import remailer
 from uffd.database import db
-from uffd.models import User, remailer, Role
+from uffd.models import User, Role
 from .selfservice import send_passwordreset
 from .session import login_required
 

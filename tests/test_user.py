@@ -5,7 +5,8 @@ from flask import url_for, session
 import sqlalchemy
 
 from uffd import create_app, db
-from uffd.models import User, remailer, RemailerAddress, Group, Role, RoleGroup, Service
+from uffd.remailer import remailer
+from uffd.models import User, Group, Role, RoleGroup, Service
 
 from utils import dump, UffdTestCase
 
@@ -108,121 +109,6 @@ class TestUserModel(UffdTestCase):
 		self.assertFalse(user.set_mail('v1-1-testuser @ remailer.example.com'))
 		self.assertFalse(user.set_mail('v1-1-testuser@REMAILER.example.com'))
 		self.assertFalse(user.set_mail('v1-1-testuser@foobar@remailer.example.com'))
-
-	def test_get_service_mail(self):
-		service1 = Service(name='service1')
-		service2 = Service(name='service2', use_remailer=True)
-		db.session.add_all([service1, service2])
-		db.session.commit()
-		user = self.get_user()
-		self.assertEqual(user.get_service_mail(service1), user.mail)
-		self.assertEqual(user.get_service_mail(service2), user.mail)
-		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		self.assertEqual(user.get_service_mail(service1), user.mail)
-		self.assertEqual(user.get_service_mail(service2), remailer.build_address(user, service2))
-		self.app.config['REMAILER_LIMIT_TO_USERS'] = ['testadmin']
-		self.assertEqual(user.get_service_mail(service1), user.mail)
-		self.assertEqual(user.get_service_mail(service2), user.mail)
-		self.app.config['REMAILER_LIMIT_TO_USERS'] = ['testadmin', 'testuser']
-		self.assertEqual(user.get_service_mail(service1), user.mail)
-		self.assertEqual(user.get_service_mail(service2), remailer.build_address(user, service2))
-
-	def test_filter_by_service_mail(self):
-		service1 = Service(name='service1')
-		service2 = Service(name='service2', use_remailer=True)
-		db.session.add_all([service1, service2])
-		db.session.commit()
-		user = self.get_user()
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, user.mail)).all(), [user])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, remailer.build_address(user, service1))).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, remailer.build_address(user, service2))).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, user.mail)).all(), [user])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, remailer.build_address(user, service1))).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, remailer.build_address(user, service2))).all(), [])
-		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, user.mail)).all(), [user])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, remailer.build_address(user, service1))).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, remailer.build_address(user, service2))).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, user.mail)).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, remailer.build_address(user, service2))).all(), [user])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, remailer.build_address(user, service1))).all(), [])
-		self.app.config['REMAILER_LIMIT_TO_USERS'] = ['testadmin']
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, user.mail)).all(), [user])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, remailer.build_address(user, service1))).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, remailer.build_address(user, service2))).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, user.mail)).all(), [user])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, remailer.build_address(user, service1))).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, remailer.build_address(user, service2))).all(), [])
-		self.app.config['REMAILER_LIMIT_TO_USERS'] = ['testadmin', 'testuser']
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, user.mail)).all(), [user])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, remailer.build_address(user, service1))).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service1, remailer.build_address(user, service2))).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, user.mail)).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, remailer.build_address(user, service1))).all(), [])
-		self.assertEqual(User.query.filter(User.filter_by_service_mail(service2, remailer.build_address(user, service2))).all(), [user])
-
-class TestRemailer(UffdTestCase):
-	def setUpDB(self):
-		self.service1 = Service(name='service1')
-		self.service2 = Service(name='service2', use_remailer=True)
-		db.session.add_all([self.service1, self.service2])
-
-	def test_is_remailer_domain(self):
-		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		self.assertTrue(remailer.is_remailer_domain('remailer.example.com'))
-		self.assertTrue(remailer.is_remailer_domain('REMAILER.EXAMPLE.COM'))
-		self.assertTrue(remailer.is_remailer_domain(' remailer.example.com '))
-		self.assertFalse(remailer.is_remailer_domain('other.remailer.example.com'))
-		self.assertFalse(remailer.is_remailer_domain('example.com'))
-		self.app.config['REMAILER_OLD_DOMAINS'] = [' OTHER.remailer.example.com ']
-		self.assertTrue(remailer.is_remailer_domain(' OTHER.remailer.example.com '))
-		self.assertTrue(remailer.is_remailer_domain('remailer.example.com'))
-		self.assertTrue(remailer.is_remailer_domain('other.remailer.example.com'))
-		self.assertFalse(remailer.is_remailer_domain('example.com'))
-
-	def test_build_address(self):
-		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		user = self.get_user()
-		self.assertTrue(remailer.build_address(user, self.service1).endswith('@remailer.example.com'))
-		self.assertTrue(remailer.build_address(user, self.service2).endswith('@remailer.example.com'))
-		self.assertLessEqual(len(remailer.build_local_part(user, self.service1)), 64)
-		self.assertLessEqual(len(remailer.build_address(user, self.service1)), 256)
-		self.assertEqual(remailer.build_address(user, self.service1), remailer.build_address(user, self.service1))
-		self.assertNotEqual(remailer.build_address(user, self.service1), remailer.build_address(user, self.service2))
-		addr = remailer.build_address(user, self.service1)
-		self.app.config['REMAILER_OLD_DOMAINS'] = ['old.remailer.example.com']
-		self.assertEqual(remailer.build_address(user, self.service1), addr)
-		self.assertTrue(remailer.build_address(user, self.service1).endswith('@remailer.example.com'))
-		self.app.config['REMAILER_SECRET_KEY'] = self.app.config['SECRET_KEY']
-		self.assertEqual(remailer.build_address(user, self.service1), addr)
-		self.app.config['REMAILER_SECRET_KEY'] = 'REMAILER-DEBUGKEY'
-		self.assertNotEqual(remailer.build_address(user, self.service1), addr)
-
-	def test_parse_address(self):
-		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		user = self.get_user()
-		addr = remailer.build_address(user, self.service2)
-		# REMAILER_DOMAIN behaviour
-		self.app.config['REMAILER_DOMAIN'] = None
-		self.assertIsNone(remailer.parse_address(addr))
-		self.assertIsNone(remailer.parse_address('foo@example.com'))
-		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		self.assertEqual(remailer.parse_address(addr), RemailerAddress(user, self.service2))
-		self.assertIsNone(remailer.parse_address('foo@example.com'))
-		self.assertIsNone(remailer.parse_address('foo@remailer.example.com'))
-		self.assertIsNone(remailer.parse_address('v1-foo@remailer.example.com'))
-		self.app.config['REMAILER_DOMAIN'] = 'new-remailer.example.com'
-		self.assertIsNone(remailer.parse_address(addr))
-		self.app.config['REMAILER_OLD_DOMAINS'] = ['remailer.example.com']
-		self.assertEqual(remailer.parse_address(addr), RemailerAddress(user, self.service2))
-		# REMAILER_SECRET_KEY behaviour
-		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		self.app.config['REMAILER_OLD_DOMAINS'] = []
-		self.assertEqual(remailer.parse_address(addr), RemailerAddress(user, self.service2))
-		self.app.config['REMAILER_SECRET_KEY'] = self.app.config['SECRET_KEY']
-		self.assertEqual(remailer.parse_address(addr), RemailerAddress(user, self.service2))
-		self.app.config['REMAILER_SECRET_KEY'] = 'REMAILER-DEBUGKEY'
-		self.assertIsNone(remailer.parse_address(addr))
 
 class TestUserViews(UffdTestCase):
 	def setUp(self):

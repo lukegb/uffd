@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from uffd.secure_redirect import secure_local_redirect
 from uffd.database import db
-from uffd.models import DeviceLoginConfirmation, OAuth2Client, OAuth2Grant, OAuth2Token, OAuth2DeviceLoginInitiation, host_ratelimit, format_delay
+from uffd.models import DeviceLoginConfirmation, OAuth2Client, OAuth2Grant, OAuth2Token, OAuth2DeviceLoginInitiation, host_ratelimit, format_delay, ServiceUser
 
 class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 	# Argument "oauthreq" is named "request" in superclass but this clashes with flask's "request" object
@@ -227,13 +227,13 @@ def oauth_required(*scopes):
 @bp.route('/userinfo')
 @oauth_required('profile')
 def userinfo():
-	user = request.oauth.user
+	service_user = ServiceUser.query.get((request.oauth.client.service_id, request.oauth.user.id))
 	return jsonify(
-		id=user.unix_uid,
-		name=user.displayname,
-		nickname=user.loginname,
-		email=user.get_service_mail(request.oauth.client.service),
-		groups=[group.name for group in user.groups]
+		id=service_user.user.unix_uid,
+		name=service_user.user.displayname,
+		nickname=service_user.user.loginname,
+		email=service_user.email,
+		groups=[group.name for group in service_user.user.groups]
 	)
 
 @bp.app_url_defaults
