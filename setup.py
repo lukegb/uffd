@@ -42,6 +42,7 @@ setup(
 		'alembic==1.0.0',
 		'argon2-cffi==18.3.0',
 		'itsdangerous==0.24',
+		'prometheus-client==0.9',
 
 		# The main dependencies on their own lead to version collisions and pip is
 		# not very good at resolving them, so we pin the versions from Debian Buster

@@ -36,3 +36,5 @@ def init_app(app):
 	app.register_blueprint(api.bp)
 	app.register_blueprint(mail.bp)
 	app.register_blueprint(rolemod.bp)
+
+	app.add_url_rule("/metrics", view_func=api.prometheus_metrics)

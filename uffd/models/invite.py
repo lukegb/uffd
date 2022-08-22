@@ -3,6 +3,7 @@ import datetime
 from flask_babel import gettext as _
 from flask import current_app
 from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Boolean
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
 from uffd.utils import token_urlfriendly
@@ -30,11 +31,11 @@ class Invite(db.Model):
 	signups = relationship('InviteSignup', back_populates='invite', lazy=True, cascade='all, delete-orphan')
 	grants = relationship('InviteGrant', back_populates='invite', lazy=True, cascade='all, delete-orphan')
 
-	@property
+	@hybrid_property
 	def expired(self):
-		return datetime.datetime.utcnow().replace(second=0, microsecond=0) > self.valid_until
+		return self.valid_until < datetime.datetime.utcnow().replace(second=0, microsecond=0)
 
-	@property
+	@hybrid_property
 	def voided(self):
 		return self.single_use and self.used
 

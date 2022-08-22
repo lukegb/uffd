@@ -18,6 +18,7 @@ class APIClient(db.Model):
 	perm_checkpassword = Column(Boolean(), default=False, nullable=False)
 	perm_mail_aliases = Column(Boolean(), default=False, nullable=False)
 	perm_remailer = Column(Boolean(), default=False, nullable=False)
+	perm_metrics = Column(Boolean(), default=False, nullable=False)
 
 	@classmethod
 	def permission_exists(cls, name):

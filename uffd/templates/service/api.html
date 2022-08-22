@@ -51,6 +51,10 @@
 				<i class="fas fa-exclamation-triangle text-warning" data-toggle="tooltip" data-placement="top" title="{{ _('This option has no effect: Remailer config options are unset') }}"></i>
 				{% endif %}
 			</div>
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" id="client-perm-metrics" name="perm_metrics" value="1" aria-label="enabled" {{ 'checked' if client.perm_metrics }}>
+				<label class="form-check-label" for="client-perm-metrics"><b>metrics</b>: {{_('Access uffd metrics')}}</label>
+			</div>
 		</div>
 
 	</form>

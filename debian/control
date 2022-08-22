@@ -32,4 +32,5 @@ Depends:
 Recommends:
  nginx,
  python3-mysqldb,
+ python3-prometheus-client,
 Description: Web-based user management and single sign-on software

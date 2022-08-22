@@ -281,3 +281,12 @@ class TestAPIRemailerResolve(UffdTestCase):
 		self.assertEqual(r.status_code, 400)
 		r = self.client.get(path=url_for('api.resolve_remailer', foo='bar'), headers=[basic_auth('test', 'test')], follow_redirects=True)
 		self.assertEqual(r.status_code, 400)
+
+class TestAPIMetricsPrometheus(UffdTestCase):
+	def setUpDB(self):
+		db.session.add(APIClient(service=Service(name='test'), auth_username='test', auth_password='test', perm_metrics=True))
+
+	def test(self):
+		r = self.client.get(path=url_for('api.prometheus_metrics'), headers=[basic_auth('test', 'test')])
+		self.assertEqual(r.status_code, 200)
+		self.assertTrue("uffd_version_info" in r.data.decode())

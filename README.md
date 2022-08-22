@@ -14,6 +14,7 @@ Please note that we refer to Debian packages here and **not** pip packages.
 - python3-flask-migrate
 - python3-qrcode
 - python3-fido2 (version 0.5.0 or 0.9.1, optional)
+- python3-prometheus-client (optional, needed for metrics)
 - python3-oauthlib
 - python3-flask-babel
 - python3-argon2
@@ -110,6 +111,24 @@ The only OAuth2 scope supported is `profile`. The userinfo endpoint returns json
 ```
 
 `id` is the numeric (Unix) user id, `name` the display name and `nickname` the loginname of the user.
+
+## Metrics
+
+Uffd can export metrics in a prometheus compatible way. It needs python3-prometheus-client for this feature to work.
+Metrics can be accessed via `/metrics` and `/api/v1/metrics_prometheus`.
+Those endpoints are protected via api credentials. Add prometheus in the uffd UI as a service and create an
+api client with the `metrics` permission. Then you can access the metrics like that:
+
+```
+$ curl localhost:5000/api/v1/metrics_prometheus --user api-user:api-password
+# HELP python_info Python platform information
+# TYPE python_info gauge
+python_info{implementation="CPython",major="3",minor="9",patchlevel="2",version="3.9.2"} 1.0
+# HELP uffd_version_info Various version infos
+# TYPE uffd_version_info gauge
+uffd_version_info{version="local"} 1.0
+[..]
+```
 
 ## Translation
 

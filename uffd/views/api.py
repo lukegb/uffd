@@ -1,9 +1,11 @@
 import functools
 
-from flask import Blueprint, jsonify, request, abort
+from flask import Blueprint, jsonify, request, abort, Response
 
 from uffd.database import db
-from uffd.models import User, ServiceUser, Group, Mail, MailReceiveAddress, MailDestinationAddress, APIClient
+from uffd.models import (
+	User, ServiceUser, Group, Mail, MailReceiveAddress, MailDestinationAddress, APIClient,
+	RecoveryCodeMethod, TOTPMethod, WebauthnMethod, Invite, Role, Service )
 from .session import login_ratelimit
 
 bp = Blueprint('api', __name__, template_folder='templates', url_prefix='/api/v1/')
@@ -158,3 +160,54 @@ def resolve_remailer():
 	if not service_user:
 		return jsonify(address=None)
 	return jsonify(address=service_user.real_email)
+
+@bp.route('/metrics_prometheus', methods=['GET'])
+@apikey_required('metrics')
+def prometheus_metrics():
+	import pkg_resources #pylint: disable=import-outside-toplevel
+	from prometheus_client.core import CollectorRegistry, CounterMetricFamily, InfoMetricFamily #pylint: disable=import-outside-toplevel
+	from prometheus_client import PLATFORM_COLLECTOR, generate_latest, CONTENT_TYPE_LATEST #pylint: disable=import-outside-toplevel
+
+	class UffdCollector():
+		def collect(self): #pylint: disable=no-self-use
+			try:
+				uffd_version = str(pkg_resources.get_distribution('uffd').version)
+			except pkg_resources.DistributionNotFound:
+				uffd_version = "unknown"
+			yield InfoMetricFamily('uffd_version', 'Various version infos', value={"version": uffd_version})
+
+			user_metric = CounterMetricFamily('uffd_users_total', 'Number of users', labels=['user_type'])
+			user_metric.add_metric(['regular'], value=User.query.filter_by(is_service_user=False).count())
+			user_metric.add_metric(['service'], User.query.filter_by(is_service_user=True).count())
+			yield user_metric
+
+			mfa_auth_metric = CounterMetricFamily('uffd_users_auth_mfa_total', 'mfa stats', labels=['mfa_type'])
+			mfa_auth_metric.add_metric(['recoverycode'], value=RecoveryCodeMethod.query.count())
+			mfa_auth_metric.add_metric(['totp'], value=TOTPMethod.query.count())
+			mfa_auth_metric.add_metric(['webauthn'], value=WebauthnMethod.query.count())
+			yield mfa_auth_metric
+
+			yield CounterMetricFamily('uffd_roles_total', 'Number of roles', value=Role.query.count())
+
+			role_members_metric = CounterMetricFamily('uffd_role_members_total', 'Members of a role', labels=['role_name'])
+			for role in Role.query.all():
+				role_members_metric.add_metric([role.name], value=len(role.members))
+			yield role_members_metric
+
+			group_metric = CounterMetricFamily('uffd_groups_total', 'Total number of groups', value=Group.query.count())
+			yield group_metric
+
+			invite_metric = CounterMetricFamily('uffd_invites_total', 'Number of invites', labels=['invite_state'])
+			invite_metric.add_metric(['used'], value=Invite.query.filter_by(used=True).count())
+			invite_metric.add_metric(['expired'], value=Invite.query.filter_by(expired=True).count())
+			invite_metric.add_metric(['disabled'], value=Invite.query.filter_by(disabled=True).count())
+			invite_metric.add_metric(['voided'], value=Invite.query.filter_by(voided=True).count())
+			invite_metric.add_metric([], value=Invite.query.count())
+			yield invite_metric
+
+			yield CounterMetricFamily('uffd_services_total', 'Number of services', value=Service.query.count())
+
+	registry = CollectorRegistry(auto_describe=True)
+	registry.register(PLATFORM_COLLECTOR)
+	registry.register(UffdCollector())
+	return Response(response=generate_latest(registry=registry),content_type=CONTENT_TYPE_LATEST)
