@@ -85,7 +85,9 @@ def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-sta
 
 	@app.shell_context_processor
 	def push_request_context(): #pylint: disable=unused-variable
-		return {'db': db} | {name: getattr(models, name) for name in models.__all__}
+		ctx = {name: getattr(models, name) for name in models.__all__}
+		ctx.setdefault('db', db)
+		return ctx
 
 	# flask-babel requires pytz-style timezone objects, but in rare cases (e.g.
 	# non-IANA TZ values) LOCALTZ is stdlib-style (without normalize/localize)
