@@ -1,14 +1,17 @@
 import string
 import re
+import datetime
 
 from flask import current_app, escape
 from flask_babel import lazy_gettext
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text, DateTime
+from sqlalchemy.orm import relationship, validates
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from uffd.database import db
-from uffd.password_hash import PasswordHashAttribute, LowEntropyPasswordHash
 from uffd.remailer import remailer
+from uffd.utils import token_urlfriendly
+from uffd.password_hash import PasswordHashAttribute, LowEntropyPasswordHash, HighEntropyPasswordHash
 
 # pylint: disable=E1101
 user_groups = db.Table('user_groups',
@@ -37,7 +40,39 @@ class User(db.Model):
 	unix_uid = Column(Integer(), unique=True, nullable=False)
 	loginname = Column(String(32), unique=True, nullable=False)
 	displayname = Column(String(128), nullable=False)
-	mail = Column(String(128), nullable=False)
+
+	all_emails = relationship(
+		'UserEmail',
+		foreign_keys='UserEmail.user_id',
+		cascade='all, delete-orphan',
+		back_populates='user',
+		post_update=True,
+	)
+	verified_emails = relationship(
+		'UserEmail',
+		foreign_keys='UserEmail.user_id',
+		viewonly=True,
+		primaryjoin='and_(User.id == UserEmail.user_id, UserEmail.verified)',
+	)
+
+	primary_email_id = Column(Integer(), ForeignKey('user_email.id', onupdate='CASCADE'), nullable=False)
+	primary_email = relationship('UserEmail', foreign_keys='User.primary_email_id')
+
+	# recovery_email_id == NULL -> use primary email
+	recovery_email_id = Column(Integer(), ForeignKey('user_email.id', onupdate='CASCADE', ondelete='SET NULL'))
+	recovery_email = relationship('UserEmail', foreign_keys='User.recovery_email_id')
+
+	@validates('primary_email', 'recovery_email')
+	def validate_email(self, key, value):
+		if value is not None:
+			if not value.user:
+				value.user = self
+			if value.user != self:
+				raise ValueError(f'UserEmail assigned to User.{key} is not associated with user')
+			if not value.verified:
+				raise ValueError(f'UserEmail assigned to User.{key} is not verified')
+		return  value
+
 	_password = Column('pwhash', Text(), nullable=True)
 	password = PasswordHashAttribute('_password', LowEntropyPasswordHash)
 	is_service_user = Column(Boolean(), default=False, nullable=False)
@@ -45,6 +80,11 @@ class User(db.Model):
 	roles = relationship('Role', secondary='role_members', back_populates='members')
 
 	service_users = relationship('ServiceUser', viewonly=True)
+
+	def __init__(self, primary_email_address=None, **kwargs):
+		super().__init__(**kwargs)
+		if primary_email_address is not None:
+			self.primary_email = UserEmail(address=primary_email_address, verified=True)
 
 	@property
 	def unix_gid(self):
@@ -97,18 +137,100 @@ class User(db.Model):
 		self.password = value
 		return True
 
-	def set_mail(self, value):
+	def set_primary_email_address(self, address):
+		# UserEmail.query.filter_by(user=self, address=address).first() would cause
+		# a flush, so we do this in python. A flush would cause an IntegrityError if
+		# this method is used a new User object, since primary_email_id is not
+		# nullable.
+		email = ([item for item in self.all_emails if item.address == address] or [None])[0]
+		if not email:
+			email = UserEmail()
+			if not email.set_address(address):
+				return False
+		email.verified = True
+		self.primary_email = email
+		return True
+
+	# Somehow pylint non-deterministically fails to detect that .update_groups is set in role.models
+	def update_groups(self):
+		pass
+
+class UserEmail(db.Model):
+	__tablename__ = 'user_email'
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+
+	# We have a cyclic dependency between User.primary_email and UserEmail.user.
+	# To solve this, we make UserEmail.user nullable, add validators, and set
+	# post_update=True here and for the backref.
+	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE', use_alter=True))
+	user = relationship('User', foreign_keys='UserEmail.user_id', back_populates='all_emails', post_update=True)
+
+	@validates('user')
+	def validate_user(self, key, value): # pylint: disable=unused-argument
+		if self.user is not None and self.user != value:
+			raise ValueError('UserEmail.user cannot be changed once set')
+		return value
+
+	address = Column(String(128), nullable=False)
+
+	@validates('address')
+	def validate_address(self, key, value): # pylint: disable=unused-argument
+		if self.address is not None and self.address != value:
+			raise ValueError('UserEmail.address cannot be changed once set')
+		return value
+
+	verified = Column(Boolean(), default=False, nullable=False)
+
+	@validates('verified')
+	def validate_verified(self, key, value): # pylint: disable=unused-argument
+		if self.verified and not value:
+			raise ValueError('UserEmail cannot be unverified once verified')
+		return value
+
+	verification_legacy_id = Column(Integer()) # id of old MailToken
+	_verification_secret = Column('verification_secret', Text())
+	verification_secret = PasswordHashAttribute('_verification_secret', HighEntropyPasswordHash)
+	verification_expires = Column(DateTime)
+
+	__table_args__ = (
+		db.UniqueConstraint('user_id', 'address', name='uq_user_email_user_id_address'),
+	)
+
+	def set_address(self, value):
 		if len(value) < 3 or '@' not in value:
 			return False
 		domain = value.rsplit('@', 1)[-1]
 		if remailer.is_remailer_domain(domain):
 			return False
-		self.mail = value
+		self.address = value
 		return True
 
-	# Somehow pylint non-deterministically fails to detect that .update_groups is set in invite.modes
-	def update_groups(self):
-		pass
+	def start_verification(self):
+		if self.verified:
+			raise Exception('UserEmail.start_verification must not be called if address is already verified')
+		self.verification_legacy_id = None
+		secret = token_urlfriendly()
+		self.verification_secret = secret
+		self.verification_expires = datetime.datetime.utcnow() + datetime.timedelta(days=2)
+		return secret
+
+	@hybrid_property
+	def verification_expired(self):
+		if self.verification_expires is None:
+			return True
+		return self.verification_expires < datetime.datetime.utcnow()
+
+	def finish_verification(self, secret):
+		# pylint: disable=using-constant-test
+		if self.verification_expired:
+			return False
+		if not self.verification_secret.verify(secret):
+			return False
+		self.verification_legacy_id = None
+		self.verification_secret = None
+		self.verification_expires = None
+		self.verified = True
+		return True
 
 def next_id_expr(column, min_value, max_value):
 	# db.func.max(column) + 1: highest used value in range + 1, NULL if no values in range

@@ -6,7 +6,7 @@ import sqlalchemy
 
 from uffd import create_app, db
 from uffd.remailer import remailer
-from uffd.models import User, Group, Role, RoleGroup, Service
+from uffd.models import User, UserEmail, Group, Role, RoleGroup, Service
 
 from utils import dump, UffdTestCase
 
@@ -42,9 +42,9 @@ class TestUserModel(UffdTestCase):
 		self.app.config['USER_SERVICE_MAX_UID'] =19999
 		User.query.delete()
 		db.session.commit()
-		user0 = User(loginname='user0', displayname='user0', mail='user0@example.com')
-		user1 = User(loginname='user1', displayname='user1', mail='user1@example.com')
-		user2 = User(loginname='user2', displayname='user2', mail='user2@example.com')
+		user0 = User(loginname='user0', displayname='user0', primary_email_address='user0@example.com')
+		user1 = User(loginname='user1', displayname='user1', primary_email_address='user1@example.com')
+		user2 = User(loginname='user2', displayname='user2', primary_email_address='user2@example.com')
 		db.session.add_all([user0, user1, user2])
 		db.session.commit()
 		self.assertEqual(user0.unix_uid, 10000)
@@ -52,12 +52,12 @@ class TestUserModel(UffdTestCase):
 		self.assertEqual(user2.unix_uid, 10002)
 		db.session.delete(user1)
 		db.session.commit()
-		user3 = User(loginname='user3', displayname='user3', mail='user3@example.com')
+		user3 = User(loginname='user3', displayname='user3', primary_email_address='user3@example.com')
 		db.session.add(user3)
 		db.session.commit()
 		self.assertEqual(user3.unix_uid, 10003)
-		service0 = User(loginname='service0', displayname='service0', mail='service0@example.com', is_service_user=True)
-		service1 = User(loginname='service1', displayname='service1', mail='service1@example.com', is_service_user=True)
+		service0 = User(loginname='service0', displayname='service0', primary_email_address='service0@example.com', is_service_user=True)
+		service1 = User(loginname='service1', displayname='service1', primary_email_address='service1@example.com', is_service_user=True)
 		db.session.add_all([service0, service1])
 		db.session.commit()
 		self.assertEqual(service0.unix_uid, 19000)
@@ -70,9 +70,9 @@ class TestUserModel(UffdTestCase):
 		self.app.config['USER_SERVICE_MAX_UID'] = 19999
 		User.query.delete()
 		db.session.commit()
-		user0 = User(loginname='user0', displayname='user0', mail='user0@example.com')
-		service0 = User(loginname='service0', displayname='service0', mail='service0@example.com', is_service_user=True)
-		user1 = User(loginname='user1', displayname='user1', mail='user1@example.com')
+		user0 = User(loginname='user0', displayname='user0', primary_email_address='user0@example.com')
+		service0 = User(loginname='service0', displayname='service0', primary_email_address='service0@example.com', is_service_user=True)
+		user1 = User(loginname='user1', displayname='user1', primary_email_address='user1@example.com')
 		db.session.add_all([user0, service0, user1])
 		db.session.commit()
 		self.assertEqual(user0.unix_uid, 10000)
@@ -84,31 +84,74 @@ class TestUserModel(UffdTestCase):
 		self.app.config['USER_MAX_UID'] = 10001
 		User.query.delete()
 		db.session.commit()
-		user0 = User(loginname='user0', displayname='user0', mail='user0@example.com')
-		user1 = User(loginname='user1', displayname='user1', mail='user1@example.com')
+		user0 = User(loginname='user0', displayname='user0', primary_email_address='user0@example.com')
+		user1 = User(loginname='user1', displayname='user1', primary_email_address='user1@example.com')
 		db.session.add_all([user0, user1])
 		db.session.commit()
 		self.assertEqual(user0.unix_uid, 10000)
 		self.assertEqual(user1.unix_uid, 10001)
 		with self.assertRaises(sqlalchemy.exc.IntegrityError):
-			user2 = User(loginname='user2', displayname='user2', mail='user2@example.com')
+			user2 = User(loginname='user2', displayname='user2', primary_email_address='user2@example.com')
 			db.session.add(user2)
 			db.session.commit()
 
-	def test_set_mail(self):
+	def test_init_primary_email_address(self):
+		user = User(primary_email_address='foobar@example.com')
+		self.assertEqual(user.primary_email.address, 'foobar@example.com')
+		self.assertEqual(user.primary_email.verified, True)
+		self.assertEqual(user.primary_email.user, user)
+		user = User(primary_email_address='invalid')
+		self.assertEqual(user.primary_email.address, 'invalid')
+		self.assertEqual(user.primary_email.verified, True)
+		self.assertEqual(user.primary_email.user, user)
+
+	def test_set_primary_email_address(self):
 		user = User()
-		self.assertTrue(user.set_mail('foobar@example.com'))
-		self.assertEqual(user.mail, 'foobar@example.com')
-		self.assertFalse(user.set_mail(''))
-		self.assertEqual(user.mail, 'foobar@example.com')
-		self.assertFalse(user.set_mail('foobar'))
-		self.assertFalse(user.set_mail('@'))
+		self.assertFalse(user.set_primary_email_address('invalid'))
+		self.assertIsNone(user.primary_email)
+		self.assertEqual(len(user.all_emails), 0)
+		self.assertTrue(user.set_primary_email_address('foobar@example.com'))
+		self.assertEqual(user.primary_email.address, 'foobar@example.com')
+		self.assertEqual(len(user.all_emails), 1)
+		self.assertFalse(user.set_primary_email_address('invalid'))
+		self.assertEqual(user.primary_email.address, 'foobar@example.com')
+		self.assertEqual(len(user.all_emails), 1)
+		self.assertTrue(user.set_primary_email_address('other@example.com'))
+		self.assertEqual(user.primary_email.address, 'other@example.com')
+		self.assertEqual(len(user.all_emails), 2)
+		self.assertEqual({user.all_emails[0].address, user.all_emails[1].address}, {'foobar@example.com', 'other@example.com'})
+
+class TestUserEmailModel(UffdTestCase):
+	def test_set_address(self):
+		email = UserEmail()
+		self.assertFalse(email.set_address('invalid'))
+		self.assertIsNone(email.address)
+		self.assertFalse(email.set_address(''))
+		self.assertFalse(email.set_address('@'))
 		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		self.assertFalse(user.set_mail('foobar@remailer.example.com'))
-		self.assertFalse(user.set_mail('v1-1-testuser@remailer.example.com'))
-		self.assertFalse(user.set_mail('v1-1-testuser @ remailer.example.com'))
-		self.assertFalse(user.set_mail('v1-1-testuser@REMAILER.example.com'))
-		self.assertFalse(user.set_mail('v1-1-testuser@foobar@remailer.example.com'))
+		self.assertFalse(email.set_address('foobar@remailer.example.com'))
+		self.assertFalse(email.set_address('v1-1-testuser@remailer.example.com'))
+		self.assertFalse(email.set_address('v1-1-testuser @ remailer.example.com'))
+		self.assertFalse(email.set_address('v1-1-testuser@REMAILER.example.com'))
+		self.assertFalse(email.set_address('v1-1-testuser@foobar@remailer.example.com'))
+		self.assertTrue(email.set_address('foobar@example.com'))
+		self.assertEqual(email.address, 'foobar@example.com')
+
+	def test_verification(self):
+		email = UserEmail(address='foo@example.com')
+		self.assertFalse(email.finish_verification('test'))
+		secret = email.start_verification()
+		self.assertTrue(email.verification_secret)
+		self.assertTrue(email.verification_secret.verify(secret))
+		self.assertFalse(email.verification_expired)
+		self.assertFalse(email.finish_verification('test'))
+		orig_expires = email.verification_expires
+		email.verification_expires = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+		self.assertFalse(email.finish_verification(secret))
+		email.verification_expires = orig_expires
+		self.assertTrue(email.finish_verification(secret))
+		self.assertFalse(email.verification_secret)
+		self.assertTrue(email.verification_expired)
 
 class TestUserViews(UffdTestCase):
 	def setUp(self):
@@ -133,7 +176,7 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(User.query.filter_by(loginname='newuser').one_or_none())
 		r = self.client.post(path=url_for('user.update'),
-			data={'loginname': 'newuser', 'mail': 'newuser@example.com', 'displayname': 'New User',
+			data={'loginname': 'newuser', 'email': 'newuser@example.com', 'displayname': 'New User',
 			f'role-{role1_id}': '1', 'password': 'newpassword'}, follow_redirects=True)
 		dump('user_new_submit', r)
 		self.assertEqual(r.status_code, 200)
@@ -143,7 +186,7 @@ class TestUserViews(UffdTestCase):
 		self.assertFalse(user_.is_service_user)
 		self.assertEqual(user_.loginname, 'newuser')
 		self.assertEqual(user_.displayname, 'New User')
-		self.assertEqual(user_.mail, 'newuser@example.com')
+		self.assertEqual(user_.primary_email.address, 'newuser@example.com')
 		self.assertGreaterEqual(user_.unix_uid, self.app.config['USER_MIN_UID'])
 		self.assertLessEqual(user_.unix_uid, self.app.config['USER_MAX_UID'])
 		role1 = Role(name='role1')
@@ -163,7 +206,7 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(User.query.filter_by(loginname='newuser').one_or_none())
 		r = self.client.post(path=url_for('user.update'),
-			data={'loginname': 'newuser', 'mail': 'newuser@example.com', 'displayname': 'New User',
+			data={'loginname': 'newuser', 'email': 'newuser@example.com', 'displayname': 'New User',
 			f'role-{role1_id}': '1', 'password': 'newpassword', 'serviceaccount': '1'}, follow_redirects=True)
 		dump('user_new_submit', r)
 		self.assertEqual(r.status_code, 200)
@@ -173,7 +216,7 @@ class TestUserViews(UffdTestCase):
 		self.assertTrue(user.is_service_user)
 		self.assertEqual(user.loginname, 'newuser')
 		self.assertEqual(user.displayname, 'New User')
-		self.assertEqual(user.mail, 'newuser@example.com')
+		self.assertEqual(user.primary_email.address, 'newuser@example.com')
 		self.assertTrue(user.unix_uid)
 		role1 = Role(name='role1')
 		self.assertEqual(roles, ['role1'])
@@ -181,7 +224,7 @@ class TestUserViews(UffdTestCase):
 
 	def test_new_invalid_loginname(self):
 		r = self.client.post(path=url_for('user.update'),
-			data={'loginname': '!newuser', 'mail': 'newuser@example.com', 'displayname': 'New User',
+			data={'loginname': '!newuser', 'email': 'newuser@example.com', 'displayname': 'New User',
 			'password': 'newpassword'}, follow_redirects=True)
 		dump('user_new_invalid_loginname', r)
 		self.assertEqual(r.status_code, 200)
@@ -189,7 +232,7 @@ class TestUserViews(UffdTestCase):
 
 	def test_new_empty_loginname(self):
 		r = self.client.post(path=url_for('user.update'),
-			data={'loginname': '', 'mail': 'newuser@example.com', 'displayname': 'New User',
+			data={'loginname': '', 'email': 'newuser@example.com', 'displayname': 'New User',
 			'password': 'newpassword'}, follow_redirects=True)
 		dump('user_new_empty_loginname', r)
 		self.assertEqual(r.status_code, 200)
@@ -197,7 +240,7 @@ class TestUserViews(UffdTestCase):
 
 	def test_new_empty_email(self):
 		r = self.client.post(path=url_for('user.update'),
-			data={'loginname': 'newuser', 'mail': '', 'displayname': 'New User',
+			data={'loginname': 'newuser', 'email': '', 'displayname': 'New User',
 			'password': 'newpassword'}, follow_redirects=True)
 		dump('user_new_empty_email', r)
 		self.assertEqual(r.status_code, 200)
@@ -205,7 +248,7 @@ class TestUserViews(UffdTestCase):
 
 	def test_new_invalid_display_name(self):
 		r = self.client.post(path=url_for('user.update'),
-			data={'loginname': 'newuser', 'mail': 'newuser@example.com', 'displayname': 'A'*200,
+			data={'loginname': 'newuser', 'email': 'newuser@example.com', 'displayname': 'A'*200,
 			'password': 'newpassword'}, follow_redirects=True)
 		dump('user_new_invalid_display_name', r)
 		self.assertEqual(r.status_code, 200)
@@ -213,6 +256,7 @@ class TestUserViews(UffdTestCase):
 
 	def test_update(self):
 		user_unupdated = self.get_user()
+		email_id = str(user_unupdated.primary_email.id)
 		db.session.add(Role(name='base', is_default=True))
 		role1 = Role(name='role1')
 		db.session.add(role1)
@@ -225,14 +269,16 @@ class TestUserViews(UffdTestCase):
 		dump('user_update', r)
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('user.update', id=user_unupdated.id),
-			data={'loginname': 'testuser', 'mail': 'newuser@example.com', 'displayname': 'New User',
-			f'role-{role1_id}': '1', 'password': ''}, follow_redirects=True)
+			data={'loginname': 'testuser',
+			f'email-{email_id}-present': '1', 'primary_email': email_id, 'recovery_email': 'primary',
+			'displayname': 'New User', f'role-{role1_id}': '1', 'password': ''},
+			follow_redirects=True)
 		dump('user_update_submit', r)
 		self.assertEqual(r.status_code, 200)
 		user_updated = self.get_user()
 		roles = sorted([r.name for r in user_updated.roles_effective])
 		self.assertEqual(user_updated.displayname, 'New User')
-		self.assertEqual(user_updated.mail, 'newuser@example.com')
+		self.assertEqual(user_updated.primary_email.address, 'test@example.com')
 		self.assertEqual(user_updated.unix_uid, user_unupdated.unix_uid)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
 		self.assertTrue(user_updated.password.verify('userpassword'))
@@ -240,16 +286,19 @@ class TestUserViews(UffdTestCase):
 
 	def test_update_password(self):
 		user_unupdated = self.get_user()
+		email_id = str(user_unupdated.primary_email.id)
 		r = self.client.get(path=url_for('user.show', id=user_unupdated.id), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('user.update', id=user_unupdated.id),
-			data={'loginname': 'testuser', 'mail': 'newuser@example.com', 'displayname': 'New User',
+			data={'loginname': 'testuser',
+			f'email-{email_id}-present': '1', 'primary_email': email_id, 'recovery_email': 'primary',
+			'displayname': 'New User',
 			'password': 'newpassword'}, follow_redirects=True)
 		dump('user_update_password', r)
 		self.assertEqual(r.status_code, 200)
 		user_updated = self.get_user()
 		self.assertEqual(user_updated.displayname, 'New User')
-		self.assertEqual(user_updated.mail, 'newuser@example.com')
+		self.assertEqual(user_updated.primary_email.address, 'test@example.com')
 		self.assertEqual(user_updated.unix_uid, user_unupdated.unix_uid)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
 		self.assertTrue(user_updated.password.verify('newpassword'))
@@ -257,10 +306,13 @@ class TestUserViews(UffdTestCase):
 
 	def test_update_invalid_password(self):
 		user_unupdated = self.get_user()
+		email_id = str(user_unupdated.primary_email.id)
 		r = self.client.get(path=url_for('user.show', id=user_unupdated.id), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('user.update', id=user_unupdated.id),
-			data={'loginname': 'testuser', 'mail': 'newuser@example.com', 'displayname': 'New User',
+			data={'loginname': 'testuser',
+			f'email-{email_id}-present': '1', 'primary_email': email_id, 'recovery_email': 'primary',
+			'displayname': 'New User',
 			'password': 'A'}, follow_redirects=True)
 		dump('user_update_invalid_password', r)
 		self.assertEqual(r.status_code, 200)
@@ -268,16 +320,19 @@ class TestUserViews(UffdTestCase):
 		self.assertFalse(user_updated.password.verify('A'))
 		self.assertTrue(user_updated.password.verify('userpassword'))
 		self.assertEqual(user_updated.displayname, user_unupdated.displayname)
-		self.assertEqual(user_updated.mail, user_unupdated.mail)
+		self.assertEqual(user_updated.primary_email.address, user_unupdated.primary_email.address)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
 
 	# Regression test for #100 (login not possible if password contains character disallowed by SASLprep)
 	def test_update_saslprep_invalid_password(self):
 		user_unupdated = self.get_user()
+		email_id = str(user_unupdated.primary_email.id)
 		r = self.client.get(path=url_for('user.show', id=user_unupdated.id), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('user.update', id=user_unupdated.id),
-			data={'loginname': 'testuser', 'mail': 'newuser@example.com', 'displayname': 'New User',
+			data={'loginname': 'testuser',
+			f'email-{email_id}-present': '1', 'primary_email': email_id, 'recovery_email': 'primary',
+			'displayname': 'New User',
 			'password': 'newpassword\n'}, follow_redirects=True)
 		dump('user_update_invalid_password', r)
 		self.assertEqual(r.status_code, 200)
@@ -285,37 +340,55 @@ class TestUserViews(UffdTestCase):
 		self.assertFalse(user_updated.password.verify('newpassword\n'))
 		self.assertTrue(user_updated.password.verify('userpassword'))
 		self.assertEqual(user_updated.displayname, user_unupdated.displayname)
-		self.assertEqual(user_updated.mail, user_unupdated.mail)
+		self.assertEqual(user_updated.primary_email.address, user_unupdated.primary_email.address)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
 
-	def test_update_empty_email(self):
-		user_unupdated = self.get_user()
-		r = self.client.get(path=url_for('user.show', id=user_unupdated.id), follow_redirects=True)
+	def test_update_email(self):
+		user = self.get_user()
+		email = UserEmail(user=user, address='foo@example.com')
+		db.session.commit()
+		email1_id = user.primary_email.id
+		email2_id = email.id
+		r = self.client.post(path=url_for('user.update', id=user.id),
+			data={'loginname': 'testuser',
+			f'email-{email1_id}-present': '1',
+			f'email-{email2_id}-present': '1',
+			f'email-{email2_id}-verified': '1',
+			f'newemail-1-address': 'new1@example.com',
+			f'newemail-2-address': 'new2@example.com', f'newemail-2-verified': '1',
+			'primary_email': email2_id, 'recovery_email': email1_id,
+			'displayname': 'Test User', 'password': ''},
+			follow_redirects=True)
+		dump('user_update_email', r)
 		self.assertEqual(r.status_code, 200)
-		r = self.client.post(path=url_for('user.update', id=user_unupdated.id),
-			data={'loginname': 'testuser', 'mail': '', 'displayname': 'New User',
-			'password': 'newpassword'}, follow_redirects=True)
-		dump('user_update_empty_mail', r)
-		self.assertEqual(r.status_code, 200)
-		user_updated = self.get_user()
-		self.assertEqual(user_updated.displayname, user_unupdated.displayname)
-		self.assertEqual(user_updated.mail, user_unupdated.mail)
-		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
-		self.assertFalse(user_updated.password.verify('newpassword'))
-		self.assertTrue(user_updated.password.verify('userpassword'))
+		user = self.get_user()
+		self.assertEqual(user.primary_email.id, email2_id)
+		self.assertEqual(user.recovery_email.id, email1_id)
+		self.assertEqual(
+			{email.address: email.verified for email in user.all_emails},
+			{
+				'test@example.com': True,
+				'foo@example.com': True,
+				'new1@example.com': False,
+				'new2@example.com': True,
+			}
+		)
 
 	def test_update_invalid_display_name(self):
 		user_unupdated = self.get_user()
+		email_id = str(user_unupdated.primary_email.id)
 		r = self.client.get(path=url_for('user.show', id=user_unupdated.id), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		r = self.client.post(path=url_for('user.update', id=user_unupdated.id),
-			data={'loginname': 'testuser', 'mail': 'newuser@example.com', 'displayname': 'A'*200,
+			data={'loginname': 'testuser',
+			f'email-{email_id}-present': '1', 'primary_email': email_id, 'recovery_email': 'primary',
+			'displayname': 'A'*200,
 			'password': 'newpassword'}, follow_redirects=True)
 		dump('user_update_invalid_display_name', r)
 		self.assertEqual(r.status_code, 200)
 		user_updated = self.get_user()
 		self.assertEqual(user_updated.displayname, user_unupdated.displayname)
-		self.assertEqual(user_updated.mail, user_unupdated.mail)
+		self.assertEqual(user_updated.primary_email.address, user_unupdated.primary_email.address)
 		self.assertEqual(user_updated.loginname, user_unupdated.loginname)
 		self.assertFalse(user_updated.password.verify('newpassword'))
 		self.assertTrue(user_updated.password.verify('userpassword'))
@@ -361,42 +434,42 @@ newuser12,newuser12@example.com,{role1.id};{role1.id}
 		self.assertIsNotNone(user)
 		self.assertEqual(user.loginname, 'newuser1')
 		self.assertEqual(user.displayname, 'newuser1')
-		self.assertEqual(user.mail, 'newuser1@example.com')
+		self.assertEqual(user.primary_email.address, 'newuser1@example.com')
 		roles = sorted([r.name for r in user.roles])
 		self.assertEqual(roles, [])
 		user = User.query.filter_by(loginname='newuser2').one_or_none()
 		self.assertIsNotNone(user)
 		self.assertEqual(user.loginname, 'newuser2')
 		self.assertEqual(user.displayname, 'newuser2')
-		self.assertEqual(user.mail, 'newuser2@example.com')
+		self.assertEqual(user.primary_email.address, 'newuser2@example.com')
 		roles = sorted([r.name for r in user.roles])
 		self.assertEqual(roles, ['role1'])
 		user = User.query.filter_by(loginname='newuser3').one_or_none()
 		self.assertIsNotNone(user)
 		self.assertEqual(user.loginname, 'newuser3')
 		self.assertEqual(user.displayname, 'newuser3')
-		self.assertEqual(user.mail, 'newuser3@example.com')
+		self.assertEqual(user.primary_email.address, 'newuser3@example.com')
 		roles = sorted([r.name for r in user.roles])
 		self.assertEqual(roles, ['role1', 'role2'])
 		user = User.query.filter_by(loginname='newuser4').one_or_none()
 		self.assertIsNotNone(user)
 		self.assertEqual(user.loginname, 'newuser4')
 		self.assertEqual(user.displayname, 'newuser4')
-		self.assertEqual(user.mail, 'newuser4@example.com')
+		self.assertEqual(user.primary_email.address, 'newuser4@example.com')
 		roles = sorted([r.name for r in user.roles])
 		self.assertEqual(roles, [])
 		user = User.query.filter_by(loginname='newuser5').one_or_none()
 		self.assertIsNotNone(user)
 		self.assertEqual(user.loginname, 'newuser5')
 		self.assertEqual(user.displayname, 'newuser5')
-		self.assertEqual(user.mail, 'newuser5@example.com')
+		self.assertEqual(user.primary_email.address, 'newuser5@example.com')
 		roles = sorted([r.name for r in user.roles])
 		self.assertEqual(roles, [])
 		user = User.query.filter_by(loginname='newuser6').one_or_none()
 		self.assertIsNotNone(user)
 		self.assertEqual(user.loginname, 'newuser6')
 		self.assertEqual(user.displayname, 'newuser6')
-		self.assertEqual(user.mail, 'newuser6@example.com')
+		self.assertEqual(user.primary_email.address, 'newuser6@example.com')
 		roles = sorted([r.name for r in user.roles])
 		self.assertEqual(roles, ['role1', 'role2'])
 		self.assertIsNone(User.query.filter_by(loginname='newuser7').one_or_none())
@@ -406,14 +479,14 @@ newuser12,newuser12@example.com,{role1.id};{role1.id}
 		self.assertIsNotNone(user)
 		self.assertEqual(user.loginname, 'newuser10')
 		self.assertEqual(user.displayname, 'newuser10')
-		self.assertEqual(user.mail, 'newuser10@example.com')
+		self.assertEqual(user.primary_email.address, 'newuser10@example.com')
 		roles = sorted([r.name for r in user.roles])
 		self.assertEqual(roles, [])
 		user = User.query.filter_by(loginname='newuser11').one_or_none()
 		self.assertIsNotNone(user)
 		self.assertEqual(user.loginname, 'newuser11')
 		self.assertEqual(user.displayname, 'newuser11')
-		self.assertEqual(user.mail, 'newuser11@example.com')
+		self.assertEqual(user.primary_email.address, 'newuser11@example.com')
 		# Currently the csv import is not very robust, imho newuser11 should have role1 and role2!
 		roles = sorted([r.name for r in user.roles])
 		self.assertEqual(roles, ['role2'])
@@ -421,7 +494,7 @@ newuser12,newuser12@example.com,{role1.id};{role1.id}
 		self.assertIsNotNone(user)
 		self.assertEqual(user.loginname, 'newuser12')
 		self.assertEqual(user.displayname, 'newuser12')
-		self.assertEqual(user.mail, 'newuser12@example.com')
+		self.assertEqual(user.primary_email.address, 'newuser12@example.com')
 		roles = sorted([r.name for r in user.roles])
 		self.assertEqual(roles, ['role1'])
 
@@ -464,7 +537,7 @@ class TestUserCLI(UffdTestCase):
 		with self.app.test_request_context():
 			user = User.query.filter_by(loginname='newuser').first()
 			self.assertIsNotNone(user)
-			self.assertEqual(user.mail, 'newmail@example.com')
+			self.assertEqual(user.primary_email.address, 'newmail@example.com')
 			self.assertEqual(user.displayname, 'New Display Name')
 			self.assertTrue(user.password.verify('newpassword'))
 			self.assertEqual(user.roles, Role.query.filter_by(name='admin').all())
@@ -487,7 +560,7 @@ class TestUserCLI(UffdTestCase):
 		with self.app.test_request_context():
 			user = User.query.filter_by(loginname='testuser').first()
 			self.assertIsNotNone(user)
-			self.assertEqual(user.mail, 'newmail@example.com')
+			self.assertEqual(user.primary_email.address, 'newmail@example.com')
 			self.assertEqual(user.displayname, 'New Display Name')
 			self.assertTrue(user.password.verify('newpassword'))
 		result = self.app.test_cli_runner().invoke(args=['user', 'update', 'testuser', '--add-role', 'admin', '--add-role', 'test'])

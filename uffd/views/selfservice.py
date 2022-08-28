@@ -2,12 +2,13 @@ import secrets
 
 from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, abort
 from flask_babel import gettext as _, lazy_gettext
+from sqlalchemy.exc import IntegrityError
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.sendmail import sendmail
 from uffd.database import db
-from uffd.models import User, PasswordToken, MailToken, Role, host_ratelimit, Ratelimit, format_delay
+from uffd.models import User, UserEmail, PasswordToken, Role, host_ratelimit, Ratelimit, format_delay
 from .session import login_required
 
 bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix='/self/')
@@ -32,9 +33,6 @@ def update_profile():
 			flash(_('Display name changed.'))
 		else:
 			flash(_('Display name is not valid.'))
-	if request.values['mail'] != request.user.mail:
-		send_mail_verification(request.user, request.values['mail'])
-		flash(_('We sent you an email, please verify your mail address.'))
 	db.session.commit()
 	return redirect(url_for('selfservice.index'))
 
@@ -71,7 +69,13 @@ def forgot_password():
 	host_ratelimit.log()
 	flash(_("We sent a mail to this user's mail address if you entered the correct mail and login name combination"))
 	user = User.query.filter_by(loginname=loginname).one_or_none()
-	if user and user.mail == mail and user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
+	if not user:
+		return redirect(url_for('session.login'))
+	matches = any(map(lambda email: secrets.compare_digest(email.address, mail), user.verified_emails))
+	if not matches:
+		return redirect(url_for('session.login'))
+	recovery_email = user.recovery_email or user.primary_email
+	if recovery_email.address == mail and user.is_in_group(current_app.config['ACL_SELFSERVICE_GROUP']):
 		send_passwordreset(user)
 	return redirect(url_for('session.login'))
 
@@ -100,20 +104,92 @@ def token_password(token_id, token):
 	flash(_('New password set'))
 	return redirect(url_for('session.login'))
 
-@bp.route("/token/mail_verification/<int:token_id>/<token>")
+@bp.route("/email/new", methods=['POST'])
 @login_required(selfservice_acl_check)
-def token_mail(token_id, token):
-	dbtoken = MailToken.query.get(token_id)
-	if not dbtoken or not secrets.compare_digest(dbtoken.token, token) or \
-			dbtoken.expired:
+def add_email():
+	email = UserEmail(user=request.user)
+	if not email.set_address(request.form['address']):
+		flash(_('E-Mail address is invalid'))
+		return redirect(url_for('selfservice.index'))
+	try:
+		db.session.flush()
+	except IntegrityError:
+		flash(_('E-Mail address already exists'))
+		return redirect(url_for('selfservice.index'))
+
+	secret = email.start_verification()
+	db.session.add(email)
+	db.session.commit()
+	if not sendmail(email.address, 'Mail verification', 'selfservice/mailverification.mail.txt', user=request.user, email=email, secret=secret):
+		flash(_('E-Mail to "%(mail_address)s" could not be sent!', mail_address=email.address))
+	else:
+		flash(_('We sent you an email, please verify your mail address.'))
+	return redirect(url_for('selfservice.index'))
+
+@bp.route("/email/<int:email_id>/verify/<secret>")
+@bp.route("/token/mail_verification/<int:legacy_id>/<secret>")
+@login_required(selfservice_acl_check)
+def verify_email(secret, email_id=None, legacy_id=None):
+	if email_id is not None:
+		email = UserEmail.query.get(email_id)
+	else:
+		email = UserEmail.query.filter_by(verification_legacy_id=legacy_id).one()
+	if not email or email.verification_expired:
 		flash(_('Link invalid or expired'))
 		return redirect(url_for('selfservice.index'))
-	if dbtoken.user != request.user:
+	if email.user != request.user:
 		abort(403, description=_('This link was generated for another user. Login as the correct user to continue.'))
-	dbtoken.user.set_mail(dbtoken.newmail)
-	db.session.delete(dbtoken)
+	if not email.finish_verification(secret):
+		flash(_('Link invalid or expired'))
+		return redirect(url_for('selfservice.index'))
+	if legacy_id is not None:
+		request.user.primary_email = email
 	db.session.commit()
-	flash(_('New mail set'))
+	flash(_('E-Mail address verified'))
+	return redirect(url_for('selfservice.index'))
+
+@bp.route("/email/<int:email_id>/retry")
+@login_required(selfservice_acl_check)
+def retry_email_verification(email_id):
+	email = UserEmail.query.filter_by(id=email_id, user=request.user, verified=False).first_or_404()
+	secret = email.start_verification()
+	db.session.commit()
+	if not sendmail(email.address, 'E-Mail verification', 'selfservice/mailverification.mail.txt', user=request.user, email=email, secret=secret):
+		flash(_('E-Mail to "%(mail_address)s" could not be sent!', mail_address=email.address))
+	else:
+		flash(_('We sent you an email, please verify your mail address.'))
+	return redirect(url_for('selfservice.index'))
+
+@bp.route("/email/<int:email_id>/delete", methods=['POST', 'GET'])
+@login_required(selfservice_acl_check)
+def delete_email(email_id):
+	email = UserEmail.query.filter_by(id=email_id, user=request.user).first_or_404()
+	try:
+		db.session.delete(email)
+		db.session.commit()
+	except IntegrityError:
+		flash(_('Cannot delete primary e-mail address'))
+		return redirect(url_for('selfservice.index'))
+	flash(_('E-Mail address deleted'))
+	return redirect(url_for('selfservice.index'))
+
+@bp.route("/email/preferences", methods=['POST'])
+@login_required(selfservice_acl_check)
+def update_email_preferences():
+	verified_emails = UserEmail.query.filter_by(user=request.user, verified=True)
+	email = verified_emails.filter_by(id=request.form['primary_email']).first()
+	if not email:
+		abort(400)
+	request.user.primary_email = email
+	if request.form['recovery_email'] == 'primary':
+		request.user.recovery_email = None
+	else:
+		email = verified_emails.filter_by(id=request.form['recovery_email']).first()
+		if not email:
+			abort(400)
+		request.user.recovery_email = email
+	db.session.commit()
+	flash(_('E-Mail preferences updated'))
 	return redirect(url_for('selfservice.index'))
 
 @bp.route("/leaverole/<int:roleid>", methods=(['POST']))
@@ -126,15 +202,6 @@ def leave_role(roleid):
 	db.session.commit()
 	flash(_('You left role %(role_name)s', role_name=role.name))
 	return redirect(url_for('selfservice.index'))
-
-def send_mail_verification(user, newmail):
-	MailToken.query.filter(MailToken.user == user).delete()
-	token = MailToken(user=user, newmail=newmail)
-	db.session.add(token)
-	db.session.commit()
-
-	if not sendmail(newmail, 'Mail verification', 'selfservice/mailverification.mail.txt', user=user, token=token):
-		flash(_('Mail to "%(mail_address)s" could not be sent!', mail_address=newmail))
 
 def send_passwordreset(user, new=False):
 	PasswordToken.query.filter(PasswordToken.user == user).delete()
@@ -149,5 +216,6 @@ def send_passwordreset(user, new=False):
 		template = 'selfservice/passwordreset.mail.txt'
 		subject = 'Password reset'
 
-	if not sendmail(user.mail, subject, template, user=user, token=token):
-		flash(_('Mail to "%(mail_address)s" could not be sent!', mail_address=user.mail))
+	email = user.recovery_email or user.primary_email
+	if not sendmail(email.address, subject, template, user=user, token=token):
+		flash(_('E-Mail to "%(mail_address)s" could not be sent!', mail_address=email.address))

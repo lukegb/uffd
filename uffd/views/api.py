@@ -97,6 +97,7 @@ def getusers():
 	if key is None or key == 'group':
 		# pylint: disable=no-member
 		query = query.options(db.joinedload(ServiceUser.user).selectinload(User.groups))
+		query = query.options(db.joinedload(ServiceUser.user).joinedload(User.primary_email))
 	return jsonify([generate_user_dict(user) for user in query])
 
 @bp.route('/checkpassword', methods=['POST'])

@@ -79,8 +79,8 @@ class Signup(db.Model):
 			return False, _('Login name is invalid')
 		if not User().set_displayname(self.displayname):
 			return False, _('Display name is invalid')
-		if not User().set_mail(self.mail):
-			return False, _('Mail address is invalid')
+		if not User().set_primary_email_address(self.mail):
+			return False, _('E-Mail address is invalid')
 		if not self.password:
 			return False, _('Invalid password')
 		if User.query.filter_by(loginname=self.loginname).all():
@@ -104,7 +104,7 @@ class Signup(db.Model):
 			return None, _('Wrong password')
 		if User.query.filter_by(loginname=self.loginname).all():
 			return None, _('A user with this login name already exists')
-		user = User(loginname=self.loginname, displayname=self.displayname, mail=self.mail, password=self.password)
+		user = User(loginname=self.loginname, displayname=self.displayname, primary_email_address=self.mail, password=self.password)
 		db.session.add(user)
 		user.update_groups() # pylint: disable=no-member
 		self.user = user

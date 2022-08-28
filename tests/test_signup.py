@@ -122,7 +122,7 @@ class TestSignupModel(UffdTestCase):
 		user = User.query.filter_by(loginname='newuser').one_or_none()
 		self.assertEqual(user.loginname, 'newuser')
 		self.assertEqual(user.displayname, 'New User')
-		self.assertEqual(user.mail, 'test@example.com')
+		self.assertEqual(user.primary_email.address, 'test@example.com')
 
 	def test_finish_completed(self):
 		signup = Signup(loginname='newuser', displayname='New User', mail='test@example.com', password='notsecret')
@@ -171,7 +171,7 @@ class TestSignupModel(UffdTestCase):
 		signup = Signup.query.get(signup1_id)
 		self.assert_finish_failure(signup, 'notsecret')
 		user = User.query.filter_by(loginname='newuser').one_or_none()
-		self.assertEqual(user.mail, 'test2@example.com')
+		self.assertEqual(user.primary_email.address, 'test2@example.com')
 
 class TestSignupViews(UffdTestCase):
 	def setUpApp(self):
@@ -333,7 +333,7 @@ class TestSignupViews(UffdTestCase):
 		self.assertTrue(signup.completed)
 		self.assertEqual(signup.user.loginname, 'newuser')
 		self.assertEqual(signup.user.displayname, 'New User')
-		self.assertEqual(signup.user.mail, 'test@example.com')
+		self.assertEqual(signup.user.primary_email.address, 'test@example.com')
 		self.assertIsNotNone(login_get_user('newuser', 'notsecret'))
 
 	def test_confirm_loggedin(self):

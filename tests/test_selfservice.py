@@ -1,10 +1,11 @@
 import datetime
+import re
 import unittest
 
 from flask import url_for, request
 
 from uffd import create_app, db
-from uffd.models import MailToken, PasswordToken, User, Role, RoleGroup
+from uffd.models import PasswordToken, User, UserEmail, Role, RoleGroup
 
 from utils import dump, UffdTestCase
 
@@ -18,13 +19,13 @@ class TestSelfservice(UffdTestCase):
 		user = request.user
 		self.assertIn(user.displayname.encode(), r.data)
 		self.assertIn(user.loginname.encode(), r.data)
-		self.assertIn(user.mail.encode(), r.data)
+		self.assertIn(user.primary_email.address.encode(), r.data)
 
 	def test_update_displayname(self):
 		self.login_as('user')
 		user = request.user
 		r = self.client.post(path=url_for('selfservice.update_profile'),
-			data={'displayname': 'New Display Name', 'mail': user.mail},
+			data={'displayname': 'New Display Name'},
 			follow_redirects=True)
 		dump('update_displayname', r)
 		self.assertEqual(r.status_code, 200)
@@ -35,43 +36,209 @@ class TestSelfservice(UffdTestCase):
 		self.login_as('user')
 		user = request.user
 		r = self.client.post(path=url_for('selfservice.update_profile'),
-			data={'displayname': '', 'mail': user.mail},
+			data={'displayname': ''},
 			follow_redirects=True)
 		dump('update_displayname_invalid', r)
 		self.assertEqual(r.status_code, 200)
 		_user = request.user
 		self.assertNotEqual(_user.displayname, '')
 
-	def test_update_mail(self):
+	def test_add_email(self):
 		self.login_as('user')
-		user = request.user
-		r = self.client.post(path=url_for('selfservice.update_profile'),
-			data={'displayname': user.displayname, 'mail': 'newemail@example.com'},
+		r = self.client.post(path=url_for('selfservice.add_email'),
+			data={'address': 'new@example.com'},
 			follow_redirects=True)
-		dump('update_mail', r)
+		dump('selfservice_add_email', r)
 		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertNotEqual(_user.mail, 'newemail@example.com')
-		token = MailToken.query.filter(MailToken.user == user).first()
-		self.assertEqual(token.newmail, 'newemail@example.com')
-		self.assertIn(token.token, str(self.app.last_mail.get_content()))
-		r = self.client.get(path=url_for('selfservice.token_mail', token_id=token.id, token=token.token), follow_redirects=True)
-		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertEqual(_user.mail, 'newemail@example.com')
+		self.assertIn('new@example.com', self.app.last_mail['To'])
+		m = re.search(r'/email/([0-9]+)/verify/(.*)', str(self.app.last_mail.get_content()))
+		email_id, secret = m.groups()
+		email = UserEmail.query.get(email_id)
+		self.assertEqual(email.user, request.user)
+		self.assertEqual(email.address, 'new@example.com')
+		self.assertFalse(email.verified)
+		self.assertFalse(email.verification_expired)
+		self.assertTrue(email.verification_secret.verify(secret))
 
-	def test_update_mail_sendfailure(self):
-		self.app.config['MAIL_SKIP_SEND'] = 'fail'
+	def test_add_email_duplicate(self):
 		self.login_as('user')
-		user = request.user
-		r = self.client.post(path=url_for('selfservice.update_profile'),
-			data={'displayname': user.displayname, 'mail': 'newemail@example.com'},
+		r = self.client.post(path=url_for('selfservice.add_email'),
+			data={'address': 'test@example.com'},
 			follow_redirects=True)
-		dump('update_mail_sendfailure', r)
+		dump('selfservice_add_email_duplicate', r)
+		self.assertFalse(hasattr(self.app, 'last_mail'))
+		self.assertEqual(len(self.get_user().all_emails), 1)
+		self.assertEqual(UserEmail.query.filter_by(user=None).all(), [])
+
+	def test_verify_email(self):
+		self.login_as('user')
+		email = UserEmail(user=self.get_user(), address='new@example.com')
+		secret = email.start_verification()
+		db.session.add(email)
+		db.session.commit()
+		email_id = email.id
+		r = self.client.get(path=url_for('selfservice.verify_email', email_id=email_id, secret=secret), follow_redirects=True)
+		dump('selfservice_verify_email', r)
 		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertNotEqual(_user.mail, 'newemail@example.com')
-		# Maybe also check that there is no new token in the db
+		email = UserEmail.query.get(email_id)
+		self.assertTrue(email.verified)
+		self.assertEqual(self.get_user().primary_email.address, 'test@example.com')
+
+	def test_verify_email_notfound(self):
+		self.login_as('user')
+		r = self.client.get(path=url_for('selfservice.verify_email', email_id=2342, secret='invalidsecret'), follow_redirects=True)
+		dump('selfservice_verify_email_notfound', r)
+
+	def test_verify_email_wrong_user(self):
+		self.login_as('user')
+		email = UserEmail(user=self.get_admin(), address='new@example.com')
+		secret = email.start_verification()
+		db.session.add(email)
+		db.session.commit()
+		r = self.client.get(path=url_for('selfservice.verify_email', email_id=email.id, secret=secret), follow_redirects=True)
+		dump('selfservice_verify_email_wrong_user', r)
+		self.assertFalse(email.verified)
+
+	def test_verify_email_wrong_secret(self):
+		self.login_as('user')
+		email = UserEmail(user=self.get_user(), address='new@example.com')
+		secret = email.start_verification()
+		db.session.add(email)
+		db.session.commit()
+		r = self.client.get(path=url_for('selfservice.verify_email', email_id=email.id, secret='invalidsecret'), follow_redirects=True)
+		dump('selfservice_verify_email_wrong_secret', r)
+		self.assertFalse(email.verified)
+
+	def test_verify_email_expired(self):
+		self.login_as('user')
+		email = UserEmail(user=self.get_user(), address='new@example.com')
+		secret = email.start_verification()
+		email.verification_expires = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+		db.session.add(email)
+		db.session.commit()
+		r = self.client.get(path=url_for('selfservice.verify_email', email_id=email.id, secret='invalidsecret'), follow_redirects=True)
+		dump('selfservice_verify_email_expired', r)
+		self.assertFalse(email.verified)
+
+	def test_verify_email_legacy(self):
+		self.login_as('user')
+		email = UserEmail(
+			user=self.get_user(),
+			address='new@example.com',
+			verification_legacy_id=1337,
+			_verification_secret='{PLAIN}ZgvsUs2bZjr9Whpy1la7Q0PHbhjmpXtNdH1mCmDbQP7',
+			verification_expires=datetime.datetime.utcnow()+datetime.timedelta(days=1)
+		)
+		db.session.add(email)
+		db.session.commit()
+		email_id = email.id
+		r = self.client.get(path=f'/self/token/mail_verification/1337/ZgvsUs2bZjr9Whpy1la7Q0PHbhjmpXtNdH1mCmDbQP7', follow_redirects=True)
+		dump('selfservice_verify_email_legacy', r)
+		self.assertEqual(r.status_code, 200)
+		email = UserEmail.query.get(email_id)
+		self.assertTrue(email.verified)
+		self.assertEqual(self.get_user().primary_email, email)
+
+	def test_retry_email_verification(self):
+		self.login_as('user')
+		email = UserEmail(user=self.get_user(), address='new@example.com')
+		old_secret = email.start_verification()
+		db.session.add(email)
+		db.session.commit()
+		r = self.client.get(path=url_for('selfservice.retry_email_verification', email_id=email.id), follow_redirects=True)
+		dump('selfservice_retry_email_verification', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertIn('new@example.com', self.app.last_mail['To'])
+		m = re.search(r'/email/([0-9]+)/verify/(.*)', str(self.app.last_mail.get_content()))
+		email_id, secret = m.groups()
+		email = UserEmail.query.get(email_id)
+		self.assertEqual(email.user, request.user)
+		self.assertEqual(email.address, 'new@example.com')
+		self.assertFalse(email.verified)
+		self.assertFalse(email.verification_expired)
+		self.assertTrue(email.verification_secret.verify(secret))
+		self.assertFalse(email.verification_secret.verify(old_secret))
+
+	def test_delete_email(self):
+		self.login_as('user')
+		email = UserEmail(user=self.get_user(), address='new@example.com', verified=True)
+		db.session.add(email)
+		self.get_user().recovery_email = email
+		db.session.commit()
+		r = self.client.post(path=url_for('selfservice.delete_email', email_id=email.id), follow_redirects=True)
+		dump('selfservice_delete_email', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertIsNone(UserEmail.query.filter_by(address='new@example.com').first())
+		self.assertIsNone(self.get_user().recovery_email)
+		self.assertEqual(self.get_user().primary_email.address, 'test@example.com')
+
+	def test_delete_email_invalid(self):
+		self.login_as('user')
+		r = self.client.post(path=url_for('selfservice.delete_email', email_id=2324), follow_redirects=True)
+		self.assertEqual(r.status_code, 404)
+
+	def test_delete_email_primary(self):
+		self.login_as('user')
+		r = self.client.post(path=url_for('selfservice.delete_email', email_id=request.user.primary_email.id), follow_redirects=True)
+		dump('selfservice_delete_email_primary', r)
+		self.assertEqual(self.get_user().primary_email.address, 'test@example.com')
+
+	def test_update_email_preferences(self):
+		self.login_as('user')
+		email = UserEmail(user=self.get_user(), address='new@example.com', verified=True)
+		db.session.add(email)
+		db.session.commit()
+		email_id = email.id
+		old_email_id = self.get_user().primary_email.id
+		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+			data={'primary_email': str(email_id), 'recovery_email': 'primary'},
+			follow_redirects=True)
+		dump('selfservice_update_email_preferences', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.get_user().primary_email.id, email.id)
+		self.assertIsNone(self.get_user().recovery_email)
+		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+			data={'primary_email': str(old_email_id), 'recovery_email': str(email_id)},
+			follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.get_user().primary_email.id, old_email_id)
+		self.assertEqual(self.get_user().recovery_email.id, email_id)
+
+	def test_update_email_preferences_unverified(self):
+		self.login_as('user')
+		email = UserEmail(user=self.get_user(), address='new@example.com')
+		db.session.add(email)
+		db.session.commit()
+		email_id = email.id
+		old_email_id = self.get_user().primary_email.id
+		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+			data={'primary_email': str(email_id), 'recovery_email': 'primary'},
+			follow_redirects=True)
+		self.assertEqual(r.status_code, 400)
+		self.assertEqual(self.get_user().primary_email.address, 'test@example.com')
+		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+			data={'primary_email': str(old_email_id), 'recovery_email': str(email_id)},
+			follow_redirects=True)
+		self.assertEqual(r.status_code, 400)
+		self.assertIsNone(self.get_user().recovery_email)
+
+	def test_update_email_preferences_invalid(self):
+		self.login_as('user')
+		email = UserEmail(user=self.get_user(), address='new@example.com', verified=True)
+		db.session.add(email)
+		db.session.commit()
+		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+			data={'primary_email': str(email.id), 'recovery_email': '2342'},
+			follow_redirects=True)
+		self.assertEqual(r.status_code, 400)
+		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+			data={'primary_email': 'primary', 'recovery_email': 'primary'},
+			follow_redirects=True)
+		self.assertEqual(r.status_code, 400)
+		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+			data={'primary_email': '2342', 'recovery_email': 'primary'},
+			follow_redirects=True)
+		self.assertEqual(r.status_code, 400)
 
 	def test_change_password(self):
 		self.login_as('user')
@@ -141,70 +308,14 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(len(_user.roles), 1)
 		self.assertEqual(list(_user.roles)[0].name, 'testrole2')
 
-	def test_token_mail_emptydb(self):
-		self.login_as('user')
-		user = request.user
-		r = self.client.get(path=url_for('selfservice.token_mail', token_id=1, token='A'*128), follow_redirects=True)
-		dump('token_mail_emptydb', r)
-		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertEqual(_user.mail, user.mail)
-
-	def test_token_mail_invalid(self):
-		self.login_as('user')
-		user = request.user
-		old_mail = user.mail
-		token = MailToken(user=user, newmail='newusermail@example.com')
-		db.session.add(token)
-		db.session.commit()
-		r = self.client.get(path=url_for('selfservice.token_mail', token_id=token.id, token='A'*128), follow_redirects=True)
-		dump('token_mail_invalid', r)
-		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertEqual(_user.mail, old_mail)
-
-	def test_token_mail_wrong_user(self):
-		self.login_as('user')
-		user = request.user
-		old_mail = user.mail
-		admin_user = self.get_admin()
-		old_admin_mail = admin_user.mail
-		db.session.add(MailToken(user=user, newmail='newusermail@example.com'))
-		admin_token = MailToken(user=admin_user, newmail='newadminmail@example.com')
-		db.session.add(admin_token)
-		db.session.commit()
-		r = self.client.get(path=url_for('selfservice.token_mail', token_id=admin_token.id, token=admin_token.token), follow_redirects=True)
-		dump('token_mail_wrong_user', r)
-		self.assertEqual(r.status_code, 403)
-		_user = self.get_user()
-		_admin_user = self.get_admin()
-		self.assertEqual(_user.mail, old_mail)
-		self.assertEqual(_admin_user.mail, old_admin_mail)
-
-	def test_token_mail_expired(self):
-		self.login_as('user')
-		user = request.user
-		old_mail = user.mail
-		token = MailToken(user=user, newmail='newusermail@example.com',
-			created=(datetime.datetime.utcnow() - datetime.timedelta(days=10)))
-		db.session.add(token)
-		db.session.commit()
-		r = self.client.get(path=url_for('selfservice.token_mail', token_id=token.id, token=token.token), follow_redirects=True)
-		dump('token_mail_expired', r)
-		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertEqual(_user.mail, old_mail)
-		tokens = MailToken.query.filter(MailToken.user == _user).all()
-		self.assertEqual(len(tokens), 1)
-		self.assertTrue(tokens[0].expired)
-
 	def test_forgot_password(self):
 		user = self.get_user()
 		r = self.client.get(path=url_for('selfservice.forgot_password'))
 		dump('forgot_password', r)
 		self.assertEqual(r.status_code, 200)
+		user = self.get_user()
 		r = self.client.post(path=url_for('selfservice.forgot_password'),
-			data={'loginname': user.loginname, 'mail': user.mail}, follow_redirects=True)
+			data={'loginname': user.loginname, 'mail': user.primary_email.address}, follow_redirects=True)
 		dump('forgot_password_submit', r)
 		self.assertEqual(r.status_code, 200)
 		token = PasswordToken.query.filter(PasswordToken.user == user).first()
@@ -215,8 +326,9 @@ class TestSelfservice(UffdTestCase):
 		user = self.get_user()
 		r = self.client.get(path=url_for('selfservice.forgot_password'))
 		self.assertEqual(r.status_code, 200)
+		user = self.get_user()
 		r = self.client.post(path=url_for('selfservice.forgot_password'),
-			data={'loginname': 'not_a_user', 'mail': user.mail}, follow_redirects=True)
+			data={'loginname': 'not_a_user', 'mail': user.primary_email.address}, follow_redirects=True)
 		dump('forgot_password_submit_wrong_user', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(hasattr(self.app, 'last_mail'))

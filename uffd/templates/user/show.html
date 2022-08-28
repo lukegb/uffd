@@ -1,5 +1,20 @@
 {% extends 'base.html' %}
 
+{% macro new_email_row(tmp_id) %}
+<tr>
+	<td>
+		<input class="form-control form-control-sm" type="email" name="newemail-{{ tmp_id }}-address" placeholder="{{ _('New address') }}">
+	</td>
+	<td class="text-center">
+		<input type="checkbox" value="1" name="newemail-{{ tmp_id }}-verified">
+	</td>
+	<td class="text-center">
+		<button type="button" class="btn btn-sm delete-new-email-row d-none"><i class="fas fa-times"></i></button>
+	</td>
+</tr>
+
+{% endmacro %}
+
 {% block body %}
 <form action="{{ url_for("user.update", id=user.id) }}" method="POST">
 <div class="align-self-center">
@@ -65,19 +80,76 @@
 					{{_("If you leave this empty it will be set to the login name. At most 128, at least 2 characters. No character restrictions.")}}
 				</small>
 			</div>
+
+			{% if not user.id %}
 			<div class="form-group col">
-				<label for="user-mail">{{_("Mail")}}</label>
-				<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail or '' }}">
+				<label for="user-email">{{_("E-Mail Address")}}</label>
+				<input type="email" class="form-control" id="user-email" name="email" value="">
 				<small class="form-text text-muted">
-					{{_("Check that the address is unique. A user can take over another account if both have the same mail address set.")}}
+					{{_("Make sure the address is correct! Services might use e-mail addresses as account identifiers and rely on them being unique and verified.")}}
 				</small>
 			</div>
+			{% else %}
+			<div class="form-group col">
+				<span>{{_("E-Mail Addresses")}}</span>
+				<table class="table table-sm mt-2">
+					<thead>
+						<tr>
+							<th scope="col">{{_("Address")}}</th>
+							<th scope="col" class="text-center">{{_("Verified")}}</th>
+							<th scope="col" class="text-center">{{_("Delete")}}</th>
+						</tr>
+					</thead>
+					<tbody id="email-rows">
+						{% for email in user.all_emails %}
+						<tr>
+							<td>
+								<input type="hidden" name="email-{{ email.id }}-present" value="1">
+								{{ email.address }}
+								{% if email == user.primary_email %}
+								<span class="badge badge-primary">{{ _('primary') }}</span>
+								{% endif %}
+							</td>
+							<td class="text-center">
+								<input type="checkbox" value="1" name="email-{{ email.id }}-verified"{{ ' checked disabled' if email.verified }}>
+							</td>
+							<td class="text-center">
+								<input type="checkbox" value="1" name="email-{{ email.id }}-delete"{{ ' disabled' if email == user.primary_email }}>
+							</td>
+						</tr>
+						{% endfor %}
+						{{ new_email_row(0) }}
+					</tbody>
+				</table>
+				<small class="form-text text-muted">
+					{{_("Make sure that addresses you add are correct! Services might use e-mail addresses as account identifiers and rely on them being unique and verified.")}}
+				</small>
+			</div>
+			<div class="form-group col">
+				<label>{{_("Primary E-Mail Address")}}</label>
+				<select name="primary_email" class="form-control">
+					{% for email in user.all_emails if email.verified %}
+					<option value="{{ email.id }}"{{ ' selected' if email == user.primary_email }}>{{ email.address }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			<div class="form-group col">
+				<label>{{_("Recovery E-Mail Address")}}</label>
+				<select name="recovery_email" class="form-control">
+					<option value="primary"{{ ' selected' if not user.recovery_email }}>{{ _('Use primary address') }}</option>
+					{% for email in user.all_emails if email.verified %}
+					<option value="{{ email.id }}" {{ 'selected' if email == user.recovery_email }}>{{ email.address }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			{% endif %}
+
 			<div class="form-group col">
 				<label for="user-loginname">{{_("Password")}}</label>
 				{% if user.id %}
 				<input type="password" class="form-control" id="user-password" name="password" placeholder="●●●●●●●●" minlength={{ User.PASSWORD_MINLEN }} maxlength={{ User.PASSWORD_MAXLEN }} pattern="{{ User.PASSWORD_REGEX }}">
 				{% else %}
-				<input type="password" class="form-control" id="user-password" name="password" placeholder="{{_("mail to set it will be sent")}}" readonly>
+				<input type="password" class="form-control" id="user-password" name="password" placeholder="{{_("E-Mail to set it will be sent")}}" readonly>
 				{% endif %}
 				<small class="form-text text-muted">
 					{{ User.PASSWORD_DESCRIPTION|safe }}
@@ -159,4 +231,17 @@
 	</div>
 </div>
 </form>
+
+<script>
+$('#email-rows').on('click', '.delete-new-email-row', function () {
+	$(this).closest('tr').remove()
+});
+let new_email_id = 1;
+$('#email-rows').on('input', 'tr:last input', function () {
+	$('#email-rows tr:last button.delete-new-email-row').removeClass('d-none');
+	$('#email-rows').append({{ new_email_row('TMPID')|tojson }}.replace('TMPID', new_email_id));
+	new_email_id ++;
+});
+</script>
+
 {% endblock %}

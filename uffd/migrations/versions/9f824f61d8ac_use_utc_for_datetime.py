@@ -31,7 +31,7 @@ def iter_rows_paged(table, pk='id', limit=1000):
 		if last_pk is not None:
 			expr = expr.where(pk_column > last_pk)
 		result = conn.execute(expr)
-		pk_index = result.keys().index(pk)
+		pk_index = list(result.keys()).index(pk)
 		rows = result.fetchall()
 		if not rows:
 			break

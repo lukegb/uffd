@@ -266,10 +266,9 @@ class TestAPIRemailerResolve(UffdTestCase):
 	def test(self):
 		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
 		service = Service.query.filter_by(name='service2').one()
-		user = self.get_user()
-		r = self.client.get(path=url_for('api.resolve_remailer', orig_address=remailer.build_address(service.id, user.id)), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		r = self.client.get(path=url_for('api.resolve_remailer', orig_address=remailer.build_address(service.id, self.get_user().id)), headers=[basic_auth('test', 'test')], follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
-		self.assertEqual(r.json, {'address': user.mail})
+		self.assertEqual(r.json, {'address': self.get_user().primary_email.address})
 		r = self.client.get(path=url_for('api.resolve_remailer', orig_address='foo@bar'), headers=[basic_auth('test', 'test')], follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.json, {'address': None})

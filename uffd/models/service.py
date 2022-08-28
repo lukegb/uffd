@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from uffd.database import db
 from uffd.remailer import remailer
 from uffd.tasks import cleanup_task
-from .user import User
+from .user import User, UserEmail
 
 class Service(db.Model):
 	__tablename__ = 'service'
@@ -53,7 +53,7 @@ class ServiceUser(db.Model):
 	# Actual e-mail address that mails from the service are sent to
 	@property
 	def real_email(self):
-		return self.user.mail
+		return self.user.primary_email.address
 
 	@property
 	def remailer_email(self):
@@ -91,9 +91,11 @@ class ServiceUser(db.Model):
 			return query.filter(cls.user_id == service_user.user_id, cls.service_id == service_user.service_id)
 
 		AliasedUser = db.aliased(User)
+		AliasedPrimaryEmail = db.aliased(UserEmail)
 		AliasedService = db.aliased(Service)
 
 		query = query.join(cls.user.of_type(AliasedUser))
+		query = query.join(AliasedUser.primary_email.of_type(AliasedPrimaryEmail))
 		query = query.join(cls.service.of_type(AliasedService))
 
 		remailer_enabled_expr = AliasedService.use_remailer if remailer.configured else False
@@ -102,7 +104,7 @@ class ServiceUser(db.Model):
 				remailer_enabled_expr,
 				AliasedUser.loginname.in_(current_app.config['REMAILER_LIMIT_TO_USERS']),
 			)
-		return query.filter(db.and_(db.not_(remailer_enabled_expr), AliasedUser.mail == email))
+		return query.filter(db.and_(db.not_(remailer_enabled_expr), AliasedPrimaryEmail.address == email))
 
 @db.event.listens_for(db.Session, 'after_flush') # pylint: disable=no-member
 def create_service_users(session, flush_context): # pylint: disable=unused-argument

@@ -39,7 +39,7 @@ class TestViews(UffdTestCase):
 		self.assertEqual(r.json['id'], user.unix_uid)
 		self.assertEqual(r.json['name'], user.displayname)
 		self.assertEqual(r.json['nickname'], user.loginname)
-		self.assertEqual(r.json['email'], mail or user.mail)
+		self.assertEqual(r.json['email'], mail or user.primary_email.address)
 		self.assertTrue(r.json.get('groups'))
 
 	def test_authorization(self):

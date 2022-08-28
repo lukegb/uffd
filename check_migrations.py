@@ -8,7 +8,7 @@ import flask_migrate
 
 from uffd import create_app, db
 from uffd.models import (
-	User, Group,
+	User, UserEmail, Group,
 	RecoveryCodeMethod, TOTPMethod, WebauthnMethod,
 	Role, RoleGroup,
 	Signup,
@@ -16,7 +16,7 @@ from uffd.models import (
 	DeviceLoginConfirmation,
 	Service,
 	OAuth2Client, OAuth2LogoutURI, OAuth2Grant, OAuth2Token, OAuth2DeviceLoginInitiation,
-	PasswordToken, MailToken,
+	PasswordToken,
 )
 
 def run_test(dburi, revision):
@@ -73,7 +73,6 @@ def run_test(dburi, revision):
 		db.session.add(OAuth2Token(user=user, client=oauth2_client, token_type='Bearer', access_token='testcode', refresh_token='testcode', expires=datetime.datetime.now()))
 		db.session.add(OAuth2DeviceLoginInitiation(client=oauth2_client, confirmations=[DeviceLoginConfirmation(user=user)]))
 		db.session.add(PasswordToken(user=user))
-		db.session.add(MailToken(user=user, newmail='test@example.com'))
 		db.session.commit()
 		flask_migrate.downgrade(revision=revision)
 		flask_migrate.upgrade(revision='head')

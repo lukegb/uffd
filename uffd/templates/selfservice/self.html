@@ -25,14 +25,81 @@
 				<label>{{_("Display Name")}}</label>
 				<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ user.displayname }}">
 			</div>
-			<div class="form-group">
-				<label>{{_("E-Mail Address")}}</label>
-				<input type="email" class="form-control" id="user-mail" name="mail" value="{{ user.mail }}" required>
-				<small class="form-text text-muted">
-					{{_("We will send you a confirmation mail to this address if you change it")}}
-				</small>
-			</div>
 			<button type="submit" class="btn btn-primary btn-block">{{_("Update Profile")}}</button>
+		</form>
+	</div>
+</div>
+
+<hr>
+
+<div class="row">
+	<div class="col-12 col-md-5">
+		<h5>{{_("E-Mail Addresses")}}</h5>
+		<p>{{_("Add and delete addresses associated with your account. You will need to verify new addresses by opening a link set to them.")}}</p>
+	</div>
+	<div class="col-12 col-md-7">
+    <form method="POST" action="{{ url_for('selfservice.add_email') }}" class="form mb-2">
+      <div class="row m-0">
+        <label class="sr-only" for="new-email-address">{{_("Email")}}</label>
+        <input type="text" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 20em;" id="new-email-address" name="address" placeholder="{{_("New E-Mail Address")}}" required>
+        <button type="submit" class="btn btn-primary mb-2 col">{{_("Add address")}}</button>
+      </div>
+    </form>
+		<table class="table mb-0">
+			<tbody>
+				{% for email in user.all_emails|sort(attribute='id') %}
+				<tr>
+					<td class="pl-0">
+						{{ email.address }}
+						{% if email == user.primary_email %}
+						<span class="badge badge-primary">{{ _('primary') }}</span>
+						{% elif not email.verified  %}
+						<span class="badge badge-danger">{{ _('unverified') }}</span>
+						{% endif %}
+					</td>
+					<td class="pt-2 pb-1 pr-0">
+						<form method="POST" action="{{ url_for('selfservice.delete_email', email_id=email.id) }}" onsubmit='return confirm({{_("Are you sure?")|tojson|e}});'>
+							<button type="submit" class="btn btn-sm btn-danger float-right ml-1 mb-1"{% if email == user.primary_email %} disabled title="{{ _('Cannot delete primary e-mail address') }}"{% endif %}>{{_("Delete")}}</button>
+						</form>
+						{% if not email.verified  %}
+						<a href="{{ url_for('selfservice.retry_email_verification', email_id=email.id) }}" class="btn btn-sm btn-primary float-right mb-1">{{_("Retry verification")}}</a>
+						{% endif %}
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<hr>
+
+<div class="row">
+	<div class="col-12 col-md-5">
+		<h5>{{_("E-Mail Preferences")}}</h5>
+		<p>{{_("Choose which of your verified address to use as your primary or recovery address.")}}</p>
+	</div>
+	<div class="col-12 col-md-7">
+		<form class="form" action="{{ url_for("selfservice.update_email_preferences") }}" method="POST">
+			<div class="form-group">
+				<label>{{_("Primary Address")}}</label>
+				<select name="primary_email" class="form-control">
+					{% for email in user.all_emails if email.verified %}
+					<option value="{{ email.id }}" {{ 'selected' if email == user.primary_email }}>{{ email.address }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			<div class="form-group">
+				<label>{{_("Recovery Address")}}</label>
+				<select name="recovery_email" class="form-control">
+					<option value="primary" {{ 'selected' if not user.recovery_email }}>{{ _('Use primary address') }}</option>
+					{% for email in user.all_emails if email.verified %}
+					<option value="{{ email.id }}" {{ 'selected' if email == user.recovery_email }}>{{ email.address }}</option>
+					{% endfor %}
+				</select>
+				<small class="text-muted">{{ _('Password reset e-mails will be sent to this address') }}</small>
+			</div>
+			<button type="submit" class="btn btn-primary btn-block">{{_("Update E-Mail Preferences")}}</button>
 		</form>
 	</div>
 </div>
@@ -91,6 +158,7 @@
 	</div>
 	<div class="col-12 col-md-7">
 		<p>{{_("Administrators and role moderators can invite you to new roles.")}}</p>
+
 		<table class="table">
 			<thead>
 				<tr>
@@ -122,6 +190,7 @@
 				{% endif %}
 			</tbody>
 		</table>
+
 	</div>
 </div>
 

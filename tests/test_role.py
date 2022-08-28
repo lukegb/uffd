@@ -32,7 +32,7 @@ class TestPrimitives(unittest.TestCase):
 
 class TestUserRoleAttributes(UffdTestCase):
 	def test_roles_effective(self):
-		db.session.add(User(loginname='service', is_service_user=True, mail='service@example.com', displayname='Service'))
+		db.session.add(User(loginname='service', is_service_user=True, primary_email_address='service@example.com', displayname='Service'))
 		db.session.commit()
 		user = self.get_user()
 		service_user = User.query.filter_by(loginname='service').one_or_none()
@@ -82,7 +82,7 @@ class TestUserRoleAttributes(UffdTestCase):
 
 class TestRoleModel(UffdTestCase):
 	def test_members_effective(self):
-		db.session.add(User(loginname='service', is_service_user=True, mail='service@example.com', displayname='Service'))
+		db.session.add(User(loginname='service', is_service_user=True, primary_email_address='service@example.com', displayname='Service'))
 		db.session.commit()
 		user1 = self.get_user()
 		user2 = self.get_admin()
@@ -229,7 +229,7 @@ class TestRoleViews(UffdTestCase):
 		# TODO: verify that group memberships are updated (currently not possible with ldap mock!)
 
 	def test_set_default(self):
-		db.session.add(User(loginname='service', is_service_user=True, mail='service@example.com', displayname='Service'))
+		db.session.add(User(loginname='service', is_service_user=True, primary_email_address='service@example.com', displayname='Service'))
 		db.session.commit()
 		role = Role(name='test')
 		db.session.add(role)
@@ -261,7 +261,7 @@ class TestRoleViews(UffdTestCase):
 		admin_role = Role(name='admin', is_default=True)
 		db.session.add(admin_role)
 		admin_role.groups[self.get_admin_group()] = RoleGroup()
-		db.session.add(User(loginname='service', is_service_user=True, mail='service@example.com', displayname='Service'))
+		db.session.add(User(loginname='service', is_service_user=True, primary_email_address='service@example.com', displayname='Service'))
 		db.session.commit()
 		role = Role(name='test', is_default=True)
 		db.session.add(role)

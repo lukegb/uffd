@@ -15,7 +15,7 @@ def update_attrs(user, mail=None, displayname=None, password=None,
                  add_role=tuple(), remove_role=tuple()):
 	if password is None and prompt_password:
 		password = click.prompt('Password', hide_input=True, confirmation_prompt='Confirm password')
-	if mail is not None and not user.set_mail(mail):
+	if mail is not None and not user.set_primary_email_address(mail):
 		raise click.ClickException('Invalid mail address')
 	if displayname is not None and not user.set_displayname(displayname):
 		raise click.ClickException('Invalid displayname')
@@ -50,7 +50,7 @@ def show(loginname):
 			raise click.ClickException(f'User {loginname} not found')
 		click.echo(f'Loginname: {user.loginname}')
 		click.echo(f'Displayname: {user.displayname}')
-		click.echo(f'Mail: {user.mail}')
+		click.echo(f'Mail: {user.primary_email.address}')
 		click.echo(f'Service User: {user.is_service_user}')
 		click.echo(f'Roles: {", ".join([role.name for role in user.roles])}')
 		click.echo(f'Groups: {", ".join([group.name for group in user.groups])}')
@@ -69,6 +69,7 @@ def create(loginname, mail, displayname, service, password, prompt_password, add
 	with current_app.test_request_context():
 		if displayname is None:
 			displayname = loginname
+		user = User(is_service_user=service)
 		user = User(is_service_user=service)
 		if not user.set_loginname(loginname, ignore_blocklist=True):
 			raise click.ClickException('Invalid loginname')
