@@ -6,7 +6,7 @@ import sqlalchemy
 
 from uffd import create_app, db
 from uffd.remailer import remailer
-from uffd.models import User, UserEmail, Group, Role, RoleGroup, Service
+from uffd.models import User, UserEmail, Group, Role, RoleGroup, Service, ServiceUser
 
 from utils import dump, UffdTestCase
 
@@ -346,9 +346,14 @@ class TestUserViews(UffdTestCase):
 	def test_update_email(self):
 		user = self.get_user()
 		email = UserEmail(user=user, address='foo@example.com')
+		service1 = Service(name='service1', enable_email_preferences=True)
+		service2 = Service(name='service2', enable_email_preferences=True)
+		db.session.add_all([service1, service2])
 		db.session.commit()
 		email1_id = user.primary_email.id
 		email2_id = email.id
+		service1_id = service1.id
+		service2_id = service2.id
 		r = self.client.post(path=url_for('user.update', id=user.id),
 			data={'loginname': 'testuser',
 			f'email-{email1_id}-present': '1',
@@ -357,6 +362,8 @@ class TestUserViews(UffdTestCase):
 			f'newemail-1-address': 'new1@example.com',
 			f'newemail-2-address': 'new2@example.com', f'newemail-2-verified': '1',
 			'primary_email': email2_id, 'recovery_email': email1_id,
+			f'service_{service1_id}_email': 'primary',
+			f'service_{service2_id}_email': email2_id,
 			'displayname': 'Test User', 'password': ''},
 			follow_redirects=True)
 		dump('user_update_email', r)
@@ -364,6 +371,8 @@ class TestUserViews(UffdTestCase):
 		user = self.get_user()
 		self.assertEqual(user.primary_email.id, email2_id)
 		self.assertEqual(user.recovery_email.id, email1_id)
+		self.assertEqual(ServiceUser.query.get((service1.id, user.id)).service_email, None)
+		self.assertEqual(ServiceUser.query.get((service2.id, user.id)).service_email.id, email2_id)
 		self.assertEqual(
 			{email.address: email.verified for email in user.all_emails},
 			{

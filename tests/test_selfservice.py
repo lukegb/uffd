@@ -5,10 +5,9 @@ import unittest
 from flask import url_for, request
 
 from uffd import create_app, db
-from uffd.models import PasswordToken, User, UserEmail, Role, RoleGroup
+from uffd.models import PasswordToken, User, UserEmail, Role, RoleGroup, Service, ServiceUser
 
 from utils import dump, UffdTestCase
-
 
 class TestSelfservice(UffdTestCase):
 	def test_index(self):
@@ -185,10 +184,14 @@ class TestSelfservice(UffdTestCase):
 
 	def test_update_email_preferences(self):
 		self.login_as('user')
+		user_id = self.get_user().id
 		email = UserEmail(user=self.get_user(), address='new@example.com', verified=True)
 		db.session.add(email)
+		service = Service(name='service', enable_email_preferences=True)
+		db.session.add(service)
 		db.session.commit()
 		email_id = email.id
+		service_id = service.id
 		old_email_id = self.get_user().primary_email.id
 		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
 			data={'primary_email': str(email_id), 'recovery_email': 'primary'},
@@ -203,42 +206,68 @@ class TestSelfservice(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(self.get_user().primary_email.id, old_email_id)
 		self.assertEqual(self.get_user().recovery_email.id, email_id)
+		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+			data={'primary_email': str(old_email_id), 'recovery_email': 'primary', f'service_{service_id}_email': 'primary'},
+			follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertIsNone(ServiceUser.query.get((service_id, user_id)).service_email)
+		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+			data={'primary_email': str(old_email_id), 'recovery_email': 'primary', f'service_{service_id}_email': str(email_id)},
+			follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(ServiceUser.query.get((service_id, user_id)).service_email.id, email_id)
 
 	def test_update_email_preferences_unverified(self):
 		self.login_as('user')
+		user_id = self.get_user().id
 		email = UserEmail(user=self.get_user(), address='new@example.com')
 		db.session.add(email)
+		service = Service(name='service', enable_email_preferences=True)
+		db.session.add(service)
 		db.session.commit()
 		email_id = email.id
+		service_id = service.id
 		old_email_id = self.get_user().primary_email.id
-		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
-			data={'primary_email': str(email_id), 'recovery_email': 'primary'},
-			follow_redirects=True)
-		self.assertEqual(r.status_code, 400)
+		with self.assertRaises(Exception):
+			r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+				data={'primary_email': str(email_id), 'recovery_email': 'primary'},
+				follow_redirects=True)
 		self.assertEqual(self.get_user().primary_email.address, 'test@example.com')
-		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
-			data={'primary_email': str(old_email_id), 'recovery_email': str(email_id)},
-			follow_redirects=True)
-		self.assertEqual(r.status_code, 400)
+		with self.assertRaises(Exception):
+			r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+				data={'primary_email': str(old_email_id), 'recovery_email': str(email_id)},
+				follow_redirects=True)
 		self.assertIsNone(self.get_user().recovery_email)
+		with self.assertRaises(Exception):
+			r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+				data={'primary_email': str(old_email_id), 'recovery_email': 'primary', f'service_{service_id}_email': str(email_id)},
+				follow_redirects=True)
+		self.assertIsNone(ServiceUser.query.get((service_id, user_id)).service_email)
 
 	def test_update_email_preferences_invalid(self):
 		self.login_as('user')
+		user_id = self.get_user().id
 		email = UserEmail(user=self.get_user(), address='new@example.com', verified=True)
 		db.session.add(email)
+		service = Service(name='service', enable_email_preferences=True)
+		db.session.add(service)
 		db.session.commit()
-		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
-			data={'primary_email': str(email.id), 'recovery_email': '2342'},
-			follow_redirects=True)
-		self.assertEqual(r.status_code, 400)
-		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
-			data={'primary_email': 'primary', 'recovery_email': 'primary'},
-			follow_redirects=True)
-		self.assertEqual(r.status_code, 400)
-		r = self.client.post(path=url_for('selfservice.update_email_preferences'),
-			data={'primary_email': '2342', 'recovery_email': 'primary'},
-			follow_redirects=True)
-		self.assertEqual(r.status_code, 400)
+		with self.assertRaises(Exception):
+			r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+				data={'primary_email': str(email.id), 'recovery_email': '2342'},
+				follow_redirects=True)
+		with self.assertRaises(Exception):
+			r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+				data={'primary_email': str(email.id), 'recovery_email': 'primary', f'service_{service_id}_email': '2342'},
+				follow_redirects=True)
+		with self.assertRaises(Exception):
+			r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+				data={'primary_email': 'primary', 'recovery_email': 'primary'},
+				follow_redirects=True)
+		with self.assertRaises(Exception):
+			r = self.client.post(path=url_for('selfservice.update_email_preferences'),
+				data={'primary_email': '2342', 'recovery_email': 'primary'},
+				follow_redirects=True)
 
 	def test_change_password(self):
 		self.login_as('user')

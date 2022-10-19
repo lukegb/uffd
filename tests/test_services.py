@@ -7,7 +7,7 @@ from utils import dump, UffdTestCase
 from uffd.remailer import remailer
 from uffd.tasks import cleanup_task
 from uffd.database import db
-from uffd.models import Service, ServiceUser, User
+from uffd.models import Service, ServiceUser, User, UserEmail
 
 class TestServiceUser(UffdTestCase):
 	def setUp(self):
@@ -43,11 +43,26 @@ class TestServiceUser(UffdTestCase):
 		db.session.commit()
 		self.assertEqual(ServiceUser.query.count(), service_count  * user_count)
 
+	def test_service_email(self):
+		user = self.get_user()
+		service = Service.query.filter_by(name='service1').first()
+		service_user = ServiceUser.query.get((service.id, user.id))
+		self.assertEqual(service_user.service_email, None)
+		service_user.service_email = UserEmail(user=user, address='foo@bar', verified=True)
+		with self.assertRaises(Exception):
+			service_user.service_email = UserEmail(user=user, address='foo2@bar', verified=False)
+		with self.assertRaises(Exception):
+			service_user.service_email = UserEmail(user=self.get_admin(), address='foo3@bar', verified=True)
+
 	def test_real_email(self):
 		user = self.get_user()
 		service = Service.query.filter_by(name='service1').first()
 		service_user = ServiceUser.query.get((service.id, user.id))
 		self.assertEqual(service_user.real_email, user.primary_email.address)
+		service_user.service_email = UserEmail(user=user, address='foo@bar', verified=True)
+		self.assertEqual(service_user.real_email, user.primary_email.address)
+		service.enable_email_preferences = True
+		self.assertEqual(service_user.real_email, service_user.service_email.address)
 
 	def test_remailer_email(self):
 		user = self.get_user()
@@ -160,6 +175,59 @@ class TestServiceUser(UffdTestCase):
 		self.assertEqual(run_query(remailer_email1_1), set())
 		self.assertEqual(run_query(remailer_email2_1), set())
 		self.assertEqual(run_query('invalid'), set())
+
+	def test_filter_query_by_email_prefs(self):
+		def run_query(value):
+			return {(su.service_id, su.user_id) for su in ServiceUser.filter_query_by_email(ServiceUser.query, value)}
+
+		user1 = self.get_user()
+		service1 = Service.query.filter_by(name='service1').first() # use_remailer=False
+		service2 = Service.query.filter_by(name='service2').first() # use_remailer=True
+		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
+		remailer_email1_1 = remailer.build_address(service1.id, user1.id)
+		remailer_email2_1 = remailer.build_address(service2.id, user1.id)
+
+		self.app.config['REMAILER_DOMAIN'] = ''
+		self.assertEqual(run_query(user1.primary_email.address), {
+			(service1.id, user1.id),
+			(service2.id, user1.id),
+		})
+		self.assertEqual(run_query('addr1-1@example.com'), set())
+		self.assertEqual(run_query('addr2-1@example.com'), set())
+		self.assertEqual(run_query(remailer_email1_1), set())
+		self.assertEqual(run_query(remailer_email2_1), set())
+
+		ServiceUser.query.get((service1.id, user1.id)).service_email = UserEmail(user=user1, verified=True, address='addr1-1@example.com')
+		ServiceUser.query.get((service2.id, user1.id)).service_email = UserEmail(user=user1, verified=True, address='addr2-1@example.com')
+		self.assertEqual(run_query(user1.primary_email.address), {
+			(service1.id, user1.id),
+			(service2.id, user1.id),
+		})
+		self.assertEqual(run_query('addr1-1@example.com'), set())
+		self.assertEqual(run_query('addr2-1@example.com'), set())
+		self.assertEqual(run_query(remailer_email1_1), set())
+		self.assertEqual(run_query(remailer_email2_1), set())
+		service1.enable_email_preferences = True
+		service2.enable_email_preferences = True
+		self.assertEqual(run_query(user1.primary_email.address), set())
+		self.assertEqual(run_query('addr1-1@example.com'), {
+			(service1.id, user1.id),
+		})
+		self.assertEqual(run_query('addr2-1@example.com'), {
+			(service2.id, user1.id),
+		})
+		self.assertEqual(run_query(remailer_email1_1), set())
+		self.assertEqual(run_query(remailer_email2_1), set())
+		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
+		self.assertEqual(run_query(user1.primary_email.address), set())
+		self.assertEqual(run_query('addr1-1@example.com'), {
+			(service1.id, user1.id),
+		})
+		self.assertEqual(run_query('addr2-1@example.com'), set())
+		self.assertEqual(run_query(remailer_email1_1), set())
+		self.assertEqual(run_query(remailer_email2_1), {
+			(service2.id, user1.id),
+		})
 
 class TestServices(UffdTestCase):
 	def setUpApp(self):

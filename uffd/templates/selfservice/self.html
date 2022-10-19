@@ -12,7 +12,7 @@
 <div class="row">
 	<div class="col-12 col-md-5">
 		<h5>{{_("Profile")}}</h5>
-		<p>{{_("Your profile information is used by all services that are integrated into the Single-Sign-On. Your e-mail address is also used for password recovery.")}}</p>
+		<p>{{_("Your profile information is used by all services that are integrated into the Single-Sign-On.")}}</p>
 		<p>{{_("Changes may take several minutes to be visible in all services.")}}</p>
 	</div>
 	<div class="col-12 col-md-7">
@@ -77,7 +77,13 @@
 <div class="row">
 	<div class="col-12 col-md-5">
 		<h5>{{_("E-Mail Preferences")}}</h5>
-		<p>{{_("Choose which of your verified address to use as your primary or recovery address.")}}</p>
+		<p>
+			{{ _("Choose your primary e-mail address and the address password recovery e-mails will be sent to.") }}
+			{% if user.service_users|map(attribute='service')|selectattr('enable_email_preferences')|list|length %}
+			{{ _("You can also select different addresses for different services.") }}
+			{% endif %}
+		</p>
+		<p>{{ _("Adresses must be verified before you can select them here.") }}</p>
 	</div>
 	<div class="col-12 col-md-7">
 		<form class="form" action="{{ url_for("selfservice.update_email_preferences") }}" method="POST">
@@ -90,15 +96,33 @@
 				</select>
 			</div>
 			<div class="form-group">
-				<label>{{_("Recovery Address")}}</label>
+				<label>{{_("Address for Password Reset E-Mails")}}</label>
 				<select name="recovery_email" class="form-control">
 					<option value="primary" {{ 'selected' if not user.recovery_email }}>{{ _('Use primary address') }}</option>
 					{% for email in user.all_emails if email.verified %}
 					<option value="{{ email.id }}" {{ 'selected' if email == user.recovery_email }}>{{ email.address }}</option>
 					{% endfor %}
 				</select>
-				<small class="text-muted">{{ _('Password reset e-mails will be sent to this address') }}</small>
 			</div>
+			{% set collapse_email_prefs = user.service_users|map(attribute='service')|selectattr('enable_email_preferences')|list|length > 2 %}
+			{% for service_user in user.service_users if service_user.service.enable_email_preferences %}
+			{% if collapse_email_prefs and loop.index == 2 %}
+			<div id="collapsed-email-prefs">
+			{% endif %}
+			<div class="form-group">
+				<label>{{ _('Address for Service "%(name)s"', name=service_user.service.name) }}</label>
+				<select name="service_{{ service_user.service.id }}_email" class="form-control">
+					<option value="primary" {{ 'selected' if not service_user.service_email }}>{{ _('Use primary address') }}</option>
+					{% for email in user.all_emails if email.verified %}
+					<option value="{{ email.id }}" {{ 'selected' if email == service_user.service_email }}>{{ email.address }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			{% endfor %}
+			{% if collapse_email_prefs %}
+			</div>
+			<button type="button" class="btn btn-sm btn-link pl-0 mb-1 showmore" data-target="#collapsed-email-prefs" style="display: none;" aria-expanded="false" aria-controls="collapsed-email-prefs">{{ _("Show more settings ...") }}</button>
+			{% endif %}
 			<button type="submit" class="btn btn-primary btn-block">{{_("Update E-Mail Preferences")}}</button>
 		</form>
 	</div>
@@ -193,5 +217,17 @@
 
 	</div>
 </div>
+
+<script>
+$(".showmore").each(function () {
+	$(this).show()
+	$($(this).data("target")).hide()
+})
+$(".showmore").on("click", function () {
+	$(this).slideUp(200)
+	$(this).prop("ariaExpanded", true)
+	$($(this).data("target")).slideDown()
+})
+</script>
 
 {% endblock %}

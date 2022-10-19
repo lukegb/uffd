@@ -72,6 +72,7 @@ def edit_submit(id=None):
 		service.limit_access = True
 		service.access_group = Group.query.get(request.form['access-group'])
 	service.use_remailer = request.form.get('use_remailer') == '1'
+	service.enable_email_preferences = request.form.get('enable_email_preferences') == '1'
 	db.session.commit()
 	return redirect(url_for('service.show', id=service.id))
 

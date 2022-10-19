@@ -1,7 +1,7 @@
 from flask import current_app
 from flask_babel import get_locale
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 
 from uffd.database import db
 from uffd.remailer import remailer
@@ -27,6 +27,7 @@ class Service(db.Model):
 	api_clients = relationship('APIClient', back_populates='service', cascade='all, delete-orphan')
 
 	use_remailer = Column(Boolean(), default=False, nullable=False)
+	enable_email_preferences = Column(Boolean(), default=False, nullable=False)
 
 class ServiceUser(db.Model):
 	'''Service-related configuration and state for a user
@@ -50,9 +51,25 @@ class ServiceUser(db.Model):
 	def has_access(self):
 		return not self.service.limit_access or self.service.access_group in self.user.groups
 
+	service_email_id = Column(Integer(), ForeignKey('user_email.id', onupdate='CASCADE', ondelete='SET NULL'))
+	service_email = relationship('UserEmail')
+
+	@validates('service_email')
+	def validate_service_email(self, key, value): # pylint: disable=unused-argument
+		if value is not None:
+			if not value.user:
+				value.user = self.user
+			if value.user != self.user:
+				raise ValueError('UserEmail assigned to ServiceUser.service_email is not associated with user')
+			if not value.verified:
+				raise ValueError('UserEmail assigned to serviceUser.service_email is not verified')
+		return  value
+
 	# Actual e-mail address that mails from the service are sent to
 	@property
 	def real_email(self):
+		if self.service.enable_email_preferences and self.service_email:
+			return self.service_email.address
 		return self.user.primary_email.address
 
 	@property
@@ -92,10 +109,12 @@ class ServiceUser(db.Model):
 
 		AliasedUser = db.aliased(User)
 		AliasedPrimaryEmail = db.aliased(UserEmail)
+		AliasedServiceEmail = db.aliased(UserEmail)
 		AliasedService = db.aliased(Service)
 
 		query = query.join(cls.user.of_type(AliasedUser))
 		query = query.join(AliasedUser.primary_email.of_type(AliasedPrimaryEmail))
+		query = query.outerjoin(cls.service_email.of_type(AliasedServiceEmail))
 		query = query.join(cls.service.of_type(AliasedService))
 
 		remailer_enabled_expr = AliasedService.use_remailer if remailer.configured else False
@@ -104,7 +123,14 @@ class ServiceUser(db.Model):
 				remailer_enabled_expr,
 				AliasedUser.loginname.in_(current_app.config['REMAILER_LIMIT_TO_USERS']),
 			)
-		return query.filter(db.and_(db.not_(remailer_enabled_expr), AliasedPrimaryEmail.address == email))
+		real_email_matches_expr = db.case(
+			whens=(
+				# pylint: disable=singleton-comparison
+				(db.and_(AliasedService.enable_email_preferences, cls.service_email != None), AliasedServiceEmail.address == email),
+			),
+			else_=(AliasedPrimaryEmail.address == email)
+		)
+		return query.filter(db.and_(db.not_(remailer_enabled_expr), real_email_matches_expr))
 
 @db.event.listens_for(db.Session, 'after_flush') # pylint: disable=no-member
 def create_service_users(session, flush_context): # pylint: disable=unused-argument

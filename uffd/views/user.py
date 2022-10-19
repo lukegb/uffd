@@ -1,7 +1,7 @@
 import csv
 import io
 
-from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, abort
+from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app
 from flask_babel import gettext as _, lazy_gettext
 from sqlalchemy.exc import IntegrityError
 
@@ -75,17 +75,19 @@ def update(id=None):
 			db.session.add(email)
 
 		verified_emails = UserEmail.query.filter_by(user=user, verified=True)
-		email = verified_emails.filter_by(id=request.form['primary_email']).first()
-		if not email:
-			abort(400)
-		user.primary_email = email
+		user.primary_email = verified_emails.filter_by(id=request.form['primary_email']).one()
 		if request.form['recovery_email'] == 'primary':
 			user.recovery_email = None
 		else:
-			email = verified_emails.filter_by(id=request.form['recovery_email']).first()
-			if not email:
-				abort(400)
-			user.recovery_email = email
+			user.recovery_email = verified_emails.filter_by(id=request.form['recovery_email']).one()
+		for service_user in user.service_users:
+			if not service_user.service.enable_email_preferences:
+				continue
+			value = request.form.get(f'service_{service_user.service.id}_email', 'primary')
+			if value == 'primary':
+				service_user.service_email = None
+			else:
+				service_user.service_email = verified_emails.filter_by(id=value).one()
 
 		for email in user.all_emails:
 			if request.form.get(f'email-{email.id}-delete') == '1':

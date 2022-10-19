@@ -177,17 +177,19 @@ def delete_email(email_id):
 @login_required(selfservice_acl_check)
 def update_email_preferences():
 	verified_emails = UserEmail.query.filter_by(user=request.user, verified=True)
-	email = verified_emails.filter_by(id=request.form['primary_email']).first()
-	if not email:
-		abort(400)
-	request.user.primary_email = email
+	request.user.primary_email = verified_emails.filter_by(id=request.form['primary_email']).one()
 	if request.form['recovery_email'] == 'primary':
 		request.user.recovery_email = None
 	else:
-		email = verified_emails.filter_by(id=request.form['recovery_email']).first()
-		if not email:
-			abort(400)
-		request.user.recovery_email = email
+		request.user.recovery_email = verified_emails.filter_by(id=request.form['recovery_email']).one()
+	for service_user in request.user.service_users:
+		if not service_user.service.enable_email_preferences:
+			continue
+		value = request.form.get(f'service_{service_user.service.id}_email', 'primary')
+		if value == 'primary':
+			service_user.service_email = None
+		else:
+			service_user.service_email = verified_emails.filter_by(id=value).one()
 	db.session.commit()
 	flash(_('E-Mail preferences updated'))
 	return redirect(url_for('selfservice.index'))

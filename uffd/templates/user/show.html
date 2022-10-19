@@ -142,6 +142,17 @@
 					{% endfor %}
 				</select>
 			</div>
+			{% for service_user in user.service_users if service_user.service.enable_email_preferences %}
+			<div class="form-group col">
+				<label>{{ _("Address for %(name)s", name=service_user.service.name) }}</label>
+				<select name="service_{{ service_user.service.id }}_email" class="form-control">
+					<option value="primary" {{ 'selected' if not service_user.service_email }}>{{ _('Use primary address') }}</option>
+					{% for email in user.all_emails if email.verified %}
+					<option value="{{ email.id }}" {{ 'selected' if email == service_user.service_email }}>{{ email.address }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			{% endfor %}
 			{% endif %}
 
 			<div class="form-group col">
@@ -239,7 +250,7 @@ $('#email-rows').on('click', '.delete-new-email-row', function () {
 let new_email_id = 1;
 $('#email-rows').on('input', 'tr:last input', function () {
 	$('#email-rows tr:last button.delete-new-email-row').removeClass('d-none');
-	$('#email-rows').append({{ new_email_row('TMPID')|tojson }}.replace('TMPID', new_email_id));
+	$('#email-rows').append({{ new_email_row('TMPID')|tojson }}.replace(/TMPID/g, new_email_id));
 	new_email_id ++;
 });
 </script>
