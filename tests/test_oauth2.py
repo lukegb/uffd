@@ -6,7 +6,7 @@ from flask import url_for, session
 from uffd import create_app, db
 from uffd.password_hash import PlaintextPasswordHash
 from uffd.remailer import remailer
-from uffd.models import User, DeviceLoginConfirmation, Service, OAuth2Client, OAuth2DeviceLoginInitiation
+from uffd.models import User, DeviceLoginConfirmation, Service, OAuth2Client, OAuth2DeviceLoginInitiation, RemailerMode
 
 from utils import dump, UffdTestCase
 
@@ -50,12 +50,12 @@ class TestViews(UffdTestCase):
 	def test_authorization_with_remailer(self):
 		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
 		service = Service.query.filter_by(name='test').one()
-		service.use_remailer = True
+		service.remailer_mode = RemailerMode.ENABLED_V1
 		db.session.commit()
 		self.login_as('user')
 		r = self.client.get(path=url_for('oauth2.authorize', response_type='code', client_id='test', state='teststate', redirect_uri='http://localhost:5009/callback', scope='profile'), follow_redirects=False)
 		service = Service.query.filter_by(name='test').one()
-		self.assert_authorization(r, mail=remailer.build_address(service.id, self.get_user().id))
+		self.assert_authorization(r, mail=remailer.build_v1_address(service.id, self.get_user().id))
 
 	def test_authorization_client_secret_rehash(self):
 		OAuth2Client.query.delete()

@@ -5,7 +5,7 @@ from .mfa import MFAType, MFAMethod, RecoveryCodeMethod, TOTPMethod, WebauthnMet
 from .oauth2 import OAuth2Client, OAuth2RedirectURI, OAuth2LogoutURI, OAuth2Grant, OAuth2Token, OAuth2DeviceLoginInitiation
 from .role import Role, RoleGroup, RoleGroupMap
 from .selfservice import PasswordToken
-from .service import Service, ServiceUser, get_services
+from .service import RemailerMode, Service, ServiceUser, get_services
 from .session import DeviceLoginType, DeviceLoginInitiation, DeviceLoginConfirmation
 from .signup import Signup
 from .user import User, UserEmail, Group
@@ -19,8 +19,7 @@ __all__ = [
 	'OAuth2Client', 'OAuth2RedirectURI', 'OAuth2LogoutURI', 'OAuth2Grant', 'OAuth2Token', 'OAuth2DeviceLoginInitiation',
 	'Role', 'RoleGroup', 'RoleGroupMap',
 	'PasswordToken',
-	'Service', 'get_services',
-	'Service', 'ServiceUser', 'get_services',
+	'RemailerMode', 'Service', 'ServiceUser', 'get_services',
 	'DeviceLoginType', 'DeviceLoginInitiation', 'DeviceLoginConfirmation',
 	'Signup',
 	'User', 'UserEmail', 'Group',

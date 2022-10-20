@@ -15,6 +15,7 @@ from flask import request, current_app
 from sqlalchemy import Column, Integer, Enum, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
+from uffd.utils import nopad_b32decode, nopad_b32encode
 from uffd.database import db
 from .user import User
 
@@ -88,13 +89,12 @@ class TOTPMethod(MFAMethod):
 	def __init__(self, user, name=None, key=None):
 		super().__init__(user, name)
 		if key is None:
-			key = base64.b32encode(secrets.token_bytes(16)).rstrip(b'=').decode()
+			key = nopad_b32encode(secrets.token_bytes(16)).decode()
 		self.key = key
 
 	@property
 	def raw_key(self):
-		tmp = self.key + '='*(8 - (len(self.key) % 8))
-		return base64.b32decode(tmp.encode())
+		return nopad_b32decode(self.key)
 
 	@property
 	def issuer(self):

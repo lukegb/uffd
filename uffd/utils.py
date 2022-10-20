@@ -1,5 +1,6 @@
 import secrets
 import math
+import base64
 
 def token_with_alphabet(alphabet, nbytes=None):
 	'''Return random text token that consists of characters from `alphabet`'''
@@ -18,3 +19,19 @@ def token_urlfriendly(nbytes=None):
 	'''Return random text token that is urlsafe and works around common parsing bugs'''
 	alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 	return token_with_alphabet(alphabet, nbytes=nbytes)
+
+def nopad_b32decode(value):
+	if isinstance(value, bytes):
+		value = value.decode()
+	return base64.b32decode(value + ('=' * (-len(value) % 8)))
+
+def nopad_b32encode(value):
+	return base64.b32encode(value).rstrip(b'=')
+
+def nopad_urlsafe_b64decode(value):
+	if isinstance(value, bytes):
+		value = value.decode()
+	return base64.urlsafe_b64decode(value + ('=' * (-len(value) % 4)))
+
+def nopad_urlsafe_b64encode(value):
+	return base64.urlsafe_b64encode(value).rstrip(b'=')

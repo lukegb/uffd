@@ -6,11 +6,13 @@ from flask_babel import lazy_gettext
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.database import db
-from uffd.models import Service, get_services, Group, OAuth2Client, OAuth2LogoutURI, APIClient
+from uffd.models import Service, get_services, Group, OAuth2Client, OAuth2LogoutURI, APIClient, RemailerMode
 
 from .session import login_required
 
 bp = Blueprint('service', __name__, template_folder='templates')
+
+bp.add_app_template_global(RemailerMode, 'RemailerMode')
 
 def admin_acl():
 	return request.user and request.user.is_in_group(current_app.config['ACL_ADMIN_GROUP'])
@@ -71,7 +73,7 @@ def edit_submit(id=None):
 	else:
 		service.limit_access = True
 		service.access_group = Group.query.get(request.form['access-group'])
-	service.use_remailer = request.form.get('use_remailer') == '1'
+	service.remailer_mode = RemailerMode[request.form['remailer-mode']]
 	service.enable_email_preferences = request.form.get('enable_email_preferences') == '1'
 	db.session.commit()
 	return redirect(url_for('service.show', id=service.id))

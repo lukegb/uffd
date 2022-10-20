@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-10-19 22:14+0200\n"
+"POT-Creation-Date: 2022-10-20 17:36+0200\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -140,8 +140,8 @@ msgstr "Über uffd"
 
 #: uffd/templates/group/list.html:8 uffd/templates/invite/list.html:6
 #: uffd/templates/mail/list.html:8 uffd/templates/role/list.html:8
-#: uffd/templates/service/index.html:8 uffd/templates/service/show.html:57
-#: uffd/templates/service/show.html:85 uffd/templates/user/list.html:8
+#: uffd/templates/service/index.html:8 uffd/templates/service/show.html:73
+#: uffd/templates/service/show.html:101 uffd/templates/user/list.html:8
 msgid "New"
 msgstr "Neu"
 
@@ -158,7 +158,7 @@ msgstr "GID"
 #: uffd/templates/rolemod/list.html:9 uffd/templates/rolemod/show.html:44
 #: uffd/templates/selfservice/self.html:189
 #: uffd/templates/service/index.html:14 uffd/templates/service/show.html:20
-#: uffd/templates/service/show.html:91 uffd/templates/user/show.html:189
+#: uffd/templates/service/show.html:107 uffd/templates/user/show.html:189
 #: uffd/templates/user/show.html:221
 msgid "Name"
 msgstr "Name"
@@ -234,7 +234,7 @@ msgid "Created by"
 msgstr "Erstellt durch"
 
 #: uffd/templates/invite/list.html:14 uffd/templates/service/api.html:34
-#: uffd/templates/service/show.html:92
+#: uffd/templates/service/show.html:108
 msgid "Permissions"
 msgstr "Berechtigungen"
 
@@ -1227,7 +1227,7 @@ msgstr "Zugriff auf Mail-Weiterleitungen"
 msgid "Resolve remailer addresses"
 msgstr "Auflösen von Remailer-Adressen"
 
-#: uffd/templates/service/api.html:51 uffd/templates/service/show.html:38
+#: uffd/templates/service/api.html:51 uffd/templates/service/show.html:37
 msgid "This option has no effect: Remailer config options are unset"
 msgstr "Diese Option hat keine Auswirkung: Remailer ist nicht konfiguriert"
 
@@ -1235,7 +1235,7 @@ msgstr "Diese Option hat keine Auswirkung: Remailer ist nicht konfiguriert"
 msgid "Access uffd metrics"
 msgstr "Zugriff auf uffd-Metriken"
 
-#: uffd/templates/service/oauth2.html:20 uffd/templates/service/show.html:63
+#: uffd/templates/service/oauth2.html:20 uffd/templates/service/show.html:79
 msgid "Client ID"
 msgstr "Client-ID"
 
@@ -1305,12 +1305,43 @@ msgid "Members of group \"%(group_name)s\" have access"
 msgstr "Mitglieder der Gruppe \"%(group_name)s\" haben Zugriff"
 
 #: uffd/templates/service/show.html:36
-msgid "Hide mail addresses with remailer"
-msgstr "Verstecke Mailadressen mit dem Remailer"
+msgid "Hide e-mail addresses with remailer"
+msgstr "E-Mail-Adressen mit Remailer verstecken"
 
-#: uffd/templates/service/show.html:45
-msgid "Enable user mail preferences"
-msgstr "User E-Mail-Einstellungen aktivieren"
+#: uffd/templates/service/show.html:41
+msgid "Remailer disabled"
+msgstr "Remailer deaktiviert"
+
+#: uffd/templates/service/show.html:44
+msgid "Remailer enabled"
+msgstr "Remailer aktiviert"
+
+#: uffd/templates/service/show.html:47
+msgid "Remailer enabled (deprecated, case-sensitive format)"
+msgstr ""
+"Remailer aktiviert (veraltetes, Groß-/Kleinschreibung-unterscheidendes "
+"Format)"
+
+#: uffd/templates/service/show.html:51
+msgid ""
+"Some services notify users about changes to their e-mail address. "
+"Modifying this setting immediatly affects the e-mail addresses of all "
+"users and can cause masses of notification e-mails."
+msgstr ""
+"Einige Dienste benachrichtigen Nutzer bei Änderungen ihrer E-Mail-"
+"Adresse. Diese Einstellung zu verändern wirkt sich unmittelbar auf die E"
+"-Mail-Adressen aller Nutzer aus und kann zu massenhaftem Versand von "
+"Benachrichtigungs-E-Mails führen."
+
+#: uffd/templates/service/show.html:58
+msgid "Allow users to select a different e-mail address for this service"
+msgstr ""
+"Ermögliche Nutzern für diesen Dienst eine andere E-Mail-Adresse "
+"auszuwählen"
+
+#: uffd/templates/service/show.html:60
+msgid "If disabled, the service always uses the primary e-mail address."
+msgstr "Wenn deaktiviert, wird immer die primäre E-Mail-Adresse verwendet."
 
 #: uffd/templates/session/deviceauth.html:15
 msgid "Log into a service on another device without entering your password."
@@ -1868,7 +1899,7 @@ msgstr "E-Mail-Einstellungen geändert"
 msgid "You left role %(role_name)s"
 msgstr "Rolle %(role_name)s verlassen"
 
-#: uffd/views/service.py:32
+#: uffd/views/service.py:34
 msgid "Services"
 msgstr "Dienste"
 

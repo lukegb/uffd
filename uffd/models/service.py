@@ -1,12 +1,19 @@
+import enum
+
 from flask import current_app
 from flask_babel import get_locale
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Enum
 from sqlalchemy.orm import relationship, validates
 
 from uffd.database import db
 from uffd.remailer import remailer
 from uffd.tasks import cleanup_task
 from .user import User, UserEmail
+
+class RemailerMode(enum.Enum):
+	DISABLED = 0
+	ENABLED_V1 = 1
+	ENABLED_V2 = 2
 
 class Service(db.Model):
 	__tablename__ = 'service'
@@ -26,7 +33,7 @@ class Service(db.Model):
 	oauth2_clients = relationship('OAuth2Client', back_populates='service', cascade='all, delete-orphan')
 	api_clients = relationship('APIClient', back_populates='service', cascade='all, delete-orphan')
 
-	use_remailer = Column(Boolean(), default=False, nullable=False)
+	remailer_mode = Column(Enum(RemailerMode), default=RemailerMode.DISABLED, nullable=False)
 	enable_email_preferences = Column(Boolean(), default=False, nullable=False)
 
 class ServiceUser(db.Model):
@@ -72,12 +79,6 @@ class ServiceUser(db.Model):
 			return self.service_email.address
 		return self.user.primary_email.address
 
-	@property
-	def remailer_email(self):
-		if not remailer.configured:
-			raise Exception('ServiceUser.remailer_email accessed with unconfigured remailer')
-		return remailer.build_address(self.service_id, self.user_id)
-
 	@classmethod
 	def get_by_remailer_email(cls, address):
 		if not remailer.configured:
@@ -91,11 +92,14 @@ class ServiceUser(db.Model):
 	# E-Mail address as seen by the service
 	@property
 	def email(self):
-		use_remailer = remailer.configured and self.service.use_remailer
-		if current_app.config['REMAILER_LIMIT_TO_USERS'] is not None:
-			use_remailer = use_remailer and self.user.loginname in current_app.config['REMAILER_LIMIT_TO_USERS']
-		if use_remailer:
-			return self.remailer_email
+		if current_app.config['REMAILER_LIMIT_TO_USERS'] is None:
+			use_remailer = remailer.configured
+		else:
+			use_remailer = remailer.configured and self.user.loginname in current_app.config['REMAILER_LIMIT_TO_USERS']
+		if use_remailer and self.service.remailer_mode == RemailerMode.ENABLED_V1:
+			return remailer.build_v1_address(self.service_id, self.user_id)
+		if use_remailer and self.service.remailer_mode == RemailerMode.ENABLED_V2:
+			return remailer.build_v2_address(self.service_id, self.user_id)
 		return self.real_email
 
 	@classmethod
@@ -117,17 +121,20 @@ class ServiceUser(db.Model):
 		query = query.outerjoin(cls.service_email.of_type(AliasedServiceEmail))
 		query = query.join(cls.service.of_type(AliasedService))
 
-		remailer_enabled_expr = AliasedService.use_remailer if remailer.configured else False
+		remailer_enabled_expr = db.and_(
+			AliasedService.remailer_mode != RemailerMode.DISABLED,
+			remailer.configured
+		)
 		if current_app.config['REMAILER_LIMIT_TO_USERS'] is not None:
 			remailer_enabled_expr = db.and_(
 				remailer_enabled_expr,
 				AliasedUser.loginname.in_(current_app.config['REMAILER_LIMIT_TO_USERS']),
 			)
 		real_email_matches_expr = db.case(
-			whens=(
+			whens=[
 				# pylint: disable=singleton-comparison
 				(db.and_(AliasedService.enable_email_preferences, cls.service_email != None), AliasedServiceEmail.address == email),
-			),
+			],
 			else_=(AliasedPrimaryEmail.address == email)
 		)
 		return query.filter(db.and_(db.not_(remailer_enabled_expr), real_email_matches_expr))

@@ -7,12 +7,12 @@ from utils import dump, UffdTestCase
 from uffd.remailer import remailer
 from uffd.tasks import cleanup_task
 from uffd.database import db
-from uffd.models import Service, ServiceUser, User, UserEmail
+from uffd.models import Service, ServiceUser, User, UserEmail, RemailerMode
 
 class TestServiceUser(UffdTestCase):
 	def setUp(self):
 		super().setUp()
-		db.session.add_all([Service(name='service1'), Service(name='service2', use_remailer=True)])
+		db.session.add_all([Service(name='service1'), Service(name='service2', remailer_mode=RemailerMode.ENABLED_V1)])
 		db.session.commit()
 
 	def test_auto_create(self):
@@ -64,21 +64,12 @@ class TestServiceUser(UffdTestCase):
 		service.enable_email_preferences = True
 		self.assertEqual(service_user.real_email, service_user.service_email.address)
 
-	def test_remailer_email(self):
-		user = self.get_user()
-		service = Service.query.filter_by(name='service1').first()
-		service_user = ServiceUser.query.get((service.id, user.id))
-		with self.assertRaises(Exception):
-			service_user.remailer_email
-		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		self.assertEqual(service_user.remailer_email, remailer.build_address(service.id, user.id))
-
 	def test_get_by_remailer_email(self):
 		user = self.get_user()
 		service = Service.query.filter_by(name='service1').first()
 		service_user = ServiceUser.query.get((service.id, user.id))
 		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		remailer_email = remailer.build_address(service.id, user.id)
+		remailer_email = remailer.build_v1_address(service.id, user.id)
 		# 1. remailer not setup
 		self.app.config['REMAILER_DOMAIN'] = ''
 		self.assertIsNone(ServiceUser.get_by_remailer_email(user.primary_email.address))
@@ -95,21 +86,21 @@ class TestServiceUser(UffdTestCase):
 		service = Service.query.filter_by(name='service1').first()
 		service_user = ServiceUser.query.get((service.id, user.id))
 		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		remailer_email = remailer.build_address(service.id, user.id)
+		remailer_email = remailer.build_v1_address(service.id, user.id)
 		# 1. remailer not setup
 		self.app.config['REMAILER_DOMAIN'] = ''
 		self.assertEqual(service_user.email, user.primary_email.address)
-		# 2. remailer setup + service.use_remailer disabled
+		# 2. remailer setup + remailer disabled
 		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
 		self.assertEqual(service_user.email, user.primary_email.address)
-		# 3. remailer setup + service.use_remailer enabled + REMAILER_LIMIT_TO_USERS unset
-		service.use_remailer = True
+		# 3. remailer setup + remailer enabled + REMAILER_LIMIT_TO_USERS unset
+		service.remailer_mode = RemailerMode.ENABLED_V1
 		db.session.commit()
 		self.assertEqual(service_user.email, remailer_email)
-		# 4. remailer setup + service.use_remailer enabled + REMAILER_LIMIT_TO_USERS does not include user
+		# 4. remailer setup + remailer enabled + REMAILER_LIMIT_TO_USERS does not include user
 		self.app.config['REMAILER_LIMIT_TO_USERS'] = ['testadmin']
 		self.assertEqual(service_user.email, user.primary_email.address)
-		# 5. remailer setup + service.use_remailer enabled + REMAILER_LIMIT_TO_USERS includes user
+		# 5. remailer setup + remailer enabled + REMAILER_LIMIT_TO_USERS includes user
 		self.app.config['REMAILER_LIMIT_TO_USERS'] = ['testuser']
 		self.assertEqual(service_user.email, remailer_email)
 
@@ -121,13 +112,13 @@ class TestServiceUser(UffdTestCase):
 		user2 = User(loginname='user2', primary_email_address=user1.primary_email.address, displayname='User 2')
 		db.session.add(user2)
 		db.session.commit()
-		service1 = Service.query.filter_by(name='service1').first() # use_remailer=False
-		service2 = Service.query.filter_by(name='service2').first() # use_remailer=True
+		service1 = Service.query.filter_by(name='service1').first() # remailer disabled
+		service2 = Service.query.filter_by(name='service2').first() # remailer enabled
 		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		remailer_email1_1 = remailer.build_address(service1.id, user1.id)
-		remailer_email2_1 = remailer.build_address(service2.id, user1.id)
-		remailer_email1_2 = remailer.build_address(service1.id, user2.id)
-		remailer_email2_2 = remailer.build_address(service2.id, user2.id)
+		remailer_email1_1 = remailer.build_v1_address(service1.id, user1.id)
+		remailer_email2_1 = remailer.build_v1_address(service2.id, user1.id)
+		remailer_email1_2 = remailer.build_v1_address(service1.id, user2.id)
+		remailer_email2_2 = remailer.build_v1_address(service2.id, user2.id)
 
 		# 1. remailer disabled
 		self.app.config['REMAILER_DOMAIN'] = ''
@@ -181,11 +172,11 @@ class TestServiceUser(UffdTestCase):
 			return {(su.service_id, su.user_id) for su in ServiceUser.filter_query_by_email(ServiceUser.query, value)}
 
 		user1 = self.get_user()
-		service1 = Service.query.filter_by(name='service1').first() # use_remailer=False
-		service2 = Service.query.filter_by(name='service2').first() # use_remailer=True
+		service1 = Service.query.filter_by(name='service1').first() # remailer disabled
+		service2 = Service.query.filter_by(name='service2').first() # remailer enabled
 		self.app.config['REMAILER_DOMAIN'] = 'remailer.example.com'
-		remailer_email1_1 = remailer.build_address(service1.id, user1.id)
-		remailer_email2_1 = remailer.build_address(service2.id, user1.id)
+		remailer_email1_1 = remailer.build_v1_address(service1.id, user1.id)
+		remailer_email2_1 = remailer.build_v1_address(service2.id, user1.id)
 
 		self.app.config['REMAILER_DOMAIN'] = ''
 		self.assertEqual(run_query(user1.primary_email.address), {

@@ -30,19 +30,37 @@
 				{% endfor %}
 			</select>
 		</div>
+
 		<div class="form-group col">
-			<div class="form-check">
-				<input class="form-check-input" type="checkbox" id="service-use-remailer" name="use_remailer" value="1" aria-label="enabled" {{ 'checked' if service.use_remailer }}>
-				<label class="form-check-label" for="service-use-remailer">{{_('Hide mail addresses with remailer')}}</label>
+			<label for="remailer-mode">
+				{{ _('Hide e-mail addresses with remailer') }}
 				{% if not remailer.configured %}
 				<i class="fas fa-exclamation-triangle text-warning" data-toggle="tooltip" data-placement="top" title="{{ _('This option has no effect: Remailer config options are unset') }}"></i>
 				{% endif %}
-			</div>
+			</label>
+			<select class="form-control" id="remailer-mode" name="remailer-mode">
+				<option value="{{ RemailerMode.DISABLED.name }}" {{ 'selected' if service.remailer_mode == RemailerMode.DISABLED }}>
+					{{ _('Remailer disabled') }}
+				</option>
+				<option value="{{ RemailerMode.ENABLED_V2.name }}" {{ 'selected' if service.remailer_mode == RemailerMode.ENABLED_V2 }}>
+					{{ _('Remailer enabled') }}
+				</option>
+				<option value="{{ RemailerMode.ENABLED_V1.name }}" {{ 'selected' if service.remailer_mode == RemailerMode.ENABLED_V1 }}>
+					{{ _('Remailer enabled (deprecated, case-sensitive format)') }}
+				</option>
+			</select>
+			<small class="form-text text-muted">
+				{{ _('Some services notify users about changes to their e-mail address. Modifying this setting immediatly affects the e-mail addresses of all users and can cause masses of notification e-mails.') }}
+			</small>
 		</div>
+
 		<div class="form-group col">
 			<div class="form-check">
 				<input class="form-check-input" type="checkbox" id="service-enable-email-preferences" name="enable_email_preferences" value="1" aria-label="enabled" {{ 'checked' if service.enable_email_preferences }}>
-				<label class="form-check-label" for="service-enable-email-preferences">{{ _('Enable user mail preferences') }}</label>
+				<label class="form-check-label" for="service-enable-email-preferences">{{ _('Allow users to select a different e-mail address for this service') }}</label>
+			<small class="form-text text-muted">
+				{{ _('If disabled, the service always uses the primary e-mail address.') }}
+			</small>
 			</div>
 		</div>
 
