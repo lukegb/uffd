@@ -1,10 +1,6 @@
-import time
+from uffd.models.ratelimit import get_addrkey, format_delay, Ratelimit
 
-from flask import Flask, Blueprint, session, url_for
-
-from uffd.models.ratelimit import get_addrkey, format_delay, Ratelimit, RatelimitEvent
-
-from utils import UffdTestCase
+from tests.utils import UffdTestCase
 
 class TestRatelimit(UffdTestCase):
 	def test_limiting(self):

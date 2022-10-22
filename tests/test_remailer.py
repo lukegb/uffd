@@ -1,6 +1,6 @@
 from uffd.remailer import remailer
 
-from utils import UffdTestCase
+from tests.utils import UffdTestCase
 
 USER_ID = 1234
 SERVICE1_ID = 4223

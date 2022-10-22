@@ -1,14 +1,13 @@
-import datetime
 from urllib.parse import urlparse, parse_qs
 
 from flask import url_for, session
 
-from uffd import create_app, db
+from uffd.database import db
 from uffd.password_hash import PlaintextPasswordHash
 from uffd.remailer import remailer
-from uffd.models import User, DeviceLoginConfirmation, Service, OAuth2Client, OAuth2DeviceLoginInitiation, RemailerMode
+from uffd.models import DeviceLoginConfirmation, Service, OAuth2Client, OAuth2DeviceLoginInitiation, RemailerMode
 
-from utils import dump, UffdTestCase
+from tests.utils import dump, UffdTestCase
 
 class TestViews(UffdTestCase):
 	def setUpDB(self):

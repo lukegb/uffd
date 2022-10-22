@@ -120,7 +120,7 @@ html5validator:
   - rm -rf pages
   - mkdir -p pages
   - cp -r uffd/static pages/static
-  - DUMP_PAGES=pages python3 -m unittest discover tests
+  - DUMP_PAGES=pages python3 -m unittest discover tests/views
   - sed -i -e 's/href="\/static\//href=".\/static\//g' -e 's/src="\/static\//src=".\/static\//g' pages/*.html
   - html5validator --root pages 2>&1 | tee html5validator.log
   artifacts:

@@ -1,9 +1,9 @@
 from flask import url_for
 
 from uffd.database import db
-from uffd.models import User, Group, Role, RoleGroup
+from uffd.models import Role, RoleGroup
 
-from utils import dump, UffdTestCase
+from tests.utils import dump, UffdTestCase
 
 class TestRolemodViewsLoggedOut(UffdTestCase):
 	def test_acl_nologin(self):

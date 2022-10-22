@@ -1,9 +1,7 @@
 import os
-import tempfile
-import shutil
 import unittest
 
-from flask import request, url_for
+from flask import url_for
 
 from uffd import create_app, db
 from uffd.models import User, Group, Mail

@@ -1,6 +1,6 @@
 from uffd.utils import nopad_b32decode, nopad_b32encode, nopad_urlsafe_b64decode, nopad_urlsafe_b64encode
 
-from utils import UffdTestCase
+from tests.utils import UffdTestCase
 
 class TestUtils(UffdTestCase):
 	def test_nopad_b32(self):

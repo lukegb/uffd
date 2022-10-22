@@ -7,7 +7,7 @@ from uffd.remailer import remailer
 from uffd.database import db
 from uffd.models import APIClient, Service, User, RemailerMode
 from uffd.views.api import apikey_required
-from utils import UffdTestCase, db_flush
+from tests.utils import UffdTestCase, db_flush
 
 def basic_auth(username, password):
 	return ('Authorization', 'Basic ' + base64.b64encode(f'{username}:{password}'.encode()).decode())

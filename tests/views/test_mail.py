@@ -1,13 +1,11 @@
-import datetime
-import time
 import unittest
 
-from flask import url_for, session
+from flask import url_for
 
-from uffd import create_app, db
+from uffd.database import db
 from uffd.models import Mail
 
-from utils import dump, UffdTestCase, db_flush
+from tests.utils import dump, UffdTestCase
 
 class TestMailViews(UffdTestCase):
 	def setUp(self):

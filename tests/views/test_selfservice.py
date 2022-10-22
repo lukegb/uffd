@@ -1,13 +1,12 @@
 import datetime
 import re
-import unittest
 
 from flask import url_for, request
 
-from uffd import create_app, db
-from uffd.models import PasswordToken, User, UserEmail, Role, RoleGroup, Service, ServiceUser
+from uffd.database import db
+from uffd.models import PasswordToken, UserEmail, Role, RoleGroup, Service, ServiceUser
 
-from utils import dump, UffdTestCase
+from tests.utils import dump, UffdTestCase
 
 class TestSelfservice(UffdTestCase):
 	def test_index(self):

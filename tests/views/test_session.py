@@ -3,12 +3,12 @@ import unittest
 
 from flask import url_for, request
 
-from uffd import create_app, db
+from uffd.database import db
 from uffd.password_hash import PlaintextPasswordHash
 from uffd.models import DeviceLoginConfirmation, Service, OAuth2Client, OAuth2DeviceLoginInitiation, User
 from uffd.views.session import login_required
 
-from utils import dump, UffdTestCase, db_flush
+from tests.utils import dump, UffdTestCase, db_flush
 
 class TestSession(UffdTestCase):
 	def setUpApp(self):
