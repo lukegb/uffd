@@ -31,6 +31,7 @@ build:apt:
   script:
   - ./debian/create_changelog.py uffd > debian/changelog
   - export PYBUILD_INSTALL_ARGS="--install-lib=/usr/share/uffd/ --install-scripts=/usr/share/uffd/"
+  - export DEB_BUILD_OPTIONS=nocheck
   - dpkg-buildpackage -us -uc
   - mv ../*.deb ./
   - dpkg-deb -I *.deb

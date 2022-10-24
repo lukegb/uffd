@@ -25,7 +25,7 @@ setup(
 	author='CCCV',
 	author_email='it@cccv.de',
 	license='AGPL3',
-	packages=find_packages(),
+	packages=['uffd'],
 	include_package_data=True,
 	zip_safe=False,
 	python_requires='>=3.7',
