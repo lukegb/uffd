@@ -42,17 +42,20 @@ build:apt:
 
 db_migrations_updated:
   stage: test
+  needs: []
   script:
   - FLASK_APP=uffd FLASK_ENV=testing flask db upgrade
   - FLASK_APP=uffd FLASK_ENV=testing flask db migrate 2>&1 | grep -q 'No changes in schema detected'
 
 test_db_migrations:sqlite:
   stage: test
+  needs: []
   script:
   - python3 check_migrations.py sqlite
 
 test_db_migrations:mysql:
   stage: test
+  needs: []
   script:
   - service mysql start
   - python3 check_migrations.py mysql
@@ -60,6 +63,7 @@ test_db_migrations:mysql:
 linter:buster:
   image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
+  needs: []
   script:
   - pip3 install $PYLINT_PIN pylint-gitlab pylint-flask-sqlalchemy # this force-updates jinja2 and some other packages!
   - python3 -m pylint --output-format=pylint_gitlab.GitlabCodeClimateReporter:codeclimate.json,pylint_gitlab.GitlabPagesHtmlReporter:pylint.html,colorized uffd
@@ -73,6 +77,7 @@ linter:buster:
 linter:bullseye:
   image: registry.git.cccv.de/uffd/docker-images/bullseye
   stage: test
+  needs: []
   script:
   - pip3 install $PYLINT_PIN pylint-gitlab pylint-flask-sqlalchemy # this force-updates jinja2 and some other packages!
   - python3 -m pylint --output-format=pylint_gitlab.GitlabCodeClimateReporter:codeclimate.json,pylint_gitlab.GitlabPagesHtmlReporter:pylint.html,colorized uffd
@@ -86,6 +91,7 @@ linter:bullseye:
 unittests:buster:
   image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
+  needs: []
   script:
   - python3-coverage run --include 'uffd/*.py' -m pytest --junitxml=report.xml || touch failed
   - python3-coverage report -m
@@ -108,6 +114,7 @@ unittests:buster:
 unittests:bullseye:
   image: registry.git.cccv.de/uffd/docker-images/bullseye
   stage: test
+  needs: []
   script:
   - python3 -m pytest --junitxml=report.xml
   artifacts:
@@ -117,6 +124,7 @@ unittests:bullseye:
 
 html5validator:
   stage: test
+  needs: []
   script:
   - rm -rf pages
   - mkdir -p pages
@@ -132,6 +140,7 @@ html5validator:
 
 .trans:
   stage: test
+  needs: []
   script:
   - ./update_translations.sh $TRANSLATION_LANGUAGE
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
