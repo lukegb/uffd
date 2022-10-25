@@ -1,6 +1,7 @@
 import string
 import re
 import datetime
+import unicodedata
 
 from flask import current_app, escape
 from flask_babel import lazy_gettext
@@ -12,6 +13,7 @@ from uffd.database import db
 from uffd.remailer import remailer
 from uffd.utils import token_urlfriendly
 from uffd.password_hash import PasswordHashAttribute, LowEntropyPasswordHash, HighEntropyPasswordHash
+from .misc import FeatureFlag
 
 # pylint: disable=E1101
 user_groups = db.Table('user_groups',
@@ -171,29 +173,67 @@ class UserEmail(db.Model):
 			raise ValueError('UserEmail.user cannot be changed once set')
 		return value
 
+	@classmethod
+	def normalize_address(cls, value):
+		return unicodedata.normalize('NFKC', value).lower().strip()
+
 	address = Column(String(128), nullable=False)
+	address_normalized = Column(String(128), nullable=False)
 
 	@validates('address')
 	def validate_address(self, key, value): # pylint: disable=unused-argument
 		if self.address is not None and self.address != value:
 			raise ValueError('UserEmail.address cannot be changed once set')
+		self.address_normalized = self.normalize_address(value)
 		return value
 
-	verified = Column(Boolean(), default=False, nullable=False)
+	# True or None/NULL (not False, see constraints below)
+	_verified = Column('verified', Boolean(), nullable=True)
 
-	@validates('verified')
-	def validate_verified(self, key, value): # pylint: disable=unused-argument
-		if self.verified and not value:
+	@hybrid_property
+	def verified(self):
+		# pylint: disable=singleton-comparison
+		return self._verified != None
+
+	@verified.setter
+	def verified(self, value):
+		if self._verified and not value:
 			raise ValueError('UserEmail cannot be unverified once verified')
-		return value
+		self._verified = True if value else None
 
 	verification_legacy_id = Column(Integer()) # id of old MailToken
 	_verification_secret = Column('verification_secret', Text())
 	verification_secret = PasswordHashAttribute('_verification_secret', HighEntropyPasswordHash)
 	verification_expires = Column(DateTime)
 
+	# Until uffd v3, we make the stricter unique constraints optional, by having
+	# enable_strict_constraints act as a switch to enable/disable the constraints
+	# on a per-row basis.
+	# True or None/NULL if disabled (not False, see constraints below)
+	enable_strict_constraints = Column(
+		Boolean(),
+		nullable=True,
+		default=db.select([db.case([(FeatureFlag.unique_email_addresses.expr, True)], else_=None)])
+	)
+
+	# The unique constraints rely on the common interpretation of SQL92, that if
+	# any column in a unique constraint is NULL, the unique constraint essentially
+	# does not apply to the row. This is how SQLite, MySQL/MariaDB, PostgreSQL and
+	# other common databases behave. A few others like Microsoft SQL Server do not
+	# follow this, but we don't support them anyway.
 	__table_args__ = (
-		db.UniqueConstraint('user_id', 'address', name='uq_user_email_user_id_address'),
+		# A user cannot have the same address more than once, regardless of verification status
+		db.UniqueConstraint('user_id', 'address', name='uq_user_email_user_id_address'), # Legacy, to be removed in v3
+		# Same unique constraint as uq_user_email_user_id_address, but with
+		# address_normalized instead of address. Only active if
+		# enable_strict_constraints is not NULL.
+		db.UniqueConstraint('user_id', 'address_normalized', 'enable_strict_constraints',
+			name='uq_user_email_user_id_address_normalized'),
+		# The same verified address can only exist once. Only active if
+		# enable_strict_constraints is not NULL. Unverified addresses are ignored,
+		# since verified is NULL in that case.
+		db.UniqueConstraint('address_normalized', 'verified', 'enable_strict_constraints',
+			name='uq_user_email_address_normalized_verified'),
 	)
 
 	def set_address(self, value):
@@ -231,6 +271,14 @@ class UserEmail(db.Model):
 		self.verification_expires = None
 		self.verified = True
 		return True
+
+@FeatureFlag.unique_email_addresses.enable_hook
+def enable_unique_email_addresses():
+	UserEmail.query.update({UserEmail.enable_strict_constraints: True})
+
+@FeatureFlag.unique_email_addresses.disable_hook
+def disable_unique_email_addresses():
+	UserEmail.query.update({UserEmail.enable_strict_constraints: None})
 
 def next_id_expr(column, min_value, max_value):
 	# db.func.max(column) + 1: highest used value in range + 1, NULL if no values in range

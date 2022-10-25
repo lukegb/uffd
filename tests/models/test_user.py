@@ -3,7 +3,7 @@ import datetime
 import sqlalchemy
 
 from uffd.database import db
-from uffd.models import User, UserEmail, Group
+from uffd.models import User, UserEmail, Group, FeatureFlag
 
 from tests.utils import UffdTestCase
 
@@ -119,6 +119,30 @@ class TestUserModel(UffdTestCase):
 		self.assertEqual({user.all_emails[0].address, user.all_emails[1].address}, {'foobar@example.com', 'other@example.com'})
 
 class TestUserEmailModel(UffdTestCase):
+	def test_normalize_address(self):
+		ref = UserEmail.normalize_address('foo@example.com')
+		self.assertEqual(ref, UserEmail.normalize_address('foo@example.com'))
+		self.assertEqual(ref, UserEmail.normalize_address('Foo@Example.Com'))
+		self.assertEqual(ref, UserEmail.normalize_address(' foo@example.com  '))
+		self.assertNotEqual(ref, UserEmail.normalize_address('bar@example.com'))
+		self.assertNotEqual(ref, UserEmail.normalize_address('foo @example.com'))
+		# "No-Break Space" instead of SPACE (Unicode normalization + stripping)
+		self.assertEqual(ref, UserEmail.normalize_address('\u00A0foo@example.com '))
+		# Pre-composed "Angstrom Sign" vs. "A" + "Combining Ring Above" (Unicode normalization)
+		self.assertEqual(UserEmail.normalize_address('\u212B@example.com'), UserEmail.normalize_address('A\u030A@example.com'))
+
+	def test_address(self):
+		email = UserEmail()
+		self.assertIsNone(email.address)
+		self.assertIsNone(email.address_normalized)
+		email.address = 'Foo@example.com'
+		self.assertEqual(email.address, 'Foo@example.com')
+		self.assertEqual(email.address_normalized, UserEmail.normalize_address('Foo@example.com'))
+		with self.assertRaises(ValueError):
+			email.address = 'bar@example.com'
+		with self.assertRaises(ValueError):
+			email.address = None
+
 	def test_set_address(self):
 		email = UserEmail()
 		self.assertFalse(email.set_address('invalid'))
@@ -133,6 +157,23 @@ class TestUserEmailModel(UffdTestCase):
 		self.assertFalse(email.set_address('v1-1-testuser@foobar@remailer.example.com'))
 		self.assertTrue(email.set_address('foobar@example.com'))
 		self.assertEqual(email.address, 'foobar@example.com')
+
+	def test_verified(self):
+		email = UserEmail(user=self.get_user(), address='foo@example.com')
+		db.session.add(email)
+		self.assertEqual(email.verified, False)
+		self.assertEqual(UserEmail.query.filter_by(address='foo@example.com', verified=True).count(), 0)
+		self.assertEqual(UserEmail.query.filter_by(address='foo@example.com', verified=False).count(), 1)
+		email.verified = True
+		self.assertEqual(email.verified, True)
+		self.assertEqual(UserEmail.query.filter_by(address='foo@example.com', verified=True).count(), 1)
+		self.assertEqual(UserEmail.query.filter_by(address='foo@example.com', verified=False).count(), 0)
+		with self.assertRaises(ValueError):
+			email.verified = False
+		self.assertEqual(email.verified, True)
+		with self.assertRaises(ValueError):
+			email.verified = None
+		self.assertEqual(email.verified, True)
 
 	def test_verification(self):
 		email = UserEmail(address='foo@example.com')
@@ -149,6 +190,100 @@ class TestUserEmailModel(UffdTestCase):
 		self.assertTrue(email.finish_verification(secret))
 		self.assertFalse(email.verification_secret)
 		self.assertTrue(email.verification_expired)
+
+	def test_enable_strict_constraints(self):
+		email = UserEmail(address='foo@example.com', user=self.get_user())
+		db.session.add(email)
+		db.session.commit()
+		self.assertIsNone(email.enable_strict_constraints)
+		FeatureFlag.unique_email_addresses.enable()
+		self.assertTrue(email.enable_strict_constraints)
+		FeatureFlag.unique_email_addresses.disable()
+		self.assertIsNone(email.enable_strict_constraints)
+
+	def assert_can_add_address(self, **kwargs):
+		user_email = UserEmail(**kwargs)
+		db.session.add(user_email)
+		db.session.commit()
+		db.session.delete(user_email)
+		db.session.commit()
+
+	def assert_cannot_add_address(self, **kwargs):
+		with self.assertRaises(sqlalchemy.exc.IntegrityError):
+			db.session.add(UserEmail(**kwargs))
+			db.session.commit()
+		db.session.rollback()
+
+	def test_unique_constraints_old(self):
+		# The same user cannot add the same exact address multiple times, but
+		# different users can have the same address
+		user = self.get_user()
+		admin = self.get_admin()
+		db.session.add(UserEmail(user=user, address='foo@example.com'))
+		db.session.add(UserEmail(user=user, address='bar@example.com', verified=True))
+		db.session.commit()
+
+		self.assert_can_add_address(user=user, address='foobar@example.com')
+		self.assert_can_add_address(user=user, address='foobar@example.com', verified=True)
+
+		self.assert_cannot_add_address(user=user, address='foo@example.com')
+		self.assert_can_add_address(user=user, address='FOO@example.com')
+		self.assert_cannot_add_address(user=user, address='bar@example.com')
+		self.assert_can_add_address(user=user, address='BAR@example.com')
+
+		self.assert_cannot_add_address(user=user, address='foo@example.com', verified=True)
+		self.assert_can_add_address(user=user, address='FOO@example.com', verified=True)
+		self.assert_cannot_add_address(user=user, address='bar@example.com', verified=True)
+		self.assert_can_add_address(user=user, address='BAR@example.com', verified=True)
+
+		self.assert_can_add_address(user=admin, address='foobar@example.com')
+		self.assert_can_add_address(user=admin, address='foobar@example.com', verified=True)
+
+		self.assert_can_add_address(user=admin, address='foo@example.com')
+		self.assert_can_add_address(user=admin, address='FOO@example.com')
+		self.assert_can_add_address(user=admin, address='bar@example.com')
+		self.assert_can_add_address(user=admin, address='BAR@example.com')
+
+		self.assert_can_add_address(user=admin, address='foo@example.com', verified=True)
+		self.assert_can_add_address(user=admin, address='FOO@example.com', verified=True)
+		self.assert_can_add_address(user=admin, address='bar@example.com', verified=True)
+		self.assert_can_add_address(user=admin, address='BAR@example.com', verified=True)
+
+	def test_unique_constraints_strict(self):
+		FeatureFlag.unique_email_addresses.enable()
+		# The same user cannot add the same (normalized) address multiple times,
+		# and different users cannot have the same verified (normalized) address
+		user = self.get_user()
+		admin = self.get_admin()
+		db.session.add(UserEmail(user=user, address='foo@example.com'))
+		db.session.add(UserEmail(user=user, address='bar@example.com', verified=True))
+		db.session.commit()
+
+		self.assert_can_add_address(user=user, address='foobar@example.com')
+		self.assert_can_add_address(user=user, address='foobar@example.com', verified=True)
+
+		self.assert_cannot_add_address(user=user, address='foo@example.com')
+		self.assert_cannot_add_address(user=user, address='FOO@example.com')
+		self.assert_cannot_add_address(user=user, address='bar@example.com')
+		self.assert_cannot_add_address(user=user, address='BAR@example.com')
+
+		self.assert_cannot_add_address(user=user, address='foo@example.com', verified=True)
+		self.assert_cannot_add_address(user=user, address='FOO@example.com', verified=True)
+		self.assert_cannot_add_address(user=user, address='bar@example.com', verified=True)
+		self.assert_cannot_add_address(user=user, address='BAR@example.com', verified=True)
+
+		self.assert_can_add_address(user=admin, address='foobar@example.com')
+		self.assert_can_add_address(user=admin, address='foobar@example.com', verified=True)
+
+		self.assert_can_add_address(user=admin, address='foo@example.com')
+		self.assert_can_add_address(user=admin, address='FOO@example.com')
+		self.assert_can_add_address(user=admin, address='bar@example.com')
+		self.assert_can_add_address(user=admin, address='BAR@example.com')
+
+		self.assert_can_add_address(user=admin, address='foo@example.com', verified=True)
+		self.assert_can_add_address(user=admin, address='FOO@example.com', verified=True)
+		self.assert_cannot_add_address(user=admin, address='bar@example.com', verified=True)
+		self.assert_cannot_add_address(user=admin, address='BAR@example.com', verified=True)
 
 class TestGroupModel(UffdTestCase):
 	def test_unix_gid_generation(self):

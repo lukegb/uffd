@@ -70,15 +70,15 @@ def create(loginname, mail, displayname, service, password, prompt_password, add
 		if displayname is None:
 			displayname = loginname
 		user = User(is_service_user=service)
-		user = User(is_service_user=service)
 		if not user.set_loginname(loginname, ignore_blocklist=True):
 			raise click.ClickException('Invalid loginname')
 		try:
 			db.session.add(user)
 			update_attrs(user, mail, displayname, password, prompt_password, add_role=add_role)
 			db.session.commit()
-		except IntegrityError as ex:
-			raise click.ClickException(f'User creation failed: {ex}')
+		except IntegrityError:
+			# pylint: disable=raise-missing-from
+			raise click.ClickException('Login name or e-mail address is already in use')
 
 @user_command.command(help='Update user attributes and roles')
 @click.argument('loginname')
@@ -94,8 +94,12 @@ def update(loginname, mail, displayname, password, prompt_password, clear_roles,
 		user = User.query.filter_by(loginname=loginname).one_or_none()
 		if user is None:
 			raise click.ClickException(f'User {loginname} not found')
-		update_attrs(user, mail, displayname, password, prompt_password, clear_roles, add_role, remove_role)
-		db.session.commit()
+		try:
+			update_attrs(user, mail, displayname, password, prompt_password, clear_roles, add_role, remove_role)
+			db.session.commit()
+		except IntegrityError:
+			# pylint: disable=raise-missing-from
+			raise click.ClickException('E-mail address is already in use')
 
 @user_command.command(help='Delete user')
 @click.argument('loginname')

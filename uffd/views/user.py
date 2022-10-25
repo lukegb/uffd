@@ -37,74 +37,102 @@ def show(id=None):
 	user = User() if id is None else User.query.get_or_404(id)
 	return render_template('user/show.html', user=user, roles=Role.query.all())
 
-@bp.route("/<int:id>/update", methods=['POST'])
 @bp.route("/new", methods=['POST'])
 @csrf_protect(blueprint=bp)
-def update(id=None):
-	# pylint: disable=too-many-branches,too-many-statements
-	if id is None:
-		user = User()
-		ignore_blocklist = request.form.get('ignore-loginname-blocklist', False)
-		if request.form.get('serviceaccount'):
-			user.is_service_user = True
-		if not user.set_loginname(request.form['loginname'], ignore_blocklist=ignore_blocklist):
-			flash(_('Login name does not meet requirements'))
-			return redirect(url_for('user.show'))
-		if not user.set_primary_email_address(request.form['email']):
-			flash(_('E-Mail address is invalid'))
-			return redirect(url_for('user.show'))
+def create():
+	user = User()
+	if request.form.get('serviceaccount'):
+		user.is_service_user = True
+	ignore_blocklist = request.form.get('ignore-loginname-blocklist', False)
+	if not user.set_loginname(request.form['loginname'], ignore_blocklist=ignore_blocklist):
+		flash(_('Login name does not meet requirements'))
+		return redirect(url_for('user.show'))
+	if not user.set_primary_email_address(request.form['email']):
+		flash(_('E-Mail address is invalid'))
+		return redirect(url_for('user.show'))
+	new_displayname = request.form['displayname'] if request.form['displayname'] else request.form['loginname']
+	if user.displayname != new_displayname and not user.set_displayname(new_displayname):
+		flash(_('Display name does not meet requirements'))
+		return redirect(url_for('user.show'))
+
+	db.session.add(user)
+	try:
+		db.session.flush()
+	except IntegrityError:
+		flash(_('Login name or e-mail address is already in use'))
+		return redirect(url_for('user.show'))
+
+	for role in Role.query.all():
+		if not user.is_service_user and role.is_default:
+			continue
+		if request.values.get('role-{}'.format(role.id), False):
+			user.roles.append(role)
+	user.update_groups()
+
+	db.session.commit()
+	if user.is_service_user:
+		flash(_('Service user created'))
 	else:
-		user = User.query.get_or_404(id)
+		send_passwordreset(user, new=True)
+		flash(_('User created. We sent the user a password reset link by e-mail'))
+	return redirect(url_for('user.show', id=user.id))
 
-		for email in user.all_emails:
-			if f'email-{email.id}-present' in request.form:
-				email.verified = email.verified or (request.form.get(f'email-{email.id}-verified') == '1')
+@bp.route("/<int:id>/update", methods=['POST'])
+@csrf_protect(blueprint=bp)
+def update(id):
+	# pylint: disable=too-many-branches,too-many-statements
+	user = User.query.get_or_404(id)
 
-		for key, value in request.form.items():
-			parts = key.split('-')
-			if not parts[0] == 'newemail' or not parts[2] == 'address' or not value:
-				continue
-			tmp_id = parts[1]
-			email = UserEmail(
-				user=user,
-				verified=(request.form.get(f'newemail-{tmp_id}-verified') == '1'),
-			)
-			if not email.set_address(value):
-				flash(_('E-Mail address is invalid'))
-				return redirect(url_for('user.show', id=id))
-			db.session.add(email)
+	for email in user.all_emails:
+		if f'email-{email.id}-present' in request.form:
+			email.verified = email.verified or (request.form.get(f'email-{email.id}-verified') == '1')
+	for key, value in request.form.items():
+		parts = key.split('-')
+		if not parts[0] == 'newemail' or not parts[2] == 'address' or not value:
+			continue
+		tmp_id = parts[1]
+		email = UserEmail(
+			user=user,
+			verified=(request.form.get(f'newemail-{tmp_id}-verified') == '1'),
+		)
+		if not email.set_address(value):
+			flash(_('E-Mail address is invalid'))
+			return redirect(url_for('user.show', id=id))
+		db.session.add(email)
 
-		verified_emails = UserEmail.query.filter_by(user=user, verified=True)
-		user.primary_email = verified_emails.filter_by(id=request.form['primary_email']).one()
-		if request.form['recovery_email'] == 'primary':
-			user.recovery_email = None
+	try:
+		db.session.flush()
+	except IntegrityError:
+		flash(_('E-Mail address already exists or is used by another account'))
+		return redirect(url_for('user.show', id=id))
+
+	verified_emails = UserEmail.query.filter_by(user=user, verified=True)
+	user.primary_email = verified_emails.filter_by(id=request.form['primary_email']).one()
+	if request.form['recovery_email'] == 'primary':
+		user.recovery_email = None
+	else:
+		user.recovery_email = verified_emails.filter_by(id=request.form['recovery_email']).one()
+	for service_user in user.service_users:
+		if not service_user.service.enable_email_preferences:
+			continue
+		value = request.form.get(f'service_{service_user.service.id}_email', 'primary')
+		if value == 'primary':
+			service_user.service_email = None
 		else:
-			user.recovery_email = verified_emails.filter_by(id=request.form['recovery_email']).one()
-		for service_user in user.service_users:
-			if not service_user.service.enable_email_preferences:
-				continue
-			value = request.form.get(f'service_{service_user.service.id}_email', 'primary')
-			if value == 'primary':
-				service_user.service_email = None
-			else:
-				service_user.service_email = verified_emails.filter_by(id=value).one()
-
-		for email in user.all_emails:
-			if request.form.get(f'email-{email.id}-delete') == '1':
-				db.session.delete(email)
+			service_user.service_email = verified_emails.filter_by(id=value).one()
+	for email in user.all_emails:
+		if request.form.get(f'email-{email.id}-delete') == '1':
+			db.session.delete(email)
 
 	new_displayname = request.form['displayname'] if request.form['displayname'] else request.form['loginname']
 	if user.displayname != new_displayname and not user.set_displayname(new_displayname):
 		flash(_('Display name does not meet requirements'))
 		return redirect(url_for('user.show', id=id))
-
 	new_password = request.form.get('password')
-	if id is not None and new_password:
+	if new_password:
 		if not user.set_password(new_password):
 			flash(_('Password is invalid'))
 			return redirect(url_for('user.show', id=id))
-
-	db.session.add(user)
 
 	user.roles.clear()
 	for role in Role.query.all():
@@ -115,14 +143,7 @@ def update(id=None):
 	user.update_groups()
 
 	db.session.commit()
-	if id is None:
-		if user.is_service_user:
-			flash(_('Service user created'))
-		else:
-			send_passwordreset(user, new=True)
-			flash(_('User created. We sent the user a password reset link by e-mail'))
-	else:
-		flash(_('User updated'))
+	flash(_('User updated'))
 	return redirect(url_for('user.show', id=user.id))
 
 @bp.route("/<int:id>/del")

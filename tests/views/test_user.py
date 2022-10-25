@@ -1,13 +1,14 @@
 from flask import url_for
 
 from uffd.database import db
-from uffd.models import User, UserEmail, Group, Role, Service, ServiceUser
+from uffd.models import User, UserEmail, Group, Role, Service, ServiceUser, FeatureFlag
 
 from tests.utils import dump, UffdTestCase
 
 class TestUserViews(UffdTestCase):
 	def setUp(self):
 		super().setUp()
+		self.app.last_mail = None
 		self.login_as('admin')
 
 	def test_index(self):
@@ -27,7 +28,7 @@ class TestUserViews(UffdTestCase):
 		dump('user_new', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(User.query.filter_by(loginname='newuser').one_or_none())
-		r = self.client.post(path=url_for('user.update'),
+		r = self.client.post(path=url_for('user.create'),
 			data={'loginname': 'newuser', 'email': 'newuser@example.com', 'displayname': 'New User',
 			f'role-{role1_id}': '1', 'password': 'newpassword'}, follow_redirects=True)
 		dump('user_new_submit', r)
@@ -39,11 +40,12 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(user_.loginname, 'newuser')
 		self.assertEqual(user_.displayname, 'New User')
 		self.assertEqual(user_.primary_email.address, 'newuser@example.com')
+		self.assertFalse(user_.password)
 		self.assertGreaterEqual(user_.unix_uid, self.app.config['USER_MIN_UID'])
 		self.assertLessEqual(user_.unix_uid, self.app.config['USER_MAX_UID'])
 		role1 = Role(name='role1')
 		self.assertEqual(roles, ['base', 'role1'])
-		# TODO: confirm Mail is send, login not yet possible
+		self.assertIsNotNone(self.app.last_mail)
 
 	def test_new_service(self):
 		db.session.add(Role(name='base', is_default=True))
@@ -57,7 +59,7 @@ class TestUserViews(UffdTestCase):
 		dump('user_new_service', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(User.query.filter_by(loginname='newuser').one_or_none())
-		r = self.client.post(path=url_for('user.update'),
+		r = self.client.post(path=url_for('user.create'),
 			data={'loginname': 'newuser', 'email': 'newuser@example.com', 'displayname': 'New User',
 			f'role-{role1_id}': '1', 'password': 'newpassword', 'serviceaccount': '1'}, follow_redirects=True)
 		dump('user_new_submit', r)
@@ -70,12 +72,13 @@ class TestUserViews(UffdTestCase):
 		self.assertEqual(user.displayname, 'New User')
 		self.assertEqual(user.primary_email.address, 'newuser@example.com')
 		self.assertTrue(user.unix_uid)
+		self.assertFalse(user.password)
 		role1 = Role(name='role1')
 		self.assertEqual(roles, ['role1'])
-		# TODO: confirm Mail is send, login not yet possible
+		self.assertIsNone(self.app.last_mail)
 
 	def test_new_invalid_loginname(self):
-		r = self.client.post(path=url_for('user.update'),
+		r = self.client.post(path=url_for('user.create'),
 			data={'loginname': '!newuser', 'email': 'newuser@example.com', 'displayname': 'New User',
 			'password': 'newpassword'}, follow_redirects=True)
 		dump('user_new_invalid_loginname', r)
@@ -83,23 +86,42 @@ class TestUserViews(UffdTestCase):
 		self.assertIsNone(User.query.filter_by(loginname='newuser').one_or_none())
 
 	def test_new_empty_loginname(self):
-		r = self.client.post(path=url_for('user.update'),
+		r = self.client.post(path=url_for('user.create'),
 			data={'loginname': '', 'email': 'newuser@example.com', 'displayname': 'New User',
 			'password': 'newpassword'}, follow_redirects=True)
 		dump('user_new_empty_loginname', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(User.query.filter_by(loginname='newuser').one_or_none())
 
+	def test_new_conflicting_loginname(self):
+		self.assertEqual(User.query.filter_by(loginname='testuser').count(), 1)
+		r = self.client.post(path=url_for('user.create'),
+			data={'loginname': 'testuser', 'email': 'newuser@example.com', 'displayname': 'New User',
+			'password': 'newpassword'}, follow_redirects=True)
+		dump('user_new_conflicting_loginname', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(User.query.filter_by(loginname='testuser').count(), 1)
+
 	def test_new_empty_email(self):
-		r = self.client.post(path=url_for('user.update'),
+		r = self.client.post(path=url_for('user.create'),
 			data={'loginname': 'newuser', 'email': '', 'displayname': 'New User',
 			'password': 'newpassword'}, follow_redirects=True)
 		dump('user_new_empty_email', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(User.query.filter_by(loginname='newuser').one_or_none())
 
+	def test_new_conflicting_email(self):
+		FeatureFlag.unique_email_addresses.enable()
+		db.session.commit()
+		r = self.client.post(path=url_for('user.create'),
+			data={'loginname': 'newuser', 'email': 'test@example.com', 'displayname': 'New User',
+			'password': 'newpassword'}, follow_redirects=True)
+		dump('user_new_conflicting_email', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertIsNone(User.query.filter_by(loginname='newuser').one_or_none())
+
 	def test_new_invalid_display_name(self):
-		r = self.client.post(path=url_for('user.update'),
+		r = self.client.post(path=url_for('user.create'),
 			data={'loginname': 'newuser', 'email': 'newuser@example.com', 'displayname': 'A'*200,
 			'password': 'newpassword'}, follow_redirects=True)
 		dump('user_new_invalid_display_name', r)
@@ -234,6 +256,78 @@ class TestUserViews(UffdTestCase):
 				'new2@example.com': True,
 			}
 		)
+
+	def test_update_email_conflict(self):
+		user = self.get_user()
+		user_id = user.id
+		email_id = user.primary_email.id
+		email_address = user.primary_email.address
+		r = self.client.post(path=url_for('user.update', id=user.id),
+			data={'loginname': 'testuser',
+			f'email-{email_id}-present': '1',
+			f'newemail-1-address': user.primary_email.address},
+			follow_redirects=True)
+		dump('user_update_email_conflict', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(UserEmail.query.filter_by(user_id=user_id).count(), 1)
+
+	def test_update_email_strict_uniqueness(self):
+		FeatureFlag.unique_email_addresses.enable()
+		db.session.commit()
+		user = self.get_user()
+		email = UserEmail(user=user, address='foo@example.com')
+		service1 = Service(name='service1', enable_email_preferences=True)
+		service2 = Service(name='service2', enable_email_preferences=True)
+		db.session.add_all([service1, service2])
+		db.session.commit()
+		email1_id = user.primary_email.id
+		email2_id = email.id
+		service1_id = service1.id
+		service2_id = service2.id
+		r = self.client.post(path=url_for('user.update', id=user.id),
+			data={'loginname': 'testuser',
+			f'email-{email1_id}-present': '1',
+			f'email-{email2_id}-present': '1',
+			f'email-{email2_id}-verified': '1',
+			f'newemail-1-address': 'new1@example.com',
+			f'newemail-2-address': 'new2@example.com', f'newemail-2-verified': '1',
+			'primary_email': email2_id, 'recovery_email': email1_id,
+			f'service_{service1_id}_email': 'primary',
+			f'service_{service2_id}_email': email2_id,
+			'displayname': 'Test User', 'password': ''},
+			follow_redirects=True)
+		dump('user_update_email_strict_uniqueness', r)
+		self.assertEqual(r.status_code, 200)
+		user = self.get_user()
+		self.assertEqual(user.primary_email.id, email2_id)
+		self.assertEqual(user.recovery_email.id, email1_id)
+		self.assertEqual(ServiceUser.query.get((service1.id, user.id)).service_email, None)
+		self.assertEqual(ServiceUser.query.get((service2.id, user.id)).service_email.id, email2_id)
+		self.assertEqual(
+			{email.address: email.verified for email in user.all_emails},
+			{
+				'test@example.com': True,
+				'foo@example.com': True,
+				'new1@example.com': False,
+				'new2@example.com': True,
+			}
+		)
+
+	def test_update_email_strict_uniqueness_conflict(self):
+		FeatureFlag.unique_email_addresses.enable()
+		db.session.commit()
+		user = self.get_user()
+		user_id = user.id
+		email_id = user.primary_email.id
+		email_address = user.primary_email.address
+		r = self.client.post(path=url_for('user.update', id=user.id),
+			data={'loginname': 'testuser',
+			f'email-{email_id}-present': '1',
+			f'newemail-1-address': user.primary_email.address},
+			follow_redirects=True)
+		dump('user_update_email_strict_uniqueness_conflict', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(UserEmail.query.filter_by(user_id=user_id).count(), 1)
 
 	def test_update_invalid_display_name(self):
 		user_unupdated = self.get_user()

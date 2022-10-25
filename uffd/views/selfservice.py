@@ -144,7 +144,11 @@ def verify_email(secret, email_id=None, legacy_id=None):
 		return redirect(url_for('selfservice.index'))
 	if legacy_id is not None:
 		request.user.primary_email = email
-	db.session.commit()
+	try:
+		db.session.commit()
+	except IntegrityError:
+		flash(_('E-Mail address is already used by another account'))
+		return redirect(url_for('selfservice.index'))
 	flash(_('E-Mail address verified'))
 	return redirect(url_for('selfservice.index'))
 

@@ -4,7 +4,7 @@ import re
 from flask import url_for, request
 
 from uffd.database import db
-from uffd.models import PasswordToken, UserEmail, Role, RoleGroup, Service, ServiceUser
+from uffd.models import PasswordToken, UserEmail, Role, RoleGroup, Service, ServiceUser, FeatureFlag
 
 from tests.utils import dump, UffdTestCase
 
@@ -114,7 +114,7 @@ class TestSelfservice(UffdTestCase):
 		email.verification_expires = datetime.datetime.utcnow() - datetime.timedelta(days=1)
 		db.session.add(email)
 		db.session.commit()
-		r = self.client.get(path=url_for('selfservice.verify_email', email_id=email.id, secret='invalidsecret'), follow_redirects=True)
+		r = self.client.get(path=url_for('selfservice.verify_email', email_id=email.id, secret=secret), follow_redirects=True)
 		dump('selfservice_verify_email_expired', r)
 		self.assertFalse(email.verified)
 
@@ -136,6 +136,20 @@ class TestSelfservice(UffdTestCase):
 		email = UserEmail.query.get(email_id)
 		self.assertTrue(email.verified)
 		self.assertEqual(self.get_user().primary_email, email)
+
+	def test_verify_email_duplicate_strict_uniqueness(self):
+		FeatureFlag.unique_email_addresses.enable()
+		db.session.commit()
+		self.login_as('user')
+		email = UserEmail(user=self.get_user(), address='admin@example.com')
+		secret = email.start_verification()
+		db.session.add(email)
+		db.session.commit()
+		email_id = email.id
+		r = self.client.get(path=url_for('selfservice.verify_email', email_id=email.id, secret=secret), follow_redirects=True)
+		dump('selfservice_verify_email_duplicate_strict_uniqueness', r)
+		email = UserEmail.query.get(email_id)
+		self.assertFalse(email.verified)
 
 	def test_retry_email_verification(self):
 		self.login_as('user')

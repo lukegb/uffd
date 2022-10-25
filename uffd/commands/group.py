@@ -38,8 +38,9 @@ def create(name, description):
 		try:
 			db.session.add(group)
 			db.session.commit()
-		except IntegrityError as ex:
-			raise click.ClickException(f'Group creation failed: {ex}')
+		except IntegrityError:
+			# pylint: disable=raise-missing-from
+			raise click.ClickException(f'A group with name "{name}" already exists')
 
 @group_command.command(help='Update group attributes')
 @click.argument('name')

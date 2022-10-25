@@ -89,8 +89,9 @@ def create(name, description, default, moderator_group, add_group, add_role):
 			db.session.add(role)
 			role.update_member_groups()
 			db.session.commit()
-		except IntegrityError as ex:
-			raise click.ClickException(f'Role creation failed: {ex}')
+		except IntegrityError:
+			# pylint: disable=raise-missing-from
+			raise click.ClickException(f'A role with name "{name}" already exists')
 
 @role_command.command(help='Update role attributes')
 @click.argument('name')

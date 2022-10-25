@@ -10,6 +10,7 @@ from .session import DeviceLoginType, DeviceLoginInitiation, DeviceLoginConfirma
 from .signup import Signup
 from .user import User, UserEmail, Group
 from .ratelimit import RatelimitEvent, Ratelimit, HostRatelimit, host_ratelimit, format_delay
+from .misc import FeatureFlag
 
 __all__ = [
 	'APIClient',
@@ -24,4 +25,5 @@ __all__ = [
 	'Signup',
 	'User', 'UserEmail', 'Group',
 	'RatelimitEvent', 'Ratelimit', 'HostRatelimit', 'host_ratelimit', 'format_delay',
+	'FeatureFlag',
 ]

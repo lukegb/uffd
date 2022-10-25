@@ -1,5 +1,5 @@
 from uffd.database import db
-from uffd.models import User, Group, Role, RoleGroup
+from uffd.models import User, Group, Role, RoleGroup, FeatureFlag
 
 from tests.utils import UffdTestCase
 
@@ -36,6 +36,16 @@ class TestUserCLI(UffdTestCase):
 		self.assertEqual(result.exit_code, 1)
 		result = self.app.test_cli_runner().invoke(args=['user', 'create', 'testuser', '--mail', 'foobar@example.com']) # conflicting name
 		self.assertEqual(result.exit_code, 1)
+
+		with self.app.test_request_context():
+			FeatureFlag.unique_email_addresses.enable()
+			db.session.commit()
+		result = self.app.test_cli_runner().invoke(args=['user', 'create', 'newuser', '--mail', 'test@example.com']) # conflicting email address
+		self.assertEqual(result.exit_code, 1)
+		with self.app.test_request_context():
+			FeatureFlag.unique_email_addresses.disable()
+			db.session.commit()
+
 		result = self.app.test_cli_runner().invoke(args=['user', 'create', 'newuser', '--mail', 'newmail@example.com',
 		                                                 '--displayname', 'New Display Name', '--password', 'newpassword', '--add-role', 'admin'])
 		self.assertEqual(result.exit_code, 0)
@@ -53,6 +63,16 @@ class TestUserCLI(UffdTestCase):
 		self.assertEqual(result.exit_code, 1)
 		result = self.app.test_cli_runner().invoke(args=['user', 'update', 'testuser', '--mail', '']) # invalid mail
 		self.assertEqual(result.exit_code, 1)
+
+		with self.app.test_request_context():
+			FeatureFlag.unique_email_addresses.enable()
+			db.session.commit()
+		result = self.app.test_cli_runner().invoke(args=['user', 'update', 'testuser', '--mail', 'admin@example.com']) # conflicting mail
+		self.assertEqual(result.exit_code, 1)
+		with self.app.test_request_context():
+			FeatureFlag.unique_email_addresses.disable()
+			db.session.commit()
+
 		result = self.app.test_cli_runner().invoke(args=['user', 'update', 'testuser', '--password', '']) # invalid password
 		self.assertEqual(result.exit_code, 1)
 		result = self.app.test_cli_runner().invoke(args=['user', 'update', 'testuser', '--displayname', '']) # invalid display name

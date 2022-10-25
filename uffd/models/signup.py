@@ -2,6 +2,7 @@ import datetime
 
 from flask_babel import gettext as _
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -104,8 +105,14 @@ class Signup(db.Model):
 			return None, _('Wrong password')
 		if User.query.filter_by(loginname=self.loginname).all():
 			return None, _('A user with this login name already exists')
+		# Flush to make sure the flush below does not catch unrelated errors
+		db.session.flush()
 		user = User(loginname=self.loginname, displayname=self.displayname, primary_email_address=self.mail, password=self.password)
 		db.session.add(user)
+		try:
+			db.session.flush()
+		except IntegrityError:
+			return None, _('Login name or e-mail address is already in use')
 		user.update_groups() # pylint: disable=no-member
 		self.user = user
 		self.loginname = None

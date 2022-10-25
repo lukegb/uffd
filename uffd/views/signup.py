@@ -105,6 +105,7 @@ def signup_confirm_submit(signup_id, token):
 		return render_template('signup/confirm.html', signup=signup)
 	user, msg = signup.finish(request.form['password'])
 	if user is None:
+		db.session.rollback()
 		flash(msg, 'error')
 		return render_template('signup/confirm.html', signup=signup)
 	db.session.commit()
