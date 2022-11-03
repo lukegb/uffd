@@ -8,9 +8,9 @@ from .selfservice import PasswordToken
 from .service import RemailerMode, Service, ServiceUser, get_services
 from .session import DeviceLoginType, DeviceLoginInitiation, DeviceLoginConfirmation
 from .signup import Signup
-from .user import User, UserEmail, Group
+from .user import User, UserEmail, Group, IDAllocator, IDRangeExhaustedError, IDAlreadyAllocatedError
 from .ratelimit import RatelimitEvent, Ratelimit, HostRatelimit, host_ratelimit, format_delay
-from .misc import FeatureFlag
+from .misc import FeatureFlag, Lock
 
 __all__ = [
 	'APIClient',
@@ -23,7 +23,7 @@ __all__ = [
 	'RemailerMode', 'Service', 'ServiceUser', 'get_services',
 	'DeviceLoginType', 'DeviceLoginInitiation', 'DeviceLoginConfirmation',
 	'Signup',
-	'User', 'UserEmail', 'Group',
+	'User', 'UserEmail', 'Group', 'IDAllocator', 'IDRangeExhaustedError', 'IDAlreadyAllocatedError',
 	'RatelimitEvent', 'Ratelimit', 'HostRatelimit', 'host_ratelimit', 'format_delay',
-	'FeatureFlag',
+	'FeatureFlag', 'Lock',
 ]

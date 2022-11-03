@@ -36,7 +36,11 @@ def update(id=None):
 	if id is None:
 		group = Group()
 		if request.form['unix_gid']:
-			group.unix_gid = int(request.form['unix_gid'])
+			try:
+				group.unix_gid = int(request.form['unix_gid'])
+			except ValueError:
+				flash(_('GID is already in use or was used in the past'))
+				return render_template('group/show.html', group=group), 400
 		if not group.set_name(request.form['name']):
 			flash(_('Invalid name'))
 			return render_template('group/show.html', group=group), 400

@@ -39,3 +39,40 @@ class FeatureFlag:
 			func()
 
 FeatureFlag.unique_email_addresses = FeatureFlag('unique-email-addresses')
+
+lock_table = db.Table('lock',
+	db.Column('name', db.String(32), primary_key=True),
+)
+
+class Lock:
+	ALL_LOCKS = set()
+
+	def __init__(self, name):
+		self.name = name
+		assert name not in self.ALL_LOCKS
+		self.ALL_LOCKS.add(name)
+
+	def acquire(self):
+		'''Acquire the lock until the end of the current transaction
+
+		Calling acquire while the specific lock is already held has no effect.'''
+		if db.engine.name == 'sqlite':
+			# SQLite does not support with_for_update, but we can lock the whole DB
+			# with any write operation. So we do a dummy update.
+			db.session.execute(db.update(lock_table).where(False).values(name=None))
+		elif db.engine.name in ('mysql', 'mariadb'):
+			result = db.session.execute(db.select([lock_table.c.name]).where(lock_table.c.name == self.name).with_for_update()).scalar()
+			if result is not None:
+				return
+			# We add all lock rows with migrations so we should never end up here
+			raise Exception(f'Lock "{self.name}" is missing')
+		else:
+			raise NotImplementedError()
+
+# Only executed when lock_table is created with db.create/db.create_all (e.g.
+# during testing). Otherwise the rows are inserted with migrations.
+@db.event.listens_for(lock_table, 'after_create') # pylint: disable=no-member
+def insert_lock_rows(target, connection, **kwargs): # pylint: disable=unused-argument
+	for name in Lock.ALL_LOCKS:
+		db.session.execute(db.insert(lock_table).values(name=name))
+	db.session.commit()

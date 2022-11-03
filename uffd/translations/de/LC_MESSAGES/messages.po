@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-10-25 22:00+0200\n"
+"POT-Creation-Date: 2022-11-01 00:38+0100\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -98,7 +98,7 @@ msgstr "Falsches Passwort"
 msgid "Login name or e-mail address is already in use"
 msgstr "Der Anmeldename oder die E-Mail-Adresse wird bereits verwendet"
 
-#: uffd/models/user.py:37
+#: uffd/models/user.py:46
 #, python-format
 msgid ""
 "At least %(minlen)d and at most %(maxlen)d characters. Only letters, "
@@ -1633,23 +1633,27 @@ msgstr "Resultierende Gruppen (wird nur aktualisiert beim Speichern)"
 msgid "Groups"
 msgstr "Gruppen"
 
-#: uffd/views/group.py:41
+#: uffd/views/group.py:42
+msgid "GID is already in use or was used in the past"
+msgstr "GID wird oder wurde bereits verwendet"
+
+#: uffd/views/group.py:45
 msgid "Invalid name"
 msgstr "Ungültiger Name"
 
-#: uffd/views/group.py:52
+#: uffd/views/group.py:56
 msgid "Group with this name or id already exists"
 msgstr "Gruppe mit diesem Namen oder dieser ID existiert bereits"
 
-#: uffd/views/group.py:57
+#: uffd/views/group.py:61
 msgid "Group created"
 msgstr "Gruppe erstellt"
 
-#: uffd/views/group.py:59
+#: uffd/views/group.py:63
 msgid "Group updated"
 msgstr "Gruppe aktualisiert"
 
-#: uffd/views/group.py:68
+#: uffd/views/group.py:72
 msgid "Deleted group"
 msgstr "Gruppe gelöscht"
 

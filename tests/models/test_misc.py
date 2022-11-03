@@ -1,12 +1,15 @@
+import time
+import threading
+
 from sqlalchemy.exc import IntegrityError
 
 from uffd.database import db
-from uffd.models import FeatureFlag
+from uffd.models import FeatureFlag, Lock
 from uffd.models.misc import feature_flag_table
 
-from tests.utils import UffdTestCase
+from tests.utils import ModelTestCase
 
-class TestFeatureFlagModel(UffdTestCase):
+class TestFeatureFlag(ModelTestCase):
 	def test_disabled(self):
 		flag = FeatureFlag('foo')
 		self.assertFalse(flag)
@@ -53,3 +56,29 @@ class TestFeatureFlagModel(UffdTestCase):
 		with self.assertRaises(IntegrityError):
 			flag.enable()
 		self.assertTrue(flag)
+
+class TestLock(ModelTestCase):
+	DISABLE_SQLITE_MEMORY_DB = True
+
+	def setUpApp(self):
+		self.lock = Lock('testlock')
+
+	def run_lock_test(self):
+		result = []
+		def func():
+			with self.app.test_request_context():
+				self.lock.acquire()
+				result.append('bar')
+		t = threading.Thread(target=func)
+		t.start()
+		time.sleep(1)
+		result.append('foo')
+		time.sleep(1)
+		db.session.rollback()
+		t.join()
+		return result
+
+	def test_lock2(self):
+		self.assertEqual(self.run_lock_test(), ['bar', 'foo'])
+		self.lock.acquire()
+		self.assertEqual(self.run_lock_test(), ['foo', 'bar'])

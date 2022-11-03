@@ -2,6 +2,7 @@ import os
 import unittest
 
 from flask import url_for
+import flask_migrate
 
 from uffd import create_app, db
 from uffd.models import User, Group, Mail
@@ -21,7 +22,106 @@ def db_flush():
 	db.session.rollback()
 	db.session.expire_all()
 
-class UffdTestCase(unittest.TestCase):
+class AppTestCase(unittest.TestCase):
+	DISABLE_SQLITE_MEMORY_DB = False
+
+	def setUp(self):
+		config = {
+			'TESTING': True,
+			'DEBUG': True,
+			'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
+			'SECRET_KEY': 'DEBUGKEY',
+			'MAIL_SKIP_SEND': True,
+			'SELF_SIGNUP': True,
+		}
+		if self.DISABLE_SQLITE_MEMORY_DB:
+			try:
+				os.remove('/tmp/uffd-migration-test-db.sqlite3')
+			except FileNotFoundError:
+				pass
+			config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/uffd-migration-test-db.sqlite3'
+		self.app = create_app(config)
+		self.setUpApp()
+
+	def setUpApp(self):
+		pass
+
+	def tearDown(self):
+		if self.DISABLE_SQLITE_MEMORY_DB:
+			try:
+				os.remove('/tmp/uffd-migration-test-db.sqlite3')
+			except FileNotFoundError:
+				pass
+
+class MigrationTestCase(AppTestCase):
+	DISABLE_SQLITE_MEMORY_DB = True
+
+	REVISION = None
+
+	def setUp(self):
+		super().setUp()
+		self.request_context = self.app.test_request_context()
+		self.request_context.__enter__()
+		if self.REVISION:
+			flask_migrate.upgrade(revision=self.REVISION + '-1')
+
+	def upgrade(self, revision='+1'):
+		db.session.commit()
+		flask_migrate.upgrade(revision=revision)
+
+	def downgrade(self, revision='-1'):
+		db.session.commit()
+		flask_migrate.downgrade(revision=revision)
+
+	def tearDown(self):
+		db.session.rollback()
+		self.request_context.__exit__(None, None, None)
+		super().tearDown()
+
+class ModelTestCase(AppTestCase):
+	def setUp(self):
+		super().setUp()
+		self.request_context = self.app.test_request_context()
+		self.request_context.__enter__()
+		db.create_all()
+		db.session.commit()
+
+	def tearDown(self):
+		db.session.rollback()
+		self.request_context.__exit__(None, None, None)
+		super().tearDown()
+
+class UffdTestCase(AppTestCase):
+	def setUp(self):
+		super().setUp()
+		self.client = self.app.test_client()
+		self.client.__enter__()
+		# Just do some request so that we can use url_for
+		self.client.get(path='/')
+		db.create_all()
+		# This reflects the old LDAP example data
+		users_group = Group(name='users', unix_gid=20001, description='Base group for all users')
+		db.session.add(users_group)
+		access_group = Group(name='uffd_access', unix_gid=20002, description='Access to Single-Sign-On and Selfservice')
+		db.session.add(access_group)
+		admin_group = Group(name='uffd_admin', unix_gid=20003, description='Admin access to uffd')
+		db.session.add(admin_group)
+		testuser = User(loginname='testuser', unix_uid=10000, password='userpassword', primary_email_address='test@example.com', displayname='Test User', groups=[users_group, access_group])
+		db.session.add(testuser)
+		testadmin = User(loginname='testadmin', unix_uid=10001, password='adminpassword', primary_email_address='admin@example.com', displayname='Test Admin', groups=[users_group, access_group, admin_group])
+		db.session.add(testadmin)
+		testmail = Mail(uid='test', receivers=['test1@example.com', 'test2@example.com'], destinations=['testuser@mail.example.com'])
+		db.session.add(testmail)
+		self.setUpDB()
+		db.session.commit()
+
+	def setUpDB(self):
+		pass
+
+	def tearDown(self):
+		self.client.__exit__(None, None, None)
+		super().tearDown()
+
 	def get_user(self):
 		return User.query.filter_by(loginname='testuser').one_or_none()
 
@@ -54,47 +154,3 @@ class UffdTestCase(unittest.TestCase):
 			password = 'adminpassword'
 		return self.client.post(path=url_for('session.login', ref=ref),
 								data={'loginname': loginname, 'password': password}, follow_redirects=True)
-
-	def setUp(self):
-		# It would be far better to create a minimal app here, but since the
-		# session module depends on almost everything else, that is not really feasable
-		config = {
-			'TESTING': True,
-			'DEBUG': True,
-			'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
-			'SECRET_KEY': 'DEBUGKEY',
-			'MAIL_SKIP_SEND': True,
-			'SELF_SIGNUP': True,
-		}
-
-		self.app = create_app(config)
-		self.setUpApp()
-		self.client = self.app.test_client()
-		self.client.__enter__()
-		# Just do some request so that we can use url_for
-		self.client.get(path='/')
-		db.create_all()
-		# This reflects the old LDAP example data
-		users_group = Group(name='users', unix_gid=20001, description='Base group for all users')
-		db.session.add(users_group)
-		access_group = Group(name='uffd_access', unix_gid=20002, description='Access to Single-Sign-On and Selfservice')
-		db.session.add(access_group)
-		admin_group = Group(name='uffd_admin', unix_gid=20003, description='Admin access to uffd')
-		db.session.add(admin_group)
-		testuser = User(loginname='testuser', unix_uid=10000, password='userpassword', primary_email_address='test@example.com', displayname='Test User', groups=[users_group, access_group])
-		db.session.add(testuser)
-		testadmin = User(loginname='testadmin', unix_uid=10001, password='adminpassword', primary_email_address='admin@example.com', displayname='Test Admin', groups=[users_group, access_group, admin_group])
-		db.session.add(testadmin)
-		testmail = Mail(uid='test', receivers=['test1@example.com', 'test2@example.com'], destinations=['testuser@mail.example.com'])
-		db.session.add(testmail)
-		self.setUpDB()
-		db.session.commit()
-
-	def setUpApp(self):
-		pass
-
-	def setUpDB(self):
-		pass
-
-	def tearDown(self):
-		self.client.__exit__(None, None, None)

@@ -13,13 +13,95 @@ from uffd.database import db
 from uffd.remailer import remailer
 from uffd.utils import token_urlfriendly
 from uffd.password_hash import PasswordHashAttribute, LowEntropyPasswordHash, HighEntropyPasswordHash
-from .misc import FeatureFlag
+from .misc import FeatureFlag, Lock
 
-# pylint: disable=E1101
-user_groups = db.Table('user_groups',
-	Column('user_id', Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True),
-	Column('group_id', Integer(), ForeignKey('group.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
-)
+class IDRangeExhaustedError(Exception):
+	pass
+
+class IDAlreadyAllocatedError(ValueError):
+	pass
+
+# Helper class for UID/GID allocation that prevents reuse even if
+# users/groups are deleted.
+#
+# To keep track of formerly used UIDs/GIDs, they are always also added to
+# uid/gid allocation tables. Rows in these tables are never deleted.
+# User/group tables have foreign key constraints to ensure that there can
+# only ever be three cases for a given ID:
+#
+# 1. The ID was never used (does not exist in either user/group or allocation
+#    table)
+# 2. The ID was used, but the user/group was deleted (it does not exist in
+#    user/group table, but it exists in the allocation table)
+# 3. The ID is in use (it exists in both the user/group and the allocation
+#    table)
+#
+# For auto-allocation, there are a few edge cases to consider:
+#
+# 1. GIDs can be chosen freely in the web interface, e.g. one could easily
+#    create a group with the last GID in range.
+# 2. For UIDs there are two ranges (for regular users and for service users).
+#    The ranges may either be the same or they may be different but
+#    non-overlapping.
+# 3. ID ranges can be changed (e.g. extended to either side if the old range
+#    is exhausted). Existing IDs should not change.
+#
+# The approach we use here is to always auto-allocate the first unused id
+# in range. This approach handles the three edge cases well and even behaves
+# sanely in unsupported configurations like different but overlapping UID
+# ranges.
+class IDAllocator:
+	# pylint completely fails to understand SQLAlchemy's query functions
+	# pylint: disable=no-member
+	def __init__(self, name):
+		self.name = name
+		self.lock = Lock(f'{name}_allocation')
+		self.allocation_table = db.Table(f'{name}_allocation', db.Column('id', db.Integer(), primary_key=True))
+
+	def allocate(self, id):
+		self.lock.acquire()
+		result = db.session.execute(
+			db.select([self.allocation_table.c.id])
+			.where(self.allocation_table.c.id == id)
+		).scalar()
+		if result is not None:
+			raise IDAlreadyAllocatedError(f'Cannot allocate {self.name}: {id} is in use or was used in the past')
+		db.session.execute(db.insert(self.allocation_table).values(id=id))
+
+	def auto(self, min_id, max_id):
+		'''Auto-allocate and return an unused id in range'''
+		self.lock.acquire()
+		# We cannot easily iterate through a large range of numbers with generic
+		# SQL statements looking for unused ids. So to find the first unused id in
+		# range, we look for the first used id in range that is followed by an
+		# unused id. This does not work if there are no used ids in range (returns
+		# NULL) or if min_id is unused (returns higher id while it should return
+		# min_id). To fix this we also check if min_id is used or not.
+		tmp = db.aliased(self.allocation_table)
+		first_unused_id = db.session.execute(
+			db.select([db.func.min(self.allocation_table.c.id + 1)])
+			.where(self.allocation_table.c.id >= min_id)
+			.where(db.not_(db.exists().where(tmp.c.id == self.allocation_table.c.id + 1)))
+		).scalar()
+		min_id_used = db.session.execute(
+			db.select([db.exists()
+			.where(self.allocation_table.c.id == min_id)])
+		).scalar()
+		if not min_id_used:
+			first_unused_id = min_id
+		if first_unused_id > max_id:
+			raise IDRangeExhaustedError(f'Cannot auto-allocate {self.name}: Range is exhausted')
+		db.session.execute(db.insert(self.allocation_table).values(id=first_unused_id))
+		return first_unused_id
+
+def user_unix_uid_default(context):
+	if context.get_current_parameters()['is_service_user']:
+		min_uid = current_app.config['USER_SERVICE_MIN_UID']
+		max_uid = current_app.config['USER_SERVICE_MAX_UID']
+	else:
+		min_uid = current_app.config['USER_MIN_UID']
+		max_uid = current_app.config['USER_MAX_UID']
+	return User.unix_uid_allocator.auto(min_uid, max_uid)
 
 class User(db.Model):
 	# Allows 8 to 256 ASCII letters (lower and upper case), digits, spaces and
@@ -38,8 +120,16 @@ class User(db.Model):
 
 	__tablename__ = 'user'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	# Default is set in event handler below
-	unix_uid = Column(Integer(), unique=True, nullable=False)
+
+	unix_uid_allocator = IDAllocator('uid')
+	unix_uid = Column(Integer(), ForeignKey('uid_allocation.id'), unique=True, nullable=False, default=user_unix_uid_default)
+
+	@validates('unix_uid')
+	def validate_unix_uid(self, key, value): # pylint: disable=unused-argument
+		if self.unix_uid != value and value is not None:
+			self.unix_uid_allocator.allocate(value)
+		return value
+
 	loginname = Column(String(32), unique=True, nullable=False)
 	displayname = Column(String(128), nullable=False)
 
@@ -261,7 +351,7 @@ class UserEmail(db.Model):
 		return self.verification_expires < datetime.datetime.utcnow()
 
 	def finish_verification(self, secret):
-		# pylint: disable=using-constant-test
+		# pylint: disable=using-constant-test,no-member
 		if self.verification_expired:
 			return False
 		if not self.verification_secret.verify(secret):
@@ -280,41 +370,28 @@ def enable_unique_email_addresses():
 def disable_unique_email_addresses():
 	UserEmail.query.update({UserEmail.enable_strict_constraints: None})
 
-def next_id_expr(column, min_value, max_value):
-	# db.func.max(column) + 1: highest used value in range + 1, NULL if no values in range
-	# db.func.min(..., max_value): clip to range
-	# db.func.coalesce(..., min_value): if NULL use min_value
-	# if range is exhausted, evaluates to max_value that violates the UNIQUE constraint
-	return db.select([db.func.coalesce(db.func.min(db.func.max(column) + 1, max_value), min_value)])\
-	         .where(column >= min_value)\
-	         .where(column <= max_value)
+# pylint: disable=E1101
+user_groups = db.Table('user_groups',
+	Column('user_id', Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True),
+	Column('group_id', Integer(), ForeignKey('group.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
+)
 
-# Emulates the behaviour of Column.default. We cannot use a static SQL
-# expression like we do for Group.unix_gid, because we need context
-# information. We also cannot set Column.default to a callable, because
-# SQLAlchemy always treats the return value as a literal value and does
-# not allow SQL expressions.
-@db.event.listens_for(User, 'before_insert')
-def set_default_unix_uid(mapper, connect, target):
-	# pylint: disable=unused-argument
-	if target.unix_uid is not None:
-		return
-	if target.is_service_user:
-		min_uid = current_app.config['USER_SERVICE_MIN_UID']
-		max_uid = current_app.config['USER_SERVICE_MAX_UID']
-	else:
-		min_uid = current_app.config['USER_MIN_UID']
-		max_uid = current_app.config['USER_MAX_UID']
-	target.unix_uid = next_id_expr(User.unix_uid, min_uid, max_uid)
-
-group_table = db.table('group', db.column('unix_gid'))
-min_gid = db.bindparam('min_gid', unique=True, callable_=lambda: current_app.config['GROUP_MIN_GID'], type_=db.Integer)
-max_gid = db.bindparam('max_gid', unique=True, callable_=lambda: current_app.config['GROUP_MAX_GID'], type_=db.Integer)
+def group_unix_gid_default():
+	return Group.unix_gid_allocator.auto(current_app.config['GROUP_MIN_GID'], current_app.config['GROUP_MAX_GID'])
 
 class Group(db.Model):
 	__tablename__ = 'group'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	unix_gid = Column(Integer(), unique=True, nullable=False, default=next_id_expr(group_table.c.unix_gid, min_gid, max_gid))
+
+	unix_gid_allocator = IDAllocator('gid')
+	unix_gid = Column(Integer(), ForeignKey('gid_allocation.id'), unique=True, nullable=False, default=group_unix_gid_default)
+
+	@validates('unix_gid')
+	def validate_unix_gid(self, key, value): # pylint: disable=unused-argument
+		if self.unix_gid != value and value is not None:
+			self.unix_gid_allocator.allocate(value)
+		return value
+
 	name = Column(String(32), unique=True, nullable=False)
 	description = Column(String(128), nullable=False, default='')
 	members = relationship('User', secondary='user_groups', back_populates='groups')
