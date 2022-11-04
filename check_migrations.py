@@ -99,12 +99,12 @@ if __name__ == '__main__':
 			conn = MySQLdb.connect(user='root', unix_socket='/var/run/mysqld/mysqld.sock')
 			cur = conn.cursor()
 			try:
-				cur.execute('DROP DATABASE uffd')
+				cur.execute('DROP DATABASE uffd_tests')
 			except:
 				pass
-			cur.execute('CREATE DATABASE uffd')
+			cur.execute('CREATE DATABASE uffd_tests CHARACTER SET utf8mb4 COLLATE utf8mb4_nopad_bin')
 			conn.close()
-			dburi = 'mysql+mysqldb:///uffd?unix_socket=/var/run/mysqld/mysqld.sock'
+			dburi = 'mysql+mysqldb:///uffd_tests?unix_socket=/var/run/mysqld/mysqld.sock&charset=utf8mb4'
 		try:
 			run_test(dburi, rev)
 		except Exception as ex:

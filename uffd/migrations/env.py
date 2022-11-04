@@ -3,6 +3,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 import logging
+import click
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -74,6 +75,14 @@ def run_migrations_online():
                       target_metadata=target_metadata,
                       process_revision_directives=process_revision_directives,
                       **current_app.extensions['migrate'].configure_args)
+    if engine.name in ('mysql', 'mariadb'):
+        character_set_connection = connection.execute('SHOW VARIABLES LIKE "character_set_connection"').fetchone()[1]
+        if character_set_connection != 'utf8mb4':
+            raise click.ClickException(f'Unsupported connection charset "{character_set_connection}". Make sure to add "?charset=utf8mb4" to SQLALCHEMY_DATABASE_URI!')
+        collation_database = connection.execute('SHOW VARIABLES LIKE "collation_database"').fetchone()[1]
+        if collation_database != 'utf8mb4_nopad_bin':
+            raise click.ClickException(f'Unsupported database collation "{collation_database}". Create the database with "CHARACTER SET utf8mb4 COLLATE utf8mb4_nopad_bin"!')
+        connection.execute('SET NAMES utf8mb4 COLLATE utf8mb4_nopad_bin')
 
     try:
         with context.begin_transaction():

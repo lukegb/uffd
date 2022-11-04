@@ -40,6 +40,17 @@ class AppTestCase(unittest.TestCase):
 			except FileNotFoundError:
 				pass
 			config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/uffd-migration-test-db.sqlite3'
+		if os.environ.get('TEST_WITH_MYSQL'):
+			import MySQLdb
+			conn = MySQLdb.connect(user='root', unix_socket='/var/run/mysqld/mysqld.sock')
+			cur = conn.cursor()
+			try:
+				cur.execute('DROP DATABASE uffd_tests')
+			except:
+				pass
+			cur.execute('CREATE DATABASE uffd_tests CHARACTER SET utf8mb4 COLLATE utf8mb4_nopad_bin')
+			conn.close()
+			config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqldb:///uffd_tests?unix_socket=/var/run/mysqld/mysqld.sock&charset=utf8mb4'
 		self.app = create_app(config)
 		self.setUpApp()
 

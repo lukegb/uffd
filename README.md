@@ -19,7 +19,7 @@ Please note that we refer to Debian packages here and **not** pip packages.
 - python3-flask-babel
 - python3-argon2
 - python3-itsdangerous (also a dependency of python3-flask)
-- python3-mysqldb or python3-pymysql for MySQL/MariaDB support
+- python3-mysqldb or python3-pymysql for MariaDB support
 
 Some of the dependencies (especially fido2) changed their API in recent versions, so make sure to install the versions from Debian Buster or Bullseye.
 For development, you can also use virtualenv with the supplied `requirements.txt`.
@@ -69,9 +69,11 @@ deb https://packages.cccv.de/uffd bullseye main
 Then download [cccv-archive-key.gpg](cccv-archive-key.gpg) and add it to the trusted repository keys in `/etc/apt/trusted.gpg.d/`.
 Afterwards run `apt update && apt install uffd` to install the package.
 
-The Debian package uses uwsgi to run uffd and ships an `uffd-admin` to execute flask commands in the correct context.
+The Debian package uses uwsgi to run uffd and ships an `uffd-admin` script to execute flask commands in the correct context.
 If you upgrade, make sure to run `flask db upgrade` after every update! The Debian package takes care of this by itself using uwsgi pre start hooks.
 For an example uwsgi config, see our [uswgi.ini](uwsgi.ini). You might find our [nginx include file](nginx.include.conf) helpful to setup a web server in front of uwsgi.
+
+Uffd supports SQLite and MariaDB. To use MariaDB, create the database with the options `CHARACTER SET utf8mb4 COLLATE utf8mb4_nopad_bin` and make sure to add the `?charset=utf8mb4` parameter to `SQLALCHEMY_DATABASE_URI`.
 
 ## Python Coding Style Conventions
 

@@ -88,7 +88,7 @@ linter:bullseye:
     reports:
       codequality: codeclimate.json
 
-unittests:buster:
+unittests:buster:sqlite:
   image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
   needs: []
@@ -111,12 +111,36 @@ unittests:buster:
       junit: report.xml
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
 
-unittests:bullseye:
+unittests:buster:mysql:
+  image: registry.git.cccv.de/uffd/docker-images/buster
+  stage: test
+  needs: []
+  script:
+  - service mysql start
+  - TEST_WITH_MYSQL=1 python3 -m pytest --junitxml=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+
+unittests:bullseye:sqlite:
   image: registry.git.cccv.de/uffd/docker-images/bullseye
   stage: test
   needs: []
   script:
   - python3 -m pytest --junitxml=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+
+unittests:bullseye:mysql:
+  image: registry.git.cccv.de/uffd/docker-images/bullseye
+  stage: test
+  needs: []
+  script:
+  - service mariadb start
+  - TEST_WITH_MYSQL=1 python3 -m pytest --junitxml=report.xml
   artifacts:
     when: always
     reports:

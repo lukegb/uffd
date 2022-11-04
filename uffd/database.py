@@ -33,6 +33,20 @@ def enable_sqlite_foreign_key_support(dbapi_connection, connection_record):
 def customize_db_engine(engine):
 	if engine.name == 'sqlite':
 		event.listen(engine, 'connect', enable_sqlite_foreign_key_support)
+	elif engine.name in ('mysql', 'mariadb'):
+		@event.listens_for(engine, 'connect')
+		def receive_connect(dbapi_connection, connection_record): # pylint: disable=unused-argument
+			cursor = dbapi_connection.cursor()
+			cursor.execute('SHOW VARIABLES LIKE "character_set_connection"')
+			character_set_connection = cursor.fetchone()[1]
+			if character_set_connection != 'utf8mb4':
+				raise Exception(f'Unsupported connection charset "{character_set_connection}". Make sure to add "?charset=utf8mb4" to SQLALCHEMY_DATABASE_URI!')
+			cursor.execute('SHOW VARIABLES LIKE "collation_database"')
+			collation_database  = cursor.fetchone()[1]
+			if collation_database != 'utf8mb4_nopad_bin':
+				raise Exception(f'Unsupported database collation "{collation_database}". Create the database with "CHARACTER SET utf8mb4 COLLATE utf8mb4_nopad_bin"!')
+			cursor.execute('SET NAMES utf8mb4 COLLATE utf8mb4_nopad_bin')
+			cursor.close()
 
 class SQLAlchemyJSON(JSONEncoder):
 	def default(self, o):
