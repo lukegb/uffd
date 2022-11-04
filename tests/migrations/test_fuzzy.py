@@ -1,12 +1,8 @@
-#!/usr/bin/python3
 import os
 import sys
-import logging
 import datetime
 
-import flask_migrate
-
-from uffd import create_app, db
+from uffd.database import db
 from uffd.models import (
 	User, UserEmail, Group,
 	RecoveryCodeMethod, TOTPMethod, WebauthnMethod,
@@ -19,37 +15,32 @@ from uffd.models import (
 	PasswordToken,
 )
 
-def run_test(dburi, revision):
-	config = {
-		'TESTING': True,
-		'DEBUG': True,
-		'SQLALCHEMY_DATABASE_URI': dburi,
-		'SECRET_KEY': 'DEBUGKEY',
-		'MAIL_SKIP_SEND': True,
-		'SELF_SIGNUP': True,
-		'ENABLE_INVITE': True,
-		'ENABLE_PASSWORDRESET': True,
-		'LDAP_SERVICE_MOCK': True,
-		'OAUTH2_CLIENTS': {
-				'test': {
-					'service_name': 'test',
-					'client_secret': 'testsecret',
-					'redirect_uris': ['http://localhost:5004/oauthproxy/callback'],
-					'logout_urls': ['http://localhost:5004/oauthproxy/logout']
-				}
-		},
-		'API_CLIENTS_2': {
+from tests.utils import MigrationTestCase
+
+class TestFuzzy(MigrationTestCase):
+	def setUpApp(self):
+		self.app.config['LDAP_SERVICE_MOCK'] = True
+		self.app.config['OAUTH2_CLIENTS'] = {
+			'test': {
+				'service_name': 'test',
+				'client_secret': 'testsecret',
+				'redirect_uris': ['http://localhost:5004/oauthproxy/callback'],
+				'logout_urls': ['http://localhost:5004/oauthproxy/logout']
+			}
+		}
+		self.app.config['API_CLIENTS_2'] = {
 			'test': {
 				'service_name': 'test',
 				'client_secret': 'testsecret',
 				'scopes': ['checkpassword', 'getusers', 'getmails']
 			},
-		},
-	}
-	app = create_app(config)
-	with app.test_request_context():
-		flask_migrate.upgrade(revision='head')
-		# Add a few rows to all tables to make sure that the migrations work with data
+		}
+
+	# Runs every upgrade/downgrade script with data. To do this we first upgrade
+	# to head, create data, then downgrade, upgrade, downgrade for every revision.
+	def test_migrations_fuzzy(self):
+		self.upgrade('head')
+		# Users and groups were created by 878b25c4fae7_ldap_to_db because we set LDAP_SERVICE_MOCK to True
 		user = User.query.first()
 		group = Group.query.first()
 		db.session.add(RecoveryCodeMethod(user=user))
@@ -74,44 +65,8 @@ def run_test(dburi, revision):
 		db.session.add(OAuth2DeviceLoginInitiation(client=oauth2_client, confirmations=[DeviceLoginConfirmation(user=user)]))
 		db.session.add(PasswordToken(user=user))
 		db.session.commit()
-		flask_migrate.downgrade(revision=revision)
-		flask_migrate.upgrade(revision='head')
-
-if __name__ == '__main__':
-	if len(sys.argv) != 2 or sys.argv[1] not in ['sqlite', 'mysql']:
-		print('usage: check_migrations.py {sqlite|mysql}')
-		exit(1)
-	dbtype = sys.argv[1]
-	revs = [s.split('_', 1)[0] for s in os.listdir('uffd/migrations/versions') if '_' in s and s.endswith('.py')] + ['base']
-	logging.getLogger().setLevel(logging.INFO)
-	failures = 0
-	for rev in revs:
-		logging.info(f'Testing "upgrade to head, add objects, downgrade to {rev}, upgrade to head"')
-		# Cleanup/drop database
-		if dbtype == 'sqlite':
-			try:
-				os.remove('/tmp/uffd_check_migrations_db.sqlite3')
-			except FileNotFoundError:
-				pass
-			dburi = 'sqlite:////tmp/uffd_check_migrations_db.sqlite3'
-		elif dbtype == 'mysql':
-			import MySQLdb
-			conn = MySQLdb.connect(user='root', unix_socket='/var/run/mysqld/mysqld.sock')
-			cur = conn.cursor()
-			try:
-				cur.execute('DROP DATABASE uffd_tests')
-			except:
-				pass
-			cur.execute('CREATE DATABASE uffd_tests CHARACTER SET utf8mb4 COLLATE utf8mb4_nopad_bin')
-			conn.close()
-			dburi = 'mysql+mysqldb:///uffd_tests?unix_socket=/var/run/mysqld/mysqld.sock&charset=utf8mb4'
-		try:
-			run_test(dburi, rev)
-		except Exception as ex:
-			failures += 1
-			logging.error('Test failed', exc_info=ex)
-	if failures:
-		logging.info(f'{failures} tests failed')
-		exit(1)
-	logging.info('All tests succeeded')
-	exit(0)
+		revs = [s.split('_', 1)[0] for s in os.listdir('uffd/migrations/versions') if '_' in s and s.endswith('.py')]
+		for rev in revs:
+			self.downgrade('-1')
+			self.upgrade('+1')
+			self.downgrade('-1')

@@ -47,19 +47,6 @@ db_migrations_updated:
   - FLASK_APP=uffd FLASK_ENV=testing flask db upgrade
   - FLASK_APP=uffd FLASK_ENV=testing flask db migrate 2>&1 | grep -q 'No changes in schema detected'
 
-test_db_migrations:sqlite:
-  stage: test
-  needs: []
-  script:
-  - python3 check_migrations.py sqlite
-
-test_db_migrations:mysql:
-  stage: test
-  needs: []
-  script:
-  - service mysql start
-  - python3 check_migrations.py mysql
-
 linter:buster:
   image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
@@ -88,12 +75,16 @@ linter:bullseye:
     reports:
       codequality: codeclimate.json
 
-unittests:buster:sqlite:
+tests:buster:sqlite:
   image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
   needs: []
   script:
-  - python3-coverage run --include 'uffd/*.py' -m pytest --junitxml=report.xml || touch failed
+  - rm -rf pages
+  - mkdir -p pages
+  - cp -r uffd/static pages/static
+  - DUMP_PAGES=pages python3-coverage run --include 'uffd/*.py' -m pytest --junitxml=report.xml || touch failed
+  - sed -i -e 's/href="\/static\//href=".\/static\//g' -e 's/src="\/static\//src=".\/static\//g' pages/*.html || true
   - python3-coverage report -m
   - python3-coverage html
   - python3-coverage xml
@@ -103,6 +94,7 @@ unittests:buster:sqlite:
     paths:
     - htmlcov/index.html
     - htmlcov
+    - pages
     expose_as: 'Coverage Report'
     reports:
       coverage_report:
@@ -111,7 +103,7 @@ unittests:buster:sqlite:
       junit: report.xml
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
 
-unittests:buster:mysql:
+tests:buster:mysql:
   image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
   needs: []
@@ -123,7 +115,7 @@ unittests:buster:mysql:
     reports:
       junit: report.xml
 
-unittests:bullseye:sqlite:
+tests:bullseye:sqlite:
   image: registry.git.cccv.de/uffd/docker-images/bullseye
   stage: test
   needs: []
@@ -134,7 +126,7 @@ unittests:bullseye:sqlite:
     reports:
       junit: report.xml
 
-unittests:bullseye:mysql:
+tests:bullseye:mysql:
   image: registry.git.cccv.de/uffd/docker-images/bullseye
   stage: test
   needs: []
@@ -148,13 +140,9 @@ unittests:bullseye:mysql:
 
 html5validator:
   stage: test
-  needs: []
+  needs:
+  - job: tests:buster:sqlite
   script:
-  - rm -rf pages
-  - mkdir -p pages
-  - cp -r uffd/static pages/static
-  - DUMP_PAGES=pages python3 -m unittest discover tests/views
-  - sed -i -e 's/href="\/static\//href=".\/static\//g' -e 's/src="\/static\//src=".\/static\//g' pages/*.html
   - html5validator --root pages 2>&1 | tee html5validator.log
   artifacts:
     when: on_failure
@@ -176,18 +164,18 @@ trans_de:
 test:package:pip:buster:
   image: registry.git.cccv.de/uffd/docker-images/buster
   stage: test
+  needs:
+  - job: build:pip
   script:
   - pip3 install dist/*.tar.gz
-  dependencies:
-  - build:pip
 
 test:package:pip:bullseye:
   image: registry.git.cccv.de/uffd/docker-images/bullseye
   stage: test
+  needs:
+  - job: build:pip
   script:
   - pip3 install dist/*.tar.gz
-  dependencies:
-  - build:pip
 
 # Since we want to test if the package installs correctly on a fresh Debian
 # install (has correct dependencies, etc.), we don't use uffd/docker-images
@@ -195,6 +183,8 @@ test:package:pip:bullseye:
 test:package:apt:buster:
   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/debian:buster
   stage: test
+  needs:
+  - job: build:apt
   before_script: []
   script:
   - apt -y update
@@ -204,12 +194,12 @@ test:package:apt:buster:
   - service nginx start || ( service nginx status; nginx -t; exit 1; )
   - uffd-admin routes
   - curl -Lv 127.0.0.1:5000
-  dependencies:
-  - build:apt
 
 test:package:apt:bullseye:
   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/debian:bullseye
   stage: test
+  needs:
+  - job: build:apt
   before_script: []
   script:
   - apt -y update
@@ -219,8 +209,6 @@ test:package:apt:bullseye:
   - service nginx start || ( service nginx status; nginx -t; exit 1; )
   - uffd-admin routes
   - curl -Lv 127.0.0.1:5000
-  dependencies:
-  - build:apt
 
 .publish:
   stage: deploy
