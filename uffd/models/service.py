@@ -58,6 +58,19 @@ class ServiceUser(db.Model):
 	def has_access(self):
 		return not self.service.limit_access or self.service.access_group in self.user.groups
 
+	remailer_overwrite_mode = Column(Enum(RemailerMode), default=None, nullable=True)
+
+	@property
+	def effective_remailer_mode(self):
+		if not remailer.configured:
+			return RemailerMode.DISABLED
+		if current_app.config['REMAILER_LIMIT_TO_USERS'] is not None:
+			if self.user.loginname not in current_app.config['REMAILER_LIMIT_TO_USERS']:
+				return RemailerMode.DISABLED
+		if self.remailer_overwrite_mode is not None:
+			return self.remailer_overwrite_mode
+		return self.service.remailer_mode
+
 	service_email_id = Column(Integer(), ForeignKey('user_email.id', onupdate='CASCADE', ondelete='SET NULL'))
 	service_email = relationship('UserEmail')
 
@@ -92,13 +105,9 @@ class ServiceUser(db.Model):
 	# E-Mail address as seen by the service
 	@property
 	def email(self):
-		if current_app.config['REMAILER_LIMIT_TO_USERS'] is None:
-			use_remailer = remailer.configured
-		else:
-			use_remailer = remailer.configured and self.user.loginname in current_app.config['REMAILER_LIMIT_TO_USERS']
-		if use_remailer and self.service.remailer_mode == RemailerMode.ENABLED_V1:
+		if self.effective_remailer_mode == RemailerMode.ENABLED_V1:
 			return remailer.build_v1_address(self.service_id, self.user_id)
-		if use_remailer and self.service.remailer_mode == RemailerMode.ENABLED_V2:
+		if self.effective_remailer_mode == RemailerMode.ENABLED_V2:
 			return remailer.build_v2_address(self.service_id, self.user_id)
 		return self.real_email
 
@@ -106,7 +115,7 @@ class ServiceUser(db.Model):
 	def filter_query_by_email(cls, query, email):
 		'''Filter query of ServiceUser by ServiceUser.email'''
 		# pylint completely fails to understand SQLAlchemy's query functions
-		# pylint: disable=no-member,invalid-name
+		# pylint: disable=no-member,invalid-name,singleton-comparison
 		service_user = cls.get_by_remailer_email(email)
 		if service_user and service_user.email == email:
 			return query.filter(cls.user_id == service_user.user_id, cls.service_id == service_user.service_id)
@@ -121,23 +130,26 @@ class ServiceUser(db.Model):
 		query = query.outerjoin(cls.service_email.of_type(AliasedServiceEmail))
 		query = query.join(cls.service.of_type(AliasedService))
 
-		remailer_enabled_expr = db.and_(
-			AliasedService.remailer_mode != RemailerMode.DISABLED,
-			remailer.configured
+		remailer_enabled = db.case(
+			whens=[
+				(db.not_(remailer.configured), False),
+				(
+					db.not_(AliasedUser.loginname.in_(current_app.config['REMAILER_LIMIT_TO_USERS']))
+						if current_app.config['REMAILER_LIMIT_TO_USERS'] is not None else db.and_(False),
+					False
+				),
+				(cls.remailer_overwrite_mode != None, cls.remailer_overwrite_mode != RemailerMode.DISABLED)
+			],
+			else_=(AliasedService.remailer_mode != RemailerMode.DISABLED)
 		)
-		if current_app.config['REMAILER_LIMIT_TO_USERS'] is not None:
-			remailer_enabled_expr = db.and_(
-				remailer_enabled_expr,
-				AliasedUser.loginname.in_(current_app.config['REMAILER_LIMIT_TO_USERS']),
-			)
-		real_email_matches_expr = db.case(
+		real_email_matches = db.case(
 			whens=[
 				# pylint: disable=singleton-comparison
 				(db.and_(AliasedService.enable_email_preferences, cls.service_email != None), AliasedServiceEmail.address == email),
 			],
 			else_=(AliasedPrimaryEmail.address == email)
 		)
-		return query.filter(db.and_(db.not_(remailer_enabled_expr), real_email_matches_expr))
+		return query.filter(db.and_(db.not_(remailer_enabled), real_email_matches))
 
 @db.event.listens_for(db.Session, 'after_flush') # pylint: disable=no-member
 def create_service_users(session, flush_context): # pylint: disable=unused-argument

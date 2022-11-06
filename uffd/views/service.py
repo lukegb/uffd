@@ -6,7 +6,7 @@ from flask_babel import lazy_gettext
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.database import db
-from uffd.models import Service, get_services, Group, OAuth2Client, OAuth2LogoutURI, APIClient, RemailerMode
+from uffd.models import User, Service, ServiceUser, get_services, Group, OAuth2Client, OAuth2LogoutURI, APIClient, RemailerMode
 
 from .session import login_required
 
@@ -50,8 +50,15 @@ def index():
 @login_required(admin_acl)
 def show(id=None):
 	service = Service() if id is None else Service.query.get_or_404(id)
+	remailer_overwrites = []
+	if id is not None:
+		# pylint: disable=singleton-comparison
+		remailer_overwrites = ServiceUser.query.filter(
+			ServiceUser.service_id == id,
+			ServiceUser.remailer_overwrite_mode != None
+		).all()
 	all_groups = Group.query.all()
-	return render_template('service/show.html', service=service, all_groups=all_groups)
+	return render_template('service/show.html', service=service, all_groups=all_groups, remailer_overwrites=remailer_overwrites)
 
 @bp.route('/service/new', methods=['POST'])
 @bp.route('/service/<int:id>', methods=['POST'])
@@ -73,8 +80,26 @@ def edit_submit(id=None):
 	else:
 		service.limit_access = True
 		service.access_group = Group.query.get(request.form['access-group'])
-	service.remailer_mode = RemailerMode[request.form['remailer-mode']]
 	service.enable_email_preferences = request.form.get('enable_email_preferences') == '1'
+	service.remailer_mode = RemailerMode[request.form['remailer-mode']]
+	remailer_overwrite_mode = RemailerMode[request.form['remailer-overwrite-mode']]
+	remailer_overwrite_user_ids = [
+		User.query.filter_by(loginname=loginname.strip()).one().id
+		for loginname in request.form['remailer-overwrite-users'].split(',') if loginname.strip()
+	]
+	# pylint: disable=singleton-comparison
+	service_users = ServiceUser.query.filter(
+		ServiceUser.service == service,
+		db.or_(
+			ServiceUser.user_id.in_(remailer_overwrite_user_ids),
+			ServiceUser.remailer_overwrite_mode != None,
+		)
+	)
+	for service_user in service_users:
+		if service_user.user_id in remailer_overwrite_user_ids:
+			service_user.remailer_overwrite_mode = remailer_overwrite_mode
+		else:
+			service_user.remailer_overwrite_mode = None
 	db.session.commit()
 	return redirect(url_for('service.show', id=service.id))
 

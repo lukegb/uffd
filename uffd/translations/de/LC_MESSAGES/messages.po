@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-11-01 00:38+0100\n"
+"POT-Creation-Date: 2022-11-06 01:46+0100\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -98,7 +98,7 @@ msgstr "Falsches Passwort"
 msgid "Login name or e-mail address is already in use"
 msgstr "Der Anmeldename oder die E-Mail-Adresse wird bereits verwendet"
 
-#: uffd/models/user.py:46
+#: uffd/models/user.py:119
 #, python-format
 msgid ""
 "At least %(minlen)d and at most %(maxlen)d characters. Only letters, "
@@ -144,8 +144,8 @@ msgstr "Über uffd"
 
 #: uffd/templates/group/list.html:8 uffd/templates/invite/list.html:6
 #: uffd/templates/mail/list.html:8 uffd/templates/role/list.html:8
-#: uffd/templates/service/index.html:8 uffd/templates/service/show.html:75
-#: uffd/templates/service/show.html:103 uffd/templates/user/list.html:8
+#: uffd/templates/service/index.html:8 uffd/templates/service/show.html:99
+#: uffd/templates/service/show.html:127 uffd/templates/user/list.html:8
 msgid "New"
 msgstr "Neu"
 
@@ -162,7 +162,7 @@ msgstr "GID"
 #: uffd/templates/rolemod/list.html:9 uffd/templates/rolemod/show.html:44
 #: uffd/templates/selfservice/self.html:189
 #: uffd/templates/service/index.html:14 uffd/templates/service/show.html:20
-#: uffd/templates/service/show.html:109 uffd/templates/user/show.html:193
+#: uffd/templates/service/show.html:133 uffd/templates/user/show.html:193
 #: uffd/templates/user/show.html:225
 msgid "Name"
 msgstr "Name"
@@ -238,7 +238,7 @@ msgid "Created by"
 msgstr "Erstellt durch"
 
 #: uffd/templates/invite/list.html:14 uffd/templates/service/api.html:34
-#: uffd/templates/service/show.html:110
+#: uffd/templates/service/show.html:134
 msgid "Permissions"
 msgstr "Berechtigungen"
 
@@ -1239,7 +1239,7 @@ msgstr "Diese Option hat keine Auswirkung: Remailer ist nicht konfiguriert"
 msgid "Access uffd metrics"
 msgstr "Zugriff auf uffd-Metriken"
 
-#: uffd/templates/service/oauth2.html:20 uffd/templates/service/show.html:81
+#: uffd/templates/service/oauth2.html:20 uffd/templates/service/show.html:105
 msgid "Client ID"
 msgstr "Client-ID"
 
@@ -1312,15 +1312,15 @@ msgstr "Mitglieder der Gruppe \"%(group_name)s\" haben Zugriff"
 msgid "Hide e-mail addresses with remailer"
 msgstr "E-Mail-Adressen mit Remailer verstecken"
 
-#: uffd/templates/service/show.html:43
+#: uffd/templates/service/show.html:43 uffd/templates/service/show.html:66
 msgid "Remailer disabled"
 msgstr "Remailer deaktiviert"
 
-#: uffd/templates/service/show.html:46
+#: uffd/templates/service/show.html:46 uffd/templates/service/show.html:69
 msgid "Remailer enabled"
 msgstr "Remailer aktiviert"
 
-#: uffd/templates/service/show.html:49
+#: uffd/templates/service/show.html:49 uffd/templates/service/show.html:72
 msgid "Remailer enabled (deprecated, case-sensitive format)"
 msgstr ""
 "Remailer aktiviert (veraltetes, Groß-/Kleinschreibung-unterscheidendes "
@@ -1337,13 +1337,29 @@ msgstr ""
 "-Mail-Adressen aller Nutzer aus und kann zu massenhaftem Versand von "
 "Benachrichtigungs-E-Mails führen."
 
-#: uffd/templates/service/show.html:60
+#: uffd/templates/service/show.html:59
+msgid "Overwrite remailer setting for specific users"
+msgstr "Überschreibe Remailer-Einstellung für ausgewählte Nutzer"
+
+#: uffd/templates/service/show.html:62
+msgid "Login names"
+msgstr "Anmeldenamen"
+
+#: uffd/templates/service/show.html:77
+msgid ""
+"Useful for testing remailer before enabling it for all users. Specify "
+"users as a comma-seperated list of login names."
+msgstr ""
+"Hilfreich zum Testen des Remailers vor dem Aktivieren für alle Nutzer. Um"
+" Nutzer auszuwählen, liste ihre Anmeldenamen mit Komma getrennt auf."
+
+#: uffd/templates/service/show.html:84
 msgid "Allow users to select a different e-mail address for this service"
 msgstr ""
 "Ermögliche Nutzern für diesen Dienst eine andere E-Mail-Adresse "
 "auszuwählen"
 
-#: uffd/templates/service/show.html:62
+#: uffd/templates/service/show.html:86
 msgid "If disabled, the service always uses the primary e-mail address."
 msgstr "Wenn deaktiviert, wird immer die primäre E-Mail-Adresse verwendet."
 

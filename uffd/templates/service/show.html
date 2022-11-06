@@ -21,7 +21,7 @@
 			<input type="text" class="form-control" id="service-name" name="name" value="{{ service.name or '' }}" required>
 		</div>
 		<div class="form-group col">
-			<label for="moderator-group">{{ _('Access Restriction') }}</label>
+			<label for="access-group">{{ _('Access Restriction') }}</label>
 			<select class="form-control" id="access-group" name="access-group">
 				<option value="" class="text-muted">{{ _('No user has access') }}</option>
 				<option value="all" class="text-muted" {{ 'selected' if not service.limit_access }}>{{ _('All users have access (legacy)') }}</option>
@@ -51,6 +51,30 @@
 			</select>
 			<small class="form-text text-muted">
 				{{ _('Some services notify users about changes to their e-mail address. Modifying this setting immediatly affects the e-mail addresses of all users and can cause masses of notification e-mails.') }}
+			</small>
+		</div>
+
+		<div class="form-group col">
+			<p class="mb-2">
+				{{ _('Overwrite remailer setting for specific users') }}
+			</p>
+			<div class="input-group" id="remailer-mode-overwrite">
+				<input class="form-control" name="remailer-overwrite-users" placeholder="{{ _('Login names') }}" value="{{ remailer_overwrites|map(attribute='user')|map(attribute='loginname')|sort|join(', ') }}">
+				<select class="form-control" name="remailer-overwrite-mode">
+					{% set remailer_overwrite_mode = remailer_overwrites|map(attribute='remailer_overwrite_mode')|first or RemailerMode.ENABLED_V2 %}
+					<option value="{{ RemailerMode.DISABLED.name }}" {{ 'selected' if remailer_overwrite_mode == RemailerMode.DISABLED }}>
+						{{ _('Remailer disabled') }}
+					</option>
+					<option value="{{ RemailerMode.ENABLED_V2.name }}" {{ 'selected' if remailer_overwrite_mode == RemailerMode.ENABLED_V2 }}>
+						{{ _('Remailer enabled') }}
+					</option>
+					<option value="{{ RemailerMode.ENABLED_V1.name }}" {{ 'selected' if remailer_overwrite_mode == RemailerMode.ENABLED_V1 }}>
+						{{ _('Remailer enabled (deprecated, case-sensitive format)') }}
+					</option>
+				</select>
+			</div>
+			<small class="form-text text-muted">
+				{{ _('Useful for testing remailer before enabling it for all users. Specify users as a comma-seperated list of login names.') }}
 			</small>
 		</div>
 
