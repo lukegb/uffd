@@ -74,12 +74,14 @@
 
 <hr>
 
+{% set service_users_with_email_prefs = user.service_users|selectattr('has_email_preferences')|list %}
+{% set collapse_email_prefs = service_users_with_email_prefs|length > 2 %}
 <div class="row">
 	<div class="col-12 col-md-5">
 		<h5>{{_("E-Mail Preferences")}}</h5>
 		<p>
 			{{ _("Choose your primary e-mail address and the address password recovery e-mails will be sent to.") }}
-			{% if user.service_users|map(attribute='service')|selectattr('enable_email_preferences')|list|length %}
+			{% if service_users_with_email_prefs %}
 			{{ _("You can also select different addresses for different services.") }}
 			{% endif %}
 		</p>
@@ -104,8 +106,7 @@
 					{% endfor %}
 				</select>
 			</div>
-			{% set collapse_email_prefs = user.service_users|map(attribute='service')|selectattr('enable_email_preferences')|list|length > 2 %}
-			{% for service_user in user.service_users if service_user.service.enable_email_preferences %}
+			{% for service_user in service_users_with_email_prefs %}
 			{% if collapse_email_prefs and loop.index == 2 %}
 			<div id="collapsed-email-prefs">
 			{% endif %}

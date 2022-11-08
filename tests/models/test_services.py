@@ -10,7 +10,7 @@ from tests.utils import UffdTestCase
 class TestServiceUser(UffdTestCase):
 	def setUp(self):
 		super().setUp()
-		db.session.add_all([Service(name='service1'), Service(name='service2', remailer_mode=RemailerMode.ENABLED_V1)])
+		db.session.add_all([Service(name='service1', limit_access=False), Service(name='service2', remailer_mode=RemailerMode.ENABLED_V1, limit_access=False)])
 		db.session.commit()
 
 	def test_auto_create(self):
@@ -78,6 +78,12 @@ class TestServiceUser(UffdTestCase):
 		service_user.service_email = UserEmail(user=user, address='foo@bar', verified=True)
 		self.assertEqual(service_user.real_email, user.primary_email.address)
 		service.enable_email_preferences = True
+		self.assertEqual(service_user.real_email, service_user.service_email.address)
+		service.limit_access = True
+		self.assertEqual(service_user.real_email, user.primary_email.address)
+		service.access_group = self.get_admin_group()
+		self.assertEqual(service_user.real_email, user.primary_email.address)
+		service.access_group = self.get_users_group()
 		self.assertEqual(service_user.real_email, service_user.service_email.address)
 
 	def test_get_by_remailer_email(self):
@@ -158,6 +164,8 @@ class TestServiceUser(UffdTestCase):
 			[RemailerMode.DISABLED, RemailerMode.ENABLED_V1, RemailerMode.ENABLED_V2],
 			# service.enable_email_preferences
 			[True, False],
+			# service.limit_access, service.access_group
+			[(False, None), (True, None), (True, self.get_admin_group()), (True, self.get_users_group())],
 			# service_user.service_email
 			[None, email1, email2],
 			# service_user.remailer_overwrite_mode
@@ -169,8 +177,9 @@ class TestServiceUser(UffdTestCase):
 			self.app.config['REMAILER_LIMIT_TO_USERS'] = options[2]
 			service.remailer_mode = options[3]
 			service.enable_email_preferences = options[4]
-			service_user.service_email = options[5]
-			service_user.remailer_overwrite_mode = options[6]
+			service.limit_access, service.access_group = options[5]
+			service_user.service_email = options[6]
+			service_user.remailer_overwrite_mode = options[7]
 			a = {result for result in all_service_users if result.email == value}
 			b = set(ServiceUser.filter_query_by_email(ServiceUser.query, value).all())
 			if a != b:

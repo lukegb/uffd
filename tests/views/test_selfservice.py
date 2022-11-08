@@ -200,7 +200,7 @@ class TestSelfservice(UffdTestCase):
 		user_id = self.get_user().id
 		email = UserEmail(user=self.get_user(), address='new@example.com', verified=True)
 		db.session.add(email)
-		service = Service(name='service', enable_email_preferences=True)
+		service = Service(name='service', enable_email_preferences=True, limit_access=False)
 		db.session.add(service)
 		db.session.commit()
 		email_id = email.id
@@ -235,7 +235,7 @@ class TestSelfservice(UffdTestCase):
 		user_id = self.get_user().id
 		email = UserEmail(user=self.get_user(), address='new@example.com')
 		db.session.add(email)
-		service = Service(name='service', enable_email_preferences=True)
+		service = Service(name='service', enable_email_preferences=True, limit_access=False)
 		db.session.add(service)
 		db.session.commit()
 		email_id = email.id
@@ -262,7 +262,7 @@ class TestSelfservice(UffdTestCase):
 		user_id = self.get_user().id
 		email = UserEmail(user=self.get_user(), address='new@example.com', verified=True)
 		db.session.add(email)
-		service = Service(name='service', enable_email_preferences=True)
+		service = Service(name='service', enable_email_preferences=True, limit_access=False)
 		db.session.add(service)
 		db.session.commit()
 		with self.assertRaises(Exception):

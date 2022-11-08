@@ -220,8 +220,8 @@ class TestUserViews(UffdTestCase):
 	def test_update_email(self):
 		user = self.get_user()
 		email = UserEmail(user=user, address='foo@example.com')
-		service1 = Service(name='service1', enable_email_preferences=True)
-		service2 = Service(name='service2', enable_email_preferences=True)
+		service1 = Service(name='service1', enable_email_preferences=True, limit_access=False)
+		service2 = Service(name='service2', enable_email_preferences=True, limit_access=False)
 		db.session.add_all([service1, service2])
 		db.session.commit()
 		email1_id = user.primary_email.id
@@ -276,8 +276,8 @@ class TestUserViews(UffdTestCase):
 		db.session.commit()
 		user = self.get_user()
 		email = UserEmail(user=user, address='foo@example.com')
-		service1 = Service(name='service1', enable_email_preferences=True)
-		service2 = Service(name='service2', enable_email_preferences=True)
+		service1 = Service(name='service1', enable_email_preferences=True, limit_access=False)
+		service2 = Service(name='service2', enable_email_preferences=True, limit_access=False)
 		db.session.add_all([service1, service2])
 		db.session.commit()
 		email1_id = user.primary_email.id

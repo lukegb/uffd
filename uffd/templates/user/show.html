@@ -146,7 +146,7 @@
 					{% endfor %}
 				</select>
 			</div>
-			{% for service_user in user.service_users if service_user.service.enable_email_preferences %}
+			{% for service_user in user.service_users if service_user.has_email_preferences %}
 			<div class="form-group col">
 				<label>{{ _("Address for %(name)s", name=service_user.service.name) }}</label>
 				<select name="service_{{ service_user.service.id }}_email" class="form-control">

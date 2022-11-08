@@ -187,7 +187,7 @@ def update_email_preferences():
 	else:
 		request.user.recovery_email = verified_emails.filter_by(id=request.form['recovery_email']).one()
 	for service_user in request.user.service_users:
-		if not service_user.service.enable_email_preferences:
+		if not service_user.has_email_preferences:
 			continue
 		value = request.form.get(f'service_{service_user.service.id}_email', 'primary')
 		if value == 'primary':

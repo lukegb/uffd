@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship, validates
 from uffd.database import db
 from uffd.remailer import remailer
 from uffd.tasks import cleanup_task
-from .user import User, UserEmail
+from .user import User, UserEmail, user_groups
 
 class RemailerMode(enum.Enum):
 	DISABLED = 0
@@ -58,6 +58,10 @@ class ServiceUser(db.Model):
 	def has_access(self):
 		return not self.service.limit_access or self.service.access_group in self.user.groups
 
+	@property
+	def has_email_preferences(self):
+		return self.has_access and self.service.enable_email_preferences
+
 	remailer_overwrite_mode = Column(Enum(RemailerMode), default=None, nullable=True)
 
 	@property
@@ -88,7 +92,7 @@ class ServiceUser(db.Model):
 	# Actual e-mail address that mails from the service are sent to
 	@property
 	def real_email(self):
-		if self.service.enable_email_preferences and self.service_email:
+		if self.has_email_preferences and self.service_email:
 			return self.service_email.address
 		return self.user.primary_email.address
 
@@ -124,6 +128,7 @@ class ServiceUser(db.Model):
 		AliasedPrimaryEmail = db.aliased(UserEmail)
 		AliasedServiceEmail = db.aliased(UserEmail)
 		AliasedService = db.aliased(Service)
+		aliased_user_groups = db.aliased(user_groups)
 
 		query = query.join(cls.user.of_type(AliasedUser))
 		query = query.join(AliasedUser.primary_email.of_type(AliasedPrimaryEmail))
@@ -142,10 +147,21 @@ class ServiceUser(db.Model):
 			],
 			else_=(AliasedService.remailer_mode != RemailerMode.DISABLED)
 		)
+		has_access = db.or_(
+			db.not_(AliasedService.limit_access),
+			db.exists().where(db.and_(
+				aliased_user_groups.c.user_id == AliasedUser.id,
+				aliased_user_groups.c.group_id == AliasedService.access_group_id,
+			))
+		)
+		has_email_preferences = db.and_(
+			has_access,
+			AliasedService.enable_email_preferences,
+		)
 		real_email_matches = db.case(
 			whens=[
 				# pylint: disable=singleton-comparison
-				(db.and_(AliasedService.enable_email_preferences, cls.service_email != None), AliasedServiceEmail.address == email),
+				(db.and_(has_email_preferences, cls.service_email != None), AliasedServiceEmail.address == email),
 			],
 			else_=(AliasedPrimaryEmail.address == email)
 		)

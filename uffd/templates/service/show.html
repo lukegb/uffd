@@ -32,6 +32,16 @@
 		</div>
 
 		<div class="form-group col">
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" id="service-enable-email-preferences" name="enable_email_preferences" value="1" aria-label="enabled" {{ 'checked' if service.enable_email_preferences }}>
+				<label class="form-check-label" for="service-enable-email-preferences">{{ _('Allow users with access to select a different e-mail address for this service') }}</label>
+			<small class="form-text text-muted">
+				{{ _('If disabled, the service always uses the primary e-mail address.') }}
+			</small>
+			</div>
+		</div>
+
+		<div class="form-group col">
 			<label for="remailer-mode">
 				{{ _('Hide e-mail addresses with remailer') }}
 				{% if not remailer.configured %}
@@ -76,16 +86,6 @@
 			<small class="form-text text-muted">
 				{{ _('Useful for testing remailer before enabling it for all users. Specify users as a comma-seperated list of login names.') }}
 			</small>
-		</div>
-
-		<div class="form-group col">
-			<div class="form-check">
-				<input class="form-check-input" type="checkbox" id="service-enable-email-preferences" name="enable_email_preferences" value="1" aria-label="enabled" {{ 'checked' if service.enable_email_preferences }}>
-				<label class="form-check-label" for="service-enable-email-preferences">{{ _('Allow users to select a different e-mail address for this service') }}</label>
-			<small class="form-text text-muted">
-				{{ _('If disabled, the service always uses the primary e-mail address.') }}
-			</small>
-			</div>
 		</div>
 
 	</form>
