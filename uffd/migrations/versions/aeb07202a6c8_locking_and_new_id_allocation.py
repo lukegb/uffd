@@ -60,17 +60,21 @@ def upgrade():
 		sa.select([sa.func.max(user_table.c.unix_uid)])
 		.where(user_table.c.unix_uid <= current_app.config['USER_MAX_UID'])
 	).scalar() or 0
+	insert_data = []
 	if max_user_uid:
 		for uid in range(current_app.config['USER_MIN_UID'], max_user_uid + 1):
-			conn.execute(sa.insert(uid_allocation_table).values(id=uid))
+			insert_data.append({'id': uid})
+	op.bulk_insert(uid_allocation_table, insert_data)
 	max_service_uid = conn.execute(
 		sa.select([sa.func.max(user_table.c.unix_uid)])
 		.where(user_table.c.unix_uid <= current_app.config['USER_SERVICE_MAX_UID'])
 	).scalar() or 0
+	insert_data = []
 	if max_service_uid:
 		for uid in range(current_app.config['USER_SERVICE_MIN_UID'], max_service_uid + 1):
 			if uid < current_app.config['USER_MIN_UID'] or uid > max_user_uid:
-				conn.execute(sa.insert(uid_allocation_table).values(id=uid))
+				insert_data.append({'id': uid})
+	op.bulk_insert(uid_allocation_table, insert_data)
 	# Also block all UIDs outside of both ranges that are in use
 	# (just to be sure, there should not be any)
 	conn.execute(sa.insert(uid_allocation_table).from_select(['id'],
@@ -105,9 +109,11 @@ def upgrade():
 		sa.select([sa.func.max(group_table.c.unix_gid)])
 		.where(group_table.c.unix_gid <= current_app.config['GROUP_MAX_GID'])
 	).scalar() or 0
+	insert_data = []
 	if max_group_gid:
 		for gid in range(current_app.config['GROUP_MIN_GID'], max_group_gid + 1):
-			conn.execute(sa.insert(gid_allocation_table).values(id=gid))
+			insert_data.append({'id': gid})
+	op.bulk_insert(gid_allocation_table, insert_data)
 	# Also block out-of-range GIDs
 	conn.execute(sa.insert(gid_allocation_table).from_select(['id'],
 		sa.select([group_table.c.unix_gid]).where(
