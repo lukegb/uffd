@@ -168,6 +168,7 @@ class User(db.Model):
 	_password = Column('pwhash', Text(), nullable=True)
 	password = PasswordHashAttribute('_password', LowEntropyPasswordHash)
 	is_service_user = Column(Boolean(), default=False, nullable=False)
+	is_deactivated = Column(Boolean(), default=False, nullable=False)
 	groups = relationship('Group', secondary='user_groups', back_populates='members')
 	roles = relationship('Role', secondary='role_members', back_populates='members')
 

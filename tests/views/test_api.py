@@ -109,6 +109,13 @@ class TestAPICheckPassword(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.json, None)
 
+	def test_deactivated(self):
+		self.get_user().is_deactivated = True
+		db.session.commit()
+		r = self.client.post(path=url_for('api.checkpassword'), data={'loginname': 'testuser', 'password': 'userpassword'}, headers=[basic_auth('test', 'test')])
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(r.json, None)
+
 class TestAPIGetusers(UffdTestCase):
 	def setUpDB(self):
 		db.session.add(APIClient(service=Service(name='test'), auth_username='test', auth_password='test', perm_users=True))
@@ -201,6 +208,23 @@ class TestAPIGetusers(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.json, [])
 
+	def test_deactivated(self):
+		self.get_user().is_deactivated = True
+		db.session.commit()
+		r = self.client.get(path=url_for('api.getusers'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'displayname': 'Test User', 'email': 'test@example.com', 'id': 10000, 'loginname': 'testuser', 'groups': ['uffd_access', 'users']},
+			{'displayname': 'Test Admin', 'email': 'admin@example.com', 'id': 10001, 'loginname': 'testadmin', 'groups': ['uffd_access', 'uffd_admin', 'users']}
+		])
+		Service.query.filter_by(name='test').first().hide_deactivated_users = True
+		db.session.commit()
+		r = self.client.get(path=url_for('api.getusers'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'displayname': 'Test Admin', 'email': 'admin@example.com', 'id': 10001, 'loginname': 'testadmin', 'groups': ['uffd_access', 'uffd_admin', 'users']}
+		])
+
 class TestAPIGetgroups(UffdTestCase):
 	def setUpDB(self):
 		db.session.add(APIClient(service=Service(name='test'), auth_username='test', auth_password='test', perm_users=True))
@@ -217,6 +241,26 @@ class TestAPIGetgroups(UffdTestCase):
 		self.assertEqual(self.fix_result(r.json), [
 			{'id': 20001, 'members': ['testadmin', 'testuser'], 'name': 'users'},
 			{'id': 20002, 'members': ['testadmin', 'testuser'], 'name': 'uffd_access'},
+			{'id': 20003, 'members': ['testadmin'], 'name': 'uffd_admin'}
+		])
+
+	def test_all_deactivated_members(self):
+		self.get_user().is_deactivated = True
+		db.session.commit()
+		r = self.client.get(path=url_for('api.getgroups'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'id': 20001, 'members': ['testadmin', 'testuser'], 'name': 'users'},
+			{'id': 20002, 'members': ['testadmin', 'testuser'], 'name': 'uffd_access'},
+			{'id': 20003, 'members': ['testadmin'], 'name': 'uffd_admin'}
+		])
+		Service.query.filter_by(name='test').first().hide_deactivated_users = True
+		db.session.commit()
+		r = self.client.get(path=url_for('api.getgroups'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'id': 20001, 'members': ['testadmin'], 'name': 'users'},
+			{'id': 20002, 'members': ['testadmin'], 'name': 'uffd_access'},
 			{'id': 20003, 'members': ['testadmin'], 'name': 'uffd_admin'}
 		])
 
@@ -256,6 +300,21 @@ class TestAPIGetgroups(UffdTestCase):
 		r = self.client.get(path=url_for('api.getgroups', member='notauser'), headers=[basic_auth('test', 'test')], follow_redirects=True)
 		self.assertEqual(r.status_code, 200)
 		self.assertEqual(r.json, [])
+
+	def test_member_deactivated(self):
+		self.get_user().is_deactivated = True
+		db.session.commit()
+		r = self.client.get(path=url_for('api.getgroups', member='testuser'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [
+			{'id': 20001, 'members': ['testadmin', 'testuser'], 'name': 'users'},
+			{'id': 20002, 'members': ['testadmin', 'testuser'], 'name': 'uffd_access'},
+		])
+		Service.query.filter_by(name='test').first().hide_deactivated_users = True
+		db.session.commit()
+		r = self.client.get(path=url_for('api.getgroups', member='testuser'), headers=[basic_auth('test', 'test')], follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(self.fix_result(r.json), [])
 
 class TestAPIRemailerResolve(UffdTestCase):
 	def setUpDB(self):

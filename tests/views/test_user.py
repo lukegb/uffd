@@ -353,11 +353,30 @@ class TestUserViews(UffdTestCase):
 		dump('user_show', r)
 		self.assertEqual(r.status_code, 200)
 
+	def test_show_self(self):
+		r = self.client.get(path=url_for('user.show', id=self.get_admin().id), follow_redirects=True)
+		dump('user_show_self', r)
+		self.assertEqual(r.status_code, 200)
+
 	def test_delete(self):
 		r = self.client.get(path=url_for('user.delete', id=self.get_user().id), follow_redirects=True)
 		dump('user_delete', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNone(self.get_user())
+
+	def test_deactivate(self):
+		r = self.client.get(path=url_for('user.deactivate', id=self.get_user().id), follow_redirects=True)
+		dump('user_deactivate', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertTrue(self.get_user().is_deactivated)
+
+	def test_activate(self):
+		self.get_user().is_deactivated = True
+		db.session.commit()
+		r = self.client.get(path=url_for('user.activate', id=self.get_user().id), follow_redirects=True)
+		dump('user_activate', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertFalse(self.get_user().is_deactivated)
 
 	def test_csvimport(self):
 		role1 = Role(name='role1')

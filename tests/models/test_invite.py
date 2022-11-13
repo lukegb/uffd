@@ -38,6 +38,9 @@ class TestInviteModel(UffdTestCase):
 		invite.creator = self.get_admin()
 		self.assertTrue(invite.permitted)
 		self.assertTrue(invite.active)
+		invite.creator.is_deactivated = True
+		self.assertFalse(invite.permitted)
+		self.assertFalse(invite.active)
 		invite.creator = self.get_user()
 		self.assertFalse(invite.permitted)
 		self.assertFalse(invite.active)

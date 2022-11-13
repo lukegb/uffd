@@ -3,8 +3,7 @@ import datetime
 from flask import url_for, request
 
 from uffd.database import db
-from uffd.models import Signup, Role, RoleGroup, FeatureFlag
-from uffd.views.session import login_get_user
+from uffd.models import User, Signup, Role, RoleGroup, FeatureFlag
 
 from tests.utils import dump, UffdTestCase, db_flush
 
@@ -161,13 +160,13 @@ class TestSignupViews(UffdTestCase):
 		signup = Signup(loginname='newuser', displayname='New User', mail='new@example.com', password='notsecret')
 		signup = refetch_signup(signup)
 		self.assertFalse(signup.completed)
-		self.assertIsNone(login_get_user('newuser', 'notsecret'))
+		self.assertIsNone(User.query.filter_by(loginname='newuser').one_or_none())
 		r = self.client.get(path=url_for('signup.signup_confirm', signup_id=signup.id, token=signup.token), follow_redirects=True)
 		dump('test_signup_confirm', r)
 		self.assertEqual(r.status_code, 200)
 		signup = refetch_signup(signup)
 		self.assertFalse(signup.completed)
-		self.assertIsNone(login_get_user('newuser', 'notsecret'))
+		self.assertIsNone(User.query.filter_by(loginname='newuser').one_or_none())
 		r = self.client.post(path=url_for('signup.signup_confirm_submit', signup_id=signup.id, token=signup.token), follow_redirects=True, data={'password': 'notsecret'})
 		dump('test_signup_confirm_submit', r)
 		self.assertEqual(r.status_code, 200)
@@ -176,7 +175,7 @@ class TestSignupViews(UffdTestCase):
 		self.assertEqual(signup.user.loginname, 'newuser')
 		self.assertEqual(signup.user.displayname, 'New User')
 		self.assertEqual(signup.user.primary_email.address, 'new@example.com')
-		self.assertIsNotNone(login_get_user('newuser', 'notsecret'))
+		self.assertTrue(User.query.filter_by(loginname='newuser').one_or_none().password.verify('notsecret'))
 
 	def test_confirm_loggedin(self):
 		baserole = Role(name='baserole', is_default=True)

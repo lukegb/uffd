@@ -38,7 +38,11 @@ def generate_group_dict(group):
 	return {
 		'id': group.unix_gid,
 		'name': group.name,
-		'members': [user.loginname for user in group.members]
+		'members': [
+			user.loginname
+			for user in group.members
+			if not user.is_deactivated or not request.api_client.service.hide_deactivated_users
+		]
 	}
 
 @bp.route('/getgroups', methods=['GET', 'POST'])
@@ -57,6 +61,8 @@ def getgroups():
 		query = query.filter(Group.name == values[0])
 	elif key == 'member' and len(values) == 1:
 		query = query.join(Group.members).filter(User.loginname == values[0])
+		if request.api_client.service.hide_deactivated_users:
+			query = query.filter(db.not_(User.is_deactivated))
 	else:
 		abort(400)
 	# Single-result queries perform better without eager loading
@@ -81,6 +87,8 @@ def getusers():
 	key = (list(request.values.keys()) or [None])[0]
 	values = request.values.getlist(key)
 	query = ServiceUser.query.filter_by(service=request.api_client.service).join(ServiceUser.user)
+	if request.api_client.service.hide_deactivated_users:
+		query = query.filter(db.not_(User.is_deactivated))
 	if key is None:
 		pass
 	elif key == 'id' and len(values) == 1:
@@ -116,6 +124,8 @@ def checkpassword():
 	).one_or_none()
 	if service_user is None or not service_user.user.password.verify(password):
 		login_ratelimit.log(username)
+		return jsonify(None)
+	if service_user.user.is_deactivated:
 		return jsonify(None)
 	if service_user.user.password.needs_rehash:
 		service_user.user.password = password

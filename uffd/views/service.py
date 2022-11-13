@@ -80,6 +80,7 @@ def edit_submit(id=None):
 	else:
 		service.limit_access = True
 		service.access_group = Group.query.get(request.form['access-group'])
+	service.hide_deactivated_users = request.form.get('hide_deactivated_users') == '1'
 	service.enable_email_preferences = request.form.get('enable_email_preferences') == '1'
 	service.remailer_mode = RemailerMode[request.form['remailer-mode']]
 	remailer_overwrite_mode = RemailerMode[request.form['remailer-overwrite-mode']]

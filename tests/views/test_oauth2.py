@@ -139,6 +139,23 @@ class TestViews(UffdTestCase):
 		r = self.client.post(path=url_for('session.devicelogin_submit', ref=ref), data={'confirmation-code': code}, follow_redirects=False)
 		self.assert_authorization(r)
 
+	def test_authorization_devicelogin_auth_deactivated(self):
+		with self.client.session_transaction() as _session:
+			initiation = OAuth2DeviceLoginInitiation(client=OAuth2Client.query.filter_by(client_id='test').one())
+			db.session.add(initiation)
+			confirmation = DeviceLoginConfirmation(initiation=initiation, user=self.get_user())
+			db.session.add(confirmation)
+			db.session.commit()
+			_session['devicelogin_id'] = initiation.id
+			_session['devicelogin_secret'] = initiation.secret
+			code = confirmation.code
+		self.client.get(path='/')
+		self.get_user().is_deactivated = True
+		db.session.commit()
+		ref = url_for('oauth2.authorize', response_type='code', client_id='test', state='teststate', redirect_uri='http://localhost:5009/callback')
+		r = self.client.post(path=url_for('session.devicelogin_submit', ref=ref), data={'confirmation-code': code}, follow_redirects=True)
+		self.assertIn(b'Device login failed', r.data)
+
 	def get_auth_code(self):
 		self.login_as('user')
 		r = self.client.get(path=url_for('oauth2.authorize', response_type='code', client_id='test', state='teststate', redirect_uri='http://localhost:5009/callback', scope='profile'), follow_redirects=False)
@@ -195,7 +212,25 @@ class TestViews(UffdTestCase):
 		self.assertEqual(r.content_type, 'application/json')
 		self.assertEqual(r.json['error'], 'unsupported_grant_type')
 
+	def test_token_deactivated_user(self):
+		code = self.get_auth_code()
+		self.get_user().is_deactivated = True
+		db.session.commit()
+		r = self.client.post(path=url_for('oauth2.token'),
+			data={'grant_type': 'authorization_code', 'code': code, 'redirect_uri': 'http://localhost:5009/callback', 'client_id': 'test', 'client_secret': 'testsecret'}, follow_redirects=True)
+		self.assertIn(r.status_code, [400, 401]) # oauthlib behaviour changed between v2.1.0 and v3.1.0
+		self.assertEqual(r.content_type, 'application/json')
+
 	def test_userinfo_invalid_access_token(self):
 		token = 'invalidtoken'
+		r = self.client.get(path=url_for('oauth2.userinfo'), headers=[('Authorization', 'Bearer %s'%token)], follow_redirects=True)
+		self.assertEqual(r.status_code, 401)
+
+	def test_userinfo_invalid_access_token(self):
+		r = self.client.post(path=url_for('oauth2.token'),
+			data={'grant_type': 'authorization_code', 'code': self.get_auth_code(), 'redirect_uri': 'http://localhost:5009/callback', 'client_id': 'test', 'client_secret': 'testsecret'}, follow_redirects=True)
+		token = r.json['access_token']
+		self.get_user().is_deactivated = True
+		db.session.commit()
 		r = self.client.get(path=url_for('oauth2.userinfo'), headers=[('Authorization', 'Bearer %s'%token)], follow_redirects=True)
 		self.assertEqual(r.status_code, 401)

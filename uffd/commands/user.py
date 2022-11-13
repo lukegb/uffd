@@ -12,7 +12,7 @@ user_command = AppGroup('user', help='Manage users')
 
 def update_attrs(user, mail=None, displayname=None, password=None,
                  prompt_password=False, clear_roles=False,
-                 add_role=tuple(), remove_role=tuple()):
+                 add_role=tuple(), remove_role=tuple(), deactivate=None):
 	if password is None and prompt_password:
 		password = click.prompt('Password', hide_input=True, confirmation_prompt='Confirm password')
 	if mail is not None and not user.set_primary_email_address(mail):
@@ -21,6 +21,8 @@ def update_attrs(user, mail=None, displayname=None, password=None,
 		raise click.ClickException('Invalid displayname')
 	if password is not None and not user.set_password(password):
 		raise click.ClickException('Invalid password')
+	if deactivate is not None:
+		user.is_deactivated = deactivate
 	if clear_roles:
 		user.roles.clear()
 	for role_name in add_role:
@@ -49,6 +51,7 @@ def show(loginname):
 		if user is None:
 			raise click.ClickException(f'User {loginname} not found')
 		click.echo(f'Loginname: {user.loginname}')
+		click.echo(f'Deactivated: {user.is_deactivated}')
 		click.echo(f'Displayname: {user.displayname}')
 		click.echo(f'Mail: {user.primary_email.address}')
 		click.echo(f'Service User: {user.is_service_user}')
@@ -65,7 +68,8 @@ def show(loginname):
 @click.option('--password', help='Password for SSO login. Login disabled if unset.')
 @click.option('--prompt-password', is_flag=True, flag_value=True, default=False, help='Read password interactively from terminal.')
 @click.option('--add-role', multiple=True, help='Add role to user. Repeat to add multiple roles.', metavar='ROLE_NAME')
-def create(loginname, mail, displayname, service, password, prompt_password, add_role):
+@click.option('--deactivate', is_flag=True, flag_value=True, default=None, help='Deactivate account.')
+def create(loginname, mail, displayname, service, password, prompt_password, add_role, deactivate):
 	with current_app.test_request_context():
 		if displayname is None:
 			displayname = loginname
@@ -74,7 +78,7 @@ def create(loginname, mail, displayname, service, password, prompt_password, add
 			raise click.ClickException('Invalid loginname')
 		try:
 			db.session.add(user)
-			update_attrs(user, mail, displayname, password, prompt_password, add_role=add_role)
+			update_attrs(user, mail, displayname, password, prompt_password, add_role=add_role, deactivate=deactivate)
 			db.session.commit()
 		except IntegrityError:
 			# pylint: disable=raise-missing-from
@@ -89,13 +93,14 @@ def create(loginname, mail, displayname, service, password, prompt_password, add
 @click.option('--clear-roles', is_flag=True, flag_value=True, default=False, help='Remove all roles from user. Executed before --add-role.')
 @click.option('--add-role', multiple=True, help='Add role to user. Repeat to add multiple roles.')
 @click.option('--remove-role', multiple=True, help='Remove role from user. Repeat to remove multiple roles.')
-def update(loginname, mail, displayname, password, prompt_password, clear_roles, add_role, remove_role):
+@click.option('--deactivate/--activate', default=None, help='Deactivate or reactivate account.')
+def update(loginname, mail, displayname, password, prompt_password, clear_roles, add_role, remove_role, deactivate):
 	with current_app.test_request_context():
 		user = User.query.filter_by(loginname=loginname).one_or_none()
 		if user is None:
 			raise click.ClickException(f'User {loginname} not found')
 		try:
-			update_attrs(user, mail, displayname, password, prompt_password, clear_roles, add_role, remove_role)
+			update_attrs(user, mail, displayname, password, prompt_password, clear_roles, add_role, remove_role, deactivate)
 			db.session.commit()
 		except IntegrityError:
 			# pylint: disable=raise-missing-from

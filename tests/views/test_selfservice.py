@@ -396,6 +396,19 @@ class TestSelfservice(UffdTestCase):
 		self.assertFalse(hasattr(self.app, 'last_mail'))
 		self.assertEqual(len(PasswordToken.query.all()), 0)
 
+	def test_forgot_password_wrong_user(self):
+		user = self.get_user()
+		r = self.client.get(path=url_for('selfservice.forgot_password'))
+		self.assertEqual(r.status_code, 200)
+		user = self.get_user()
+		user.is_deactivated = True
+		db.session.commit()
+		r = self.client.post(path=url_for('selfservice.forgot_password'),
+			data={'loginname': user.loginname, 'mail': user.primary_email.address}, follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertFalse(hasattr(self.app, 'last_mail'))
+		self.assertEqual(len(PasswordToken.query.all()), 0)
+
 	def test_token_password(self):
 		user = self.get_user()
 		token = PasswordToken(user=user)

@@ -33,6 +33,9 @@
 						{% if user.is_service_user %}
 						<span class="badge badge-secondary">{{_('service')}}</span>
 						{% endif %}
+						{% if user.is_deactivated %}
+						<span class="badge badge-danger">{{ _('deactivated') }}</span>
+						{% endif %}
 					</td>
 					<td>
 						{{ user.displayname }}

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-11-08 20:12+0100\n"
+"POT-Creation-Date: 2022-11-13 02:05+0100\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -144,8 +144,8 @@ msgstr "Über uffd"
 
 #: uffd/templates/group/list.html:8 uffd/templates/invite/list.html:6
 #: uffd/templates/mail/list.html:8 uffd/templates/role/list.html:8
-#: uffd/templates/service/index.html:8 uffd/templates/service/show.html:99
-#: uffd/templates/service/show.html:127 uffd/templates/user/list.html:8
+#: uffd/templates/service/index.html:8 uffd/templates/service/show.html:106
+#: uffd/templates/service/show.html:134 uffd/templates/user/list.html:8
 msgid "New"
 msgstr "Neu"
 
@@ -162,8 +162,8 @@ msgstr "GID"
 #: uffd/templates/rolemod/list.html:9 uffd/templates/rolemod/show.html:44
 #: uffd/templates/selfservice/self.html:190
 #: uffd/templates/service/index.html:14 uffd/templates/service/show.html:20
-#: uffd/templates/service/show.html:133 uffd/templates/user/show.html:193
-#: uffd/templates/user/show.html:225
+#: uffd/templates/service/show.html:140 uffd/templates/user/show.html:205
+#: uffd/templates/user/show.html:237
 msgid "Name"
 msgstr "Name"
 
@@ -171,14 +171,14 @@ msgstr "Name"
 #: uffd/templates/invite/new.html:36 uffd/templates/role/list.html:15
 #: uffd/templates/role/show.html:48 uffd/templates/rolemod/list.html:10
 #: uffd/templates/rolemod/show.html:26 uffd/templates/selfservice/self.html:191
-#: uffd/templates/user/show.html:194 uffd/templates/user/show.html:226
+#: uffd/templates/user/show.html:206 uffd/templates/user/show.html:238
 msgid "Description"
 msgstr "Beschreibung"
 
 #: uffd/templates/group/show.html:8 uffd/templates/mail/show.html:27
 #: uffd/templates/role/show.html:13 uffd/templates/rolemod/show.html:8
 #: uffd/templates/service/api.html:15 uffd/templates/service/oauth2.html:15
-#: uffd/templates/service/show.html:16 uffd/templates/user/show.html:26
+#: uffd/templates/service/show.html:16 uffd/templates/user/show.html:31
 msgid "Save"
 msgstr "Speichern"
 
@@ -189,7 +189,7 @@ msgstr "Speichern"
 #: uffd/templates/service/show.html:10
 #: uffd/templates/session/deviceauth.html:39
 #: uffd/templates/session/deviceauth.html:49
-#: uffd/templates/session/devicelogin.html:29 uffd/templates/user/show.html:27
+#: uffd/templates/session/devicelogin.html:29 uffd/templates/user/show.html:32
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -197,7 +197,7 @@ msgstr "Abbrechen"
 #: uffd/templates/role/show.html:21 uffd/templates/selfservice/self.html:61
 #: uffd/templates/selfservice/self.html:205 uffd/templates/service/api.html:11
 #: uffd/templates/service/oauth2.html:11 uffd/templates/service/show.html:12
-#: uffd/templates/user/show.html:29 uffd/templates/user/show.html:181
+#: uffd/templates/user/show.html:41 uffd/templates/user/show.html:193
 msgid "Are you sure?"
 msgstr "Wirklich fortfahren?"
 
@@ -207,8 +207,8 @@ msgstr "Wirklich fortfahren?"
 #: uffd/templates/role/show.html:21 uffd/templates/role/show.html:24
 #: uffd/templates/selfservice/self.html:62 uffd/templates/service/api.html:12
 #: uffd/templates/service/oauth2.html:12 uffd/templates/service/show.html:13
-#: uffd/templates/user/show.html:29 uffd/templates/user/show.html:31
-#: uffd/templates/user/show.html:104
+#: uffd/templates/user/show.html:41 uffd/templates/user/show.html:43
+#: uffd/templates/user/show.html:116
 msgid "Delete"
 msgstr "Löschen"
 
@@ -238,7 +238,7 @@ msgid "Created by"
 msgstr "Erstellt durch"
 
 #: uffd/templates/invite/list.html:14 uffd/templates/service/api.html:34
-#: uffd/templates/service/show.html:134
+#: uffd/templates/service/show.html:141
 msgid "Permissions"
 msgstr "Berechtigungen"
 
@@ -266,7 +266,7 @@ msgstr "Account-Registrierung"
 msgid "user signups"
 msgstr "Account-Registrierungen"
 
-#: uffd/templates/invite/list.html:49 uffd/templates/user/show.html:178
+#: uffd/templates/invite/list.html:49 uffd/templates/user/show.html:190
 msgid "Disabled"
 msgstr "Deaktiviert"
 
@@ -460,7 +460,7 @@ msgid "One address per line"
 msgstr "Eine Adresse pro Zeile"
 
 #: uffd/templates/mfa/auth.html:6 uffd/templates/selfservice/self.html:159
-#: uffd/templates/user/show.html:176
+#: uffd/templates/user/show.html:188
 msgid "Two-Factor Authentication"
 msgstr "Zwei-Faktor-Authentifizierung"
 
@@ -599,7 +599,7 @@ msgid "Reset two-factor configuration"
 msgstr "Zwei-Faktor-Authentifizierung zurücksetzen"
 
 #: uffd/templates/mfa/setup.html:46 uffd/templates/mfa/setup_recovery.html:5
-#: uffd/templates/user/show.html:179
+#: uffd/templates/user/show.html:191
 msgid "Recovery Codes"
 msgstr "Wiederherstellungscodes"
 
@@ -637,7 +637,7 @@ msgstr "Generiere neue Wiederherstellungscodes"
 msgid "You have no remaining recovery codes."
 msgstr "Du hast keine Wiederherstellungscodes übrig."
 
-#: uffd/templates/mfa/setup.html:85 uffd/templates/user/show.html:179
+#: uffd/templates/mfa/setup.html:85 uffd/templates/user/show.html:191
 msgid "Authenticator Apps (TOTP)"
 msgstr "Authentifikator-Apps (TOTP)"
 
@@ -667,7 +667,7 @@ msgstr "Registriert am"
 msgid "No authenticator apps registered yet"
 msgstr "Bisher keine Authentifikator-Apps registriert"
 
-#: uffd/templates/mfa/setup.html:134 uffd/templates/user/show.html:179
+#: uffd/templates/mfa/setup.html:134 uffd/templates/user/show.html:191
 msgid "U2F and FIDO2 Devices"
 msgstr "U2F und FIDO2 Geräte"
 
@@ -972,7 +972,7 @@ msgstr "Passwort vergessen"
 #: uffd/templates/selfservice/forgot_password.html:9
 #: uffd/templates/selfservice/self.html:21 uffd/templates/session/login.html:12
 #: uffd/templates/signup/start.html:9 uffd/templates/user/list.html:18
-#: uffd/templates/user/show.html:66
+#: uffd/templates/user/show.html:78
 msgid "Login Name"
 msgstr "Anmeldename"
 
@@ -993,7 +993,7 @@ msgstr ""
 "Authentifizierung.\n"
 "\tDiese Berechtigungen werden erst aktiv, wenn du dies getan hast."
 
-#: uffd/templates/selfservice/self.html:14 uffd/templates/user/show.html:36
+#: uffd/templates/selfservice/self.html:14 uffd/templates/user/show.html:48
 msgid "Profile"
 msgstr "Profil"
 
@@ -1010,7 +1010,7 @@ msgid "Changes may take several minutes to be visible in all services."
 msgstr "Änderungen sind erst nach einigen Minuten in allen Diensten sichtbar."
 
 #: uffd/templates/selfservice/self.html:25 uffd/templates/signup/start.html:22
-#: uffd/templates/user/list.html:19 uffd/templates/user/show.html:81
+#: uffd/templates/user/list.html:19 uffd/templates/user/show.html:93
 msgid "Display Name"
 msgstr "Anzeigename"
 
@@ -1018,7 +1018,7 @@ msgstr "Anzeigename"
 msgid "Update Profile"
 msgstr "Änderungen speichern"
 
-#: uffd/templates/selfservice/self.html:37 uffd/templates/user/show.html:98
+#: uffd/templates/selfservice/self.html:37 uffd/templates/user/show.html:110
 msgid "E-Mail Addresses"
 msgstr "E-Mail-Adressen"
 
@@ -1043,7 +1043,7 @@ msgstr "Neue E-Mail-Adresse"
 msgid "Add address"
 msgstr "Adresse hinzufügen"
 
-#: uffd/templates/selfservice/self.html:55 uffd/templates/user/show.html:114
+#: uffd/templates/selfservice/self.html:55 uffd/templates/user/show.html:126
 msgid "primary"
 msgstr "primär"
 
@@ -1090,8 +1090,8 @@ msgid "Address for Password Reset E-Mails"
 msgstr "Adresse für Passwort-Zurücksetzen-E-Mails"
 
 #: uffd/templates/selfservice/self.html:103
-#: uffd/templates/selfservice/self.html:116 uffd/templates/user/show.html:143
-#: uffd/templates/user/show.html:153
+#: uffd/templates/selfservice/self.html:116 uffd/templates/user/show.html:155
+#: uffd/templates/user/show.html:165
 msgid "Use primary address"
 msgstr "Primäre Adresse verwenden"
 
@@ -1110,7 +1110,7 @@ msgstr "E-Mail-Einstellungen speichern"
 
 #: uffd/templates/selfservice/self.html:136
 #: uffd/templates/session/login.html:16 uffd/templates/signup/start.html:36
-#: uffd/templates/user/show.html:163
+#: uffd/templates/user/show.html:175
 msgid "Password"
 msgstr "Passwort"
 
@@ -1155,7 +1155,7 @@ msgid "Manage two-factor authentication"
 msgstr "Zwei-Faktor-Authentifizierung (2FA) verwalten"
 
 #: uffd/templates/selfservice/self.html:178 uffd/templates/user/list.html:20
-#: uffd/templates/user/show.html:39 uffd/templates/user/show.html:188
+#: uffd/templates/user/show.html:51 uffd/templates/user/show.html:200
 #: uffd/views/role.py:21
 msgid "Roles"
 msgstr "Rollen"
@@ -1231,7 +1231,7 @@ msgstr "Zugriff auf Mail-Weiterleitungen"
 msgid "Resolve remailer addresses"
 msgstr "Auflösen von Remailer-Adressen"
 
-#: uffd/templates/service/api.html:51 uffd/templates/service/show.html:48
+#: uffd/templates/service/api.html:51 uffd/templates/service/show.html:55
 msgid "This option has no effect: Remailer config options are unset"
 msgstr "Diese Option hat keine Auswirkung: Remailer ist nicht konfiguriert"
 
@@ -1239,7 +1239,7 @@ msgstr "Diese Option hat keine Auswirkung: Remailer ist nicht konfiguriert"
 msgid "Access uffd metrics"
 msgstr "Zugriff auf uffd-Metriken"
 
-#: uffd/templates/service/oauth2.html:20 uffd/templates/service/show.html:105
+#: uffd/templates/service/oauth2.html:20 uffd/templates/service/show.html:112
 msgid "Client ID"
 msgstr "Client-ID"
 
@@ -1286,8 +1286,8 @@ msgstr "Kein Zugriff"
 msgid "Manage OAuth2 and API clients"
 msgstr "OAuth2- und API-Clients verwalten"
 
-#: uffd/templates/service/overview.html:95 uffd/templates/user/list.html:58
-#: uffd/templates/user/list.html:79
+#: uffd/templates/service/overview.html:95 uffd/templates/user/list.html:61
+#: uffd/templates/user/list.html:82
 msgid "Close"
 msgstr "Schließen"
 
@@ -1309,6 +1309,10 @@ msgid "Members of group \"%(group_name)s\" have access"
 msgstr "Mitglieder der Gruppe \"%(group_name)s\" haben Zugriff"
 
 #: uffd/templates/service/show.html:37
+msgid "Hide deactivated users from service"
+msgstr "Deaktivierte Nutzer verstecken"
+
+#: uffd/templates/service/show.html:44
 msgid ""
 "Allow users with access to select a different e-mail address for this "
 "service"
@@ -1316,29 +1320,29 @@ msgstr ""
 "Ermögliche Nutzern mit Zugriff auf diesen Dienst eine andere E-Mail-"
 "Adresse auszuwählen"
 
-#: uffd/templates/service/show.html:39
+#: uffd/templates/service/show.html:46
 msgid "If disabled, the service always uses the primary e-mail address."
 msgstr "Wenn deaktiviert, wird immer die primäre E-Mail-Adresse verwendet."
 
-#: uffd/templates/service/show.html:46
+#: uffd/templates/service/show.html:53
 msgid "Hide e-mail addresses with remailer"
 msgstr "E-Mail-Adressen mit Remailer verstecken"
 
-#: uffd/templates/service/show.html:53 uffd/templates/service/show.html:76
+#: uffd/templates/service/show.html:60 uffd/templates/service/show.html:83
 msgid "Remailer disabled"
 msgstr "Remailer deaktiviert"
 
-#: uffd/templates/service/show.html:56 uffd/templates/service/show.html:79
+#: uffd/templates/service/show.html:63 uffd/templates/service/show.html:86
 msgid "Remailer enabled"
 msgstr "Remailer aktiviert"
 
-#: uffd/templates/service/show.html:59 uffd/templates/service/show.html:82
+#: uffd/templates/service/show.html:66 uffd/templates/service/show.html:89
 msgid "Remailer enabled (deprecated, case-sensitive format)"
 msgstr ""
 "Remailer aktiviert (veraltetes, Groß-/Kleinschreibung-unterscheidendes "
 "Format)"
 
-#: uffd/templates/service/show.html:63
+#: uffd/templates/service/show.html:70
 msgid ""
 "Some services notify users about changes to their e-mail address. "
 "Modifying this setting immediatly affects the e-mail addresses of all "
@@ -1349,15 +1353,15 @@ msgstr ""
 "-Mail-Adressen aller Nutzer aus und kann zu massenhaftem Versand von "
 "Benachrichtigungs-E-Mails führen."
 
-#: uffd/templates/service/show.html:69
+#: uffd/templates/service/show.html:76
 msgid "Overwrite remailer setting for specific users"
 msgstr "Überschreibe Remailer-Einstellung für ausgewählte Nutzer"
 
-#: uffd/templates/service/show.html:72
+#: uffd/templates/service/show.html:79
 msgid "Login names"
 msgstr "Anmeldenamen"
 
-#: uffd/templates/service/show.html:87
+#: uffd/templates/service/show.html:94
 msgid ""
 "Useful for testing remailer before enabling it for all users. Specify "
 "users as a comma-seperated list of login names."
@@ -1467,7 +1471,7 @@ msgstr "Überprüfen"
 msgid "At least one and at most 128 characters, no other special requirements."
 msgstr "Mindestens 1 und maximal 128 Zeichen, keine weiteren Einschränkungen."
 
-#: uffd/templates/signup/start.html:29 uffd/templates/user/show.html:90
+#: uffd/templates/signup/start.html:29 uffd/templates/user/show.html:102
 msgid "E-Mail Address"
 msgstr "E-Mail-Adresse"
 
@@ -1527,15 +1531,19 @@ msgstr "CSV-Import"
 msgid "UID"
 msgstr "UID"
 
-#: uffd/templates/user/list.html:34 uffd/templates/user/show.html:48
+#: uffd/templates/user/list.html:34 uffd/templates/user/show.html:60
 msgid "service"
 msgstr "service"
 
-#: uffd/templates/user/list.html:57
+#: uffd/templates/user/list.html:37
+msgid "deactivated"
+msgstr "deaktiviert"
+
+#: uffd/templates/user/list.html:60
 msgid "Import a csv formated list of users"
 msgstr "Importiere eine als CSV formatierte Liste von Accounts"
 
-#: uffd/templates/user/list.html:64
+#: uffd/templates/user/list.html:67
 msgid ""
 "The format should be \"loginname,mailaddres,roleid1;roleid2\". Neither "
 "setting the display name nor setting passwords is supported (yet). "
@@ -1545,11 +1553,11 @@ msgstr ""
 "Anzeigename oder das Password können (derzeit) nicht gesetzt werden. "
 "Beispiel:"
 
-#: uffd/templates/user/list.html:75 uffd/templates/user/show.html:76
+#: uffd/templates/user/list.html:78 uffd/templates/user/show.html:88
 msgid "Ignore login name blocklist"
 msgstr "Liste der nicht erlaubten Anmeldenamen ignorieren"
 
-#: uffd/templates/user/list.html:80
+#: uffd/templates/user/list.html:83
 msgid "Import"
 msgstr "Importieren"
 
@@ -1557,19 +1565,38 @@ msgstr "Importieren"
 msgid "New address"
 msgstr "Neue Adresse"
 
-#: uffd/templates/user/show.html:46
+#: uffd/templates/user/show.html:27
+msgid ""
+"This account is deactivated. The user cannot login and existing sessions "
+"are not usable. The user cannot log into services, but existing sessions "
+"on services might still be active."
+msgstr ""
+"Dieser Account ist deaktiviert. Der Nutzer kann sich nicht neu anmelden. "
+"Existierende Sitzungen sind nicht nutzbar. Eine Anmeldung bei Diensten "
+"ist nicht möglich, allerdings könnten bestehende Sitzungen weiterhin "
+"aktiv sein."
+
+#: uffd/templates/user/show.html:34 uffd/templates/user/show.html:38
+msgid "Deactivate"
+msgstr "Deaktivieren"
+
+#: uffd/templates/user/show.html:36
+msgid "Activate"
+msgstr "Aktivieren"
+
+#: uffd/templates/user/show.html:58
 msgid "User ID"
 msgstr "Account ID"
 
-#: uffd/templates/user/show.html:54
+#: uffd/templates/user/show.html:66
 msgid "will be choosen"
 msgstr "wird automatisch bestimmt"
 
-#: uffd/templates/user/show.html:61
+#: uffd/templates/user/show.html:73
 msgid "Service User"
 msgstr "Service-Account"
 
-#: uffd/templates/user/show.html:69
+#: uffd/templates/user/show.html:81
 msgid ""
 "Only letters, numbers, dashes (\"-\") and underscores (\"_\") are "
 "allowed. At most 32, at least 2 characters. There is a word blocklist. "
@@ -1579,7 +1606,7 @@ msgstr ""
 "erlaubt. Maximal 32, mindestens 2 Zeichen. Es gibt eine Liste nicht "
 "erlaubter Namen. Muss einmalig sein."
 
-#: uffd/templates/user/show.html:84
+#: uffd/templates/user/show.html:96
 msgid ""
 "If you leave this empty it will be set to the login name. At most 128, at"
 " least 2 characters. No character restrictions."
@@ -1587,7 +1614,7 @@ msgstr ""
 "Wenn das Feld leer bleibt, wird der Anmeldename verwendet. Maximal 128, "
 "mindestens 2 Zeichen. Keine Zeichenbeschränkung."
 
-#: uffd/templates/user/show.html:93
+#: uffd/templates/user/show.html:105
 msgid ""
 "Make sure the address is correct! Services might use e-mail addresses as "
 "account identifiers and rely on them being unique and verified."
@@ -1596,15 +1623,15 @@ msgstr ""
 " E-Mail-Adresse um Accounts zu identifizieren und verlassen sich darauf, "
 "dass diese verifiziert und einzigartig sind."
 
-#: uffd/templates/user/show.html:102
+#: uffd/templates/user/show.html:114
 msgid "Address"
 msgstr "Adresse"
 
-#: uffd/templates/user/show.html:103
+#: uffd/templates/user/show.html:115
 msgid "Verified"
 msgstr "Verifiziert"
 
-#: uffd/templates/user/show.html:129
+#: uffd/templates/user/show.html:141
 msgid ""
 "Make sure that addresses you add are correct! Services might use e-mail "
 "addresses as account identifiers and rely on them being unique and "
@@ -1614,36 +1641,36 @@ msgstr ""
 "Dienste verwenden die E-Mail-Adresse um Accounts zu identifizieren und "
 "verlassen sich darauf, dass diese verifiziert und einzigartig sind."
 
-#: uffd/templates/user/show.html:133
+#: uffd/templates/user/show.html:145
 msgid "Primary E-Mail Address"
 msgstr "Primäre E-Mail-Adresse"
 
-#: uffd/templates/user/show.html:141
+#: uffd/templates/user/show.html:153
 msgid "Recovery E-Mail Address"
 msgstr "Wiederherstellungs-E-Mail-Adresse"
 
-#: uffd/templates/user/show.html:151
+#: uffd/templates/user/show.html:163
 #, python-format
 msgid "Address for %(name)s"
 msgstr "Adresse für %(name)s"
 
-#: uffd/templates/user/show.html:167
+#: uffd/templates/user/show.html:179
 msgid "E-Mail to set it will be sent"
 msgstr "Mail zum Setzen wird versendet"
 
-#: uffd/templates/user/show.html:178
+#: uffd/templates/user/show.html:190
 msgid "Status:"
 msgstr "Status:"
 
-#: uffd/templates/user/show.html:178
+#: uffd/templates/user/show.html:190
 msgid "Enabled"
 msgstr "Aktiv"
 
-#: uffd/templates/user/show.html:181
+#: uffd/templates/user/show.html:193
 msgid "Reset 2FA"
 msgstr "2FA zurücksetzen"
 
-#: uffd/templates/user/show.html:221
+#: uffd/templates/user/show.html:233
 msgid "Resulting groups (only updated after save)"
 msgstr "Resultierende Gruppen (wird nur aktualisiert beim Speichern)"
 
@@ -1785,8 +1812,8 @@ msgstr ""
 msgid "Two-factor authentication failed"
 msgstr "Zwei-Faktor-Authentifizierung fehlgeschlagen"
 
-#: uffd/views/oauth2.py:167 uffd/views/selfservice.py:66
-#: uffd/views/session.py:72
+#: uffd/views/oauth2.py:172 uffd/views/selfservice.py:66
+#: uffd/views/session.py:67
 #, python-format
 msgid ""
 "We received too many requests from your ip address/network! Please wait "
@@ -1795,19 +1822,19 @@ msgstr ""
 "Wir haben zu viele Anfragen von deiner IP-Adresses bzw. aus deinem "
 "Netzwerk empfangen! Bitte warte mindestens %(delay)s."
 
-#: uffd/views/oauth2.py:175
+#: uffd/views/oauth2.py:180
 msgid "Device login is currently not available. Try again later!"
 msgstr "Geräte-Login ist gerade nicht verfügbar. Versuche es später nochmal!"
 
-#: uffd/views/oauth2.py:188
+#: uffd/views/oauth2.py:193
 msgid "Device login failed"
 msgstr "Gerätelogin fehlgeschlagen"
 
-#: uffd/views/oauth2.py:194
+#: uffd/views/oauth2.py:199
 msgid "You need to login to access this service"
 msgstr "Du musst dich anmelden, um auf diesen Dienst zugreifen zu können"
 
-#: uffd/views/oauth2.py:201
+#: uffd/views/oauth2.py:206
 #, python-format
 msgid ""
 "You don't have the permission to access the service "
@@ -1933,7 +1960,7 @@ msgstr "Rolle %(role_name)s verlassen"
 msgid "Services"
 msgstr "Dienste"
 
-#: uffd/views/session.py:70
+#: uffd/views/session.py:65
 #, python-format
 msgid ""
 "We received too many invalid login attempts for this user! Please wait at"
@@ -1942,27 +1969,34 @@ msgstr ""
 "Wir haben zu viele fehlgeschlagene Anmeldeversuche für diesen Account "
 "erhalten! Bitte warte mindestens %(delay)s."
 
-#: uffd/views/session.py:78
+#: uffd/views/session.py:74
 msgid "Login name or password is wrong"
 msgstr "Der Anmeldename oder das Passwort ist falsch"
 
-#: uffd/views/session.py:84
+#: uffd/views/session.py:77
+#, python-format
+msgid "Your account is deactivated. Contact %(contact_email)s for details."
+msgstr ""
+"Dein Account ist deaktiviert. Kontaktiere %(contact_email)s für weitere "
+"Informationen."
+
+#: uffd/views/session.py:83
 msgid "You do not have access to this service"
 msgstr "Du hast keinen Zugriff auf diesen Service"
 
-#: uffd/views/session.py:96 uffd/views/session.py:107
+#: uffd/views/session.py:95 uffd/views/session.py:106
 msgid "You need to login first"
 msgstr "Du musst dich erst anmelden"
 
-#: uffd/views/session.py:128 uffd/views/session.py:138
+#: uffd/views/session.py:127 uffd/views/session.py:137
 msgid "Initiation code is no longer valid"
 msgstr "Startcode ist nicht mehr gültig"
 
-#: uffd/views/session.py:142
+#: uffd/views/session.py:141
 msgid "Invalid confirmation code"
 msgstr "Ungültiger Bestätigungscode"
 
-#: uffd/views/session.py:154 uffd/views/session.py:165
+#: uffd/views/session.py:153 uffd/views/session.py:164
 msgid "Invalid initiation code"
 msgstr "Ungültiger Startcode"
 
@@ -2019,7 +2053,15 @@ msgstr "Passwort ist ungültig"
 msgid "User updated"
 msgstr "Account aktualisiert"
 
-#: uffd/views/user.py:156
+#: uffd/views/user.py:155
+msgid "User deactivated"
+msgstr "Account deaktiviert"
+
+#: uffd/views/user.py:164
+msgid "User activated"
+msgstr "Account aktiviert"
+
+#: uffd/views/user.py:174
 msgid "Deleted user"
 msgstr "Account gelöscht"
 

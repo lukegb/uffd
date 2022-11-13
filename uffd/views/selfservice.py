@@ -68,7 +68,7 @@ def forgot_password():
 	reset_ratelimit.log(loginname+'/'+mail)
 	host_ratelimit.log()
 	flash(_("We sent a mail to this user's mail address if you entered the correct mail and login name combination"))
-	user = User.query.filter_by(loginname=loginname).one_or_none()
+	user = User.query.filter_by(loginname=loginname, is_deactivated=False).one_or_none()
 	if not user:
 		return redirect(url_for('session.login'))
 	matches = any(map(lambda email: secrets.compare_digest(email.address, mail), user.verified_emails))

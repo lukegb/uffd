@@ -57,6 +57,13 @@ class TestUserCLI(UffdTestCase):
 			self.assertTrue(user.password.verify('newpassword'))
 			self.assertEqual(user.roles, Role.query.filter_by(name='admin').all())
 			self.assertIn(self.get_admin_group(), user.groups)
+			self.assertFalse(user.is_deactivated)
+
+		result = self.app.test_cli_runner().invoke(args=['user', 'create', 'newuser2', '--mail', 'newmail2@example.com', '--deactivate'])
+		self.assertEqual(result.exit_code, 0)
+		with self.app.test_request_context():
+			user = User.query.filter_by(loginname='newuser2').first()
+			self.assertTrue(user.is_deactivated)
 
 	def test_update(self):
 		result = self.app.test_cli_runner().invoke(args=['user', 'update', 'doesnotexist', '--displayname', 'foo'])
@@ -106,6 +113,16 @@ class TestUserCLI(UffdTestCase):
 			user = User.query.filter_by(loginname='testuser').first()
 			self.assertEqual(user.roles, Role.query.filter_by(name='admin').all())
 			self.assertIn(self.get_admin_group(), user.groups)
+		result = self.app.test_cli_runner().invoke(args=['user', 'update', 'testuser', '--deactivate'])
+		self.assertEqual(result.exit_code, 0)
+		with self.app.test_request_context():
+			user = User.query.filter_by(loginname='testuser').first()
+			self.assertTrue(user.is_deactivated)
+		result = self.app.test_cli_runner().invoke(args=['user', 'update', 'testuser', '--activate'])
+		self.assertEqual(result.exit_code, 0)
+		with self.app.test_request_context():
+			user = User.query.filter_by(loginname='testuser').first()
+			self.assertFalse(user.is_deactivated)
 
 	def test_delete(self):
 		with self.app.test_request_context():

@@ -17,7 +17,7 @@ class TestSession(UffdTestCase):
 		@self.app.route('/test_login_required')
 		@login_required()
 		def test_login_required():
-			return 'SUCCESS', 200
+			return 'SUCCESS ' + request.user.loginname, 200
 
 		@self.app.route('/test_group_required1')
 		@login_required(lambda: request.user.is_in_group('users'))
@@ -38,15 +38,10 @@ class TestSession(UffdTestCase):
 		self.assertIsNotNone(request.user)
 
 	def assertLoggedIn(self):
-		self.assertIsNotNone(request.user)
-		self.assertEqual(self.client.get(path=url_for('test_login_required'), follow_redirects=True).data, b'SUCCESS')
-		self.assertEqual(request.user.loginname, self.get_user().loginname)
+		self.assertEqual(self.client.get(path=url_for('test_login_required'), follow_redirects=True).data, b'SUCCESS testuser')
 
 	def assertLoggedOut(self):
-		self.assertIsNone(request.user)
-		self.assertNotEqual(self.client.get(path=url_for('test_login_required'),
-							follow_redirects=True).data, b'SUCCESS')
-		self.assertEqual(request.user, None)
+		self.assertNotIn(b'SUCCESS', self.client.get(path=url_for('test_login_required'), follow_redirects=True).data)
 
 	def test_login(self):
 		self.assertLoggedOut()
@@ -78,7 +73,7 @@ class TestSession(UffdTestCase):
 	def test_redirect(self):
 		r = self.login_as('user', ref=url_for('test_login_required'))
 		self.assertEqual(r.status_code, 200)
-		self.assertEqual(r.data, b'SUCCESS')
+		self.assertEqual(r.data, b'SUCCESS testuser')
 
 	def test_wrong_password(self):
 		r = self.client.post(path=url_for('session.login'),
@@ -123,6 +118,20 @@ class TestSession(UffdTestCase):
 			data={'loginname': 'testservice', 'password': 'servicepassword'}, follow_redirects=True)
 		dump('login_no_access', r)
 		self.assertEqual(r.status_code, 200)
+		self.assertLoggedOut()
+
+	def test_deactivated(self):
+		self.get_user().is_deactivated = True
+		db.session.commit()
+		r = self.login_as('user')
+		dump('login_deactivated', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertLoggedOut()
+
+	def test_deactivated_after_login(self):
+		self.login_as('user')
+		self.get_user().is_deactivated = True
+		db.session.commit()
 		self.assertLoggedOut()
 
 	def test_group_required(self):

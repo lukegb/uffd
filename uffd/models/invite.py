@@ -43,6 +43,8 @@ class Invite(db.Model):
 	def permitted(self):
 		if self.creator is None:
 			return False # Creator does not exist (anymore)
+		if self.creator.is_deactivated:
+			return False
 		if self.creator.is_in_group(current_app.config['ACL_ADMIN_GROUP']):
 			return True
 		if self.allow_signup and not self.creator.is_in_group(current_app.config['ACL_SIGNUP_GROUP']):

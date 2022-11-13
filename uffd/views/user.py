@@ -146,6 +146,24 @@ def update(id):
 	flash(_('User updated'))
 	return redirect(url_for('user.show', id=user.id))
 
+@bp.route('/<int:id>/deactivate')
+@csrf_protect(blueprint=bp)
+def deactivate(id):
+	user = User.query.get_or_404(id)
+	user.is_deactivated = True
+	db.session.commit()
+	flash(_('User deactivated'))
+	return redirect(url_for('user.show', id=user.id))
+
+@bp.route('/<int:id>/activate')
+@csrf_protect(blueprint=bp)
+def activate(id):
+	user = User.query.get_or_404(id)
+	user.is_deactivated = False
+	db.session.commit()
+	flash(_('User activated'))
+	return redirect(url_for('user.show', id=user.id))
+
 @bp.route("/<int:id>/del")
 @csrf_protect(blueprint=bp)
 def delete(id):

@@ -22,15 +22,27 @@
 <form action="{{ url_for("user.create") }}" method="POST">
 {% endif %}
 <div class="align-self-center">
-	<div class="float-sm-right pb-2">
+	{% if user.id and user.is_deactivated %}
+	<div class="alert alert-warning">
+		{{ _('This account is deactivated. The user cannot login and existing sessions are not usable. The user cannot log into services, but existing sessions on services might still be active.') }}
+	</div>
+	{% endif %}
+	<div class="clearfix pb-2"><div class="float-sm-right">
 		<button type="submit" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> {{_("Save")}}</button>
 		<a href="{{ url_for("user.index") }}" class="btn btn-secondary">{{_("Cancel")}}</a>
-		{% if user.id %}
+		{% if user.id and not user.is_deactivated and user != request.user %}
+			<a href="{{ url_for("user.deactivate", id=user.id) }}" class="btn btn-secondary">{{ _("Deactivate") }}</a>
+		{% elif user.id and user.is_deactivated %}
+			<a href="{{ url_for("user.activate", id=user.id) }}" class="btn btn-primary">{{ _("Activate") }}</a>
+		{% else %}
+			<a href="#" class="btn btn-secondary disabled">{{ _("Deactivate") }}</a>
+		{% endif %}
+		{% if user.id and user != request.user %}
 			<a href="{{ url_for("user.delete", id=user.id) }}" onClick='return confirm({{_("Are you sure?")|tojson}});' class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
 		{% else %}
 			<a href="#" class="btn btn-danger disabled"><i class="fa fa-trash" aria-hidden="true"></i> {{_("Delete")}}</a>
 		{% endif %}
-	</div>
+	</div></div>
 	<ul class="nav nav-tabs pt-2 border-0" id="tablist" role="tablist">
 		<li class="nav-item">
 			<a class="nav-link active" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="true">{{_("Profile")}}</a>

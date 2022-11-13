@@ -172,6 +172,7 @@ class TestServiceAdminViews(UffdTestCase):
 		self.assertEqual(service.access_group, None)
 		self.assertEqual(service.remailer_mode, RemailerMode.DISABLED)
 		self.assertEqual(service.enable_email_preferences, False)
+		self.assertEqual(service.hide_deactivated_users, False)
 
 	def test_edit_access_all(self):
 		self.login_as('admin')
@@ -208,6 +209,24 @@ class TestServiceAdminViews(UffdTestCase):
 		service = Service.query.get(self.service_id)
 		self.assertEqual(service.limit_access, True)
 		self.assertEqual(service.access_group, self.get_users_group())
+
+	def test_edit_hide_deactivated_users(self):
+		self.login_as('admin')
+		r = self.client.post(
+			path=url_for('service.edit_submit', id=self.service_id),
+			follow_redirects=True,
+			data={
+				'name': 'test1',
+				'access-group': '',
+				'remailer-mode': 'DISABLED',
+				'remailer-overwrite-mode': 'ENABLED_V2',
+				'remailer-overwrite-users': '',
+				'hide_deactivated_users': '1',
+			},
+		)
+		self.assertEqual(r.status_code, 200)
+		service = Service.query.get(self.service_id)
+		self.assertEqual(service.hide_deactivated_users, True)
 
 	def test_edit_email_preferences(self):
 		self.login_as('admin')

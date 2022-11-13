@@ -85,6 +85,8 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 			return False
 		if oauthreq.grant.expired:
 			return False
+		if oauthreq.grant.user.is_deactivated:
+			return False
 		oauthreq.user = oauthreq.grant.user
 		oauthreq.scopes = oauthreq.grant.scopes
 		return True
@@ -129,6 +131,9 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 			return False
 		if tok.expired:
 			oauthreq.error_message = 'Token expired'
+			return False
+		if tok.user.is_deactivated:
+			oauthreq.error_message = 'User deactivated'
 			return False
 		if not set(scopes).issubset(tok.scopes):
 			oauthreq.error_message = 'Scopes invalid'
@@ -184,7 +189,7 @@ def authorize():
 		del session['devicelogin_id']
 		del session['devicelogin_secret']
 		del session['devicelogin_confirmation']
-		if not initiation or initiation.expired or not confirmation:
+		if not initiation or initiation.expired or not confirmation or confirmation.user.is_deactivated:
 			flash(_('Device login failed'))
 			return redirect(url_for('session.login', ref=request.full_path, devicelogin=True))
 		credentials['user'] = confirmation.user

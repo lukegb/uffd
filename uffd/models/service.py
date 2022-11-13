@@ -35,6 +35,7 @@ class Service(db.Model):
 
 	remailer_mode = Column(Enum(RemailerMode), default=RemailerMode.DISABLED, nullable=False)
 	enable_email_preferences = Column(Boolean(), default=False, nullable=False)
+	hide_deactivated_users = Column(Boolean(), default=False, nullable=False)
 
 class ServiceUser(db.Model):
 	'''Service-related configuration and state for a user

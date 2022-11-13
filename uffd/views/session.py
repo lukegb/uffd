@@ -25,17 +25,11 @@ def set_request_user():
 	if datetime.datetime.utcnow().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
 		return
 	user = User.query.get(session['user_id'])
-	if not user or not user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
+	if not user or user.is_deactivated or not user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
 		return
 	request.user_pre_mfa = user
 	if session.get('user_mfa'):
 		request.user = user
-
-def login_get_user(loginname, password):
-	user = User.query.filter_by(loginname=loginname).one_or_none()
-	if user is None or not user.password.verify(password):
-		return None
-	return user
 
 @bp.route("/logout")
 def logout():
@@ -56,6 +50,7 @@ def set_session(user, skip_mfa=False):
 
 @bp.route("/login", methods=('GET', 'POST'))
 def login():
+	# pylint: disable=too-many-return-statements
 	if request.user_pre_mfa:
 		return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
 	if request.method == 'GET':
@@ -71,11 +66,15 @@ def login():
 		else:
 			flash(_('We received too many requests from your ip address/network! Please wait at least %(delay)s.', delay=format_delay(host_delay)))
 		return render_template('session/login.html', ref=request.values.get('ref'))
-	user = login_get_user(username, password)
-	if user is None:
+
+	user = User.query.filter_by(loginname=username).one_or_none()
+	if user is None or not user.password.verify(password):
 		login_ratelimit.log(username)
 		host_ratelimit.log()
 		flash(_('Login name or password is wrong'))
+		return render_template('session/login.html', ref=request.values.get('ref'))
+	if user.is_deactivated:
+		flash(_('Your account is deactivated. Contact %(contact_email)s for details.', contact_email=current_app.config['ORGANISATION_CONTACT']))
 		return render_template('session/login.html', ref=request.values.get('ref'))
 	if user.password.needs_rehash:
 		user.password = password
