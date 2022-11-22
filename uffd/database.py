@@ -1,10 +1,7 @@
-from collections import OrderedDict
-
 from sqlalchemy import MetaData, event
 from sqlalchemy.types import TypeDecorator, Text
 from sqlalchemy.ext.mutable import MutableList
 from flask_sqlalchemy import SQLAlchemy
-from flask.json import JSONEncoder
 
 convention = {
 	'ix': 'ix_%(column_0_label)s',
@@ -47,15 +44,6 @@ def customize_db_engine(engine):
 				raise Exception(f'Unsupported database collation "{collation_database}". Create the database with "CHARACTER SET utf8mb4 COLLATE utf8mb4_nopad_bin"!')
 			cursor.execute('SET NAMES utf8mb4 COLLATE utf8mb4_nopad_bin')
 			cursor.close()
-
-class SQLAlchemyJSON(JSONEncoder):
-	def default(self, o):
-		if isinstance(o, db.Model):
-			result = OrderedDict()
-			for key in o.__mapper__.c.keys():
-				result[key] = getattr(o, key)
-			return result
-		return JSONEncoder.default(self, o)
 
 class CommaSeparatedList(TypeDecorator):
 	# For some reason TypeDecorator.process_literal_param and

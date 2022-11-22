@@ -8,7 +8,7 @@ from babel.dates import LOCALTZ
 from werkzeug.exceptions import Forbidden
 from flask_migrate import Migrate
 
-from .database import db, SQLAlchemyJSON, customize_db_engine
+from .database import db, customize_db_engine
 from .template_helper import register_template_helper
 from .navbar import setup_navbar
 from .csrf import bp as csrf_bp
@@ -52,7 +52,6 @@ def init_config(app: Flask, test_config):
 
 def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-statements
 	app = Flask(__name__, instance_relative_config=False)
-	app.json_encoder = SQLAlchemyJSON
 
 	init_config(app, test_config)
 
