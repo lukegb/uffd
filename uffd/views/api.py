@@ -180,7 +180,7 @@ def prometheus_metrics():
 	from prometheus_client import PLATFORM_COLLECTOR, generate_latest, CONTENT_TYPE_LATEST #pylint: disable=import-outside-toplevel
 
 	class UffdCollector():
-		def collect(self): #pylint: disable=no-self-use
+		def collect(self):
 			try:
 				uffd_version = str(pkg_resources.get_distribution('uffd').version)
 			except pkg_resources.DistributionNotFound:

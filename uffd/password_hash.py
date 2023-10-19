@@ -206,7 +206,7 @@ class InvalidPasswordHash:
 	def __init__(self, value=None):
 		self.value = value
 
-	# pylint: disable=no-self-use,unused-argument
+	# pylint: disable=unused-argument
 	def verify(self, password):
 		return False
 

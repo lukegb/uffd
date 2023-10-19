@@ -14,8 +14,6 @@ class Remailer:
 	Version 2 of the remailer address format is tolerant to case conversions at
 	the cost of being slightly longer.'''
 
-	# pylint: disable=no-self-use
-
 	@property
 	def configured(self):
 		return bool(current_app.config['REMAILER_DOMAIN'])

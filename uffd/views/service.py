@@ -28,7 +28,7 @@ def overview_login_maybe_required(func):
 	return decorator
 
 def overview_navbar_visible():
-	return get_services(request.user) != [] or admin_acl()
+	return get_services(request.user) or admin_acl()
 
 @bp.route('/services/')
 @register_navbar(lazy_gettext('Services'), icon='sitemap', blueprint=bp, visible=overview_navbar_visible)

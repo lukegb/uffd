@@ -70,8 +70,7 @@ class DeviceLoginInitiation(db.Model):
 	existing and possibly attacker-controlled code).
 
 	An initiation code is securly bound to the session that it was created
-	with by storing both id and secret in the encrypted and authenticated
-	session cookie.'''
+	with by storing both id and secret in the authenticated session cookie.'''
 	__tablename__ = 'device_login_initiation'
 
 	id = Column(Integer(), primary_key=True, autoincrement=True)

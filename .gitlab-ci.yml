@@ -5,7 +5,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: normal
   APT_API_URL: https://packages.cccv.de
   APT_REPO: uffd
-  PYLINT_PIN: pylint~=2.10.0
+  PYLINT_PIN: pylint~=2.16.2
 
 before_script:
   - python3 -V
