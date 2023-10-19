@@ -13,7 +13,7 @@ before_script:
   - uname -a
   - python3 -m pylint --version
   - python3 -m coverage --version
-  - echo "${CI_COMMIT_TAG}" | grep -qE "v[0-9]+[.][0-9]+[.][0-9]+.*" && export UFFD_PACKAGE_VERSION="${CI_COMMIT_TAG#v}" || export UFFD_PACKAGE_VERSION="${CI_COMMIT_SHA}"
+  - export UFFD_PACKAGE_VERSION="$(git describe | sed -E -n -e 's/^v([0-9.]*)$/\1/p' -e 's/^v([0-9.]*)-([0-9]*)-g([0-9a-z]*)$/\1.dev+git.\3/p' | grep .)"
 
 .build:
   stage: build
