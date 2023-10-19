@@ -66,7 +66,7 @@ To install uffd on Debian Bullseye, add our package mirror to `/etc/sources.list
 deb https://packages.cccv.de/uffd bullseye main
 ```
 
-Then download [cccv-archive-key.gpg](cccv-archive-key.gpg) and add it to the trusted repository keys in `/etc/apt/trusted.gpg.d/`.
+Then download [cccv-archive-key.gpg](https://packages.cccv.de/docs/cccv-archive-key.gpg) and add it to the trusted repository keys in `/etc/apt/trusted.gpg.d/`.
 Afterwards run `apt update && apt install uffd` to install the package.
 
 The Debian package uses uwsgi to run uffd and ships an `uffd-admin` script to execute flask commands in the correct context.
