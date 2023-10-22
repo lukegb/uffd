@@ -1,4 +1,4 @@
-image: registry.git.cccv.de/uffd/docker-images/buster
+image: registry.git.cccv.de/uffd/docker-images/bookworm
 
 variables:
   DEBIAN_FRONTEND: noninteractive 
@@ -13,7 +13,7 @@ before_script:
   - uname -a
   - python3 -m pylint --version
   - python3 -m coverage --version
-  - export UFFD_PACKAGE_VERSION="$(git describe | sed -E -n -e 's/^v([0-9.]*)$/\1/p' -e 's/^v([0-9.]*)-([0-9]*)-g([0-9a-z]*)$/\1.dev+git.\3/p' | grep .)"
+  - export PACKAGE_VERSION="$(git describe | sed -E -n -e 's/^v([0-9.]*)$/\1/p' -e 's/^v([0-9.]*)-([0-9]*)-g([0-9a-z]*)$/\1.dev+git.\3/p' | grep .)"
 
 .build:
   stage: build
@@ -21,7 +21,7 @@ before_script:
 build:pip:
   extends: .build
   script:
-  - PACKAGE_VERSION="${UFFD_PACKAGE_VERSION}" python3 -m build
+  - python3 -m build
   artifacts:
     paths:
       - dist/*
