@@ -38,10 +38,10 @@ def upgrade():
 		sa.Column('token', sa.String(length=128), nullable=False),
 		sa.Column('created', sa.DateTime(), nullable=False),
 		sa.Column('valid_until', sa.DateTime(), nullable=False),
-		sa.Column('single_use', sa.Boolean(name=op.f('ck_invite_single_use')), nullable=False),
-		sa.Column('allow_signup', sa.Boolean(name=op.f('ck_invite_allow_signup')), nullable=False),
-		sa.Column('used', sa.Boolean(name=op.f('ck_invite_used')), nullable=False),
-		sa.Column('disabled', sa.Boolean(name=op.f('ck_invite_disabled')), nullable=False),
+		sa.Column('single_use', sa.Boolean(create_constraint=True, name=op.f('ck_invite_single_use')), nullable=False),
+		sa.Column('allow_signup', sa.Boolean(create_constraint=True, name=op.f('ck_invite_allow_signup')), nullable=False),
+		sa.Column('used', sa.Boolean(create_constraint=True, name=op.f('ck_invite_used')), nullable=False),
+		sa.Column('disabled', sa.Boolean(create_constraint=True, name=op.f('ck_invite_disabled')), nullable=False),
 		sa.PrimaryKeyConstraint('token', name=op.f('pk_invite'))
 	)
 	with op.batch_alter_table('invite_grant', schema=None) as batch_op:
@@ -115,10 +115,10 @@ def downgrade():
 		sa.Column('token', sa.String(length=128), nullable=False),
 		sa.Column('created', sa.DateTime(), nullable=False),
 		sa.Column('valid_until', sa.DateTime(), nullable=False),
-		sa.Column('single_use', sa.Boolean(name=op.f('ck_invite_single_use')), nullable=False),
-		sa.Column('allow_signup', sa.Boolean(name=op.f('ck_invite_allow_signup')), nullable=False),
-		sa.Column('used', sa.Boolean(name=op.f('ck_invite_used')), nullable=False),
-		sa.Column('disabled', sa.Boolean(name=op.f('ck_invite_disabled')), nullable=False),
+		sa.Column('single_use', sa.Boolean(create_constraint=True, name=op.f('ck_invite_single_use')), nullable=False),
+		sa.Column('allow_signup', sa.Boolean(create_constraint=True, name=op.f('ck_invite_allow_signup')), nullable=False),
+		sa.Column('used', sa.Boolean(create_constraint=True, name=op.f('ck_invite_used')), nullable=False),
+		sa.Column('disabled', sa.Boolean(create_constraint=True, name=op.f('ck_invite_disabled')), nullable=False),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_invite')),
 		sa.UniqueConstraint('token', name=op.f('uq_invite_token'))
 	)

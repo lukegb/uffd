@@ -9,8 +9,7 @@ import hashlib
 import base64
 import urllib.parse
 # imports for recovery codes
-import crypt
-
+import crypt # pylint: disable=deprecated-module
 from flask import request, current_app
 from sqlalchemy import Column, Integer, Enum, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
@@ -29,7 +28,7 @@ class MFAType(enum.Enum):
 class MFAMethod(db.Model):
 	__tablename__ = 'mfa_method'
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	type = Column(Enum(MFAType), nullable=False)
+	type = Column(Enum(MFAType, create_constraint=True), nullable=False)
 	created = Column(DateTime(), nullable=False, default=datetime.datetime.utcnow)
 	name = Column(String(128))
 	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)

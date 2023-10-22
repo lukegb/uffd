@@ -21,10 +21,10 @@ def upgrade():
     sa.Column('token', sa.String(length=128), nullable=False),
     sa.Column('created', sa.DateTime(), nullable=False),
     sa.Column('valid_until', sa.DateTime(), nullable=False),
-    sa.Column('single_use', sa.Boolean(), nullable=False),
-    sa.Column('allow_signup', sa.Boolean(), nullable=False),
-    sa.Column('used', sa.Boolean(), nullable=False),
-    sa.Column('disabled', sa.Boolean(), nullable=False),
+    sa.Column('single_use', sa.Boolean(create_constraint=True), nullable=False),
+    sa.Column('allow_signup', sa.Boolean(create_constraint=True), nullable=False),
+    sa.Column('used', sa.Boolean(create_constraint=True), nullable=False),
+    sa.Column('disabled', sa.Boolean(create_constraint=True), nullable=False),
     sa.PrimaryKeyConstraint('token')
     )
     op.create_table('mailToken',
@@ -36,7 +36,7 @@ def upgrade():
     )
     op.create_table('mfa_method',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('type', sa.Enum('RECOVERY_CODE', 'TOTP', 'WEBAUTHN', name='mfatype'), nullable=True),
+    sa.Column('type', sa.Enum('RECOVERY_CODE', 'TOTP', 'WEBAUTHN', create_constraint=True, name='mfatype'), nullable=True),
     sa.Column('created', sa.DateTime(), nullable=True),
     sa.Column('name', sa.String(length=128), nullable=True),
     sa.Column('dn', sa.String(length=128), nullable=True),

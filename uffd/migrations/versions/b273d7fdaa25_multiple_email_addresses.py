@@ -36,7 +36,7 @@ def upgrade():
 		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
 		sa.Column('user_id', sa.Integer(), nullable=True),
 		sa.Column('address', sa.String(length=128), nullable=False),
-		sa.Column('verified', sa.Boolean(), nullable=False),
+		sa.Column('verified', sa.Boolean(create_constraint=True), nullable=False),
 		sa.Column('verification_legacy_id', sa.Integer(), nullable=True),
 		sa.Column('verification_secret', sa.Text(), nullable=True),
 		sa.Column('verification_expires', sa.DateTime(), nullable=True),
@@ -50,7 +50,7 @@ def upgrade():
 	)
 	op.execute(user_email_table.insert().from_select(
 		['user_id', 'address', 'verified'],
-		sa.select([user_table.c.id, user_table.c.mail, sa.literal(True, sa.Boolean())])
+		sa.select([user_table.c.id, user_table.c.mail, sa.literal(True, sa.Boolean(create_constraint=True))])
 	))
 	with op.batch_alter_table('user', schema=None) as batch_op:
 		batch_op.add_column(sa.Column('primary_email_id', sa.Integer(), nullable=True))
@@ -67,7 +67,7 @@ def upgrade():
 		sa.Column('primary_email_id', sa.Integer(), nullable=True),
 		sa.Column('recovery_email_id', sa.Integer(), nullable=True),
 		sa.Column('pwhash', sa.Text(), nullable=True),
-		sa.Column('is_service_user', sa.Boolean(), nullable=False),
+		sa.Column('is_service_user', sa.Boolean(create_constraint=True), nullable=False),
 		sa.ForeignKeyConstraint(['primary_email_id'], ['user_email.id'], name=op.f('fk_user_primary_email_id_user_email'), onupdate='CASCADE'),
 		sa.ForeignKeyConstraint(['recovery_email_id'], ['user_email.id'], name=op.f('fk_user_recovery_email_id_user_email'), onupdate='CASCADE', ondelete='SET NULL'),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_user')),
@@ -110,7 +110,7 @@ def downgrade():
 		sa.Column('primary_email_id', sa.Integer(), nullable=False),
 		sa.Column('recovery_email_id', sa.Integer(), nullable=True),
 		sa.Column('pwhash', sa.Text(), nullable=True),
-		sa.Column('is_service_user', sa.Boolean(), nullable=False),
+		sa.Column('is_service_user', sa.Boolean(create_constraint=True), nullable=False),
 		sa.ForeignKeyConstraint(['primary_email_id'], ['user_email.id'], name=op.f('fk_user_primary_email_id_user_email'), onupdate='CASCADE'),
 		sa.ForeignKeyConstraint(['recovery_email_id'], ['user_email.id'], name=op.f('fk_user_recovery_email_id_user_email'), onupdate='CASCADE', ondelete='SET NULL'),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_user')),

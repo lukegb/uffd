@@ -17,7 +17,7 @@ depends_on = None
 def upgrade():
 	op.create_table('device_login_initiation',
 		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-		sa.Column('type', sa.Enum('OAUTH2', name='devicelogintype'), nullable=False),
+		sa.Column('type', sa.Enum('OAUTH2', create_constraint=True, name='devicelogintype'), nullable=False),
 		sa.Column('code0', sa.String(length=32), nullable=False),
 		sa.Column('code1', sa.String(length=32), nullable=False),
 		sa.Column('secret', sa.String(length=128), nullable=False),

@@ -167,8 +167,8 @@ class User(db.Model):
 
 	_password = Column('pwhash', Text(), nullable=True)
 	password = PasswordHashAttribute('_password', LowEntropyPasswordHash)
-	is_service_user = Column(Boolean(), default=False, nullable=False)
-	is_deactivated = Column(Boolean(), default=False, nullable=False)
+	is_service_user = Column(Boolean(create_constraint=True), default=False, nullable=False)
+	is_deactivated = Column(Boolean(create_constraint=True), default=False, nullable=False)
 	groups = relationship('Group', secondary='user_groups', back_populates='members')
 	roles = relationship('Role', secondary='role_members', back_populates='members')
 
@@ -279,7 +279,7 @@ class UserEmail(db.Model):
 		return value
 
 	# True or None/NULL (not False, see constraints below)
-	_verified = Column('verified', Boolean(), nullable=True)
+	_verified = Column('verified', Boolean(create_constraint=True), nullable=True)
 
 	@hybrid_property
 	def verified(self):
@@ -302,7 +302,7 @@ class UserEmail(db.Model):
 	# on a per-row basis.
 	# True or None/NULL if disabled (not False, see constraints below)
 	enable_strict_constraints = Column(
-		Boolean(),
+		Boolean(create_constraint=True),
 		nullable=True,
 		default=db.select([db.case([(FeatureFlag.unique_email_addresses.expr, True)], else_=None)])
 	)

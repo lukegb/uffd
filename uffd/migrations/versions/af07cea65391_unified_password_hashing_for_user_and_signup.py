@@ -37,7 +37,7 @@ def upgrade():
 		sa.Column('displayname', sa.String(length=128), nullable=False),
 		sa.Column('mail', sa.String(length=128), nullable=False),
 		sa.Column('pwhash', sa.String(length=256), nullable=True),
-		sa.Column('is_service_user', sa.Boolean(), nullable=False),
+		sa.Column('is_service_user', sa.Boolean(create_constraint=True), nullable=False),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_user')),
 		sa.UniqueConstraint('loginname', name=op.f('uq_user_loginname')),
 		sa.UniqueConstraint('unix_uid', name=op.f('uq_user_unix_uid'))
@@ -71,7 +71,7 @@ def downgrade():
 		sa.Column('displayname', sa.String(length=128), nullable=False),
 		sa.Column('mail', sa.String(length=128), nullable=False),
 		sa.Column('pwhash', sa.Text(), nullable=True),
-		sa.Column('is_service_user', sa.Boolean(), nullable=False),
+		sa.Column('is_service_user', sa.Boolean(create_constraint=True), nullable=False),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_user')),
 		sa.UniqueConstraint('loginname', name=op.f('uq_user_loginname')),
 		sa.UniqueConstraint('unix_uid', name=op.f('uq_user_unix_uid'))

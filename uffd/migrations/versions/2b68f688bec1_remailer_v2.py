@@ -15,22 +15,22 @@ depends_on = None
 
 def upgrade():
 	with op.batch_alter_table('service', schema=None) as batch_op:
-		batch_op.add_column(sa.Column('remailer_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', name='remailermode'), nullable=False, server_default='DISABLED'))
+		batch_op.add_column(sa.Column('remailer_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', create_constraint=True, name='remailermode'), nullable=False, server_default='DISABLED'))
 	service = sa.table('service',
 		sa.column('id', sa.Integer),
-		sa.column('use_remailer', sa.Boolean),
-		sa.column('remailer_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', name='remailermode')),
+		sa.column('use_remailer', sa.Boolean(create_constraint=True)),
+		sa.column('remailer_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', create_constraint=True, name='remailermode')),
 	)
 	op.execute(service.update().values(remailer_mode='ENABLED_V1').where(service.c.use_remailer))
 	meta = sa.MetaData(bind=op.get_bind())
 	service = sa.Table('service', meta,
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
-    sa.Column('limit_access', sa.Boolean(), nullable=False),
+    sa.Column('limit_access', sa.Boolean(create_constraint=True), nullable=False),
     sa.Column('access_group_id', sa.Integer(), nullable=True),
-    sa.Column('use_remailer', sa.Boolean(), nullable=False),
-    sa.Column('enable_email_preferences', sa.Boolean(), nullable=False),
-    sa.Column('remailer_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', name='remailermode'), nullable=False, server_default='DISABLED'),
+    sa.Column('use_remailer', sa.Boolean(create_constraint=True), nullable=False),
+    sa.Column('enable_email_preferences', sa.Boolean(create_constraint=True), nullable=False),
+    sa.Column('remailer_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', create_constraint=True, name='remailermode'), nullable=False, server_default='DISABLED'),
     sa.ForeignKeyConstraint(['access_group_id'], ['group.id'], name=op.f('fk_service_access_group_id_group'), onupdate='CASCADE', ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_service')),
     sa.UniqueConstraint('name', name=op.f('uq_service_name'))
@@ -44,19 +44,19 @@ def downgrade():
 		batch_op.add_column(sa.Column('use_remailer', sa.BOOLEAN(), nullable=False, server_default=sa.false()))
 	service = sa.table('service',
 		sa.column('id', sa.Integer),
-		sa.column('use_remailer', sa.Boolean),
-		sa.column('remailer_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', name='remailermode')),
+		sa.column('use_remailer', sa.Boolean(create_constraint=True)),
+		sa.column('remailer_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', create_constraint=True, name='remailermode')),
 	)
 	op.execute(service.update().values(use_remailer=sa.true()).where(service.c.remailer_mode != 'DISABLED'))
 	meta = sa.MetaData(bind=op.get_bind())
 	service = sa.Table('service', meta,
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
-    sa.Column('limit_access', sa.Boolean(), nullable=False),
+    sa.Column('limit_access', sa.Boolean(create_constraint=True), nullable=False),
     sa.Column('access_group_id', sa.Integer(), nullable=True),
-    sa.Column('use_remailer', sa.Boolean(), nullable=False, server_default=sa.false()),
-    sa.Column('enable_email_preferences', sa.Boolean(), nullable=False),
-    sa.Column('remailer_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', name='remailermode'), nullable=False),
+    sa.Column('use_remailer', sa.Boolean(create_constraint=True), nullable=False, server_default=sa.false()),
+    sa.Column('enable_email_preferences', sa.Boolean(create_constraint=True), nullable=False),
+    sa.Column('remailer_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', create_constraint=True, name='remailermode'), nullable=False),
     sa.ForeignKeyConstraint(['access_group_id'], ['group.id'], name=op.f('fk_service_access_group_id_group'), onupdate='CASCADE', ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_service')),
     sa.UniqueConstraint('name', name=op.f('uq_service_name'))

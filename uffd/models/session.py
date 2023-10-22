@@ -74,7 +74,7 @@ class DeviceLoginInitiation(db.Model):
 	__tablename__ = 'device_login_initiation'
 
 	id = Column(Integer(), primary_key=True, autoincrement=True)
-	type = Column(Enum(DeviceLoginType), nullable=False)
+	type = Column(Enum(DeviceLoginType, create_constraint=True), nullable=False)
 	code0 = Column(String(32), unique=True, nullable=False, default=lambda: token_typeable(3))
 	code1 = Column(String(32), unique=True, nullable=False, default=lambda: token_typeable(3))
 	secret = Column(String(128), nullable=False, default=lambda: secrets.token_hex(64))

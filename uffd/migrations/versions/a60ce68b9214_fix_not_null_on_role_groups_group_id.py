@@ -22,7 +22,7 @@ def upgrade():
 	role_groups = sa.Table('role_groups', meta,
 		sa.Column('role_id', sa.Integer(), nullable=False),
 		sa.Column('group_id', sa.Integer(), nullable=True),
-		sa.Column('requires_mfa', sa.Boolean(), nullable=False),
+		sa.Column('requires_mfa', sa.Boolean(create_constraint=True), nullable=False),
 		sa.ForeignKeyConstraint(['group_id'], ['group.id'], name=op.f('fk_role_groups_group_id_group'), onupdate='CASCADE', ondelete='CASCADE'),
 		sa.ForeignKeyConstraint(['role_id'], ['role.id'], name=op.f('fk_role_groups_role_id_role'), onupdate='CASCADE', ondelete='CASCADE'),
 		sa.PrimaryKeyConstraint('role_id', 'group_id', name=op.f('pk_role_groups'))
@@ -35,7 +35,7 @@ def downgrade():
 	role_groups = sa.Table('role_groups', meta,
 		sa.Column('role_id', sa.Integer(), nullable=False),
 		sa.Column('group_id', sa.Integer(), nullable=False),
-		sa.Column('requires_mfa', sa.Boolean(), nullable=False),
+		sa.Column('requires_mfa', sa.Boolean(create_constraint=True), nullable=False),
 		sa.ForeignKeyConstraint(['group_id'], ['group.id'], name=op.f('fk_role_groups_group_id_group'), onupdate='CASCADE', ondelete='CASCADE'),
 		sa.ForeignKeyConstraint(['role_id'], ['role.id'], name=op.f('fk_role_groups_role_id_role'), onupdate='CASCADE', ondelete='CASCADE'),
 		sa.PrimaryKeyConstraint('role_id', 'group_id', name=op.f('pk_role_groups'))

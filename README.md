@@ -21,7 +21,7 @@ Please note that we refer to Debian packages here and **not** pip packages.
 - python3-itsdangerous (also a dependency of python3-flask)
 - python3-mysqldb or python3-pymysql for MariaDB support
 
-Some of the dependencies (especially fido2) changed their API in recent versions, so make sure to install the versions from Debian Buster or Bullseye.
+Some of the dependencies (especially fido2) changed their API in recent versions, so make sure to install the versions from Debian Bookworm, Bullseye or Buster.
 For development, you can also use virtualenv with the supplied `requirements.txt`.
 
 ## Development
@@ -57,7 +57,7 @@ The dependencies of the pip package roughly represent the versions shipped by De
 We do not keep them updated and we do not test the pip package!
 The pip package only exists for local testing/development and to help build the Debian package.
 
-We provide packages for Debian stable and oldstable (currently Bullseye and Buster).
+We provide packages for Debian stable, oldstable and oldoldstable (currently Bookworm, Bullseye and Buster).
 Since all dependencies are available in the official package mirrors, you will get security updates for everything but uffd itself from Debian.
 
 To install uffd on Debian Bullseye, add our package mirror to `/etc/sources.list`:

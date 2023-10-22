@@ -205,7 +205,7 @@ def upgrade():
 		sa.Column('displayname', sa.String(length=128), nullable=False),
 		sa.Column('mail', sa.String(length=128), nullable=False),
 		sa.Column('pwhash', sa.String(length=256), nullable=True),
-		sa.Column('is_service_user', sa.Boolean(name=op.f('ck_user_is_service_user')), nullable=False),
+		sa.Column('is_service_user', sa.Boolean(create_constraint=True, name=op.f('ck_user_is_service_user')), nullable=False),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_user')),
 		sa.UniqueConstraint('loginname', name=op.f('uq_user_loginname')),
 		sa.UniqueConstraint('unix_uid', name=op.f('uq_user_unix_uid'))
@@ -337,10 +337,10 @@ def upgrade():
 		sa.Column('creator_id', sa.Integer(), nullable=True),
 		sa.Column('creator_dn', sa.String(length=128), nullable=True),
 		sa.Column('valid_until', sa.DateTime(), nullable=False),
-		sa.Column('single_use', sa.Boolean(name=op.f('ck_invite_single_use')), nullable=False),
-		sa.Column('allow_signup', sa.Boolean(name=op.f('ck_invite_allow_signup')), nullable=False),
-		sa.Column('used', sa.Boolean(name=op.f('ck_invite_used')), nullable=False),
-		sa.Column('disabled', sa.Boolean(name=op.f('ck_invite_disabled')), nullable=False),
+		sa.Column('single_use', sa.Boolean(create_constraint=True, name=op.f('ck_invite_single_use')), nullable=False),
+		sa.Column('allow_signup', sa.Boolean(create_constraint=True, name=op.f('ck_invite_allow_signup')), nullable=False),
+		sa.Column('used', sa.Boolean(create_constraint=True, name=op.f('ck_invite_used')), nullable=False),
+		sa.Column('disabled', sa.Boolean(create_constraint=True, name=op.f('ck_invite_disabled')), nullable=False),
 		sa.ForeignKeyConstraint(['creator_id'], ['user.id'], name=op.f('fk_invite_creator_id_user'), onupdate='CASCADE'),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_invite')),
 		sa.UniqueConstraint('token', name=op.f('uq_invite_token'))
@@ -373,7 +373,7 @@ def upgrade():
 		batch_op.create_foreign_key(batch_op.f('fk_mfa_method_user_id_user'), 'user', ['user_id'], ['id'])
 	mfa_method = sa.Table('mfa_method', meta,
 		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-		sa.Column('type', sa.Enum('RECOVERY_CODE', 'TOTP', 'WEBAUTHN', name='ck_mfa_method_type'), nullable=True),
+		sa.Column('type', sa.Enum('RECOVERY_CODE', 'TOTP', 'WEBAUTHN', create_constraint=True, name='ck_mfa_method_type'), nullable=True),
 		sa.Column('created', sa.DateTime(), nullable=True),
 		sa.Column('name', sa.String(length=128), nullable=True),
 		sa.Column('user_id', sa.Integer(), nullable=True),
@@ -390,7 +390,7 @@ def upgrade():
 	with op.batch_alter_table('mfa_method', copy_from=mfa_method) as batch_op:
 		batch_op.alter_column('user_id', nullable=False, existing_type=sa.Integer())
 		batch_op.alter_column('created', existing_type=sa.DateTime(), nullable=False)
-		batch_op.alter_column('type', existing_type=sa.Enum('RECOVERY_CODE', 'TOTP', 'WEBAUTHN', name='ck_mfa_method_type'), nullable=False)
+		batch_op.alter_column('type', existing_type=sa.Enum('RECOVERY_CODE', 'TOTP', 'WEBAUTHN', create_constraint=True, name='ck_mfa_method_type'), nullable=False)
 		batch_op.drop_constraint('fk_mfa_method_user_id_user', type_='foreignkey')
 		batch_op.create_foreign_key(batch_op.f('fk_mfa_method_user_id_user'), 'user', ['user_id'], ['id'], onupdate='CASCADE', ondelete='CASCADE')
 		batch_op.drop_column('dn')
@@ -457,8 +457,8 @@ def upgrade():
 		sa.Column('description', sa.Text(), nullable=True),
 		sa.Column('moderator_group_id', sa.Integer(), nullable=True),
 		sa.Column('moderator_group_dn', sa.String(length=128), nullable=True),
-		sa.Column('locked', sa.Boolean(name=op.f('ck_role_locked')), nullable=False),
-		sa.Column('is_default', sa.Boolean(name=op.f('ck_role_is_default')), nullable=False),
+		sa.Column('locked', sa.Boolean(create_constraint=True, name=op.f('ck_role_locked')), nullable=False),
+		sa.Column('is_default', sa.Boolean(create_constraint=True, name=op.f('ck_role_is_default')), nullable=False),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_role')),
 		sa.UniqueConstraint('name', name=op.f('uq_role_name'))
 	)
@@ -630,7 +630,7 @@ def downgrade():
 		sa.Column('displayname', sa.String(length=128), nullable=False),
 		sa.Column('mail', sa.String(length=128), nullable=False),
 		sa.Column('pwhash', sa.String(length=256), nullable=True),
-		sa.Column('is_service_user', sa.Boolean(name=op.f('ck_user_is_service_user')), nullable=False),
+		sa.Column('is_service_user', sa.Boolean(create_constraint=True, name=op.f('ck_user_is_service_user')), nullable=False),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_user')),
 		sa.UniqueConstraint('loginname', name=op.f('uq_user_loginname')),
 		sa.UniqueConstraint('unix_uid', name=op.f('uq_user_unix_uid'))
@@ -742,8 +742,8 @@ def downgrade():
 		sa.Column('description', sa.Text(), nullable=True),
 		sa.Column('moderator_group_id', sa.Integer(), nullable=True),
 		sa.Column('moderator_group_dn', sa.String(length=128), nullable=True),
-		sa.Column('locked', sa.Boolean(name=op.f('ck_role_locked')), nullable=False),
-		sa.Column('is_default', sa.Boolean(name=op.f('ck_role_is_default')), nullable=False),
+		sa.Column('locked', sa.Boolean(create_constraint=True, name=op.f('ck_role_locked')), nullable=False),
+		sa.Column('is_default', sa.Boolean(create_constraint=True, name=op.f('ck_role_is_default')), nullable=False),
 		sa.ForeignKeyConstraint(['moderator_group_id'], ['group.id'], name=op.f('fk_role_moderator_group_id_group'), onupdate='CASCADE', ondelete='SET NULL'),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_role')),
 		sa.UniqueConstraint('name', name=op.f('uq_role_name'))
@@ -813,7 +813,7 @@ def downgrade():
 		batch_op.add_column(sa.Column('dn', sa.String(length=128), nullable=True))
 	mfa_method = sa.Table('mfa_method', meta,
 		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-		sa.Column('type', sa.Enum('RECOVERY_CODE', 'TOTP', 'WEBAUTHN', name='ck_mfa_method_type'), nullable=False),
+		sa.Column('type', sa.Enum('RECOVERY_CODE', 'TOTP', 'WEBAUTHN', create_constraint=True, name='ck_mfa_method_type'), nullable=False),
 		sa.Column('created', sa.DateTime(), nullable=False),
 		sa.Column('name', sa.String(length=128), nullable=True),
 		sa.Column('user_id', sa.Integer(), nullable=False),
@@ -829,7 +829,7 @@ def downgrade():
 	op.execute(mfa_method.delete().where(mfa_method.c.dn==None))
 	with op.batch_alter_table('mfa_method', copy_from=mfa_method) as batch_op:
 		batch_op.drop_constraint('fk_mfa_method_user_id_user', 'foreignkey')
-		batch_op.alter_column('type', existing_type=sa.Enum('RECOVERY_CODE', 'TOTP', 'WEBAUTHN', name='ck_mfa_method_type'), nullable=True)
+		batch_op.alter_column('type', existing_type=sa.Enum('RECOVERY_CODE', 'TOTP', 'WEBAUTHN', create_constraint=True, name='ck_mfa_method_type'), nullable=True)
 		batch_op.alter_column('created', existing_type=sa.DateTime(), nullable=True)
 		batch_op.drop_column('user_id')
 
@@ -861,10 +861,10 @@ def downgrade():
 		sa.Column('creator_id', sa.Integer(), nullable=True),
 		sa.Column('creator_dn', sa.String(length=128), nullable=True),
 		sa.Column('valid_until', sa.DateTime(), nullable=False),
-		sa.Column('single_use', sa.Boolean(name=op.f('ck_invite_single_use')), nullable=False),
-		sa.Column('allow_signup', sa.Boolean(name=op.f('ck_invite_allow_signup')), nullable=False),
-		sa.Column('used', sa.Boolean(name=op.f('ck_invite_used')), nullable=False),
-		sa.Column('disabled', sa.Boolean(name=op.f('ck_invite_disabled')), nullable=False),
+		sa.Column('single_use', sa.Boolean(create_constraint=True, name=op.f('ck_invite_single_use')), nullable=False),
+		sa.Column('allow_signup', sa.Boolean(create_constraint=True, name=op.f('ck_invite_allow_signup')), nullable=False),
+		sa.Column('used', sa.Boolean(create_constraint=True, name=op.f('ck_invite_used')), nullable=False),
+		sa.Column('disabled', sa.Boolean(create_constraint=True, name=op.f('ck_invite_disabled')), nullable=False),
 		sa.ForeignKeyConstraint(['creator_id'], ['user.id'], name=op.f('fk_invite_creator_id_user')),
 		sa.PrimaryKeyConstraint('id', name=op.f('pk_invite')),
 		sa.UniqueConstraint('token', name=op.f('uq_invite_token'))

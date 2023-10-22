@@ -26,16 +26,16 @@ class Service(db.Model):
 	# parameter meant no access restrictions. Representing this state by
 	# setting access_group_id to NULL would lead to a bad/unintuitive ondelete
 	# behaviour.
-	limit_access = Column(Boolean(), default=True, nullable=False)
+	limit_access = Column(Boolean(create_constraint=True), default=True, nullable=False)
 	access_group_id = Column(Integer(), ForeignKey('group.id', onupdate='CASCADE', ondelete='SET NULL'), nullable=True)
 	access_group = relationship('Group')
 
 	oauth2_clients = relationship('OAuth2Client', back_populates='service', cascade='all, delete-orphan')
 	api_clients = relationship('APIClient', back_populates='service', cascade='all, delete-orphan')
 
-	remailer_mode = Column(Enum(RemailerMode), default=RemailerMode.DISABLED, nullable=False)
-	enable_email_preferences = Column(Boolean(), default=False, nullable=False)
-	hide_deactivated_users = Column(Boolean(), default=False, nullable=False)
+	remailer_mode = Column(Enum(RemailerMode, create_constraint=True), default=RemailerMode.DISABLED, nullable=False)
+	enable_email_preferences = Column(Boolean(create_constraint=True), default=False, nullable=False)
+	hide_deactivated_users = Column(Boolean(create_constraint=True), default=False, nullable=False)
 
 class ServiceUser(db.Model):
 	'''Service-related configuration and state for a user
@@ -63,7 +63,7 @@ class ServiceUser(db.Model):
 	def has_email_preferences(self):
 		return self.has_access and self.service.enable_email_preferences
 
-	remailer_overwrite_mode = Column(Enum(RemailerMode), default=None, nullable=True)
+	remailer_overwrite_mode = Column(Enum(RemailerMode, create_constraint=True), default=None, nullable=True)
 
 	@property
 	def effective_remailer_mode(self):

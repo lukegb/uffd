@@ -31,7 +31,7 @@ def upgrade():
 		batch_op.drop_column('id')
 		batch_op.alter_column('dn', new_column_name='group_dn', nullable=False, existing_type=sa.String(128))
 		batch_op.alter_column('role_id', nullable=False, existing_type=sa.Integer())
-		batch_op.add_column(sa.Column('requires_mfa', sa.Boolean(name=op.f('ck_role-group_requires_mfa')), nullable=False, default=False))
+		batch_op.add_column(sa.Column('requires_mfa', sa.Boolean(create_constraint=True, name=op.f('ck_role-group_requires_mfa')), nullable=False, default=False))
 		batch_op.create_primary_key(batch_op.f('pk_role-group'), ['role_id', 'group_dn'])
 
 def downgrade():
@@ -39,7 +39,7 @@ def downgrade():
 	table = sa.Table('role-group', meta,
 		sa.Column('role_id', sa.Integer(), nullable=False),
 		sa.Column('group_dn', sa.String(128), nullable=False),
-		sa.Column('requires_mfa', sa.Boolean(name=op.f('ck_role-group_requires_mfa')), nullable=False, default=False),
+		sa.Column('requires_mfa', sa.Boolean(create_constraint=True, name=op.f('ck_role-group_requires_mfa')), nullable=False, default=False),
 		sa.ForeignKeyConstraint(['role_id'], ['role.id'], name=op.f('fk_role-group_role_id_role')),
 		sa.PrimaryKeyConstraint('role_id', 'group_dn', name=op.f('pk_role-group'))
 	)

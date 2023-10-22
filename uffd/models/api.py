@@ -14,11 +14,11 @@ class APIClient(db.Model):
 	auth_password = PasswordHashAttribute('_auth_password', HighEntropyPasswordHash)
 
 	# Permissions are defined by adding an attribute named "perm_NAME"
-	perm_users = Column(Boolean(), default=False, nullable=False)
-	perm_checkpassword = Column(Boolean(), default=False, nullable=False)
-	perm_mail_aliases = Column(Boolean(), default=False, nullable=False)
-	perm_remailer = Column(Boolean(), default=False, nullable=False)
-	perm_metrics = Column(Boolean(), default=False, nullable=False)
+	perm_users = Column(Boolean(create_constraint=True), default=False, nullable=False)
+	perm_checkpassword = Column(Boolean(create_constraint=True), default=False, nullable=False)
+	perm_mail_aliases = Column(Boolean(create_constraint=True), default=False, nullable=False)
+	perm_remailer = Column(Boolean(create_constraint=True), default=False, nullable=False)
+	perm_metrics = Column(Boolean(create_constraint=True), default=False, nullable=False)
 
 	@classmethod
 	def permission_exists(cls, name):

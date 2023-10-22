@@ -1,7 +1,7 @@
 import secrets
 import hashlib
 import base64
-from crypt import crypt
+from crypt import crypt # pylint: disable=deprecated-module
 import argon2
 
 def build_value(method_name, data):

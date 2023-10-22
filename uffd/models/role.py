@@ -11,7 +11,7 @@ class RoleGroup(db.Model):
 	role = relationship('Role', back_populates='groups')
 	group_id = Column(Integer(), ForeignKey('group.id', onupdate='CASCADE', ondelete='CASCADE'), primary_key=True)
 	group = relationship('Group')
-	requires_mfa = Column(Boolean(), default=False, nullable=False)
+	requires_mfa = Column(Boolean(create_constraint=True), default=False, nullable=False)
 
 # pylint: disable=E1101
 role_members = db.Table('role_members',
@@ -99,9 +99,9 @@ class Role(db.Model):
 	# Roles that are managed externally (e.g. by Ansible) can be locked to
 	# prevent accidental editing of name, moderator group, included roles
 	# and groups as well as deletion in the web interface.
-	locked = Column(Boolean(), default=False, nullable=False)
+	locked = Column(Boolean(create_constraint=True), default=False, nullable=False)
 
-	is_default = Column(Boolean(), default=False, nullable=False)
+	is_default = Column(Boolean(create_constraint=True), default=False, nullable=False)
 
 	@property
 	def members_effective(self):

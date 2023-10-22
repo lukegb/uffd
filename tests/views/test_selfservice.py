@@ -21,25 +21,23 @@ class TestSelfservice(UffdTestCase):
 
 	def test_update_displayname(self):
 		self.login_as('user')
-		user = request.user
 		r = self.client.post(path=url_for('selfservice.update_profile'),
 			data={'displayname': 'New Display Name'},
 			follow_redirects=True)
 		dump('update_displayname', r)
 		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertEqual(_user.displayname, 'New Display Name')
+		user = self.get_user()
+		self.assertEqual(user.displayname, 'New Display Name')
 
 	def test_update_displayname_invalid(self):
 		self.login_as('user')
-		user = request.user
 		r = self.client.post(path=url_for('selfservice.update_profile'),
 			data={'displayname': ''},
 			follow_redirects=True)
 		dump('update_displayname_invalid', r)
 		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertNotEqual(_user.displayname, '')
+		user = self.get_user()
+		self.assertNotEqual(user.displayname, '')
 
 	def test_add_email(self):
 		self.login_as('user')
@@ -52,7 +50,7 @@ class TestSelfservice(UffdTestCase):
 		m = re.search(r'/email/([0-9]+)/verify/(.*)', str(self.app.last_mail.get_content()))
 		email_id, secret = m.groups()
 		email = UserEmail.query.get(email_id)
-		self.assertEqual(email.user, request.user)
+		self.assertEqual(email.user.id, request.user.id)
 		self.assertEqual(email.address, 'new@example.com')
 		self.assertFalse(email.verified)
 		self.assertFalse(email.verification_expired)
@@ -164,7 +162,7 @@ class TestSelfservice(UffdTestCase):
 		m = re.search(r'/email/([0-9]+)/verify/(.*)', str(self.app.last_mail.get_content()))
 		email_id, secret = m.groups()
 		email = UserEmail.query.get(email_id)
-		self.assertEqual(email.user, request.user)
+		self.assertEqual(email.user.id, request.user.id)
 		self.assertEqual(email.address, 'new@example.com')
 		self.assertFalse(email.verified)
 		self.assertFalse(email.verification_expired)
@@ -245,17 +243,20 @@ class TestSelfservice(UffdTestCase):
 			r = self.client.post(path=url_for('selfservice.update_email_preferences'),
 				data={'primary_email': str(email_id), 'recovery_email': 'primary'},
 				follow_redirects=True)
-		self.assertEqual(self.get_user().primary_email.address, 'test@example.com')
+		with self.app.test_request_context():
+			self.assertEqual(self.get_user().primary_email.address, 'test@example.com')
 		with self.assertRaises(Exception):
 			r = self.client.post(path=url_for('selfservice.update_email_preferences'),
 				data={'primary_email': str(old_email_id), 'recovery_email': str(email_id)},
 				follow_redirects=True)
-		self.assertIsNone(self.get_user().recovery_email)
+		with self.app.test_request_context():
+			self.assertIsNone(self.get_user().recovery_email)
 		with self.assertRaises(Exception):
 			r = self.client.post(path=url_for('selfservice.update_email_preferences'),
 				data={'primary_email': str(old_email_id), 'recovery_email': 'primary', f'service_{service_id}_email': str(email_id)},
 				follow_redirects=True)
-		self.assertIsNone(ServiceUser.query.get((service_id, user_id)).service_email)
+		with self.app.test_request_context():
+			self.assertIsNone(ServiceUser.query.get((service_id, user_id)).service_email)
 
 	def test_update_email_preferences_invalid(self):
 		self.login_as('user')
@@ -284,52 +285,47 @@ class TestSelfservice(UffdTestCase):
 
 	def test_change_password(self):
 		self.login_as('user')
-		user = request.user
 		r = self.client.post(path=url_for('selfservice.change_password'),
 			data={'password1': 'newpassword', 'password2': 'newpassword'},
 			follow_redirects=True)
 		dump('change_password', r)
 		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertTrue(_user.password.verify('newpassword'))
+		self.assertTrue(self.get_user().password.verify('newpassword'))
 
 	def test_change_password_invalid(self):
 		self.login_as('user')
-		user = request.user
 		r = self.client.post(path=url_for('selfservice.change_password'),
 			data={'password1': 'shortpw', 'password2': 'shortpw'},
 			follow_redirects=True)
 		dump('change_password_invalid', r)
 		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertFalse(_user.password.verify('shortpw'))
-		self.assertTrue(_user.password.verify('userpassword'))
+		user = self.get_user()
+		self.assertFalse(user.password.verify('shortpw'))
+		self.assertTrue(user.password.verify('userpassword'))
 
 	# Regression test for #100 (login not possible if password contains character disallowed by SASLprep)
 	def test_change_password_samlprep_invalid(self):
 		self.login_as('user')
-		user = request.user
 		r = self.client.post(path=url_for('selfservice.change_password'),
 			data={'password1': 'shortpw\n', 'password2': 'shortpw\n'},
 			follow_redirects=True)
 		dump('change_password_samlprep_invalid', r)
 		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertFalse(_user.password.verify('shortpw\n'))
-		self.assertTrue(_user.password.verify('userpassword'))
+		user = self.get_user()
+		self.assertFalse(user.password.verify('shortpw\n'))
+		self.assertTrue(user.password.verify('userpassword'))
 
 	def test_change_password_mismatch(self):
 		self.login_as('user')
-		user = request.user
 		r = self.client.post(path=url_for('selfservice.change_password'),
 			data={'password1': 'newpassword1', 'password2': 'newpassword2'},
 			follow_redirects=True)
 		dump('change_password_mismatch', r)
 		self.assertEqual(r.status_code, 200)
-		_user = request.user
-		self.assertFalse(_user.password.verify('newpassword1'))
-		self.assertFalse(_user.password.verify('newpassword2'))
-		self.assertTrue(_user.password.verify('userpassword'))
+		user = self.get_user()
+		self.assertFalse(user.password.verify('newpassword1'))
+		self.assertFalse(user.password.verify('newpassword2'))
+		self.assertTrue(user.password.verify('userpassword'))
 
 	def test_leave_role(self):
 		baserole = Role(name='baserole', is_default=True)

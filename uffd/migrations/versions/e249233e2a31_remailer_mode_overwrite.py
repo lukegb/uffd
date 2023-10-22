@@ -26,14 +26,14 @@ def upgrade():
 		sa.PrimaryKeyConstraint('service_id', 'user_id', name=op.f('pk_service_user'))
 	)
 	with op.batch_alter_table('service_user', copy_from=service_user) as batch_op:
-		batch_op.add_column(sa.Column('remailer_overwrite_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', name='remailermode'), nullable=True))
+		batch_op.add_column(sa.Column('remailer_overwrite_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', create_constraint=True, name='remailermode'), nullable=True))
 
 def downgrade():
 	meta = sa.MetaData(bind=op.get_bind())
 	service_user = sa.Table('service_user', meta,
 		sa.Column('service_id', sa.Integer(), nullable=False),
 		sa.Column('user_id', sa.Integer(), nullable=False),
-		sa.Column('remailer_overwrite_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', name='remailermode'), nullable=True),
+		sa.Column('remailer_overwrite_mode', sa.Enum('DISABLED', 'ENABLED_V1', 'ENABLED_V2', create_constraint=True, name='remailermode'), nullable=True),
 		sa.Column('service_email_id', sa.Integer(), nullable=True),
 		sa.ForeignKeyConstraint(['service_email_id'], ['user_email.id'], name=op.f('fk_service_user_service_email_id_user_email'), onupdate='CASCADE', ondelete='SET NULL'),
 		sa.ForeignKeyConstraint(['service_id'], ['service.id'], name=op.f('fk_service_user_service_id_service'), onupdate='CASCADE', ondelete='CASCADE'),

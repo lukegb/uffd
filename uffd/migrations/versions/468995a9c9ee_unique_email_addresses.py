@@ -37,16 +37,16 @@ def iter_rows_paged(table, pk='id', limit=1000):
 def upgrade():
 	with op.batch_alter_table('user_email', schema=None) as batch_op:
 		batch_op.add_column(sa.Column('address_normalized', sa.String(length=128), nullable=True))
-		batch_op.add_column(sa.Column('enable_strict_constraints', sa.Boolean(), nullable=True))
-		batch_op.alter_column('verified', existing_type=sa.Boolean(), nullable=True)
+		batch_op.add_column(sa.Column('enable_strict_constraints', sa.Boolean(create_constraint=True), nullable=True))
+		batch_op.alter_column('verified', existing_type=sa.Boolean(create_constraint=True), nullable=True)
 	meta = sa.MetaData(bind=op.get_bind())
 	user_email_table = sa.Table('user_email', meta,
 		sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
 		sa.Column('user_id', sa.Integer(), nullable=True),
 		sa.Column('address', sa.String(length=128), nullable=False),
 		sa.Column('address_normalized', sa.String(length=128), nullable=True),
-		sa.Column('enable_strict_constraints', sa.Boolean(), nullable=True),
-		sa.Column('verified', sa.Boolean(), nullable=True),
+		sa.Column('enable_strict_constraints', sa.Boolean(create_constraint=True), nullable=True),
+		sa.Column('verified', sa.Boolean(create_constraint=True), nullable=True),
 		sa.Column('verification_legacy_id', sa.Integer(), nullable=True),
 		sa.Column('verification_secret', sa.Text(), nullable=True),
 		sa.Column('verification_expires', sa.DateTime(), nullable=True),
@@ -81,8 +81,8 @@ def downgrade():
 		sa.Column('user_id', sa.Integer(), nullable=True),
 		sa.Column('address', sa.String(length=128), nullable=False),
 		sa.Column('address_normalized', sa.String(length=128), nullable=False),
-		sa.Column('enable_strict_constraints', sa.Boolean(), nullable=True),
-		sa.Column('verified', sa.Boolean(), nullable=True),
+		sa.Column('enable_strict_constraints', sa.Boolean(create_constraint=True), nullable=True),
+		sa.Column('verified', sa.Boolean(create_constraint=True), nullable=True),
 		sa.Column('verification_legacy_id', sa.Integer(), nullable=True),
 		sa.Column('verification_secret', sa.Text(), nullable=True),
 		sa.Column('verification_expires', sa.DateTime(), nullable=True),
@@ -96,7 +96,7 @@ def downgrade():
 	with op.batch_alter_table('user_email', copy_from=user_email_table) as batch_op:
 		batch_op.drop_constraint('uq_user_email_user_id_address_normalized', type_='unique')
 		batch_op.drop_constraint('uq_user_email_address_normalized_verified', type_='unique')
-		batch_op.alter_column('verified', existing_type=sa.Boolean(), nullable=False)
+		batch_op.alter_column('verified', existing_type=sa.Boolean(create_constraint=True), nullable=False)
 		batch_op.drop_column('enable_strict_constraints')
 		batch_op.drop_column('address_normalized')
 	op.drop_table('feature_flag')
