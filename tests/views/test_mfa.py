@@ -296,6 +296,29 @@ class TestMfaViews(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		self.assertIsNotNone(request.user)
 
+	def test_auth_totp_code_reuse(self):
+		self.add_recovery_codes()
+		self.add_totp()
+		method = TOTPMethod(user=self.get_user(), name='testname')
+		raw_key = method.raw_key
+		db.session.add(method)
+		db.session.commit()
+		self.login_as('user')
+		r = self.client.get(path=url_for('mfa.auth'), follow_redirects=False)
+		self.assertEqual(r.status_code, 200)
+		self.assertIsNone(request.user)
+		code = _hotp(int(time.time()/30), raw_key)
+		r = self.client.post(path=url_for('mfa.auth_finish'), data={'code': code}, follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertIsNotNone(request.user)
+		self.login_as('user')
+		r = self.client.get(path=url_for('mfa.auth'), follow_redirects=False)
+		self.assertEqual(r.status_code, 200)
+		self.assertIsNone(request.user)
+		r = self.client.post(path=url_for('mfa.auth_finish'), data={'code': code}, follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		self.assertIsNone(request.user)
+
 	def test_auth_empty_code(self):
 		self.add_recovery_codes()
 		self.add_totp()

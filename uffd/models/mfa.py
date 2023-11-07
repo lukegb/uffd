@@ -79,6 +79,7 @@ def _hotp(counter, key, digits=6):
 
 class TOTPMethod(MFAMethod):
 	key = Column('totp_key', String(64))
+	last_counter = Column('totp_last_counter', Integer())
 	user = relationship('User', backref='mfa_totp_methods')
 
 	__mapper_args__ = {
@@ -120,10 +121,13 @@ class TOTPMethod(MFAMethod):
 		:param code: String of digits (as entered by the user)
 
 		:returns: True if code is valid, False otherwise'''
-		counter = int(time.time()/30)
-		for valid_code in [_hotp(counter-1, self.raw_key), _hotp(counter, self.raw_key)]:
-			if secrets.compare_digest(code, valid_code):
-				return True
+		current_counter = int(time.time()/30)
+		for counter in (current_counter - 1, current_counter):
+			if counter > (self.last_counter or 0):
+				valid_code = _hotp(counter, self.raw_key)
+				if secrets.compare_digest(code, valid_code):
+					self.last_counter = counter
+					return True
 		return False
 
 class WebauthnMethod(MFAMethod):

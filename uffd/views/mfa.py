@@ -215,6 +215,7 @@ def auth_finish():
 		return redirect(url_for('mfa.auth', ref=request.values.get('ref')))
 	for method in request.user_pre_mfa.mfa_totp_methods:
 		if method.verify(request.form['code']):
+			db.session.commit()
 			session['user_mfa'] = True
 			set_request_user()
 			return secure_local_redirect(request.values.get('ref', url_for('index')))

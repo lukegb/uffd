@@ -82,6 +82,15 @@ class TestMfaMethodModels(UffdTestCase):
 		self.assertTrue(method.verify(_hotp(counter, method.raw_key)))
 		self.assertFalse(method.verify(_hotp(counter+2, method.raw_key)))
 
+	def test_totp_method_verify_reuse(self):
+		method = TOTPMethod(user=self.get_user())
+		counter = int(time.time()/30)
+		self.assertFalse(method.verify(_hotp(counter-2, method.raw_key)))
+		self.assertTrue(method.verify(_hotp(counter-1, method.raw_key)))
+		self.assertTrue(method.verify(_hotp(counter, method.raw_key)))
+		self.assertFalse(method.verify(_hotp(counter-1, method.raw_key)))
+		self.assertFalse(method.verify(_hotp(counter, method.raw_key)))
+
 	def test_webauthn_method(self):
 		data = get_fido2_test_cred(self)
 		method = WebauthnMethod(user=self.get_user(), cred=data, name='testname')
