@@ -192,6 +192,19 @@ class TestViews(UffdTestCase):
 			data={'grant_type': 'authorization_code', 'code': 'abcdef', 'redirect_uri': 'http://localhost:5009/callback', 'client_id': 'test', 'client_secret': 'testsecret'}, follow_redirects=True)
 		self.assertIn(r.status_code, [400, 401]) # oauthlib behaviour changed between v2.1.0 and v3.1.0
 		self.assertEqual(r.content_type, 'application/json')
+		self.assertEqual(r.json['error'], 'invalid_grant')
+
+	def test_token_code_invalidation(self):
+		code = self.get_auth_code()
+		r = self.client.post(path=url_for('oauth2.token'),
+			data={'grant_type': 'authorization_code', 'code': code, 'redirect_uri': 'http://localhost:5009/callback'},
+			headers={'Authorization': f'Basic dGVzdDp0ZXN0c2VjcmV0'}, follow_redirects=True)
+		self.assertEqual(r.status_code, 200)
+		r = self.client.post(path=url_for('oauth2.token'),
+			data={'grant_type': 'authorization_code', 'code': code, 'redirect_uri': 'http://localhost:5009/callback'},
+			headers={'Authorization': f'Basic dGVzdDp0ZXN0c2VjcmV0'}, follow_redirects=True)
+		self.assertIn(r.status_code, [400, 401]) # oauthlib behaviour changed between v2.1.0 and v3.1.0
+		self.assertEqual(r.json['error'], 'invalid_grant')
 
 	def test_token_invalid_client(self):
 		r = self.client.post(path=url_for('oauth2.token'),

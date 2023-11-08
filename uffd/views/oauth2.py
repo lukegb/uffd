@@ -92,7 +92,15 @@ class UffdRequestValidator(oauthlib.oauth2.RequestValidator):
 		return True
 
 	def invalidate_authorization_code(self, client_id, code, oauthreq, *args, **kwargs):
-		OAuth2Grant.query.filter_by(client=oauthreq.client, code=code).delete()
+		if '-' not in code:
+			return
+		grant_id, grant_code = code.split('-', 2)
+		grant = OAuth2Grant.query.get(grant_id)
+		if not grant or grant.client != oauthreq.client:
+			return
+		if not secrets.compare_digest(grant.code, grant_code):
+			return
+		db.session.delete(grant)
 		db.session.commit()
 
 	def save_bearer_token(self, token_data, oauthreq, *args, **kwargs):
