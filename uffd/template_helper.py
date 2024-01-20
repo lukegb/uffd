@@ -15,13 +15,18 @@ def register_template_helper(app):
 
 	@app.template_filter()
 	def qrcode_svg(content, **attrs): #pylint: disable=unused-variable
-		img = qrcode.make(content, image_factory=qrcode.image.svg.SvgPathImage, border=0)
+		img = qrcode.make(content, image_factory=qrcode.image.svg.SvgPathImage, border=4)
 		svg = img.get_image()
 		for key, value, in attrs.items():
 			svg.set(key, value)
 		buf = io.BytesIO()
 		img.save(buf)
-		return Markup(buf.getvalue().decode().replace('<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n', '').replace(' id="qr-path" ', ' '))
+		return Markup(
+			buf.getvalue().decode()
+			.replace('<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n', '')
+			.replace(' id="qr-path" ', ' ')
+			.replace('<svg ', '<svg class="qrcode" ')
+		)
 
 	@app.template_filter()
 	def datauri(data, mimetype='text/plain'): #pylint: disable=unused-variable
