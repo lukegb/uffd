@@ -46,9 +46,10 @@ def init_config(app: Flask, test_config):
 			if load_config_file(app, os.path.join(app.instance_path, filename), silent=True):
 				break
 
-	if app.env == "production" and app.secret_key is None:
-		raise Exception("SECRET_KEY not configured and we are running in production mode!")
-	app.config.setdefault("SECRET_KEY", secrets.token_hex(128))
+	if app.secret_key is None:
+		if app.env == "production":
+			raise Exception("SECRET_KEY not configured and we are running in production mode!")
+		app.secret_key = secrets.token_hex(128)
 
 def create_app(test_config=None): # pylint: disable=too-many-locals,too-many-statements
 	app = Flask(__name__, instance_relative_config=False)
