@@ -18,6 +18,9 @@ from uffd.utils import nopad_b32decode, nopad_b32encode
 from uffd.database import db
 from .user import User
 
+User.mfa_recovery_codes = relationship('RecoveryCodeMethod', viewonly=True)
+User.mfa_totp_methods = relationship('TOTPMethod', viewonly=True)
+User.mfa_webauthn_methods = relationship('WebauthnMethod', viewonly=True)
 User.mfa_enabled = property(lambda user: bool(user.mfa_totp_methods or user.mfa_webauthn_methods))
 
 class MFAType(enum.Enum):
@@ -46,7 +49,6 @@ class MFAMethod(db.Model):
 class RecoveryCodeMethod(MFAMethod):
 	code_salt = Column('recovery_salt', String(64))
 	code_hash = Column('recovery_hash', String(256))
-	user = relationship('User', backref='mfa_recovery_codes')
 
 	__mapper_args__ = {
 		'polymorphic_identity': MFAType.RECOVERY_CODE
@@ -80,7 +82,6 @@ def _hotp(counter, key, digits=6):
 class TOTPMethod(MFAMethod):
 	key = Column('totp_key', String(64))
 	last_counter = Column('totp_last_counter', Integer())
-	user = relationship('User', backref='mfa_totp_methods')
 
 	__mapper_args__ = {
 		'polymorphic_identity': MFAType.TOTP
@@ -132,7 +133,6 @@ class TOTPMethod(MFAMethod):
 
 class WebauthnMethod(MFAMethod):
 	_cred = Column('webauthn_cred', Text())
-	user = relationship('User', backref='mfa_webauthn_methods')
 
 	__mapper_args__ = {
 		'polymorphic_identity': MFAType.WEBAUTHN

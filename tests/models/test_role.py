@@ -57,6 +57,7 @@ class TestUserRoleAttributes(UffdTestCase):
 		role2.groups[group2].requires_mfa = True
 		self.assertSetEqual(user.compute_groups(), {group1})
 		db.session.add(TOTPMethod(user=user))
+		db.session.commit()
 		self.assertSetEqual(user.compute_groups(), {group1, group2})
 
 	def test_update_groups(self):
