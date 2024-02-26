@@ -1,7 +1,7 @@
 {% extends 'base_narrow.html' %}
 
 {% block body %}
-<form action="{{ url_for("mfa.auth_finish", ref=ref) }}" method="POST">
+<form action="{{ url_for("mfa.auth_finish", ref=ref) }}" method="POST" autocomplete="off">
 	<div class="col-12 mb-3">
 		<h2 class="text-center">{{_("Two-Factor Authentication")}}</h2>
 	</div>
@@ -24,7 +24,7 @@
 	<div class="text-center text-muted d-none webauthn-group mb-3">- {{_("or")}} -</div>
 	{% endif %}
 	<div class="form-group col-12 mb-2">
-		<input type="text" class="form-control" id="mfa-code" name="code" required="required" placeholder="{{_("Code from your authenticator app or recovery code")}}" autocomplete="off" autofocus>
+		<input type="text" class="form-control" id="mfa-code" name="code" required="required" placeholder="{{_("Code from your authenticator app or recovery code")}}" autofocus>
 	</div>
 	<div class="form-group col-12">
 		<button type="submit" class="btn btn-primary btn-block">{{_("Verify")}}</button>

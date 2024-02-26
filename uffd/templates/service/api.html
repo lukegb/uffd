@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="row">
-	<form action="{{ url_for('service.api_submit', service_id=service.id, id=client.id) }}" method="POST" class="form col-12 px-0">
+	<form action="{{ url_for('service.api_submit', service_id=service.id, id=client.id) }}" method="POST" autocomplete="off" class="form col-12 px-0">
 
 		<div class="form-group col">
 			<p class="text-right">
@@ -24,9 +24,9 @@
 		<div class="form-group col">
 			<label for="client-auth-password">{{ _('Authentication Password') }}</label>
 			{% if client.id %}
-			<input type="password" class="form-control" id="client-auth-password" name="auth_password" placeholder="●●●●●●●●">
+			<input type="password" autocomplete="new-password" class="form-control" id="client-auth-password" name="auth_password" placeholder="●●●●●●●●">
 			{% else %}
-			<input type="password" class="form-control" id="client-auth-password" name="auth_password" required>
+			<input type="password" autocomplete="new-password" class="form-control" id="client-auth-password" name="auth_password" required>
 			{% endif %}
 		</div>
 

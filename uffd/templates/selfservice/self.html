@@ -41,7 +41,7 @@
     <form method="POST" action="{{ url_for('selfservice.add_email') }}" class="form mb-2">
       <div class="row m-0">
         <label class="sr-only" for="new-email-address">{{_("Email")}}</label>
-        <input type="text" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 20em;" id="new-email-address" name="address" placeholder="{{_("New E-Mail Address")}}" required>
+        <input type="email" autocomplete="email" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 20em;" id="new-email-address" name="address" placeholder="{{_("New E-Mail Address")}}" required>
         <button type="submit" class="btn btn-primary mb-2 col">{{_("Add address")}}</button>
       </div>
     </form>
@@ -139,13 +139,13 @@
 	<div class="col-12 col-md-7">
 		<form class="form" action="{{ url_for("selfservice.change_password") }}" method="POST">
 			<div class="form-group">
-				<input type="password" class="form-control" id="user-password1" name="password1" placeholder="{{_("New Password")}}" minlength={{ User.PASSWORD_MINLEN }} maxlength={{ User.PASSWORD_MAXLEN }} pattern="{{ User.PASSWORD_REGEX }}" required>
+				<input type="password" autocomplete="new-password" class="form-control" id="user-password1" name="password1" placeholder="{{_("New Password")}}" minlength={{ User.PASSWORD_MINLEN }} maxlength={{ User.PASSWORD_MAXLEN }} pattern="{{ User.PASSWORD_REGEX }}" required>
 				<small class="form-text text-muted">
 					{{ User.PASSWORD_DESCRIPTION|safe }}
 				</small>
 			</div>
 			<div class="form-group">
-				<input type="password" class="form-control" id="user-password2" name="password2" placeholder="{{_("Repeat Password")}}" required>
+				<input type="password" autocomplete="new-password" class="form-control" id="user-password2" name="password2" placeholder="{{_("Repeat Password")}}" required>
 			</div>
 			<button type="submit" class="btn btn-primary btn-block">{{_("Change Password")}}</button>
 		</form>

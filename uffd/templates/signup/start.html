@@ -8,7 +8,7 @@
 	<div class="form-group col-12">
 		<label for="user-loginname">{{_('Login Name')}}</label>
 		<div class="js-only-input-group">
-			<input type="text" class="form-control" id="user-loginname" name="loginname" aria-describedby="loginname-feedback" value="{{ request.form.loginname }}" minlength=1 maxlength=32 pattern="[a-z0-9_-]*" required>
+			<input type="text" autocomplete="username" class="form-control" id="user-loginname" name="loginname" aria-describedby="loginname-feedback" value="{{ request.form.loginname }}" minlength=1 maxlength=32 pattern="[a-z0-9_-]*" required>
 			<div class="js-only-input-group-append d-none">
 				<button class="btn btn-outline-secondary rounded-right" type="button" id="check-loginname">{{_('Check')}}</button>
 			</div>
@@ -20,28 +20,28 @@
 	</div>
 	<div class="form-group col-12">
 		<label for="user-displayname">{{_('Display Name')}}</label>
-		<input type="text" class="form-control" id="user-displayname" name="displayname" value="{{ request.form.displayname }}" minlength=1 maxlength=128 required>
+		<input type="text" autocomplete="nickname" class="form-control" id="user-displayname" name="displayname" value="{{ request.form.displayname }}" minlength=1 maxlength=128 required>
 		<small class="form-text text-muted">
 			{{_('At least one and at most 128 characters, no other special requirements.')}}
 		</small>
 	</div>
 	<div class="form-group col-12">
 		<label for="user-mail">{{_('E-Mail Address')}}</label>
-		<input type="email" class="form-control" id="user-mail" name="mail" value="{{ request.form.mail }}" required>
+		<input type="email" autocomplete="email" class="form-control" id="user-mail" name="mail" value="{{ request.form.mail }}" required>
 		<small class="form-text text-muted">
 			{{_('We will send a confirmation mail to this address that you need to complete the registration.')}}
 		</small>
 	</div>
 	<div class="form-group col-12">
 		<label for="user-password1">{{_('Password')}}</label>
-		<input type="password" class="form-control" id="user-password1" name="password1" minlength={{ User.PASSWORD_MINLEN }} maxlength={{ User.PASSWORD_MAXLEN }} pattern="{{ User.PASSWORD_REGEX }}" required>
+		<input type="password" autocomplete="new-password" class="form-control" id="user-password1" name="password1" minlength={{ User.PASSWORD_MINLEN }} maxlength={{ User.PASSWORD_MAXLEN }} pattern="{{ User.PASSWORD_REGEX }}" required>
 		<small class="form-text text-muted">
 			{{ User.PASSWORD_DESCRIPTION|safe }}
 		</small>
 	</div>
 	<div class="form-group col-12">
 		<label for="user-password2">{{_('Repeat Password')}}</label>
-		<input type="password" class="form-control" id="user-password2" name="password2" required>
+		<input type="password" autocomplete="new-password" class="form-control" id="user-password2" name="password2" required>
 	</div>
 	<div class="form-group col-12">
 		<button type="submit" class="btn btn-primary btn-block">{{_('Create Account')}}</button>

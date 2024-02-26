@@ -93,7 +93,7 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 	</div>
 
 	<div class="col-12 col-md-7">
-		<form class="form mb-2" action="{{ url_for('mfa.setup_totp') }}">
+		<form class="form mb-2" action="{{ url_for('mfa.setup_totp') }}" autocomplete="off">
 			<div class="row m-0">
 				<label class="sr-only" for="totp-name">{{_("Name")}}</label>
 				<input type="text" name="name" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="totp-name" placeholder="{{_("Name")}}" required {{ 'disabled' if mfa_init }}>
@@ -152,7 +152,7 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 			</div>
 		</noscript>
 		<div id="webauthn-alert" class="alert alert-warning d-none" role="alert"></div>
-		<form id="webauthn-form" class="form mb-2">
+		<form id="webauthn-form" autocomplete="off" class="form mb-2">
 			<div class="row m-0">
 				<label class="sr-only" for="webauthn-name">{{_("Name")}}</label>
 				<input type="text" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="webauthn-name" placeholder="{{_("Name")}}" required disabled>

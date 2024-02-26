@@ -17,9 +17,9 @@
 
 {% block body %}
 {% if user.id %}
-<form action="{{ url_for("user.update", id=user.id) }}" method="POST">
+<form action="{{ url_for("user.update", id=user.id) }}" method="POST" autocomplete="off">
 {% else %}
-<form action="{{ url_for("user.create") }}" method="POST">
+<form action="{{ url_for("user.create") }}" method="POST" autocomplete="off">
 {% endif %}
 <div class="align-self-center">
 	{% if user.id and user.is_deactivated %}
@@ -174,9 +174,9 @@
 			<div class="form-group col">
 				<label for="user-loginname">{{_("Password")}}</label>
 				{% if user.id %}
-				<input type="password" class="form-control" id="user-password" name="password" placeholder="●●●●●●●●" minlength={{ User.PASSWORD_MINLEN }} maxlength={{ User.PASSWORD_MAXLEN }} pattern="{{ User.PASSWORD_REGEX }}">
+				<input type="password" autocomplete="new-password" class="form-control" id="user-password" name="password" placeholder="●●●●●●●●" minlength={{ User.PASSWORD_MINLEN }} maxlength={{ User.PASSWORD_MAXLEN }} pattern="{{ User.PASSWORD_REGEX }}">
 				{% else %}
-				<input type="password" class="form-control" id="user-password" name="password" placeholder="{{_("E-Mail to set it will be sent")}}" readonly>
+				<input type="text" class="form-control" id="user-password" name="password" placeholder="{{_("E-Mail to set it will be sent")}}" readonly>
 				{% endif %}
 				<small class="form-text text-muted">
 					{{ User.PASSWORD_DESCRIPTION|safe }}

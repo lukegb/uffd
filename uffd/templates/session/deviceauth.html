@@ -2,11 +2,11 @@
 
 {% block body %}
 {% if not initiation %}
-<form action="{{ url_for("session.deviceauth") }}">
+<form action="{{ url_for("session.deviceauth") }}" autocomplete="off">
 {% elif not confirmation %}
-<form action="{{ url_for("session.deviceauth_submit") }}" method="POST">
+<form action="{{ url_for("session.deviceauth_submit") }}" method="POST" autocomplete="off">
 {% else %}
-<form action="{{ url_for("session.deviceauth_finish") }}" method="POST">
+<form action="{{ url_for("session.deviceauth_finish") }}" method="POST" autocomplete="off">
 {% endif %}
 	<div class="col-12">
 		<h2 class="text-center">{{_('Authorize Device Login')}}</h2>

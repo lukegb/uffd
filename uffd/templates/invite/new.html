@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<form action="{{ url_for("invite.new_submit") }}" method="POST" class="form">
+<form action="{{ url_for("invite.new_submit") }}" method="POST" autocomplete="off" class="form">
 	<div class="form-group">
 		<label for="single-use">{{_('Link Type')}}</label>
 		<select class="form-control" id="single-use" name="single-use">

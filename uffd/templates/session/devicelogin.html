@@ -1,7 +1,7 @@
 {% extends 'base_narrow.html' %}
 
 {% block body %}
-<form action="{{ url_for("session.devicelogin_submit", ref=ref) }}" method="POST">
+<form action="{{ url_for("session.devicelogin_submit", ref=ref) }}" method="POST" autocomplete="off">
 	<div class="col-12">
 		<h2 class="text-center">{{_('Device Login')}}</h2>
 	</div>

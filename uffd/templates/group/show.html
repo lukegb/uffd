@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<form action="{{ url_for("group.update", id=group.id) }}" method="POST">
+<form action="{{ url_for("group.update", id=group.id) }}" method="POST" autocomplete="off">
 <div class="align-self-center">
 	<div class="clearfix pb-2 col">
 		<div class="float-sm-right">

@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="row">
-	<form action="{{ url_for('service.oauth2_submit', service_id=service.id, db_id=client.db_id) }}" method="POST" class="form col-12 px-0">
+	<form action="{{ url_for('service.oauth2_submit', service_id=service.id, db_id=client.db_id) }}" method="POST" autocomplete="off" class="form col-12 px-0">
 
 		<div class="form-group col">
 			<p class="text-right">
@@ -24,9 +24,9 @@
 		<div class="form-group col">
 			<label for="client-client-secret">{{ _('Client Secret') }}</label>
 			{% if client.db_id %}
-			<input type="password" class="form-control" id="client-client-secret" name="client_secret" placeholder="●●●●●●●●">
+			<input type="password" autocomplete="new-password" class="form-control" id="client-client-secret" name="client_secret" placeholder="●●●●●●●●">
 			{% else %}
-			<input type="password" class="form-control" id="client-client-secret" name="client_secret" required>
+			<input type="password" autocomplete="new-password" class="form-control" id="client-client-secret" name="client_secret" required>
 			{% endif %}
 		</div>
 
