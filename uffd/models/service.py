@@ -178,7 +178,7 @@ def create_service_users(session, flush_context): # pylint: disable=unused-argum
 		return
 	db.session.execute(db.insert(ServiceUser).from_select(
 		['service_id', 'user_id'],
-		db.select([Service.id, User.id]).where(db.or_(
+		db.select([Service.id, User.id]).select_from(db.join(Service, User, db.true())).where(db.or_(
 			Service.id.in_(new_service_ids),
 			User.id.in_(new_user_ids),
 		))
@@ -193,7 +193,7 @@ def create_missing_service_users():
 	# pylint: disable=no-member
 	db.session.execute(db.insert(ServiceUser).from_select(
 		['service_id', 'user_id'],
-		db.select([Service.id, User.id]).where(db.not_(
+		db.select([Service.id, User.id]).select_from(db.join(Service, User, db.true())).where(db.not_(
 			ServiceUser.query.filter(
 				ServiceUser.service_id == Service.id,
 				ServiceUser.user_id == User.id
