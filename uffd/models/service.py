@@ -116,6 +116,16 @@ class ServiceUser(db.Model):
 			return remailer.build_v2_address(self.service_id, self.user_id)
 		return self.real_email
 
+	# User.primary_email and ServiceUser.service_email can only be set to
+	# verified addresses, so this should always return True
+	@property
+	def email_verified(self):
+		if self.effective_remailer_mode != RemailerMode.DISABLED:
+			return True
+		if self.has_email_preferences and self.service_email:
+			return self.service_email.verified
+		return self.user.primary_email.verified
+
 	@classmethod
 	def filter_query_by_email(cls, query, email):
 		'''Filter query of ServiceUser by ServiceUser.email'''

@@ -15,7 +15,8 @@ Please note that we refer to Debian packages here and **not** pip packages.
 - python3-qrcode
 - python3-fido2 (version 0.5.0 or 0.9.1, optional)
 - python3-prometheus-client (optional, needed for metrics)
-- python3-oauthlib
+- python3-jwt
+- python3-cryptography
 - python3-flask-babel
 - python3-argon2
 - python3-itsdangerous (also a dependency of python3-flask)
@@ -97,6 +98,8 @@ The services need to be setup to use the following URLs with the Authorization C
 * `/oauth2/token`: token request endpoint
 * `/oauth2/userinfo`: endpoint that provides information about the current user
 
+If the service supports server metadata discovery ([RFC 8414](https://www.rfc-editor.org/rfc/rfc8414)), configuring the base url of your uffd installation or `/.well-known/openid-configuration` as the discovery endpoint should be sufficient.
+
 The only OAuth2 scope supported is `profile`. The userinfo endpoint returns json data with the following structure:
 
 ```
@@ -113,6 +116,48 @@ The only OAuth2 scope supported is `profile`. The userinfo endpoint returns json
 ```
 
 `id` is the numeric (Unix) user id, `name` the display name and `nickname` the loginname of the user.
+
+## OpenID Connect Single-Sign-On Provider
+
+In addition to plain OAuth2, uffd also has basic OpenID Connect support.
+Endpoint URLs are the same as for plain OAuth2.
+OpenID Connect support is enabled by requesting the `openid` scope.
+ID token signing keys are served at `/oauth2/keys`.
+
+See [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html) specification for more details.
+
+Supported flows and response types:
+
+* Only Authorization Code Flow with `code` response type
+
+Supported scopes:
+
+* `openid`: Enables OpenID Connect support and returns mandatory `sub` claim
+* `profile`: Returns `name` and `preferred_username` claims
+* `email`: Returns `email` and `email_verified` claims
+* `groups`: Returns non-standard `groups` claim
+
+Supported claims:
+
+* `sub` (string): Decimal encoded numeric (Unix) user id
+* `name` (string): Display name
+* `preferred_username`(string): Loginname
+* `email` (string): Service-specific or primary email address
+* `email_verified` (boolean): Verification status of `email` value (always `true`)
+* `groups` (array of strings): Names of groups the user is a member of (non-standard)
+
+uffd supports the optional `claims` authorization request parameter for requesting claims individually.
+
+Note that there is a IANA-registered `groups` claim with a syntax borrowed from [SCIM](https://www.rfc-editor.org/rfc/rfc7643.html).
+The syntax used by uffd is different and incompatible, although arguably more common for a claim named "groups" in this context.
+
+uffd aims for complience with OpenID provider conformance profiles Basic and Config.
+It is, however, not a certified OpenID provider and it has the following limitations:
+
+* Only the `none` value for the `prompt` authorization request parameter is recognized. Other values (`login`, `consent` and `select_account`) are ignored.
+* The `max_age` authorization request parameter is not supported and ignored by uffd.
+* The `auth_time` claim is not supported and neither returned if the `max_age` authorization request parameter is present nor if it is requested via the `claims` parameter.
+* Requesting the `sub` claim with a specific value for the ID Token (or passing the `id_token_hint` authorization request parameter) is only supported if the `prompt` authorization request parameter is set to `none`. The authorization request is rejected otherwise.
 
 ## Metrics
 
