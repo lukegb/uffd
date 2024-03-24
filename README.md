@@ -21,6 +21,7 @@ Please note that we refer to Debian packages here and **not** pip packages.
 - python3-argon2
 - python3-itsdangerous (also a dependency of python3-flask)
 - python3-mysqldb or python3-pymysql for MariaDB support
+- python3-ua-parser (optional, better user agent parsing)
 
 Some of the dependencies (especially fido2) changed their API in recent versions, so make sure to install the versions from Debian Bookworm, Bullseye or Buster.
 For development, you can also use virtualenv with the supplied `requirements.txt`.

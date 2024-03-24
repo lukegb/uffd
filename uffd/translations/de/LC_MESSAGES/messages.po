@@ -7,30 +7,30 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-11-13 02:05+0100\n"
+"POT-Creation-Date: 2024-03-24 18:37+0100\n"
 "PO-Revision-Date: 2021-05-25 21:18+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
 "Language-Team: de <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.0\n"
+"Generated-By: Babel 2.10.3\n"
 
-#: uffd/models/invite.py:82 uffd/models/invite.py:105 uffd/models/invite.py:110
+#: uffd/models/invite.py:84 uffd/models/invite.py:107 uffd/models/invite.py:112
 msgid "Invite link is invalid"
 msgstr "Einladungslink ist ungültig"
 
-#: uffd/models/invite.py:84
+#: uffd/models/invite.py:86
 msgid "Invite link does not grant any roles"
 msgstr "Einladungslink weist keine Rollen zu"
 
-#: uffd/models/invite.py:86
+#: uffd/models/invite.py:88
 msgid "Invite link does not grant any new roles"
 msgstr "Einladungslink weist keine neuen Rollen zu"
 
-#: uffd/models/invite.py:91 uffd/models/signup.py:122
+#: uffd/models/invite.py:93 uffd/models/signup.py:122
 #: uffd/templates/mfa/setup.html:225
 msgid "Success"
 msgstr "Erfolgreich"
@@ -60,6 +60,11 @@ msgstr "eine Stunde"
 #, python-format
 msgid "%(hours)d hours"
 msgstr "%(hours)d Stunden"
+
+#: uffd/models/session.py:62 uffd/models/session.py:74
+#: uffd/models/session.py:80 uffd/models/session.py:90
+msgid "Unknown"
+msgstr "Unbekannt"
 
 #: uffd/models/signup.py:78 uffd/models/signup.py:103
 msgid "Invalid signup request"
@@ -117,28 +122,28 @@ msgstr "Zugriff verweigert"
 msgid "You don't have the permission to access this page."
 msgstr "Du bist nicht berechtigt, auf diese Seite zuzugreifen."
 
-#: uffd/templates/base.html:84
+#: uffd/templates/base.html:85
 msgid "Change"
 msgstr "Ändern"
 
-#: uffd/templates/base.html:92 uffd/templates/session/deviceauth.html:12
+#: uffd/templates/base.html:93 uffd/templates/session/deviceauth.html:12
 msgid "Authorize Device Login"
 msgstr "Gerätelogin erlauben"
 
-#: uffd/templates/base.html:93 uffd/templates/session/devicelogin.html:6
+#: uffd/templates/base.html:94 uffd/templates/session/devicelogin.html:6
 msgid "Device Login"
 msgstr "Gerätelogin"
 
-#: uffd/templates/base.html:99 uffd/templates/oauth2/logout.html:5
+#: uffd/templates/base.html:100 uffd/templates/oauth2/logout.html:5
 msgid "Logout"
 msgstr "Abmelden"
 
-#: uffd/templates/base.html:106 uffd/templates/service/overview.html:15
+#: uffd/templates/base.html:107 uffd/templates/service/overview.html:15
 #: uffd/templates/session/login.html:6 uffd/templates/session/login.html:20
 msgid "Login"
 msgstr "Anmelden"
 
-#: uffd/templates/base.html:142
+#: uffd/templates/base.html:143
 msgid "About uffd"
 msgstr "Über uffd"
 
@@ -160,18 +165,18 @@ msgstr "GID"
 #: uffd/templates/mfa/setup.html:157 uffd/templates/mfa/setup.html:158
 #: uffd/templates/mfa/setup.html:169 uffd/templates/role/list.html:14
 #: uffd/templates/rolemod/list.html:9 uffd/templates/rolemod/show.html:44
-#: uffd/templates/selfservice/self.html:190
+#: uffd/templates/selfservice/self.html:239
 #: uffd/templates/service/index.html:14 uffd/templates/service/show.html:20
-#: uffd/templates/service/show.html:140 uffd/templates/user/show.html:205
-#: uffd/templates/user/show.html:237
+#: uffd/templates/service/show.html:140 uffd/templates/user/show.html:212
+#: uffd/templates/user/show.html:244
 msgid "Name"
 msgstr "Name"
 
 #: uffd/templates/group/list.html:16 uffd/templates/group/show.html:33
 #: uffd/templates/invite/new.html:36 uffd/templates/role/list.html:15
 #: uffd/templates/role/show.html:48 uffd/templates/rolemod/list.html:10
-#: uffd/templates/rolemod/show.html:26 uffd/templates/selfservice/self.html:191
-#: uffd/templates/user/show.html:206 uffd/templates/user/show.html:238
+#: uffd/templates/rolemod/show.html:26 uffd/templates/selfservice/self.html:240
+#: uffd/templates/user/show.html:213 uffd/templates/user/show.html:245
 msgid "Description"
 msgstr "Beschreibung"
 
@@ -195,9 +200,11 @@ msgstr "Abbrechen"
 
 #: uffd/templates/group/show.html:11 uffd/templates/role/show.html:19
 #: uffd/templates/role/show.html:21 uffd/templates/selfservice/self.html:61
-#: uffd/templates/selfservice/self.html:205 uffd/templates/service/api.html:11
+#: uffd/templates/selfservice/self.html:210
+#: uffd/templates/selfservice/self.html:254 uffd/templates/service/api.html:11
 #: uffd/templates/service/oauth2.html:11 uffd/templates/service/show.html:12
 #: uffd/templates/user/show.html:41 uffd/templates/user/show.html:193
+#: uffd/templates/user/show.html:199
 msgid "Are you sure?"
 msgstr "Wirklich fortfahren?"
 
@@ -1154,13 +1161,48 @@ msgstr ""
 msgid "Manage two-factor authentication"
 msgstr "Zwei-Faktor-Authentifizierung (2FA) verwalten"
 
-#: uffd/templates/selfservice/self.html:178 uffd/templates/user/list.html:20
-#: uffd/templates/user/show.html:51 uffd/templates/user/show.html:200
+#: uffd/templates/selfservice/self.html:178
+msgid "Active Sessions"
+msgstr "Aktive Sitzungen"
+
+#: uffd/templates/selfservice/self.html:179
+msgid "Your active login sessions on this device and other devices."
+msgstr "Deine aktiven Sitzungen auf diesem und anderen Geräten."
+
+#: uffd/templates/selfservice/self.html:180
+msgid ""
+"Revoke a session to log yourself out on another device. Note that this is"
+" limited to the Single-Sign-On session and <b>does not affect login "
+"sessions on services.</b>"
+msgstr ""
+"Widerrufe eine Sitzung, um dich auf einem anderen Gerät abzumelden. "
+"Beachte dass dies auf deine Sitzung im Single-Sign-On beschränkt ist und "
+"sich <b>nicht auf Sitzungen an Diensten auswirkt.</b>"
+
+#: uffd/templates/selfservice/self.html:186
+msgid "Last used"
+msgstr "Zuletzt verwendet"
+
+#: uffd/templates/selfservice/self.html:187
+msgid "Device"
+msgstr "Gerät"
+
+#: uffd/templates/selfservice/self.html:193
+#: uffd/templates/selfservice/self.html:202
+msgid "Just now"
+msgstr "Gerade eben"
+
+#: uffd/templates/selfservice/self.html:211
+msgid "Revoke"
+msgstr "Widerrufen"
+
+#: uffd/templates/selfservice/self.html:227 uffd/templates/user/list.html:20
+#: uffd/templates/user/show.html:51 uffd/templates/user/show.html:207
 #: uffd/views/role.py:21
 msgid "Roles"
 msgstr "Rollen"
 
-#: uffd/templates/selfservice/self.html:179
+#: uffd/templates/selfservice/self.html:228
 msgid ""
 "Aside from a set of base permissions, your roles determine the "
 "permissions of your account."
@@ -1168,7 +1210,7 @@ msgstr ""
 "Deine Berechtigungen werden, von einigen Basis-Berechtigungen abgesehen, "
 "von deinen Rollen bestimmt"
 
-#: uffd/templates/selfservice/self.html:181
+#: uffd/templates/selfservice/self.html:230
 #, python-format
 msgid ""
 "See <a href=\"%(services_url)s\">Services</a> for an overview of your "
@@ -1177,13 +1219,13 @@ msgstr ""
 "Auf <a href=\"%(services_url)s\">Dienste</a> erhälst du einen Überblick "
 "über deine aktuellen Berechtigungen."
 
-#: uffd/templates/selfservice/self.html:185
+#: uffd/templates/selfservice/self.html:234
 msgid "Administrators and role moderators can invite you to new roles."
 msgstr ""
 "Accounts mit Adminrechten oder Rollen-Moderationsrechten können dich zu "
 "Rollen einladen."
 
-#: uffd/templates/selfservice/self.html:200
+#: uffd/templates/selfservice/self.html:249
 msgid ""
 "Some permissions in this role require you to setup two-factor "
 "authentication"
@@ -1191,11 +1233,11 @@ msgstr ""
 "Einige Berechtigungen dieser Rolle erfordern das Einrichten von Zwei-"
 "Faktor-Authentifikation"
 
-#: uffd/templates/selfservice/self.html:206
+#: uffd/templates/selfservice/self.html:255
 msgid "Leave"
 msgstr "Verlassen"
 
-#: uffd/templates/selfservice/self.html:213
+#: uffd/templates/selfservice/self.html:262
 msgid "You currently don't have any roles"
 msgstr "Du hast derzeit keine Rollen"
 
@@ -1670,7 +1712,20 @@ msgstr "Aktiv"
 msgid "Reset 2FA"
 msgstr "2FA zurücksetzen"
 
-#: uffd/templates/user/show.html:233
+#: uffd/templates/user/show.html:197
+msgid "Sessions"
+msgstr "Sitzungen"
+
+#: uffd/templates/user/show.html:198
+#, python-format
+msgid "%(session_count)d active sessions"
+msgstr "%(session_count)d aktive Sitzungen"
+
+#: uffd/templates/user/show.html:199
+msgid "Revoke all sessions"
+msgstr "Alle Sitzungen widerrufen"
+
+#: uffd/templates/user/show.html:240
 msgid "Resulting groups (only updated after save)"
 msgstr "Resultierende Gruppen (wird nur aktualisiert beim Speichern)"
 
@@ -1791,16 +1846,16 @@ msgstr ""
 "2FA WebAuthn Unterstützung deaktiviert, da das fido2 Modul nicht geladen "
 "werden konnte (%s)"
 
-#: uffd/views/mfa.py:214
+#: uffd/views/mfa.py:216
 #, python-format
 msgid "We received too many invalid attempts! Please wait at least %s."
 msgstr "Wir haben zu viele fehlgeschlagene Versuche! Bitte warte mindestens %s."
 
-#: uffd/views/mfa.py:228
+#: uffd/views/mfa.py:231
 msgid "You have exhausted your recovery codes. Please generate new ones now!"
 msgstr "Du hast keine Wiederherstellungscode mehr. Bitte generiere diese jetzt!"
 
-#: uffd/views/mfa.py:231
+#: uffd/views/mfa.py:234
 msgid ""
 "You only have a few recovery codes remaining. Make sure to generate new "
 "ones before they run out."
@@ -1808,12 +1863,12 @@ msgstr ""
 "Du hast nur noch wenige Wiederherstellungscodes übrig. Bitte generiere "
 "diese erneut bevor keine mehr übrig sind."
 
-#: uffd/views/mfa.py:235
+#: uffd/views/mfa.py:238
 msgid "Two-factor authentication failed"
 msgstr "Zwei-Faktor-Authentifizierung fehlgeschlagen"
 
-#: uffd/views/oauth2.py:172 uffd/views/selfservice.py:66
-#: uffd/views/session.py:67
+#: uffd/views/oauth2.py:267 uffd/views/selfservice.py:66
+#: uffd/views/session.py:86
 #, python-format
 msgid ""
 "We received too many requests from your ip address/network! Please wait "
@@ -1822,19 +1877,19 @@ msgstr ""
 "Wir haben zu viele Anfragen von deiner IP-Adresses bzw. aus deinem "
 "Netzwerk empfangen! Bitte warte mindestens %(delay)s."
 
-#: uffd/views/oauth2.py:180
+#: uffd/views/oauth2.py:278
 msgid "Device login is currently not available. Try again later!"
 msgstr "Geräte-Login ist gerade nicht verfügbar. Versuche es später nochmal!"
 
-#: uffd/views/oauth2.py:193
+#: uffd/views/oauth2.py:296
 msgid "Device login failed"
 msgstr "Gerätelogin fehlgeschlagen"
 
-#: uffd/views/oauth2.py:199
+#: uffd/views/oauth2.py:304
 msgid "You need to login to access this service"
 msgstr "Du musst dich anmelden, um auf diesen Dienst zugreifen zu können"
 
-#: uffd/views/oauth2.py:206
+#: uffd/views/oauth2.py:335
 #, python-format
 msgid ""
 "You don't have the permission to access the service "
@@ -1918,7 +1973,7 @@ msgid "E-Mail address already exists"
 msgstr "E-Mail-Adresse existiert bereits"
 
 #: uffd/views/selfservice.py:124 uffd/views/selfservice.py:162
-#: uffd/views/selfservice.py:227
+#: uffd/views/selfservice.py:237
 #, python-format
 msgid "E-Mail to \"%(mail_address)s\" could not be sent!"
 msgstr "E-Mail an \"%(mail_address)s\" konnte nicht gesendet werden!"
@@ -1951,7 +2006,11 @@ msgstr "E-Mail-Adresse gelöscht"
 msgid "E-Mail preferences updated"
 msgstr "E-Mail-Einstellungen geändert"
 
-#: uffd/views/selfservice.py:209
+#: uffd/views/selfservice.py:208
+msgid "Session revoked"
+msgstr "Sitzung widerrufen"
+
+#: uffd/views/selfservice.py:219
 #, python-format
 msgid "You left role %(role_name)s"
 msgstr "Rolle %(role_name)s verlassen"
@@ -1960,7 +2019,7 @@ msgstr "Rolle %(role_name)s verlassen"
 msgid "Services"
 msgstr "Dienste"
 
-#: uffd/views/session.py:65
+#: uffd/views/session.py:84
 #, python-format
 msgid ""
 "We received too many invalid login attempts for this user! Please wait at"
@@ -1969,34 +2028,34 @@ msgstr ""
 "Wir haben zu viele fehlgeschlagene Anmeldeversuche für diesen Account "
 "erhalten! Bitte warte mindestens %(delay)s."
 
-#: uffd/views/session.py:74
+#: uffd/views/session.py:93
 msgid "Login name or password is wrong"
 msgstr "Der Anmeldename oder das Passwort ist falsch"
 
-#: uffd/views/session.py:77
+#: uffd/views/session.py:96
 #, python-format
 msgid "Your account is deactivated. Contact %(contact_email)s for details."
 msgstr ""
 "Dein Account ist deaktiviert. Kontaktiere %(contact_email)s für weitere "
 "Informationen."
 
-#: uffd/views/session.py:83
+#: uffd/views/session.py:102
 msgid "You do not have access to this service"
 msgstr "Du hast keinen Zugriff auf diesen Service"
 
-#: uffd/views/session.py:95 uffd/views/session.py:106
+#: uffd/views/session.py:114 uffd/views/session.py:125
 msgid "You need to login first"
 msgstr "Du musst dich erst anmelden"
 
-#: uffd/views/session.py:127 uffd/views/session.py:137
+#: uffd/views/session.py:146 uffd/views/session.py:156
 msgid "Initiation code is no longer valid"
 msgstr "Startcode ist nicht mehr gültig"
 
-#: uffd/views/session.py:141
+#: uffd/views/session.py:160
 msgid "Invalid confirmation code"
 msgstr "Ungültiger Bestätigungscode"
 
-#: uffd/views/session.py:153 uffd/views/session.py:164
+#: uffd/views/session.py:172 uffd/views/session.py:183
 msgid "Invalid initiation code"
 msgstr "Ungültiger Startcode"
 
@@ -2061,7 +2120,11 @@ msgstr "Account deaktiviert"
 msgid "User activated"
 msgstr "Account aktiviert"
 
-#: uffd/views/user.py:174
+#: uffd/views/user.py:173
+msgid "Sessions revoked"
+msgstr "Sitzungen widerrufen"
+
+#: uffd/views/user.py:183
 msgid "Deleted user"
 msgstr "Account gelöscht"
 

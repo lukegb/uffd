@@ -175,6 +175,55 @@
 
 <div class="row mt-3">
 	<div class="col-12 col-md-5">
+		<h5>{{_("Active Sessions")}}</h5>
+		<p>{{_("Your active login sessions on this device and other devices.")}}</p>
+		<p>{{_("Revoke a session to log yourself out on another device. Note that this is limited to the Single-Sign-On session and <b>does not affect login sessions on services.</b>")}}</p>
+	</div>
+	<div class="col-12 col-md-7">
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">{{_("Last used")}}</th>
+					<th scope="col">{{_("Device")}}</th>
+					<th scope="col"></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>{{_("Just now")}}</td>
+					<td>{{ request.session.user_agent_browser }} on {{ request.session.user_agent_platform }} ({{ request.session.ip_address }})</td>
+					<td></td>
+				</tr>
+				{% for session in user.sessions|sort(attribute='last_used', reverse=True) if not session.expired and session != request.session %}
+				<tr>
+					<td>
+						{% set last_used_rel = session.last_used - datetime.utcnow() %}
+						{% if -last_used_rel.total_seconds() <= 60 %}
+						{{_("Just now")}}
+						{% else %}
+						{{ last_used_rel|timedeltaformat(add_direction=True, granularity='minute') }}
+						{% endif %}
+					</td>
+					<td>{{ session.user_agent_browser }} on {{ session.user_agent_platform }} ({{ session.ip_address }})</td>
+					<td>
+						{% if session != request.session %}
+						<form action="{{ url_for("selfservice.revoke_session", session_id=session.id) }}" method="POST" onsubmit='return confirm({{_("Are you sure?")|tojson|e}});'>
+							<button type="submit" class="btn btn-sm btn-danger float-right">{{_("Revoke")}}</button>
+						</form>
+						{% endif %}
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+
+	</div>
+</div>
+
+<hr>
+
+<div class="row mt-3">
+	<div class="col-12 col-md-5">
 		<h5>{{_("Roles")}}</h5>
 		<p>{{_("Aside from a set of base permissions, your roles determine the permissions of your account.")}}</p>
 		{% if config['SERVICES'] %}

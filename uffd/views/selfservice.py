@@ -8,7 +8,7 @@ from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.sendmail import sendmail
 from uffd.database import db
-from uffd.models import User, UserEmail, PasswordToken, Role, host_ratelimit, Ratelimit, format_delay
+from uffd.models import User, UserEmail, PasswordToken, Role, host_ratelimit, Ratelimit, format_delay, Session
 from .session import login_required
 
 bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix='/self/')
@@ -196,6 +196,16 @@ def update_email_preferences():
 			service_user.service_email = verified_emails.filter_by(id=value).one()
 	db.session.commit()
 	flash(_('E-Mail preferences updated'))
+	return redirect(url_for('selfservice.index'))
+
+@bp.route("/session/<int:session_id>/revoke", methods=(['POST']))
+@csrf_protect(blueprint=bp)
+@login_required(selfservice_acl_check)
+def revoke_session(session_id):
+	session = Session.query.filter_by(id=session_id, user=request.user).first_or_404()
+	db.session.delete(session)
+	db.session.commit()
+	flash(_('Session revoked'))
 	return redirect(url_for('selfservice.index'))
 
 @bp.route("/leaverole/<int:roleid>", methods=(['POST']))

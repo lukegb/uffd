@@ -6,7 +6,7 @@ from .oauth2 import OAuth2Client, OAuth2RedirectURI, OAuth2LogoutURI, OAuth2Gran
 from .role import Role, RoleGroup, RoleGroupMap
 from .selfservice import PasswordToken
 from .service import RemailerMode, Service, ServiceUser, get_services
-from .session import DeviceLoginType, DeviceLoginInitiation, DeviceLoginConfirmation
+from .session import Session, DeviceLoginType, DeviceLoginInitiation, DeviceLoginConfirmation
 from .signup import Signup
 from .user import User, UserEmail, Group, IDAllocator, IDRangeExhaustedError, IDAlreadyAllocatedError
 from .ratelimit import RatelimitEvent, Ratelimit, HostRatelimit, host_ratelimit, format_delay

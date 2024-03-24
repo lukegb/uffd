@@ -8,7 +8,7 @@ from flask_babel import gettext as _
 from uffd.database import db
 from uffd.csrf import csrf_protect
 from uffd.secure_redirect import secure_local_redirect
-from uffd.models import User, DeviceLoginInitiation, DeviceLoginConfirmation, Ratelimit, host_ratelimit, format_delay
+from uffd.models import User, DeviceLoginInitiation, DeviceLoginConfirmation, Ratelimit, host_ratelimit, format_delay, Session
 
 bp = Blueprint("session", __name__, template_folder='templates', url_prefix='/')
 
@@ -18,35 +18,54 @@ login_ratelimit = Ratelimit('login', 1*60, 3)
 def set_request_user():
 	request.user = None
 	request.user_pre_mfa = None
-	if 'user_id' not in session:
+	request.session = None
+	if 'id' not in session:
 		return
-	if 'logintime' not in session:
+	if 'secret' not in session:
 		return
-	if datetime.datetime.utcnow().timestamp() > session['logintime'] + current_app.config['SESSION_LIFETIME_SECONDS']:
+	_session = Session.query.get(session['id'])
+	if _session is None or not _session.secret.verify(session['secret']) or _session.expired:
 		return
-	user = User.query.get(session['user_id'])
-	if not user or user.is_deactivated or not user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
+	if _session.last_used <= datetime.datetime.utcnow() - datetime.timedelta(seconds=60):
+		_session.last_used = datetime.datetime.utcnow()
+		_session.ip_address = request.remote_addr
+		_session.user_agent = request.user_agent.string
+		db.session.commit()
+	if _session.user.is_deactivated or not _session.user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
 		return
-	request.user_pre_mfa = user
-	if session.get('user_mfa'):
-		request.user = user
+	request.session = _session
+	request.user_pre_mfa = _session.user
+	if _session.mfa_done:
+		request.user = _session.user
 
 @bp.route("/logout")
 def logout():
 	# The oauth2 module takes data from `session` and injects it into the url,
 	# so we need to build the url BEFORE we clear the session!
 	resp = redirect(url_for('oauth2.logout', ref=request.values.get('ref', url_for('.login'))))
+	if request.session:
+		db.session.delete(request.session)
+		db.session.commit()
 	session.clear()
 	return resp
 
 def set_session(user, skip_mfa=False):
 	session.clear()
 	session.permanent = True
-	session['user_id'] = user.id
-	session['logintime'] = datetime.datetime.utcnow().timestamp()
-	session['_csrf_token'] = secrets.token_hex(128)
+	secret = secrets.token_hex(128)
+	_session = Session(
+		user=user,
+		secret=secret,
+		ip_address=request.remote_addr,
+		user_agent=request.user_agent.string,
+	)
 	if skip_mfa:
-		session['user_mfa'] = True
+		_session.mfa_done = True
+	db.session.add(_session)
+	db.session.commit()
+	session['id'] = _session.id
+	session['secret'] = secret
+	session['_csrf_token'] = secrets.token_hex(128)
 
 @bp.route("/login", methods=('GET', 'POST'))
 def login():

@@ -182,7 +182,8 @@ if WEBAUTHN_SUPPORTED:
 			auth_data,
 			signature,
 		)
-		session['user_mfa'] = True
+		request.session.mfa_done = True
+		db.session.commit()
 		set_request_user()
 		return cbor.encode({"status": "OK"})
 
@@ -200,9 +201,10 @@ def delete_webauthn(id): #pylint: disable=redefined-builtin
 @login_required_pre_mfa()
 def auth():
 	if not request.user_pre_mfa.mfa_enabled:
-		session['user_mfa'] = True
+		request.session.mfa_done = True
+		db.session.commit()
 		set_request_user()
-	if session.get('user_mfa'):
+	if request.session.mfa_done:
 		return secure_local_redirect(request.values.get('ref', url_for('index')))
 	return render_template('mfa/auth.html', ref=request.values.get('ref'))
 
@@ -215,15 +217,15 @@ def auth_finish():
 		return redirect(url_for('mfa.auth', ref=request.values.get('ref')))
 	for method in request.user_pre_mfa.mfa_totp_methods:
 		if method.verify(request.form['code']):
+			request.session.mfa_done = True
 			db.session.commit()
-			session['user_mfa'] = True
 			set_request_user()
 			return secure_local_redirect(request.values.get('ref', url_for('index')))
 	for method in request.user_pre_mfa.mfa_recovery_codes:
 		if method.verify(request.form['code']):
 			db.session.delete(method)
+			request.session.mfa_done = True
 			db.session.commit()
-			session['user_mfa'] = True
 			set_request_user()
 			if len(request.user_pre_mfa.mfa_recovery_codes) <= 1:
 				flash(_('You have exhausted your recovery codes. Please generate new ones now!'))

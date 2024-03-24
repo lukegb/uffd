@@ -174,6 +174,8 @@ class User(db.Model):
 
 	service_users = relationship('ServiceUser', viewonly=True)
 
+	sessions = relationship('Session', back_populates='user', cascade='all, delete-orphan')
+
 	def __init__(self, primary_email_address=None, **kwargs):
 		super().__init__(**kwargs)
 		if primary_email_address is not None:

@@ -2,13 +2,92 @@ import datetime
 import secrets
 import enum
 
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum
+from flask import current_app
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum, Text, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
+from flask_babel import gettext as _
+
+try:
+	from ua_parser import user_agent_parser
+	USER_AGENT_PARSER_SUPPORTED = True
+except ImportError:
+	USER_AGENT_PARSER_SUPPORTED = False
 
 from uffd.database import db
 from uffd.utils import token_typeable
 from uffd.tasks import cleanup_task
+from uffd.password_hash import PasswordHashAttribute, HighEntropyPasswordHash
+
+@cleanup_task.delete_by_attribute('expired')
+class Session(db.Model):
+	__tablename__ = 'session'
+
+	id = Column(Integer(), primary_key=True, autoincrement=True)
+	_secret = Column('secret', Text)
+	secret = PasswordHashAttribute('_secret', HighEntropyPasswordHash)
+
+	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	user = relationship('User', back_populates='sessions')
+
+	created = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+	last_used = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+	user_agent = Column(Text, nullable=False, default='')
+	ip_address = Column(Text)
+
+	mfa_done = Column(Boolean(create_constraint=True), default=False, nullable=False)
+
+	@hybrid_property
+	def expired(self):
+		if self.created is None or self.last_used is None:
+			return False
+		if self.created < datetime.datetime.utcnow() - datetime.timedelta(seconds=current_app.config['SESSION_LIFETIME_SECONDS']):
+			return True
+		if self.last_used < datetime.datetime.utcnow() - current_app.permanent_session_lifetime:
+			return True
+		return False
+
+	@expired.expression
+	def expired(cls): # pylint: disable=no-self-argument
+		return db.or_(
+			cls.created < datetime.datetime.utcnow() - datetime.timedelta(seconds=current_app.config['SESSION_LIFETIME_SECONDS']),
+			cls.last_used < datetime.datetime.utcnow() - current_app.permanent_session_lifetime,
+		)
+
+	@property
+	def user_agent_browser(self):
+		# pylint: disable=too-many-return-statements
+		if USER_AGENT_PARSER_SUPPORTED and not getattr(self, 'DISABLE_USER_AGENT_PARSER', False):
+			family = user_agent_parser.ParseUserAgent(self.user_agent)['family']
+			return family if family != 'Other' else _('Unknown')
+
+		if ' OPR/' in self.user_agent:
+			return 'Opera'
+		if ' Edg/' in self.user_agent:
+			return 'Microsoft Edge'
+		if ' Safari/' in self.user_agent and ' Chrome/' not in self.user_agent:
+			return 'Safari'
+		if ' Chrome/' in self.user_agent:
+			return 'Chrome'
+		if ' Firefox/' in self.user_agent:
+			return 'Firefox'
+		return _('Unknown')
+
+	@property
+	def user_agent_platform(self):
+		if USER_AGENT_PARSER_SUPPORTED and not getattr(self, 'DISABLE_USER_AGENT_PARSER', False):
+			family = user_agent_parser.ParseOS(self.user_agent)['family']
+			return family if family != 'Other' else _('Unknown')
+
+		sysinfo = ([''] + self.user_agent.split('(', 1))[-1].split(')', 0)[0]
+		platforms = [
+			'Android', 'Linux', 'OpenBSD', 'FreeBSD', 'NetBSD', 'Windows', 'iPhone',
+			'iPad', 'Macintosh',
+		]
+		for platform in platforms:
+			if platform in sysinfo:
+				return platform
+		return _('Unknown')
 
 # Device login provides a convenient and secure way to log into SSO-enabled
 # services on a secondary device without entering the user password or

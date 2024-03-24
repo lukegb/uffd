@@ -164,6 +164,15 @@ def activate(id):
 	flash(_('User activated'))
 	return redirect(url_for('user.show', id=user.id))
 
+@bp.route('/<int:id>/sessions/revoke')
+@csrf_protect(blueprint=bp)
+def revoke_sessions(id):
+	user = User.query.get_or_404(id)
+	user.sessions.clear()
+	db.session.commit()
+	flash(_('Sessions revoked'))
+	return redirect(url_for('user.show', id=user.id))
+
 @bp.route("/<int:id>/del")
 @csrf_protect(blueprint=bp)
 def delete(id):
