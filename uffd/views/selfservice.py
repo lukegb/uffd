@@ -242,17 +242,17 @@ def send_passwordreset(user, new=False):
 		flash(_('E-Mail to "%(mail_address)s" could not be sent!', mail_address=email.address))
 
 @bp.route('/mfa/', methods=['GET'])
-@login_required()
+@login_required(selfservice_acl_check)
 def setup_mfa():
 	return render_template('selfservice/setup_mfa.html')
 
 @bp.route('/mfa/setup/disable', methods=['GET'])
-@login_required()
+@login_required(selfservice_acl_check)
 def disable_mfa():
 	return render_template('selfservice/disable_mfa.html')
 
 @bp.route('/mfa/setup/disable', methods=['POST'])
-@login_required()
+@login_required(selfservice_acl_check)
 @csrf_protect(blueprint=bp)
 def disable_mfa_confirm():
 	MFAMethod.query.filter_by(user=request.user).delete()
@@ -262,7 +262,7 @@ def disable_mfa_confirm():
 	return redirect(url_for('selfservice.setup_mfa'))
 
 @bp.route('/mfa/setup/recovery', methods=['POST'])
-@login_required()
+@login_required(selfservice_acl_check)
 @csrf_protect(blueprint=bp)
 def setup_mfa_recovery():
 	for method in RecoveryCodeMethod.query.filter_by(user=request.user).all():
@@ -276,14 +276,14 @@ def setup_mfa_recovery():
 	return render_template('selfservice/setup_mfa_recovery.html', methods=methods)
 
 @bp.route('/mfa/setup/totp', methods=['GET'])
-@login_required()
+@login_required(selfservice_acl_check)
 def setup_mfa_totp():
 	method = TOTPMethod(request.user)
 	session['mfa_totp_key'] = method.key
 	return render_template('selfservice/setup_mfa_totp.html', method=method, name=request.values['name'])
 
 @bp.route('/mfa/setup/totp', methods=['POST'])
-@login_required()
+@login_required(selfservice_acl_check)
 @csrf_protect(blueprint=bp)
 def setup_mfa_totp_finish():
 	if not RecoveryCodeMethod.query.filter_by(user=request.user).all():
@@ -299,7 +299,7 @@ def setup_mfa_totp_finish():
 	return redirect(url_for('selfservice.setup_mfa_totp', name=request.values['name']))
 
 @bp.route('/mfa/setup/totp/<int:id>/delete')
-@login_required()
+@login_required(selfservice_acl_check)
 @csrf_protect(blueprint=bp)
 def delete_mfa_totp(id): #pylint: disable=redefined-builtin
 	method = TOTPMethod.query.filter_by(user=request.user, id=id).first_or_404()
@@ -312,7 +312,7 @@ bp.add_app_template_global(WEBAUTHN_SUPPORTED, name='webauthn_supported')
 
 if WEBAUTHN_SUPPORTED:
 	@bp.route('/mfa/setup/webauthn/begin', methods=['POST'])
-	@login_required()
+	@login_required(selfservice_acl_check)
 	@csrf_protect(blueprint=bp)
 	def setup_mfa_webauthn_begin():
 		if not RecoveryCodeMethod.query.filter_by(user=request.user).all():
@@ -333,7 +333,7 @@ if WEBAUTHN_SUPPORTED:
 		return cbor.encode(registration_data)
 
 	@bp.route('/mfa/setup/webauthn/complete', methods=['POST'])
-	@login_required()
+	@login_required(selfservice_acl_check)
 	@csrf_protect(blueprint=bp)
 	def setup_mfa_webauthn_complete():
 		server = get_webauthn_server()
@@ -348,7 +348,7 @@ if WEBAUTHN_SUPPORTED:
 		return cbor.encode({"status": "OK"})
 
 @bp.route('/mfa/setup/webauthn/<int:id>/delete')
-@login_required()
+@login_required(selfservice_acl_check)
 @csrf_protect(blueprint=bp)
 def delete_mfa_webauthn(id): #pylint: disable=redefined-builtin
 	method = WebauthnMethod.query.filter_by(user=request.user, id=id).first_or_404()
