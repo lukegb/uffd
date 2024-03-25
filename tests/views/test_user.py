@@ -1,7 +1,7 @@
-from flask import url_for
+from flask import url_for, request
 
 from uffd.database import db
-from uffd.models import User, UserEmail, Group, Role, Service, ServiceUser, FeatureFlag
+from uffd.models import User, UserEmail, Group, Role, Service, ServiceUser, FeatureFlag, MFAMethod, RecoveryCodeMethod, TOTPMethod
 
 from tests.utils import dump, UffdTestCase
 
@@ -377,6 +377,21 @@ class TestUserViews(UffdTestCase):
 		dump('user_activate', r)
 		self.assertEqual(r.status_code, 200)
 		self.assertFalse(self.get_user().is_deactivated)
+
+	def test_disable_mfa(self):
+		db.session.add(RecoveryCodeMethod(user=self.get_admin()))
+		user = self.get_user()
+		for _ in range(10):
+			db.session.add(RecoveryCodeMethod(user=user))
+		db.session.add(TOTPMethod(user=self.get_user(), name='My phone'))
+		db.session.commit()
+		self.login_as('admin')
+		admin_methods = len(MFAMethod.query.filter_by(user=self.get_admin()).all())
+		r = self.client.get(path=url_for('user.disable_mfa', id=self.get_user().id), follow_redirects=True)
+		dump('user_disable_mfa', r)
+		self.assertEqual(r.status_code, 200)
+		self.assertEqual(len(MFAMethod.query.filter_by(user=self.get_user()).all()), 0)
+		self.assertEqual(len(MFAMethod.query.filter_by(user=self.get_admin()).all()), admin_methods)
 
 	def test_csvimport(self):
 		role1 = Role(name='role1')

@@ -28,11 +28,11 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 {% if mfa_setup or mfa_enabled %}
 <div class="clearfix">
 	{% if mfa_enabled %}
-	<form class="form float-right" action="{{ url_for('mfa.disable') }}">
+	<form class="form float-right" action="{{ url_for('selfservice.disable_mfa') }}">
 		<button type="submit" class="btn btn-danger mb-2">{{_("Disable two-factor authentication")}}</button>
 	</form>
 	{% else %}
-	<form class="form float-right" action="{{ url_for('mfa.disable_confirm') }}" method="POST">
+	<form class="form float-right" action="{{ url_for('selfservice.disable_mfa_confirm') }}" method="POST">
 		<button type="submit" class="btn btn-light mb-2">{{_("Reset two-factor configuration")}}</button>
 	</form>
 	{% endif %}
@@ -56,7 +56,7 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 	</div>
 
 	<div class="col-12 col-md-7">
-		<form class="form" action="{{ url_for('mfa.setup_recovery') }}" method="POST">
+		<form class="form" action="{{ url_for('selfservice.setup_mfa_recovery') }}" method="POST">
 			{% if mfa_init %}
 			<button type="submit" class="btn btn-primary mb-2 col">
 				{{_("Generate recovery codes to enable two-factor authentication")}}
@@ -93,7 +93,7 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 	</div>
 
 	<div class="col-12 col-md-7">
-		<form class="form mb-2" action="{{ url_for('mfa.setup_totp') }}" autocomplete="off">
+		<form class="form mb-2" action="{{ url_for('selfservice.setup_mfa_totp') }}" autocomplete="off">
 			<div class="row m-0">
 				<label class="sr-only" for="totp-name">{{_("Name")}}</label>
 				<input type="text" name="name" class="form-control mb-2 col-12 col-lg-auto mr-2" style="width: 15em;" id="totp-name" placeholder="{{_("Name")}}" required {{ 'disabled' if mfa_init }}>
@@ -114,7 +114,7 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 				<tr>
 					<td>{{ method.name }}</td>
 					<td>{{ method.created|dateformat }}</td>
-					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_totp', id=method.id) }}">{{_("Delete")}}</a></td>
+					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('selfservice.delete_mfa_totp', id=method.id) }}">{{_("Delete")}}</a></td>
 				</tr>
 				{% endfor %}
 				{% if not request.user.mfa_totp_methods %}
@@ -176,7 +176,7 @@ mfa_enabled: The user has setup at least one two-factor method. Two-factor authe
 				<tr>
 					<td>{{ method.name }}</td>
 					<td>{{ method.created|dateformat }}</td>
-					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('mfa.delete_webauthn', id=method.id) }}">{{_("Delete")}}</a></td>
+					<td><a class="btn btn-sm btn-danger float-right" href="{{ url_for('selfservice.delete_mfa_webauthn', id=method.id) }}">{{_("Delete")}}</a></td>
 				</tr>
 				{% endfor %}
 				{% if not request.user.mfa_webauthn_methods %}
@@ -198,7 +198,7 @@ $('#webauthn-form').on('submit', function(e) {
 	$('#webauthn-spinner').removeClass('d-none');
 	$('#webauthn-btn-text').text({{ _('Contacting server')|tojson }});
 	$('#webauthn-btn').prop('disabled', true);
-	fetch({{ url_for('mfa.setup_webauthn_begin')|tojson }}, {
+	fetch({{ url_for('selfservice.setup_mfa_webauthn_begin')|tojson }}, {
 		method: 'POST',
 	}).then(function(response) {
 		if (response.ok)
@@ -210,7 +210,7 @@ $('#webauthn-form').on('submit', function(e) {
 		$('#webauthn-btn-text').text({{ _('Waiting for device')|tojson }});
 		return navigator.credentials.create(options);
 	}).then(function(attestation) {
-		return fetch({{ url_for('mfa.setup_webauthn_complete')|tojson }}, {
+		return fetch({{ url_for('selfservice.setup_mfa_webauthn_complete')|tojson }}, {
 			method: 'POST',
 			headers: {'Content-Type': 'application/cbor'},
 			body: CBOR.encode({
@@ -223,7 +223,7 @@ $('#webauthn-form').on('submit', function(e) {
 		if (response.ok) {
 			$('#webauthn-spinner').addClass('d-none');
 			$('#webauthn-btn-text').text({{ _('Success')|tojson }});
-			window.location = {{ url_for('mfa.setup')|tojson }};
+			window.location = {{ url_for('selfservice.setup_mfa')|tojson }};
 		} else {
 			throw new Error({{ _('Invalid response from device')|tojson }});
 		}

@@ -3,7 +3,7 @@ from werkzeug.exceptions import Forbidden
 
 from uffd.secure_redirect import secure_local_redirect
 
-from . import session, selfservice, signup, mfa, oauth2, user, group, service, role, invite, api, mail, rolemod
+from . import session, selfservice, signup, oauth2, user, group, service, role, invite, api, mail, rolemod
 
 def init_app(app):
 	@app.errorhandler(403)
@@ -26,7 +26,6 @@ def init_app(app):
 	app.register_blueprint(session.bp)
 	app.register_blueprint(selfservice.bp)
 	app.register_blueprint(signup.bp)
-	app.register_blueprint(mfa.bp)
 	app.register_blueprint(oauth2.bp)
 	app.register_blueprint(user.bp)
 	app.register_blueprint(group.bp)

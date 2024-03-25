@@ -1,6 +1,6 @@
 import secrets
 
-from flask import Blueprint, render_template, request, url_for, redirect, flash, current_app, abort
+from flask import Blueprint, render_template, session, request, url_for, redirect, flash, current_app, abort
 from flask_babel import gettext as _, lazy_gettext
 from sqlalchemy.exc import IntegrityError
 
@@ -8,7 +8,12 @@ from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.sendmail import sendmail
 from uffd.database import db
-from uffd.models import User, UserEmail, PasswordToken, Role, host_ratelimit, Ratelimit, format_delay, Session
+from uffd.models import (
+	User, UserEmail, PasswordToken, Role, host_ratelimit, Ratelimit, format_delay,
+	Session, MFAMethod, TOTPMethod, WebauthnMethod, RecoveryCodeMethod,
+)
+from uffd.fido2_compat import * # pylint: disable=wildcard-import,unused-wildcard-import
+
 from .session import login_required
 
 bp = Blueprint("selfservice", __name__, template_folder='templates', url_prefix='/self/')
@@ -202,8 +207,8 @@ def update_email_preferences():
 @csrf_protect(blueprint=bp)
 @login_required(selfservice_acl_check)
 def revoke_session(session_id):
-	session = Session.query.filter_by(id=session_id, user=request.user).first_or_404()
-	db.session.delete(session)
+	_session = Session.query.filter_by(id=session_id, user=request.user).first_or_404()
+	db.session.delete(_session)
 	db.session.commit()
 	flash(_('Session revoked'))
 	return redirect(url_for('selfservice.index'))
@@ -235,3 +240,119 @@ def send_passwordreset(user, new=False):
 	email = user.recovery_email or user.primary_email
 	if not sendmail(email.address, subject, template, user=user, token=token):
 		flash(_('E-Mail to "%(mail_address)s" could not be sent!', mail_address=email.address))
+
+@bp.route('/mfa/', methods=['GET'])
+@login_required()
+def setup_mfa():
+	return render_template('selfservice/setup_mfa.html')
+
+@bp.route('/mfa/setup/disable', methods=['GET'])
+@login_required()
+def disable_mfa():
+	return render_template('selfservice/disable_mfa.html')
+
+@bp.route('/mfa/setup/disable', methods=['POST'])
+@login_required()
+@csrf_protect(blueprint=bp)
+def disable_mfa_confirm():
+	MFAMethod.query.filter_by(user=request.user).delete()
+	db.session.commit()
+	request.user.update_groups()
+	db.session.commit()
+	return redirect(url_for('selfservice.setup_mfa'))
+
+@bp.route('/mfa/setup/recovery', methods=['POST'])
+@login_required()
+@csrf_protect(blueprint=bp)
+def setup_mfa_recovery():
+	for method in RecoveryCodeMethod.query.filter_by(user=request.user).all():
+		db.session.delete(method)
+	methods = []
+	for _ in range(10):
+		method = RecoveryCodeMethod(request.user)
+		methods.append(method)
+		db.session.add(method)
+	db.session.commit()
+	return render_template('selfservice/setup_mfa_recovery.html', methods=methods)
+
+@bp.route('/mfa/setup/totp', methods=['GET'])
+@login_required()
+def setup_mfa_totp():
+	method = TOTPMethod(request.user)
+	session['mfa_totp_key'] = method.key
+	return render_template('selfservice/setup_mfa_totp.html', method=method, name=request.values['name'])
+
+@bp.route('/mfa/setup/totp', methods=['POST'])
+@login_required()
+@csrf_protect(blueprint=bp)
+def setup_mfa_totp_finish():
+	if not RecoveryCodeMethod.query.filter_by(user=request.user).all():
+		flash(_('Generate recovery codes first!'))
+		return redirect(url_for('selfservice.setup_mfa'))
+	method = TOTPMethod(request.user, name=request.values['name'], key=session.pop('mfa_totp_key'))
+	if method.verify(request.form['code']):
+		db.session.add(method)
+		request.user.update_groups()
+		db.session.commit()
+		return redirect(url_for('selfservice.setup_mfa'))
+	flash(_('Code is invalid'))
+	return redirect(url_for('selfservice.setup_mfa_totp', name=request.values['name']))
+
+@bp.route('/mfa/setup/totp/<int:id>/delete')
+@login_required()
+@csrf_protect(blueprint=bp)
+def delete_mfa_totp(id): #pylint: disable=redefined-builtin
+	method = TOTPMethod.query.filter_by(user=request.user, id=id).first_or_404()
+	db.session.delete(method)
+	request.user.update_groups()
+	db.session.commit()
+	return redirect(url_for('selfservice.setup_mfa'))
+
+bp.add_app_template_global(WEBAUTHN_SUPPORTED, name='webauthn_supported')
+
+if WEBAUTHN_SUPPORTED:
+	@bp.route('/mfa/setup/webauthn/begin', methods=['POST'])
+	@login_required()
+	@csrf_protect(blueprint=bp)
+	def setup_mfa_webauthn_begin():
+		if not RecoveryCodeMethod.query.filter_by(user=request.user).all():
+			abort(403)
+		methods = WebauthnMethod.query.filter_by(user=request.user).all()
+		creds = [method.cred for method in methods]
+		server = get_webauthn_server()
+		registration_data, state = server.register_begin(
+			{
+				"id": str(request.user.id).encode(),
+				"name": request.user.loginname,
+				"displayName": request.user.displayname,
+			},
+			creds,
+			user_verification='discouraged',
+		)
+		session["webauthn-state"] = state
+		return cbor.encode(registration_data)
+
+	@bp.route('/mfa/setup/webauthn/complete', methods=['POST'])
+	@login_required()
+	@csrf_protect(blueprint=bp)
+	def setup_mfa_webauthn_complete():
+		server = get_webauthn_server()
+		data = cbor.decode(request.get_data())
+		client_data = ClientData(data["clientDataJSON"])
+		att_obj = AttestationObject(data["attestationObject"])
+		auth_data = server.register_complete(session["webauthn-state"], client_data, att_obj)
+		method = WebauthnMethod(request.user, auth_data.credential_data, name=data['name'])
+		db.session.add(method)
+		request.user.update_groups()
+		db.session.commit()
+		return cbor.encode({"status": "OK"})
+
+@bp.route('/mfa/setup/webauthn/<int:id>/delete')
+@login_required()
+@csrf_protect(blueprint=bp)
+def delete_mfa_webauthn(id): #pylint: disable=redefined-builtin
+	method = WebauthnMethod.query.filter_by(user=request.user, id=id).first_or_404()
+	db.session.delete(method)
+	request.user.update_groups()
+	db.session.commit()
+	return redirect(url_for('selfservice.setup_mfa'))

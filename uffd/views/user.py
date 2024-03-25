@@ -9,7 +9,7 @@ from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
 from uffd.remailer import remailer
 from uffd.database import db
-from uffd.models import User, UserEmail, Role
+from uffd.models import User, UserEmail, Role, MFAMethod
 from .selfservice import send_passwordreset
 from .session import login_required
 
@@ -163,6 +163,16 @@ def activate(id):
 	db.session.commit()
 	flash(_('User activated'))
 	return redirect(url_for('user.show', id=user.id))
+
+@bp.route('/<int:id>/mfa/disable')
+@csrf_protect(blueprint=bp)
+def disable_mfa(id):
+	user = User.query.get_or_404(id)
+	MFAMethod.query.filter_by(user=user).delete()
+	user.update_groups()
+	db.session.commit()
+	flash(_('Two-factor authentication was reset'))
+	return redirect(url_for('user.show', id=id))
 
 @bp.route('/<int:id>/sessions/revoke')
 @csrf_protect(blueprint=bp)

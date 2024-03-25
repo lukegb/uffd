@@ -9,10 +9,12 @@ from uffd.database import db
 from uffd.csrf import csrf_protect
 from uffd.secure_redirect import secure_local_redirect
 from uffd.models import User, DeviceLoginInitiation, DeviceLoginConfirmation, Ratelimit, host_ratelimit, format_delay, Session
+from uffd.fido2_compat import * # pylint: disable=wildcard-import,unused-wildcard-import
 
 bp = Blueprint("session", __name__, template_folder='templates', url_prefix='/')
 
 login_ratelimit = Ratelimit('login', 1*60, 3)
+mfa_ratelimit = Ratelimit('mfa', 1*60, 3)
 
 @bp.before_app_request
 def set_request_user():
@@ -71,7 +73,7 @@ def set_session(user, skip_mfa=False):
 def login():
 	# pylint: disable=too-many-return-statements
 	if request.user_pre_mfa:
-		return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
+		return redirect(url_for('session.mfa_auth', ref=request.values.get('ref', url_for('index'))))
 	if request.method == 'GET':
 		return render_template('session/login.html', ref=request.values.get('ref'))
 
@@ -102,7 +104,7 @@ def login():
 		flash(_('You do not have access to this service'))
 		return render_template('session/login.html', ref=request.values.get('ref'))
 	set_session(user)
-	return redirect(url_for('mfa.auth', ref=request.values.get('ref', url_for('index'))))
+	return redirect(url_for('session.mfa_auth', ref=request.values.get('ref', url_for('index'))))
 
 def login_required_pre_mfa(no_redirect=False):
 	def wrapper(func):
@@ -125,12 +127,92 @@ def login_required(permission_check=lambda: True):
 				flash(_('You need to login first'))
 				return redirect(url_for('session.login', ref=request.full_path))
 			if not request.user:
-				return redirect(url_for('mfa.auth', ref=request.full_path))
+				return redirect(url_for('session.mfa_auth', ref=request.full_path))
 			if not permission_check():
 				abort(403)
 			return func(*args, **kwargs)
 		return decorator
 	return wrapper
+
+@bp.route('/mfa/auth', methods=['GET'])
+@login_required_pre_mfa()
+def mfa_auth():
+	if not request.user_pre_mfa.mfa_enabled:
+		request.session.mfa_done = True
+		db.session.commit()
+		set_request_user()
+	if request.session.mfa_done:
+		return secure_local_redirect(request.values.get('ref', url_for('index')))
+	return render_template('session/mfa_auth.html', ref=request.values.get('ref'))
+
+@bp.route('/mfa/auth', methods=['POST'])
+@login_required_pre_mfa()
+def mfa_auth_finish():
+	delay = mfa_ratelimit.get_delay(request.user_pre_mfa.id)
+	if delay:
+		flash(_('We received too many invalid attempts! Please wait at least %s.')%format_delay(delay))
+		return redirect(url_for('session.mfa_auth', ref=request.values.get('ref')))
+	for method in request.user_pre_mfa.mfa_totp_methods:
+		if method.verify(request.form['code']):
+			request.session.mfa_done = True
+			db.session.commit()
+			set_request_user()
+			return secure_local_redirect(request.values.get('ref', url_for('index')))
+	for method in request.user_pre_mfa.mfa_recovery_codes:
+		if method.verify(request.form['code']):
+			db.session.delete(method)
+			request.session.mfa_done = True
+			db.session.commit()
+			set_request_user()
+			if len(request.user_pre_mfa.mfa_recovery_codes) <= 1:
+				flash(_('You have exhausted your recovery codes. Please generate new ones now!'))
+				return redirect(url_for('selfservice.setup_mfa'))
+			if len(request.user_pre_mfa.mfa_recovery_codes) <= 5:
+				flash(_('You only have a few recovery codes remaining. Make sure to generate new ones before they run out.'))
+				return redirect(url_for('selfservice.setup_mfa'))
+			return secure_local_redirect(request.values.get('ref', url_for('index')))
+	mfa_ratelimit.log(request.user_pre_mfa.id)
+	flash(_('Two-factor authentication failed'))
+	return redirect(url_for('session.mfa_auth', ref=request.values.get('ref')))
+
+if WEBAUTHN_SUPPORTED:
+	@bp.route("/mfa/auth/webauthn/begin", methods=["POST"])
+	@login_required_pre_mfa(no_redirect=True)
+	def mfa_auth_webauthn_begin():
+		server = get_webauthn_server()
+		creds = [method.cred for method in request.user_pre_mfa.mfa_webauthn_methods]
+		if not creds:
+			abort(404)
+		auth_data, state = server.authenticate_begin(creds, user_verification='discouraged')
+		session["webauthn-state"] = state
+		return cbor.encode(auth_data)
+
+	@bp.route("/mfa/auth/webauthn/complete", methods=["POST"])
+	@login_required_pre_mfa(no_redirect=True)
+	def mfa_auth_webauthn_complete():
+		server = get_webauthn_server()
+		creds = [method.cred for method in request.user_pre_mfa.mfa_webauthn_methods]
+		if not creds:
+			abort(404)
+		data = cbor.decode(request.get_data())
+		credential_id = data["credentialId"]
+		client_data = ClientData(data["clientDataJSON"])
+		auth_data = AuthenticatorData(data["authenticatorData"])
+		signature = data["signature"]
+		# authenticate_complete() (as of python-fido2 v0.5.0, the version in Debian Buster)
+		# does not check signCount, although the spec recommends it
+		server.authenticate_complete(
+			session.pop("webauthn-state"),
+			creds,
+			credential_id,
+			client_data,
+			auth_data,
+			signature,
+		)
+		request.session.mfa_done = True
+		db.session.commit()
+		set_request_user()
+		return cbor.encode({"status": "OK"})
 
 @bp.route("/login/device/start")
 def devicelogin_start():

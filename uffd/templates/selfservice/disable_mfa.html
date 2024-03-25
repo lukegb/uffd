@@ -7,7 +7,7 @@
 	You can later generate new recovery codes and setup your applications and devices again.")}}
 </p>
 
-<form class="form" action="{{ url_for('mfa.disable_confirm') }}" method="POST">
+<form class="form" action="{{ url_for('selfservice.disable_mfa_confirm') }}" method="POST">
 	<button type="submit" class="btn btn-danger btn-block">{{_("Disable two-factor authentication")}}</button>
 </form>
 

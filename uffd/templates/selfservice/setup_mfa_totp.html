@@ -32,7 +32,7 @@
 	</div>
 </div>
 
-<form action="{{ url_for('mfa.setup_totp_finish', name=name) }}" method="POST" autocomplete="off" class="form">
+<form action="{{ url_for('selfservice.setup_mfa_totp_finish', name=name) }}" method="POST" autocomplete="off" class="form">
 	<div class="row m-0">
 		<input type="text" name="code" class="form-control mb-2 mr-2 col-auto col-md" id="code" placeholder="{{_('Code')}}" required autofocus>
 		<button type="submit" class="btn btn-primary mb-2 col col-md-auto">{{_("Verify and complete setup")}}</button>

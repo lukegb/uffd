@@ -167,7 +167,7 @@
 			{{ _("Two-factor authentication is currently <strong>disabled</strong>.")|safe }}
 			{% endif %}
 		</p>
-		<a class="btn btn-primary btn-block" href="{{ url_for('mfa.setup') }}">{{_("Manage two-factor authentication")}}</a>
+		<a class="btn btn-primary btn-block" href="{{ url_for('selfservice.setup_mfa') }}">{{_("Manage two-factor authentication")}}</a>
 	</div>
 </div>
 

@@ -1,7 +1,7 @@
 {% extends 'base_narrow.html' %}
 
 {% block body %}
-<form action="{{ url_for("mfa.auth_finish", ref=ref) }}" method="POST" autocomplete="off">
+<form action="{{ url_for("session.mfa_auth_finish", ref=ref) }}" method="POST" autocomplete="off">
 	<div class="col-12 mb-3">
 		<h2 class="text-center">{{_("Two-Factor Authentication")}}</h2>
 	</div>
@@ -42,7 +42,7 @@ function begin_webauthn() {
 	$('#webauthn-spinner').removeClass('d-none');
 	$('#webauthn-btn-text').text({{ _('Contacting server')|tojson }});
 	$('#webauthn-btn').prop('disabled', true);
-	fetch({{ url_for('mfa.auth_webauthn_begin')|tojson }}, {
+	fetch({{ url_for('session.mfa_auth_webauthn_begin')|tojson }}, {
 		method: 'POST',
 	}).then(function(response) {
 		if (response.ok) {
@@ -60,7 +60,7 @@ function begin_webauthn() {
 		return navigator.credentials.get(options);
 	}).then(function(assertion) {
 		$('#webauthn-btn-text').text({{ _('Verifing response')|tojson }});
-		return fetch({{ url_for('mfa.auth_webauthn_complete')|tojson }}, {
+		return fetch({{ url_for('session.mfa_auth_webauthn_complete')|tojson }}, {
 			method: 'POST',
 			headers: {'Content-Type': 'application/cbor'},
 			body: CBOR.encode({

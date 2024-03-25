@@ -23,7 +23,7 @@
 </p>
 
 <div class="btn-toolbar">
-	<a class="ml-auto mb-2 btn btn-primary d-print-none" href="{{ url_for('mfa.setup') }}">{{_("Continue")}}</a>
+	<a class="ml-auto mb-2 btn btn-primary d-print-none" href="{{ url_for('selfservice.setup_mfa') }}">{{_("Continue")}}</a>
 	<a class="ml-2 mb-2 btn btn-light d-print-none" href="{{ methods|map(attribute='code')|join('\n')|datauri }}" download="uffd-recovery-codes">
 		{{_("Download codes")}}
 	</a>
