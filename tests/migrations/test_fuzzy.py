@@ -13,6 +13,7 @@ from uffd.models import (
 	Service,
 	OAuth2Client, OAuth2LogoutURI, OAuth2Grant, OAuth2Token, OAuth2DeviceLoginInitiation,
 	PasswordToken,
+	Session,
 )
 
 from tests.utils import MigrationTestCase
@@ -62,7 +63,15 @@ class TestFuzzy(MigrationTestCase):
 		db.session.add_all([service, oauth2_client])
 		db.session.add(OAuth2Grant(user=user, client=oauth2_client, _code='testcode', redirect_uri='http://example.com/callback', expires=datetime.datetime.now()))
 		db.session.add(OAuth2Token(user=user, client=oauth2_client, token_type='Bearer', _access_token='testcode', _refresh_token='testcode', expires=datetime.datetime.now()))
-		db.session.add(OAuth2DeviceLoginInitiation(client=oauth2_client, confirmations=[DeviceLoginConfirmation(user=user)]))
+		session = Session(
+			user=user,
+			secret='0919de9da3f7dc6c33ab849f44c20e8221b673ca701030de17488f3269fc5469f100e2ce56e5fd71305b23d8ecbb06d80d22004adcd3fefc5f5fcb80a436e31f2c2d9cc8fe8c59ae44871ae4524408d312474570280bf29d3ba145a4bd00010ca758eaa0795b180ec12978b42d13bf4c4f06f72103d44077022ce656610be855',
+			ip_address='127.0.0.1',
+			user_agent='Mozilla/5.0 (X11; Linux x86_64; rv:124.0) Gecko/20100101 Firefox/124.0',
+			mfa_done=True,
+		)
+		db.session.add(session)
+		db.session.add(OAuth2DeviceLoginInitiation(client=oauth2_client, confirmations=[DeviceLoginConfirmation(session=session)]))
 		db.session.add(PasswordToken(user=user))
 		db.session.commit()
 		revs = [s.split('_', 1)[0] for s in os.listdir('uffd/migrations/versions') if '_' in s and s.endswith('.py')]

@@ -7,7 +7,7 @@ from flask import url_for, session
 from uffd.database import db
 from uffd.password_hash import PlaintextPasswordHash
 from uffd.remailer import remailer
-from uffd.models import DeviceLoginConfirmation, Service, OAuth2Client, OAuth2DeviceLoginInitiation, RemailerMode, OAuth2Key
+from uffd.models import DeviceLoginConfirmation, Service, OAuth2Client, OAuth2DeviceLoginInitiation, RemailerMode, OAuth2Key, Session
 
 from tests.utils import dump, UffdTestCase
 from tests.models.test_oauth2 import TEST_JWK
@@ -143,7 +143,7 @@ class TestViews(UffdTestCase):
 		with self.client.session_transaction() as _session:
 			initiation = OAuth2DeviceLoginInitiation(client=OAuth2Client.query.filter_by(client_id='test').one())
 			db.session.add(initiation)
-			confirmation = DeviceLoginConfirmation(initiation=initiation, user=self.get_user())
+			confirmation = DeviceLoginConfirmation(initiation=initiation, session=Session(user=self.get_user()))
 			db.session.add(confirmation)
 			db.session.commit()
 			_session['devicelogin_id'] = initiation.id
@@ -158,7 +158,7 @@ class TestViews(UffdTestCase):
 		with self.client.session_transaction() as _session:
 			initiation = OAuth2DeviceLoginInitiation(client=OAuth2Client.query.filter_by(client_id='test').one())
 			db.session.add(initiation)
-			confirmation = DeviceLoginConfirmation(initiation=initiation, user=self.get_user())
+			confirmation = DeviceLoginConfirmation(initiation=initiation, session=Session(user=self.get_user()))
 			db.session.add(confirmation)
 			db.session.commit()
 			_session['devicelogin_id'] = initiation.id

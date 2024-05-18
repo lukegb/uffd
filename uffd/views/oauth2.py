@@ -291,14 +291,14 @@ def authorize_user(client):
 		del session['devicelogin_id']
 		del session['devicelogin_secret']
 		del session['devicelogin_confirmation']
-		if not initiation or initiation.expired or not confirmation or confirmation.user.is_deactivated:
+		if not initiation or initiation.expired or not confirmation or confirmation.session.user.is_deactivated:
 			raise LoginRequiredError(
 				flash_message=_('Device login failed'),
 				response=redirect(url_for('session.login', ref=request.full_path, devicelogin=True))
 			)
 		db.session.delete(initiation)
 		db.session.commit()
-		return confirmation.user
+		return confirmation.session.user
 
 	raise LoginRequiredError(
 		flash_message=_('You need to login to access this service'),

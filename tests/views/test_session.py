@@ -183,7 +183,7 @@ class TestSession(UffdTestCase):
 		self.assertEqual(r.status_code, 200)
 		initiation = OAuth2DeviceLoginInitiation.query.filter_by(code=code).one()
 		self.assertEqual(len(initiation.confirmations), 1)
-		self.assertEqual(initiation.confirmations[0].user.loginname, 'testuser')
+		self.assertEqual(initiation.confirmations[0].session.user.loginname, 'testuser')
 		self.assertIn(initiation.confirmations[0].code.encode(), r.data)
 		r = self.client.get(path=url_for('session.deviceauth_finish'), follow_redirects=True)
 		self.assertEqual(r.status_code, 200)

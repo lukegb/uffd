@@ -185,7 +185,7 @@ class DeviceLoginConfirmation(db.Model):
 
 	A confirmation code is generated and displayed when an authenticated user
 	enters an initiation code and confirms the device login attempt. Every
-	instance is bound to both an initiation code and a user.
+	instance is bound to both an initiation code and a login session.
 
 	The code attribute is formed out of two indepentently unique parts
 	to ensure that at any time all existing codes differ in at least two
@@ -198,8 +198,8 @@ class DeviceLoginConfirmation(db.Model):
 	                       name='fk_device_login_confirmation_initiation_id_',
 	                       onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	initiation = relationship('DeviceLoginInitiation', back_populates='confirmations')
-	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False, unique=True)
-	user = relationship('User')
+	session_id = Column(Integer(), ForeignKey('session.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False, unique=True)
+	session = relationship('Session')
 	code0 = Column(String(32), nullable=False, default=lambda: token_typeable(1))
 	code1 = Column(String(32), nullable=False, default=lambda: token_typeable(1))
 

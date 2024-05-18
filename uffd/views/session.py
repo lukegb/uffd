@@ -261,12 +261,12 @@ def deviceauth():
 @login_required()
 @csrf_protect(blueprint=bp)
 def deviceauth_submit():
-	DeviceLoginConfirmation.query.filter_by(user=request.user).delete()
+	DeviceLoginConfirmation.query.filter_by(session=request.session).delete()
 	initiation = DeviceLoginInitiation.query.filter_by(code=request.form['initiation-code']).one_or_none()
 	if initiation is None or initiation.expired:
 		flash(_('Invalid initiation code'))
 		return redirect(url_for('session.deviceauth'))
-	confirmation = DeviceLoginConfirmation(user=request.user, initiation=initiation)
+	confirmation = DeviceLoginConfirmation(session=request.session, initiation=initiation)
 	db.session.add(confirmation)
 	db.session.commit()
 	return render_template('session/deviceauth.html', initiation=initiation, confirmation=confirmation)
@@ -274,6 +274,6 @@ def deviceauth_submit():
 @bp.route("/device/finish", methods=['GET', 'POST'])
 @login_required()
 def deviceauth_finish():
-	DeviceLoginConfirmation.query.filter_by(user=request.user).delete()
+	DeviceLoginConfirmation.query.filter_by(session=request.session).delete()
 	db.session.commit()
 	return redirect(url_for('index'))
