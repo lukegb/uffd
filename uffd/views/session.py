@@ -21,6 +21,7 @@ def set_request_user():
 	request.user = None
 	request.user_pre_mfa = None
 	request.session = None
+	request.session_pre_mfa = None
 	if 'id' not in session:
 		return
 	if 'secret' not in session:
@@ -35,9 +36,10 @@ def set_request_user():
 		db.session.commit()
 	if _session.user.is_deactivated or not _session.user.is_in_group(current_app.config['ACL_ACCESS_GROUP']):
 		return
-	request.session = _session
+	request.session_pre_mfa = _session
 	request.user_pre_mfa = _session.user
 	if _session.mfa_done:
+		request.session = _session
 		request.user = _session.user
 
 @bp.route("/logout")
@@ -45,8 +47,8 @@ def logout():
 	# The oauth2 module takes data from `session` and injects it into the url,
 	# so we need to build the url BEFORE we clear the session!
 	resp = redirect(url_for('oauth2.logout', ref=request.values.get('ref', url_for('.login'))))
-	if request.session:
-		db.session.delete(request.session)
+	if request.session_pre_mfa:
+		db.session.delete(request.session_pre_mfa)
 		db.session.commit()
 	session.clear()
 	return resp
@@ -138,10 +140,10 @@ def login_required(permission_check=lambda: True):
 @login_required_pre_mfa()
 def mfa_auth():
 	if not request.user_pre_mfa.mfa_enabled:
-		request.session.mfa_done = True
+		request.session_pre_mfa.mfa_done = True
 		db.session.commit()
 		set_request_user()
-	if request.session.mfa_done:
+	if request.session_pre_mfa.mfa_done:
 		return secure_local_redirect(request.values.get('ref', url_for('index')))
 	return render_template('session/mfa_auth.html', ref=request.values.get('ref'))
 
@@ -154,14 +156,14 @@ def mfa_auth_finish():
 		return redirect(url_for('session.mfa_auth', ref=request.values.get('ref')))
 	for method in request.user_pre_mfa.mfa_totp_methods:
 		if method.verify(request.form['code']):
-			request.session.mfa_done = True
+			request.session_pre_mfa.mfa_done = True
 			db.session.commit()
 			set_request_user()
 			return secure_local_redirect(request.values.get('ref', url_for('index')))
 	for method in request.user_pre_mfa.mfa_recovery_codes:
 		if method.verify(request.form['code']):
 			db.session.delete(method)
-			request.session.mfa_done = True
+			request.session_pre_mfa.mfa_done = True
 			db.session.commit()
 			set_request_user()
 			if len(request.user_pre_mfa.mfa_recovery_codes) <= 1:
@@ -209,7 +211,7 @@ if WEBAUTHN_SUPPORTED:
 			auth_data,
 			signature,
 		)
-		request.session.mfa_done = True
+		request.session_pre_mfa.mfa_done = True
 		db.session.commit()
 		set_request_user()
 		return cbor.encode({"status": "OK"})
