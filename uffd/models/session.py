@@ -29,6 +29,8 @@ class Session(db.Model):
 
 	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	user = relationship('User', back_populates='sessions')
+	oauth2_grants = relationship('OAuth2Grant', back_populates='session', cascade='all, delete-orphan')
+	oauth2_tokens = relationship('OAuth2Token', back_populates='session', cascade='all, delete-orphan')
 
 	created = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
 	last_used = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)

@@ -254,8 +254,8 @@ def authorize_validate_request_oidc(grant):
 	return grant, sub_value, prompt_values
 
 def authorize_user(client):
-	if request.user:
-		return request.user
+	if request.session:
+		return request.session
 
 	if 'devicelogin_started' in session:
 		del session['devicelogin_started']
@@ -298,7 +298,7 @@ def authorize_user(client):
 			)
 		db.session.delete(initiation)
 		db.session.commit()
-		return confirmation.session.user
+		return confirmation.session
 
 	raise LoginRequiredError(
 		flash_message=_('You need to login to access this service'),
@@ -325,18 +325,18 @@ def authorize():
 		return render_template('oauth2/error.html', **err.params), 400
 
 	try:
-		user = authorize_user(grant.client)
-		if sub_value is not None and str(user.unix_uid) != sub_value:
+		_session = authorize_user(grant.client)
+		if sub_value is not None and str(_session.user.unix_uid) != sub_value:
 			# We only reach this point in OIDC requests with prompt=none, see
 			# authorize_validate_request_oidc. So this LoginRequiredError is
 			# always returned as a redirect back to the client.
 			raise LoginRequiredError()
-		if not grant.client.access_allowed(user):
+		if not grant.client.access_allowed(_session.user):
 			raise AccessDeniedError(flash_message=_(
 				"You don't have the permission to access the service <b>%(service_name)s</b>.",
 				service_name=grant.client.service.name
 			))
-		grant.user = user
+		grant.session = _session
 	except LoginRequiredError as err:
 		# We abuse LoginRequiredError to signal a redirect to the login page
 		if is_oidc and 'none' in prompt_values:
@@ -350,9 +350,6 @@ def authorize():
 			return oauth2_redirect(**err.params)
 		abort(403, description=err.flash_message)
 
-	session['oauth2-clients'] = session.get('oauth2-clients', [])
-	if grant.client.client_id not in session['oauth2-clients']:
-		session['oauth2-clients'].append(grant.client.client_id)
 	db.session.add(grant)
 	db.session.commit()
 	return oauth2_redirect(code=grant.code)
@@ -488,9 +485,11 @@ def userinfo():
 
 @bp.app_url_defaults
 def inject_logout_params(endpoint, values):
-	if endpoint != 'oauth2.logout' or not session.get('oauth2-clients'):
+	if endpoint != 'oauth2.logout' or not request.session:
 		return
-	values['client_ids'] = ','.join(session['oauth2-clients'])
+	client_ids = set(token.client.client_id for token in request.session.oauth2_tokens)
+	if client_ids:
+		values['client_ids'] = ','.join(client_ids)
 
 @bp.route('/oauth2/logout')
 def logout():

@@ -72,8 +72,8 @@ class OAuth2Grant(db.Model):
 	EXPIRES_IN = 100
 	expires = Column(DateTime, nullable=False, default=lambda: datetime.datetime.utcnow() + datetime.timedelta(seconds=OAuth2Grant.EXPIRES_IN))
 
-	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
-	user = relationship('User')
+	session_id = Column(Integer(), ForeignKey('session.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	session = relationship('Session')
 
 	client_db_id = Column(Integer, ForeignKey('oauth2client.db_id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	client = relationship('OAuth2Client')
@@ -96,10 +96,7 @@ class OAuth2Grant(db.Model):
 
 	@property
 	def service_user(self):
-		service_user = ServiceUser.query.get((self.client.service_id, self.user.id))
-		if service_user is None:
-			raise Exception('ServiceUser lookup failed')
-		return service_user
+		return ServiceUser.query.get((self.client.service_id, self.session.user_id))
 
 	@hybrid_property
 	def expired(self):
@@ -116,20 +113,23 @@ class OAuth2Grant(db.Model):
 		grant = cls.query.filter_by(id=grant_id, expired=False).first()
 		if not grant or not secrets.compare_digest(grant._code, grant_code):
 			return None
-		if grant.user.is_deactivated or not grant.client.access_allowed(grant.user):
+		if grant.session.expired or grant.session.user.is_deactivated:
+			return None
+		if not grant.service_user or not grant.service_user.has_access:
 			return None
 		return grant
 
 	def make_token(self, **kwargs):
 		return OAuth2Token(
-			user=self.user,
+			session=self.session,
 			client=self.client,
 			scopes=self.scopes,
 			claims=self.claims,
 			**kwargs
 		)
 
-@cleanup_task.delete_by_attribute('expired')
+# OAuth2Token objects are cleaned-up when the session expires and is
+# auto-deleted (or the user manually revokes it).
 class OAuth2Token(db.Model):
 	__tablename__ = 'oauth2token'
 	id = Column(Integer, primary_key=True, autoincrement=True)
@@ -137,8 +137,8 @@ class OAuth2Token(db.Model):
 	EXPIRES_IN = 3600
 	expires = Column(DateTime, nullable=False, default=lambda: datetime.datetime.utcnow() + datetime.timedelta(seconds=OAuth2Token.EXPIRES_IN))
 
-	user_id = Column(Integer(), ForeignKey('user.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
-	user = relationship('User')
+	session_id = Column(Integer(), ForeignKey('session.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+	session = relationship('Session')
 
 	client_db_id = Column(Integer, ForeignKey('oauth2client.db_id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
 	client = relationship('OAuth2Client')
@@ -163,10 +163,7 @@ class OAuth2Token(db.Model):
 
 	@property
 	def service_user(self):
-		service_user = ServiceUser.query.get((self.client.service_id, self.user.id))
-		if service_user is None:
-			raise Exception('ServiceUser lookup failed')
-		return service_user
+		return ServiceUser.query.get((self.client.service_id, self.session.user_id))
 
 	@hybrid_property
 	def expired(self):
@@ -181,7 +178,9 @@ class OAuth2Token(db.Model):
 		token = cls.query.filter_by(id=token_id, expired=False).first()
 		if not token or not secrets.compare_digest(token._access_token, token_secret):
 			return None
-		if token.user.is_deactivated or not token.client.access_allowed(token.user):
+		if token.session.expired or token.session.user.is_deactivated:
+			return None
+		if not token.service_user or not token.service_user.has_access:
 			return None
 		return token
 
