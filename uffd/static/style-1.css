@@ -44,4 +44,22 @@
 	.btn-link:disabled {
 		color: #3395ff;
 	}
+
+	/* Dark theme breaks spinners (appears as full ring without animation) */
+	.spinner-border {
+		display: inline-block;
+		width: 2rem;
+		height: 2rem;
+		vertical-align: text-bottom;
+		border: 0.25em solid currentColor;
+		border-right-color: transparent;
+		border-radius: 50%;
+		-webkit-animation: spinner-border .75s linear infinite;
+		animation: spinner-border .75s linear infinite;
+	}
+	.spinner-border-sm {
+		width: 1rem;
+		height: 1rem;
+		border-width: 0.2em;
+	}
 }
