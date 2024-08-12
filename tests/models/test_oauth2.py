@@ -71,6 +71,7 @@ class TestOAuth2Key(UffdTestCase):
 
 	def test_encode_jwt(self):
 		jwtdata = self.key.encode_jwt({'aud': 'test', 'foo': 'bar'})
+		self.assertIsInstance(jwtdata, str) # Regression check for #165
 		self.assertEqual(
 			jwt.get_unverified_header(jwtdata),
 			# typ is optional, x5u/x5c/jku/jwk are discoraged by OIDC Core 1.0 spec section 2

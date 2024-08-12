@@ -243,7 +243,11 @@ class OAuth2Key(db.Model):
 	def encode_jwt(self, payload):
 		if not self.active:
 			raise jwt.exceptions.InvalidKeyError(f'Key {self.id} not active')
-		return jwt.encode(payload, key=self.private_key, algorithm=self.algorithm, headers={'kid': self.id})
+		res = jwt.encode(payload, key=self.private_key, algorithm=self.algorithm, headers={'kid': self.id})
+		# pyjwt pre-v2 compat (Buster/Bullseye)
+		if isinstance(res, bytes):
+			res = res.decode()
+		return res
 
 	# Hash algorithm for at_hash/c_hash from OpenID Connect Core 1.0 section 3.1.3.6
 	def oidc_hash(self, value):
