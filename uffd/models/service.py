@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Enum
 from sqlalchemy.orm import relationship, validates
 
 from uffd.database import db
-from uffd.remailer import remailer
+from uffd.remailer import forwarder, remailer
 from uffd.tasks import cleanup_task
 from .user import User, UserEmail, user_groups
 
@@ -14,6 +14,7 @@ class RemailerMode(enum.Enum):
 	DISABLED = 0
 	ENABLED_V1 = 1
 	ENABLED_V2 = 2
+	ENABLED_FORWARDER = 3
 
 class Service(db.Model):
 	__tablename__ = 'service'
@@ -61,20 +62,29 @@ class ServiceUser(db.Model):
 
 	@property
 	def has_email_preferences(self):
+		if self.service.remailer_mode == RemailerMode.ENABLED_FORWARDER:
+			return False
 		return self.has_access and self.service.enable_email_preferences
 
 	remailer_overwrite_mode = Column(Enum(RemailerMode, create_constraint=True), default=None, nullable=True)
 
 	@property
 	def effective_remailer_mode(self):
-		if not remailer.configured:
-			return RemailerMode.DISABLED
 		if current_app.config['REMAILER_LIMIT_TO_USERS'] is not None:
 			if self.user.loginname not in current_app.config['REMAILER_LIMIT_TO_USERS']:
 				return RemailerMode.DISABLED
 		if self.remailer_overwrite_mode is not None:
-			return self.remailer_overwrite_mode
-		return self.service.remailer_mode
+			mode = self.remailer_overwrite_mode
+		else:
+			mode = self.service.remailer_mode
+		if not remailer.configured and mode in (
+				RemailerMode.ENABLED_V1,
+				RemailerMode.ENABLED_V2,
+		):
+			return RemailerMode.DISABLED
+		if not forwarder.configured and mode == RemailerMode.ENABLED_FORWARDER:
+			return RemailerMode.DISABLED
+		return mode
 
 	service_email_id = Column(Integer(), ForeignKey('user_email.id', onupdate='CASCADE', ondelete='SET NULL'))
 	service_email = relationship('UserEmail')
@@ -114,6 +124,8 @@ class ServiceUser(db.Model):
 			return remailer.build_v1_address(self.service_id, self.user_id)
 		if self.effective_remailer_mode == RemailerMode.ENABLED_V2:
 			return remailer.build_v2_address(self.service_id, self.user_id)
+		if self.effective_remailer_mode == RemailerMode.ENABLED_FORWARDER:
+			return forwarder.build_forwarder_address(self.user.loginname)
 		return self.real_email
 
 	# User.primary_email and ServiceUser.service_email can only be set to

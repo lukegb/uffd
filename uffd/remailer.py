@@ -73,4 +73,37 @@ class Remailer:
 			return self.parse_v2_payload(payload)
 		return None
 
+
+class Forwarder:
+	'''The forwarder feature is similar to the remailer feature but provides 'standard'
+	email addresses based upon the uffd loginname.
+
+	This can be used for services, but at a cost - it is not possible to direct email
+	per-service to different email accounts.
+
+	This does, however, make it more useful for sharable emails.'''
+
+	@property
+	def configured(self):
+		return bool(current_app.config['FORWARDER_DOMAIN'])
+
+	def build_forwarder_address(self, user_loginname):
+		return user_loginname + '@' + current_app.config['FORWARDER_DOMAIN']
+
+	def is_forwarder_domain(self, domain):
+		domains = {domain.lower().strip() for domain in current_app.config['FORWARDER_OLD_DOMAINS']}
+		if current_app.config['FORWARDER_DOMAIN']:
+			domains.add(current_app.config['FORWARDER_DOMAIN'].lower().strip())
+		return domain.lower().strip() in domains
+
+	def parse_address(self, address):
+		if '@' not in address:
+			return None
+		local_part, domain = address.rsplit('@', 1)
+		if not self.is_forwarder_domain(domain):
+			return None
+		return local_part
+
+
 remailer = Remailer()
+forwarder = Forwarder()

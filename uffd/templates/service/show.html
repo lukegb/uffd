@@ -51,7 +51,7 @@
 		<div class="form-group col">
 			<label for="remailer-mode">
 				{{ _('Hide e-mail addresses with remailer') }}
-				{% if not remailer.configured %}
+				{% if not remailer.configured and not forwarder.configured %}
 				<i class="fas fa-exclamation-triangle text-warning" data-toggle="tooltip" data-placement="top" title="{{ _('This option has no effect: Remailer config options are unset') }}"></i>
 				{% endif %}
 			</label>
@@ -65,6 +65,11 @@
 				<option value="{{ RemailerMode.ENABLED_V1.name }}" {{ 'selected' if service.remailer_mode == RemailerMode.ENABLED_V1 }}>
 					{{ _('Remailer enabled (deprecated, case-sensitive format)') }}
 				</option>
+				{% if forwarder.configured %}
+				<option value="{{ RemailerMode.ENABLED_FORWARDER.name }}" {{ 'selected' if service.remailer_mode == RemailerMode.ENABLED_FORWARDER }}>
+					{{ _('Forwarder enabled') }}
+				</option>
+				{% endif %}
 			</select>
 			<small class="form-text text-muted">
 				{{ _('Some services notify users about changes to their e-mail address. Modifying this setting immediatly affects the e-mail addresses of all users and can cause masses of notification e-mails.') }}
@@ -88,6 +93,11 @@
 					<option value="{{ RemailerMode.ENABLED_V1.name }}" {{ 'selected' if remailer_overwrite_mode == RemailerMode.ENABLED_V1 }}>
 						{{ _('Remailer enabled (deprecated, case-sensitive format)') }}
 					</option>
+					{% if forwarder.configured %}
+					<option value="{{ RemailerMode.ENABLED_FORWARDER.name }}" {{ 'selected' if remailer_overwrite_mode == RemailerMode.ENABLED_FORWARDER }}>
+						{{ _('Forwarder enabled') }}
+					</option>
+					{% endif %}
 				</select>
 			</div>
 			<small class="form-text text-muted">

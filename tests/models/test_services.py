@@ -1,6 +1,6 @@
 import itertools
 
-from uffd.remailer import remailer
+from uffd.remailer import forwarder, remailer
 from uffd.tasks import cleanup_task
 from uffd.database import db
 from uffd.models import Service, ServiceUser, User, UserEmail, RemailerMode
@@ -133,6 +133,39 @@ class TestServiceUser(UffdTestCase):
 		# 7. remailer setup + remailer enabled + user overwrite
 		self.app.config['REMAILER_LIMIT_TO_USERS'] = None
 		service.remailer_mode = RemailerMode.ENABLED_V1
+		service_user.remailer_overwrite_mode = RemailerMode.DISABLED
+		self.assertEqual(service_user.email, user.primary_email.address)
+
+	def test_email_forwarder(self):
+		user = self.get_user()
+		service = Service.query.filter_by(name='service1').first()
+		service_user = ServiceUser.query.get((service.id, user.id))
+		self.app.config['FORWARDER_DOMAIN'] = 'forwarder.example.com'
+		forwarder_email = forwarder.build_forwarder_address(user.loginname)
+		# 1. forwarder not setup
+		self.app.config['FORWARDER_DOMAIN'] = ''
+		self.assertEqual(service_user.email, user.primary_email.address)
+		# 2. forwarder setup + forwarder disabled
+		self.app.config['FORWARDER_DOMAIN'] = 'forwarder.example.com'
+		self.assertEqual(service_user.email, user.primary_email.address)
+		# 3. forwarder setup + forwarder enabled + REMAILER_LIMIT_TO_USERS unset
+		service.remailer_mode = RemailerMode.ENABLED_FORWARDER
+		db.session.commit()
+		self.assertEqual(service_user.email, forwarder_email)
+		# 4. forwarder setup + forwarder enabled + REMAILER_LIMIT_TO_USERS does not include user
+		self.app.config['REMAILER_LIMIT_TO_USERS'] = ['testadmin']
+		self.assertEqual(service_user.email, user.primary_email.address)
+		# 5. forwarder setup + forwarder enabled + REMAILER_LIMIT_TO_USERS includes user
+		self.app.config['REMAILER_LIMIT_TO_USERS'] = ['testuser']
+		self.assertEqual(service_user.email, forwarder_email)
+		# 6. forwarder setup + forwarder disabled + user overwrite
+		self.app.config['REMAILER_LIMIT_TO_USERS'] = None
+		service.remailer_mode = RemailerMode.DISABLED
+		service_user.remailer_overwrite_mode = RemailerMode.ENABLED_FORWARDER
+		self.assertEqual(service_user.email, forwarder_email)
+		# 7. forwarder setup + forwarder enabled + user overwrite
+		self.app.config['REMAILER_LIMIT_TO_USERS'] = None
+		service.remailer_mode = RemailerMode.ENABLED_FORWARDER
 		service_user.remailer_overwrite_mode = RemailerMode.DISABLED
 		self.assertEqual(service_user.email, user.primary_email.address)
 

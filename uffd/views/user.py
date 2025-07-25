@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from uffd.navbar import register_navbar
 from uffd.csrf import csrf_protect
-from uffd.remailer import remailer
+from uffd.remailer import forwarder, remailer
 from uffd.database import db
 from uffd.models import User, UserEmail, Role, MFAMethod
 from .selfservice import send_passwordreset
@@ -16,6 +16,7 @@ from .session import login_required
 bp = Blueprint("user", __name__, template_folder='templates', url_prefix='/user/')
 
 bp.add_app_template_global(User, 'User')
+bp.add_app_template_global(forwarder, 'forwarder')
 bp.add_app_template_global(remailer, 'remailer')
 
 def user_acl_check():
