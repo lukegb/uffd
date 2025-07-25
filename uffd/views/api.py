@@ -6,6 +6,7 @@ from uffd.database import db
 from uffd.models import (
 	User, ServiceUser, Group, Mail, MailReceiveAddress, MailDestinationAddress, APIClient,
 	RecoveryCodeMethod, TOTPMethod, WebauthnMethod, Invite, Role, Service )
+from uffd.remailer import forwarder
 from .session import login_ratelimit
 
 bp = Blueprint('api', __name__, template_folder='templates', url_prefix='/api/v1/')
@@ -158,6 +159,22 @@ def getmails():
 	else:
 		abort(400)
 	return jsonify([generate_mail_dict(mail) for mail in query])
+
+@bp.route('/resolve-forwarder', methods=['GET', 'POST'])
+@apikey_required('remailer')
+def resolve_forwarder():
+	if list(request.values.keys()) != ['orig_address']:
+		abort(400)
+	values = request.values.getlist('orig_address')
+	if len(values) != 1:
+		abort(400)
+	parsed = forwarder.parse_address(values[0])
+	if not parsed:
+		return jsonify(address=None)
+	user = User.query.filter_by(loginname=parsed).one_or_none()
+	if not user:
+		return jsonify(address=None)
+	return jsonify(address=user.primary_email.address)
 
 @bp.route('/resolve-remailer', methods=['GET', 'POST'])
 @apikey_required('remailer')
