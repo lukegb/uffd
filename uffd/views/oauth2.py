@@ -422,7 +422,7 @@ def token():
 	}
 	if 'openid' in tok.scopes:
 		key = OAuth2Key.get_preferred_key()
-		id_token = render_claims(['openid'], (grant.claims or {}).get('id_token', {}), tok.service_user)
+		id_token = render_claims(tok.scopes, (grant.claims or {}).get('id_token', {}), tok.service_user)
 		id_token['iss'] = get_issuer()
 		id_token['aud'] = tok.client.client_id
 		id_token['iat'] = int(time.time())
