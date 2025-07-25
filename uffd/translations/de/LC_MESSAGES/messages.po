@@ -1387,7 +1387,7 @@ msgstr ""
 #: uffd/templates/service/show.html:70
 msgid ""
 "Some services notify users about changes to their e-mail address. "
-"Modifying this setting immediatly affects the e-mail addresses of all "
+"Modifying this setting immediately affects the e-mail addresses of all "
 "users and can cause masses of notification e-mails."
 msgstr ""
 "Einige Dienste benachrichtigen Nutzer bei Änderungen ihrer E-Mail-"
