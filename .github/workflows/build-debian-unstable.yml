@@ -1,0 +1,58 @@
+on: push
+
+jobs:
+  build:
+    name: Build deb
+    strategy:
+      fail-fast: false
+      matrix:
+        debian_release:
+          - bookworm
+          - trixie
+          - forky
+    runs-on: ubuntu-latest
+    container:
+      image: debian:${{ matrix.debian_release }}
+    steps:
+      - name: Setup
+        run: |
+          export DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8
+          apt-get update
+          apt-get install -y \
+            build-essential \
+            locales \
+            git \
+            nodejs \
+            python3-git
+          localedef -i en_GB -c -f UTF-8 -A /usr/share/locale/locale.alias en_GB.UTF-8
+      - name: Checkout
+        # This comes after "setup" since we might need nodejs...
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # we need tags as well
+      - name: Setup for build
+        run: |
+          export DEBIAN_FRONTEND=noninteractive LANG=en_GB.UTF-8
+          git config --global --add safe.directory $PWD
+          apt-get build-dep -y .
+          ./debian/create_changelog.py uffd > debian/changelog
+      - name: Perform build
+        run: |
+          export DEBIAN_FRONTEND=noninteractive LANG=en_GB.UTF-8
+          git config --global --add safe.directory $PWD
+          export PACKAGE_VERSION="$(git describe | sed -E -n -e 's/^v([0-9.]*)$/\1/p' -e 's/^v([0-9.]*)-([0-9]*)-g([0-9a-z]*)$/\1.dev+git.\3/p' | grep .)"
+          export PYBUILD_INSTALL_ARGS="--install-lib=/usr/share/uffd/ --install-scripts=/usr/share/uffd/"
+          export DEB_BUILD_OPTIONS=nocheck
+          dpkg-buildpackage -us -uc
+      - name: Verify artifacts
+        run: |
+          export DEBIAN_FRONTEND=noninteractive LANG=en_GB.UTF-8
+          mkdir out/
+          mv ../*.deb out/
+          dpkg-deb -I out/*.deb
+          dpkg-deb -c out/*.deb
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ matrix.debian_release }}
+          path: out/
