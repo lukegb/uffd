@@ -1,0 +1,49 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: GitHub
+Label: uffd
+Codename: forky
+Date: Mon, 18 Aug 2025 19:03:12 UTC
+Architectures: amd64 arm64
+Components: forky
+MD5Sum:
+ 6597341c596db2c52c04c6039231bafb 781 forky/binary-amd64/Packages
+ 0274725e71b94ca1447d5b5926daf576 496 forky/binary-amd64/Packages.gz
+ e8a76f7bd1975df47eb6b1dac07be8c0 64 forky/binary-amd64/Release
+ 6597341c596db2c52c04c6039231bafb 781 forky/binary-arm64/Packages
+ 0274725e71b94ca1447d5b5926daf576 496 forky/binary-arm64/Packages.gz
+ 6c6fdcb3a35c6eb74c56bf828e8d1fd7 64 forky/binary-arm64/Release
+ ecbc27f62cafa65311e9b67fbf52aa0c 138589 forky/Contents-amd64
+ bce259b1f9e8c888a43c4659ee0b8618 11516 forky/Contents-amd64.gz
+ ecbc27f62cafa65311e9b67fbf52aa0c 138589 forky/Contents-arm64
+ bce259b1f9e8c888a43c4659ee0b8618 11516 forky/Contents-arm64.gz
+SHA1:
+ b7cd4d8aad0a953fa5dc542a4491de8df1e6dda1 781 forky/binary-amd64/Packages
+ 6ecf4cc043418a88f02cd75c0f7d149da01241f7 496 forky/binary-amd64/Packages.gz
+ 3087b54058c55a83d73c374d9d040c9cc2722647 64 forky/binary-amd64/Release
+ b7cd4d8aad0a953fa5dc542a4491de8df1e6dda1 781 forky/binary-arm64/Packages
+ 6ecf4cc043418a88f02cd75c0f7d149da01241f7 496 forky/binary-arm64/Packages.gz
+ bd9274c35ada775f8e527231229bf66380871893 64 forky/binary-arm64/Release
+ 3944d724e41abf08c6ce587ad8b4c6e6ee2dc960 138589 forky/Contents-amd64
+ eb6c4ed0aa48c76ffb68f21c6f8f8b4a4365affd 11516 forky/Contents-amd64.gz
+ 3944d724e41abf08c6ce587ad8b4c6e6ee2dc960 138589 forky/Contents-arm64
+ eb6c4ed0aa48c76ffb68f21c6f8f8b4a4365affd 11516 forky/Contents-arm64.gz
+SHA256:
+ 2646a130a7d41ec6213d074c73053943086a2507e3639a54f75b0721de69ea77 781 forky/binary-amd64/Packages
+ fe23e758c55ce1028796159b7ac3f1754ef4ac62e2d4818763d77150aca5f627 496 forky/binary-amd64/Packages.gz
+ 0fd4d082cba419c32527c0bfcf0481457b2eafa3033481a1ffbe38133d0cfbc9 64 forky/binary-amd64/Release
+ 2646a130a7d41ec6213d074c73053943086a2507e3639a54f75b0721de69ea77 781 forky/binary-arm64/Packages
+ fe23e758c55ce1028796159b7ac3f1754ef4ac62e2d4818763d77150aca5f627 496 forky/binary-arm64/Packages.gz
+ 0e11061ccd2a1a4301b2685236d819f76a54f222a7e594012716a6b26d7fd2d4 64 forky/binary-arm64/Release
+ 75a14672de5fc6841eba8e4f3fcd0596f1cf95d43f7e292e014a9c9859b6592c 138589 forky/Contents-amd64
+ 0e44873325cf317f5348834cd7e1302b297e632f441c8dbbb28dc2e689c8e7e2 11516 forky/Contents-amd64.gz
+ 75a14672de5fc6841eba8e4f3fcd0596f1cf95d43f7e292e014a9c9859b6592c 138589 forky/Contents-arm64
+ 0e44873325cf317f5348834cd7e1302b297e632f441c8dbbb28dc2e689c8e7e2 11516 forky/Contents-arm64.gz
+-----BEGIN PGP SIGNATURE-----
+
+iHUEARYKAB0WIQT0EGmpPXGTuvSeVrgexhKGJCEmTgUCaKN48AAKCRAexhKGJCEm
+ThAGAP9QochLBaicxcpeosDRyPZbjGKBvr5hcV2MxxOgtKQNFQEAq3DEpouuP52m
+LIFlmymmcwKJyHHIFMCuLI6ujUkh1gM=
+=GcQu
+-----END PGP SIGNATURE-----

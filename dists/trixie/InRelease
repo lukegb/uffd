@@ -1,0 +1,49 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: GitHub
+Label: uffd
+Codename: trixie
+Date: Mon, 18 Aug 2025 19:03:12 UTC
+Architectures: amd64 arm64
+Components: trixie
+MD5Sum:
+ 98346f0460de7ed5af8130386cd80d11 782 trixie/binary-amd64/Packages
+ 4dd2ca4976c0a5366832901858487db2 493 trixie/binary-amd64/Packages.gz
+ d4ef9bb3b9932134725a6c89c230e5bb 65 trixie/binary-amd64/Release
+ 98346f0460de7ed5af8130386cd80d11 782 trixie/binary-arm64/Packages
+ 4dd2ca4976c0a5366832901858487db2 493 trixie/binary-arm64/Packages.gz
+ a102b0c6f8739658d70eb765975c1c3b 65 trixie/binary-arm64/Release
+ ecbc27f62cafa65311e9b67fbf52aa0c 138589 trixie/Contents-amd64
+ bce259b1f9e8c888a43c4659ee0b8618 11516 trixie/Contents-amd64.gz
+ ecbc27f62cafa65311e9b67fbf52aa0c 138589 trixie/Contents-arm64
+ bce259b1f9e8c888a43c4659ee0b8618 11516 trixie/Contents-arm64.gz
+SHA1:
+ a58d3e84d335385505dd180c0d2a888af8a3810d 782 trixie/binary-amd64/Packages
+ 8f4bf0f6a7bd6d782ad05f4406e536d72763efe9 493 trixie/binary-amd64/Packages.gz
+ 098255607dd05bfaafc591adaf0a78e35d52c5f0 65 trixie/binary-amd64/Release
+ a58d3e84d335385505dd180c0d2a888af8a3810d 782 trixie/binary-arm64/Packages
+ 8f4bf0f6a7bd6d782ad05f4406e536d72763efe9 493 trixie/binary-arm64/Packages.gz
+ 744c8166279b45dc1c0a183a432fd89e46cb92e6 65 trixie/binary-arm64/Release
+ 3944d724e41abf08c6ce587ad8b4c6e6ee2dc960 138589 trixie/Contents-amd64
+ eb6c4ed0aa48c76ffb68f21c6f8f8b4a4365affd 11516 trixie/Contents-amd64.gz
+ 3944d724e41abf08c6ce587ad8b4c6e6ee2dc960 138589 trixie/Contents-arm64
+ eb6c4ed0aa48c76ffb68f21c6f8f8b4a4365affd 11516 trixie/Contents-arm64.gz
+SHA256:
+ 1c12a344ff484b68fa14677e4029dc270beddedb180dc4b117a5cc8894cd3dc5 782 trixie/binary-amd64/Packages
+ 22daa3853d706a04a251c88222fc1f20525fd94eb353052fdb76d6ccdac58dc7 493 trixie/binary-amd64/Packages.gz
+ 9c6619aaf64dbc02e5b3d80fcb2d4fd813656c10dd5e26f1ba2f16795f3705f4 65 trixie/binary-amd64/Release
+ 1c12a344ff484b68fa14677e4029dc270beddedb180dc4b117a5cc8894cd3dc5 782 trixie/binary-arm64/Packages
+ 22daa3853d706a04a251c88222fc1f20525fd94eb353052fdb76d6ccdac58dc7 493 trixie/binary-arm64/Packages.gz
+ 1bd1a4352c453991a958e7f3d94f608f4ef101ff016834080263d835d1fae4c4 65 trixie/binary-arm64/Release
+ 75a14672de5fc6841eba8e4f3fcd0596f1cf95d43f7e292e014a9c9859b6592c 138589 trixie/Contents-amd64
+ 0e44873325cf317f5348834cd7e1302b297e632f441c8dbbb28dc2e689c8e7e2 11516 trixie/Contents-amd64.gz
+ 75a14672de5fc6841eba8e4f3fcd0596f1cf95d43f7e292e014a9c9859b6592c 138589 trixie/Contents-arm64
+ 0e44873325cf317f5348834cd7e1302b297e632f441c8dbbb28dc2e689c8e7e2 11516 trixie/Contents-arm64.gz
+-----BEGIN PGP SIGNATURE-----
+
+iHUEARYKAB0WIQT0EGmpPXGTuvSeVrgexhKGJCEmTgUCaKN48AAKCRAexhKGJCEm
+TtvhAQCVhxhy/BECkmJli059fbroLVAWUL0aRCAXWPXvPjwzPwEAl9+g5WJXGO1r
+l7n3wSvhOjZVibepUkmqGF7FqiBbhAs=
+=VJUj
+-----END PGP SIGNATURE-----

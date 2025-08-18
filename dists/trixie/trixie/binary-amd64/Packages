@@ -1,0 +1,17 @@
+Package: uffd
+Version: 2.3.1+emf3
+Architecture: all
+Maintainer: CCCV <it@cccv.de>
+Installed-Size: 20290
+Depends: python3-flask, python3-flask-sqlalchemy, python3-flask-migrate, python3-qrcode, python3-fido2, python3-jwt, python3-cryptography, python3-flask-babel, python3-argon2, python3-itsdangerous, uwsgi, uwsgi-plugin-python3
+Recommends: nginx, python3-mysqldb, python3-prometheus-client, python3-ua-parser
+Homepage: https://git.cccv.de/uffd/uffd
+Priority: optional
+Section: python
+Filename: pool/trixie/u/uffd/uffd_2.3.1+emf3_all.deb
+Size: 2334328
+SHA256: 2c306a2a8b6b6002524b508fc0feece265c556186d8f6e7b67bd3ea554bacc51
+SHA1: 2cf9f0dabc36982c5d63c676855e257b36ad3edf
+MD5sum: 6a4aa2078284f68d5c2640abf110080a
+Description: Web-based user management and single sign-on software
+

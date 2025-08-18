@@ -1,0 +1,49 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: GitHub
+Label: uffd
+Codename: bookworm
+Date: Mon, 18 Aug 2025 19:03:11 UTC
+Architectures: amd64 arm64
+Components: bookworm
+MD5Sum:
+ 1deead2f8d4c79763f10a6e4459d430f 784 bookworm/binary-amd64/Packages
+ 40ffbe8dc644eb041dfc5a8cfbeda3e8 496 bookworm/binary-amd64/Packages.gz
+ b5995d0f72c1c8e7d927af8df908d371 67 bookworm/binary-amd64/Release
+ 1deead2f8d4c79763f10a6e4459d430f 784 bookworm/binary-arm64/Packages
+ 40ffbe8dc644eb041dfc5a8cfbeda3e8 496 bookworm/binary-arm64/Packages.gz
+ fe18528dac56500e8addc2b85375498e 67 bookworm/binary-arm64/Release
+ 9d23dec41320d98ac263c0c333ff8e83 138589 bookworm/Contents-amd64
+ 92aa2546e12320d495fb76626308a0f5 11516 bookworm/Contents-amd64.gz
+ 9d23dec41320d98ac263c0c333ff8e83 138589 bookworm/Contents-arm64
+ 92aa2546e12320d495fb76626308a0f5 11516 bookworm/Contents-arm64.gz
+SHA1:
+ 0db8c4f49ec32913109b05b2083db74ec202cdf9 784 bookworm/binary-amd64/Packages
+ 8f5507ff1b2b52bf1410a011601e8738b9074c51 496 bookworm/binary-amd64/Packages.gz
+ 2e1a9b739474f8367370c4328cc4e449f8f1191b 67 bookworm/binary-amd64/Release
+ 0db8c4f49ec32913109b05b2083db74ec202cdf9 784 bookworm/binary-arm64/Packages
+ 8f5507ff1b2b52bf1410a011601e8738b9074c51 496 bookworm/binary-arm64/Packages.gz
+ 271abb9e2998a005f1ef9996fe80b9b0cb8b2293 67 bookworm/binary-arm64/Release
+ 4193d29d3c90e40a9f5367347295a9784e11f441 138589 bookworm/Contents-amd64
+ 5ef27b320715623466b75dc557f106106fa8945f 11516 bookworm/Contents-amd64.gz
+ 4193d29d3c90e40a9f5367347295a9784e11f441 138589 bookworm/Contents-arm64
+ 5ef27b320715623466b75dc557f106106fa8945f 11516 bookworm/Contents-arm64.gz
+SHA256:
+ 2dcb1427ccd7b2a8ba4ec9d2e054b59f8fc481d4a8f14f5c44d26cf572658001 784 bookworm/binary-amd64/Packages
+ e4635ab51f255b26ca0167abcb29e5739db46e8437a2132cc75c880f93365fb4 496 bookworm/binary-amd64/Packages.gz
+ 145ce4a43c4771904bd0a169333f38b7de81a749f4652a7cd1649338e9fb0ee7 67 bookworm/binary-amd64/Release
+ 2dcb1427ccd7b2a8ba4ec9d2e054b59f8fc481d4a8f14f5c44d26cf572658001 784 bookworm/binary-arm64/Packages
+ e4635ab51f255b26ca0167abcb29e5739db46e8437a2132cc75c880f93365fb4 496 bookworm/binary-arm64/Packages.gz
+ f2cfccc3154ab19468439801dc63d31f1f2491d05655b04211f253ac279bd4b2 67 bookworm/binary-arm64/Release
+ 97ef79bbaf1e8b5745e88b76cf0b70c7888cfed68ce2bf9102fb47b92af3189c 138589 bookworm/Contents-amd64
+ acb3c2a64b7f68ea3289f1144082224244c63e6e5a3dde6a1d9eba7945db2af9 11516 bookworm/Contents-amd64.gz
+ 97ef79bbaf1e8b5745e88b76cf0b70c7888cfed68ce2bf9102fb47b92af3189c 138589 bookworm/Contents-arm64
+ acb3c2a64b7f68ea3289f1144082224244c63e6e5a3dde6a1d9eba7945db2af9 11516 bookworm/Contents-arm64.gz
+-----BEGIN PGP SIGNATURE-----
+
+iHUEARYKAB0WIQT0EGmpPXGTuvSeVrgexhKGJCEmTgUCaKN47wAKCRAexhKGJCEm
+ThJVAP9z9x8A3nSngE+EICToGkJ+BLQb0+76uEfOL1kkAxxdmQD+Oik6reAzWHb0
+ZbofeZ9M+n9aJPs87yoq50J22pSSSgo=
+=VJnM
+-----END PGP SIGNATURE-----
