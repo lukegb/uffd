@@ -1,0 +1,21 @@
+Codename: bookworm
+Architectures: amd64
+Contents:
+Origin: GitHub
+Label: uffd
+SignWith: F41069A93D7193BAF49E56B81EC612862421264E
+
+Codename: trixie
+Architectures: amd64
+Contents:
+Origin: GitHub
+Label: uffd
+SignWith: F41069A93D7193BAF49E56B81EC612862421264E
+
+Codename: forky
+Architectures: amd64
+Contents:
+Origin: GitHub
+Label: uffd
+SignWith: F41069A93D7193BAF49E56B81EC612862421264E
+
