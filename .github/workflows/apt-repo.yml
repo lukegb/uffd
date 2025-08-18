@@ -4,7 +4,10 @@ jobs:
   publish:
     permissions:
       pages: write
-      contents: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     name: Publish apt repo
     runs-on: ubuntu-latest
     env:
@@ -15,20 +18,21 @@ jobs:
       - name: Install dependencies
         run: |
           export DEBIAN_FRONTEND=noninteractive
+          sudo rm /var/lib/man-db/auto-update
           sudo apt-get update
           sudo apt-get install -y reprepro gnupg jq
       - name: Set up GPG
         run: |
           echo "$GPG_PRIVATE_KEY" | gpg --batch --import
           echo "$KEY_ID:6:" |  gpg --batch --import-ownertrust --pinentry-mode=loopback 
-          gpg --batch --export "$KEY_ID" --output pubkey.gpg
       - name: Set up APT repo
         run: |
           mkdir -p repo/conf
           for codename in ${CODENAMES}; do
           cat <<EOF >>repo/conf/distributions
           Codename: ${codename}
-          Architectures: amd64
+          Components: ${codename}
+          Architectures: amd64 arm64
           Contents:
           Origin: GitHub
           Label: uffd
@@ -36,13 +40,13 @@ jobs:
 
           EOF
           done
-          cp pubkey.gpg repo/pubkey.gpg
+          gpg --batch --export "$KEY_ID" > repo/pubkey.gpg
           touch repo/index.html
       - name: Download all artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          export RELEASES="$(gh -R ${{ github.repository }} release list -t "{{ .tagName }}")"
+          export RELEASES="$(gh -R ${{ github.repository }} release list --json tagName -t "{{range .}}{{.tagName}} {{end}}")"
           for release in $RELEASES; do
             echo $release
             rm -rf debtmp || true
@@ -52,12 +56,14 @@ jobs:
               echo "- $codename"
               for f in debtmp/*${codename}*.deb; do
                 echo "- - $f"
-                reprepro -Vb repo includedeb "$codename" "$f"
+                reprepro -C "$codename" -Vb repo includedeb "$codename" "$f"
               done
             done
           done
-      - name: Upload to GitHub pages
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e  # v4.0.0
+      - name: Upload GH Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./repo
+          path: repo/
+      - name: Publish to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
